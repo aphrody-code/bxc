@@ -362,5 +362,8 @@ Firefox / Edge / Safari and any derivative.
 }
 
 if (import.meta.main) {
-	await main(process.argv.slice(2));
+	main(process.argv.slice(2)).catch((err: unknown) => {
+		process.stderr.write(`fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+		process.exit(1);
+	});
 }
