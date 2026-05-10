@@ -1,6 +1,6 @@
 {
   "name": "@aphrody-code/bunlight",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Bun + Lightpanda fusionnés — browser engine in-process pour Bun",
   "type": "module",
   "main": "./src/api/browser.ts",
@@ -84,8 +84,7 @@
   "author": "aphrody-code",
   "license": "0BSD",
   "publishConfig": {
-    "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "repository": {
     "type": "git",

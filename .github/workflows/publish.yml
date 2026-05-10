@@ -63,7 +63,7 @@ jobs:
         run: |
           echo "@aphrody-code:registry=https://npm.pkg.github.com" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
-          bun publish --access public
+          bun publish --access public --registry https://npm.pkg.github.com
 
   publish-npm:
     runs-on: ubuntu-latest
