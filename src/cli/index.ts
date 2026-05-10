@@ -50,7 +50,10 @@ let _pkgVersion = typeof __BUNLIGHT_VERSION__ !== "undefined" ? __BUNLIGHT_VERSI
 
 // In dev mode, read the actual version from package.json (file system available).
 // In standalone executables, the define above wins and this block is dead-code-eliminated.
-if (_pkgVersion === "0.0.0-dev") {
+// Wrapped in IIFE so `bun build --compile --target=bun-windows-x64` doesn't reject
+// the top-level await (bug in cross-compile pipeline).
+async function _resolvePkgVersion(): Promise<void> {
+	if (_pkgVersion !== "0.0.0-dev") return;
 	try {
 		const pkgPath = join(import.meta.dir, "../../package.json");
 		const text = await Bun.file(pkgPath).text();
@@ -62,6 +65,7 @@ if (_pkgVersion === "0.0.0-dev") {
 		// Keep "0.0.0-dev".
 	}
 }
+void _resolvePkgVersion();
 
 const _buildTime = typeof __BUNLIGHT_BUILD_TIME__ !== "undefined" ? __BUNLIGHT_BUILD_TIME__ : "dev";
 void _buildTime;
