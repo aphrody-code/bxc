@@ -11,9 +11,18 @@ Catalog ciblé Rust : crates pour driver Chromium via CDP, embed CEF, parser le 
 
 ```toml
 # Cargo.toml
+[package]
+edition = "2024"           # chromiumoxide 0.9.1 demande edition 2024 / rust 1.85+
+rust-version = "1.85"
+
 [dependencies]
 # 1. Driver CDP haut niveau (recommandé)
-chromiumoxide = { version = "0.9", features = ["tokio-runtime"] }
+# Tokio est embarqué par chromiumoxide — pas de feature "runtime" à activer.
+# Default features: ["bytes"]. Pour BrowserFetcher add ["fetcher", "rustls", "zip8"].
+chromiumoxide = "0.9"
+
+# Optionnel : auto-download Chromium binary
+# chromiumoxide = { version = "0.9", features = ["fetcher", "rustls", "zip8"] }
 
 # 2. Parser SQLite local (history, bookmarks, cookies offline)
 rusqlite = { version = "0.32", features = ["bundled"] }
@@ -25,13 +34,13 @@ rookie = "0.5"
 # (binary tool, pas Cargo dep)
 # cargo install --locked cargo-xwin
 
-# 5. Async runtime
+# 5. Async runtime + utilities
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 ```
 
 **Verdict 2026-05-10** :
-- `chromiumoxide` (1275⭐, [mattsse/chromiumoxide](https://github.com/mattsse/chromiumoxide)) = standard de facto. Maintenu, supporte stealth + connect existing + cookies CDP.
+- **chromiumoxide v0.9.1** (1275⭐, **1.77M downloads** sur crates.io, MIT OR Apache-2.0, [mattsse/chromiumoxide](https://github.com/mattsse/chromiumoxide)) = standard de facto. Maintenu, supporte stealth + connect existing + cookies CDP + BrowserFetcher + page.execute(raw CDP) + 100% des types DevTools Protocol via `chromiumoxide_cdp`.
 - `rust-headless-chrome` (28⭐) = quasi mort — ne pas adopter.
 - `chrome-remote-interface-rs` (yskszk63) = OK, plus bas niveau, dernière update 2023.
 - `chromium-source-rs` / direct Chromium bindings = inutile pour 99% des cas.
@@ -43,12 +52,18 @@ futures = "0.3"
 ### 1.1 chromiumoxide — RECOMMANDÉ
 
 ```bash
-cargo add chromiumoxide --features tokio-runtime
+cargo add chromiumoxide
 cargo add tokio --features full
 cargo add futures
 ```
 
-[mattsse/chromiumoxide](https://github.com/mattsse/chromiumoxide) — 1275⭐, async API haut niveau, supporte tous les types CDP, launch + connect, headless + headed, stealth built-in.
+NB : pas besoin de feature `tokio-runtime` (chromiumoxide embarque tokio par défaut, c'est sa seule runtime supportée). Pour auto-download Chromium :
+
+```bash
+cargo add chromiumoxide --features fetcher,rustls,zip8
+```
+
+[mattsse/chromiumoxide](https://github.com/mattsse/chromiumoxide) — v0.9.1, 1275⭐, **1.77M downloads**, MIT OR Apache-2.0, edition 2024 (rust 1.85+). Async API haut niveau, supporte tous les types CDP via `chromiumoxide_cdp`, launch + connect, headless + headed, stealth built-in, BrowserFetcher pour install auto.
 
 #### Connect to Existing Chrome (le cas real-browser)
 
@@ -109,7 +124,105 @@ for c in &cookies {
 // Or browser-level
 let all = browser.get_cookies().await?;
 browser.clear_cookies().await?;
+
+// Set cookie
+let cookie = CookieParam::builder()
+    .domain(".example.com")
+    .name("tracking_id")
+    .value("xyz789")
+    .path("/")
+    .secure(true)
+    .http_only(true)
+    .build()?;
+page.set_cookie(cookie).await?;
 ```
+
+#### Mount user data dir (real-browser pattern Rust)
+
+```rust
+use chromiumoxide::browser::{Browser, BrowserConfig};
+use std::time::Duration;
+
+let user_data = if cfg!(target_os = "windows") {
+    format!(
+        r"{}\Google\Chrome\User Data",
+        std::env::var("LOCALAPPDATA").unwrap()
+    )
+} else {
+    format!("{}/.config/google-chrome", std::env::var("HOME").unwrap())
+};
+
+let chrome_exe = if cfg!(target_os = "windows") {
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+} else {
+    "/usr/bin/google-chrome"
+};
+
+let config = BrowserConfig::builder()
+    .chrome_executable(chrome_exe)
+    .user_data_dir(&user_data)
+    .with_head()
+    .arg("--profile-directory=Default")
+    .arg("--no-first-run")
+    .arg("--no-default-browser-check")
+    .launch_timeout(Duration::from_secs(15))
+    .build()?;
+
+let (browser, _handler) = Browser::launch(config).await?;
+let cookies = browser.get_cookies().await?;  // déchiffrés par Chrome (ABE OK)
+```
+
+C'est l'équivalent Rust du `launchRealBrowser()` TypeScript de bunlight (cf. [`PROFILES-WINDOWS.md`](./PROFILES-WINDOWS.md)).
+
+#### Raw CDP commands (toutes les API DevTools)
+
+```rust
+use chromiumoxide_cdp::cdp::browser_protocol::page::ReloadParams;
+use chromiumoxide_cdp::cdp::browser_protocol::emulation::SetGeolocationOverrideParams;
+
+// Reload, ignore cache
+page.execute(ReloadParams::builder().ignore_cache(true).build()).await?;
+
+// Geolocation spoof
+page.execute(
+    SetGeolocationOverrideParams::builder()
+        .latitude(37.7749)
+        .longitude(-122.4194)
+        .accuracy(100.0)
+        .build()
+).await?;
+
+// Browser info
+let version = browser.version().await?;
+println!("{} v{}", version.product, version.revision);
+```
+
+Tous les types CDP sont exposés via `chromiumoxide_cdp::cdp::*` — `Network.*`, `Storage.*`, `IndexedDB.*`, `DOMStorage.*`, `Cache.*`, `Page.*`, `Emulation.*`, `Runtime.*`, `Profiler.*`, etc.
+
+#### BrowserFetcher (auto-download Chromium)
+
+```rust
+use chromiumoxide::fetcher::{BrowserFetcher, BrowserFetcherOptions};
+use std::path::Path;
+
+// Cargo.toml: features = ["fetcher", "rustls", "zip8"]
+let download_path = Path::new("./browser-download");
+tokio::fs::create_dir_all(&download_path).await?;
+
+let fetcher = BrowserFetcher::new(
+    BrowserFetcherOptions::builder()
+        .with_path(&download_path)
+        .build()?
+);
+let info = fetcher.fetch().await?;
+println!("Browser at: {:?}", info.executable_path);
+
+let config = BrowserConfig::builder()
+    .chrome_executable(info.executable_path)
+    .build()?;
+```
+
+Utile pour CI / scripts portables qui ne peuvent pas garantir Chrome installé.
 
 Doc Context7 complète : [`/mattsse/chromiumoxide`](https://context7.com/mattsse/chromiumoxide) — 43 snippets curated, 81.95/100 benchmark.
 
@@ -430,10 +543,11 @@ Pour gros volumes ou queries dynamiques.
 [package]
 name = "my-chrome-driver"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.85"        # required by chromiumoxide 0.9.1
 
 [dependencies]
-chromiumoxide = { version = "0.9", features = ["tokio-runtime"] }
+chromiumoxide = "0.9"        # tokio embedded, no "runtime" feature needed
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 serde_json = "1"
@@ -472,6 +586,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+```
+
+**Alternative** : launch (au lieu de connect) en mountant le user data dir :
+
+```rust
+use chromiumoxide::browser::{Browser, BrowserConfig};
+use std::time::Duration;
+
+let local_app_data = std::env::var("LOCALAPPDATA")?;
+let config = BrowserConfig::builder()
+    .chrome_executable(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+    .user_data_dir(format!(r"{local_app_data}\Google\Chrome\User Data"))
+    .with_head()
+    .arg("--profile-directory=Default")
+    .arg("--no-first-run")
+    .launch_timeout(Duration::from_secs(15))
+    .build()?;
+
+let (browser, _handler) = Browser::launch(config).await?;
+// browser.get_cookies() retourne tous les cookies du profil, déchiffrés.
 ```
 
 Build cross-platform :
