@@ -401,3 +401,154 @@ export function inspectChromeProfile(
 		profileDirectory,
 	};
 }
+
+// ─── CDP-based extractors (works on Chrome 127+ with App-Bound Encryption) ─
+
+/**
+ * Extract all cookies from the running Chrome instance via CDP.
+ *
+ * **Why CDP and not direct SQLite read?**
+ *   Chrome 127+ encrypts cookie values with "App-Bound Encryption" (AES-256-GCM
+ *   bound to chrome.exe's process identity) on top of DPAPI. Reading the
+ *   `Cookies` SQLite directly returns ciphertext only chrome.exe itself can
+ *   decrypt. CDP `Network.getAllCookies` runs *inside* chrome.exe and returns
+ *   plaintext cookies — by design, no DPAPI/ABE handling on our side.
+ *
+ * Pre-conditions:
+ *   - Chrome was started via `launchRealBrowser()` (so CDP is available).
+ *   - The user's profile is mounted (so the cookie jar reflects real sessions).
+ *
+ * Returns the standard CDP cookie shape (name, value, domain, path, expires,
+ * httpOnly, secure, sameSite, sourceScheme, sourcePort, partitionKey, ...).
+ */
+export async function extractCookiesViaCdp(handle: RealBrowserHandle): Promise<
+	Array<{
+		name: string;
+		value: string;
+		domain: string;
+		path: string;
+		expires: number;
+		size: number;
+		httpOnly: boolean;
+		secure: boolean;
+		session: boolean;
+		sameSite?: string;
+		priority?: string;
+		sourceScheme?: string;
+		sourcePort?: number;
+		partitionKey?: unknown;
+	}>
+> {
+	const pages = await handle.browser.pages();
+	const page = pages[0] ?? (await handle.browser.newPage());
+	const cdp = await page.target().createCDPSession();
+	try {
+		const result = (await cdp.send("Network.getAllCookies")) as { cookies: unknown[] };
+		return result.cookies as Array<{
+			name: string;
+			value: string;
+			domain: string;
+			path: string;
+			expires: number;
+			size: number;
+			httpOnly: boolean;
+			secure: boolean;
+			session: boolean;
+		}>;
+	} finally {
+		await cdp.detach().catch(() => undefined);
+	}
+}
+
+/**
+ * Filter cookies for a specific domain via CDP `Network.getCookies`.
+ * Faster than `getAllCookies + filter` when the domain set is known.
+ */
+export async function extractCookiesForDomainsViaCdp(
+	handle: RealBrowserHandle,
+	urls: readonly string[],
+): Promise<unknown[]> {
+	const pages = await handle.browser.pages();
+	const page = pages[0] ?? (await handle.browser.newPage());
+	const cdp = await page.target().createCDPSession();
+	try {
+		const result = (await cdp.send("Network.getCookies", { urls: [...urls] })) as {
+			cookies: unknown[];
+		};
+		return result.cookies;
+	} finally {
+		await cdp.detach().catch(() => undefined);
+	}
+}
+
+// ─── Offline (Chrome closed) SQLite readers ────────────────────────────
+
+interface HistoryEntry {
+	url: string;
+	title: string;
+	visit_count: number;
+	last_visit_time: number; // Chrome timestamp (microseconds since 1601-01-01 UTC)
+}
+
+/**
+ * Read the History SQLite (Chrome stores URL visits unencrypted).
+ *
+ * **Pre-condition: Chrome must be CLOSED**. The SQLite is locked while
+ * chrome.exe runs.
+ *
+ * Returns up to `limit` most-recent entries.
+ */
+export async function extractHistoryFromSqlite(
+	userDataDir = resolveDefaultProfileDir(),
+	profileDirectory = "Default",
+	limit = 5000,
+): Promise<HistoryEntry[]> {
+	const { Database } = await import("bun:sqlite");
+	const inspection = inspectChromeProfile(userDataDir, profileDirectory);
+	if (!(await fileExists(inspection.historyDbPath))) {
+		throw new Error(`real-browser: History SQLite not found at ${inspection.historyDbPath}`);
+	}
+	const db = new Database(inspection.historyDbPath, { readonly: true });
+	try {
+		const rows = db
+			.query<
+				HistoryEntry,
+				[number]
+			>(`SELECT urls.url, urls.title, urls.visit_count, urls.last_visit_time
+			   FROM urls
+			   ORDER BY urls.last_visit_time DESC
+			   LIMIT ?`)
+			.all(limit);
+		return rows;
+	} finally {
+		db.close(false);
+	}
+}
+
+interface BookmarkEntry {
+	id: string;
+	type: "folder" | "url";
+	name: string;
+	url?: string;
+	dateAdded?: string;
+	children?: BookmarkEntry[];
+}
+
+/**
+ * Parse the `Bookmarks` JSON file (Chrome doesn't lock it). Safe to read
+ * while Chrome is running. Returns the full tree.
+ */
+export async function extractBookmarks(
+	userDataDir = resolveDefaultProfileDir(),
+	profileDirectory = "Default",
+): Promise<{ bookmark_bar: BookmarkEntry; other: BookmarkEntry; synced?: BookmarkEntry }> {
+	const path = join(userDataDir, profileDirectory, "Bookmarks");
+	const f = Bun.file(path);
+	if (!(await f.exists())) {
+		throw new Error(`real-browser: Bookmarks JSON not found at ${path}`);
+	}
+	const json = JSON.parse(await f.text()) as {
+		roots: { bookmark_bar: BookmarkEntry; other: BookmarkEntry; synced?: BookmarkEntry };
+	};
+	return json.roots;
+}

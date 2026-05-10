@@ -20,6 +20,10 @@
  */
 
 import {
+	extractBookmarks,
+	extractCookiesForDomainsViaCdp,
+	extractCookiesViaCdp,
+	extractHistoryFromSqlite,
 	findChromeBinary,
 	inspectChromeProfile,
 	launchRealBrowser,
@@ -28,7 +32,7 @@ import {
 } from "../profiles/real-browser/index.ts";
 
 interface CliOptions {
-	action: "launch" | "inspect" | "profiles";
+	action: "launch" | "inspect" | "profiles" | "cookies" | "history" | "bookmarks";
 	executablePath?: string;
 	userDataDir?: string;
 	profileDirectory?: string;
@@ -40,6 +44,8 @@ interface CliOptions {
 	extraArgs: string[];
 	json: boolean;
 	keepAlive: boolean;
+	domainFilters?: string[];
+	historyLimit?: number;
 }
 
 function printUsage(): void {
@@ -55,6 +61,11 @@ Actions:
   inspect    Print resolved paths (chrome.exe, userDataDir, Cookies/History
              SQLite paths) without launching anything.
   profiles   List the sub-profiles (Default, Profile 1, ...) in userDataDir.
+  cookies    Extract decrypted cookies via CDP (Chrome 127+ App-Bound
+             Encryption supported). Optional positional args = domain filters.
+  history    Read History SQLite (Chrome MUST be CLOSED). Optional positional
+             arg = max entries (default 5000).
+  bookmarks  Parse the Bookmarks JSON tree (safe while Chrome is running).
 
 Options (launch):
   --executable-path <p>     Override chrome.exe path  (BUNLIGHT_CHROME_PATH)
@@ -146,11 +157,19 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		out.action = "launch";
 	} else {
 		const action = positional[0];
-		if (action !== "launch" && action !== "inspect" && action !== "profiles") {
+		const valid = ["launch", "inspect", "profiles", "cookies", "history", "bookmarks"] as const;
+		type Valid = (typeof valid)[number];
+		if (!valid.includes(action as Valid)) {
 			process.stderr.write(`Unknown action: ${action}\n`);
 			return null;
 		}
-		out.action = action;
+		out.action = action as Valid;
+		if (out.action === "cookies") {
+			out.domainFilters = positional.slice(1);
+		} else if (out.action === "history") {
+			const lim = parseInt(positional[1] ?? "5000", 10);
+			if (Number.isFinite(lim) && lim > 0) out.historyLimit = lim;
+		}
 	}
 	return out;
 }
@@ -277,6 +296,104 @@ async function actionLaunch(opts: CliOptions): Promise<void> {
 	await new Promise<void>(() => {});
 }
 
+async function actionCookies(opts: CliOptions): Promise<void> {
+	const launchOpts: RealBrowserOptions = {
+		executablePath: opts.executablePath,
+		userDataDir: opts.userDataDir,
+		profileDirectory: opts.profileDirectory,
+		port: opts.port,
+		headless: true,
+		stealth: false,
+		adblock: false,
+		anonymizeUa: false,
+		extraArgs: opts.extraArgs,
+	};
+
+	const handle = await launchRealBrowser(launchOpts);
+	try {
+		const filters = opts.domainFilters ?? [];
+		const cookies =
+			filters.length > 0
+				? await extractCookiesForDomainsViaCdp(
+						handle,
+						filters.map((d) => (d.includes("://") ? d : `https://${d}`)),
+					)
+				: await extractCookiesViaCdp(handle);
+
+		if (opts.json) {
+			process.stdout.write(`${JSON.stringify(cookies, null, 2)}\n`);
+		} else {
+			process.stdout.write(`Got ${cookies.length} cookies\n`);
+			for (const c of cookies as Array<{ name: string; domain: string; httpOnly: boolean }>) {
+				process.stdout.write(
+					`  ${c.domain.padEnd(40)} ${c.name}${c.httpOnly ? " (httpOnly)" : ""}\n`,
+				);
+			}
+		}
+	} finally {
+		await handle.close();
+	}
+}
+
+async function actionHistory(opts: CliOptions): Promise<void> {
+	const limit = opts.historyLimit ?? 5000;
+	const userDataDir = opts.userDataDir ?? resolveDefaultProfileDir();
+	const profileDirectory = opts.profileDirectory ?? "Default";
+
+	const entries = await extractHistoryFromSqlite(userDataDir, profileDirectory, limit);
+
+	if (opts.json) {
+		process.stdout.write(`${JSON.stringify(entries, null, 2)}\n`);
+		return;
+	}
+
+	const chromeTsToIso = (ts: number): string => {
+		const ms = ts / 1000 - 11_644_473_600_000;
+		return new Date(ms).toISOString();
+	};
+
+	process.stdout.write(`History entries: ${entries.length} (most recent first)\n\n`);
+	for (const e of entries.slice(0, 50)) {
+		const time = chromeTsToIso(e.last_visit_time);
+		const title = (e.title || "").slice(0, 60).padEnd(60);
+		process.stdout.write(`${time}  ${title}  ${e.url}\n`);
+	}
+	if (entries.length > 50) {
+		process.stdout.write(`... (${entries.length - 50} more, use --json for full output)\n`);
+	}
+}
+
+async function actionBookmarks(opts: CliOptions): Promise<void> {
+	const userDataDir = opts.userDataDir ?? resolveDefaultProfileDir();
+	const profileDirectory = opts.profileDirectory ?? "Default";
+	const tree = await extractBookmarks(userDataDir, profileDirectory);
+
+	if (opts.json) {
+		process.stdout.write(`${JSON.stringify(tree, null, 2)}\n`);
+		return;
+	}
+
+	interface BkNode {
+		type: "folder" | "url";
+		name: string;
+		url?: string;
+		children?: BkNode[];
+	}
+
+	const walk = (node: BkNode, depth: number): void => {
+		const indent = "  ".repeat(depth);
+		if (node.type === "folder") {
+			process.stdout.write(`${indent}[${node.name}]\n`);
+			for (const c of node.children ?? []) walk(c as BkNode, depth + 1);
+		} else {
+			process.stdout.write(`${indent}* ${node.name}\n${indent}  ${node.url}\n`);
+		}
+	};
+	walk(tree.bookmark_bar as BkNode, 0);
+	walk(tree.other as BkNode, 0);
+	if (tree.synced) walk(tree.synced as BkNode, 0);
+}
+
 export async function main(argv: readonly string[]): Promise<void> {
 	const opts = parseArgs(argv);
 	if (!opts) {
@@ -287,6 +404,9 @@ export async function main(argv: readonly string[]): Promise<void> {
 	try {
 		if (opts.action === "inspect") await actionInspect(opts);
 		else if (opts.action === "profiles") await actionProfiles(opts);
+		else if (opts.action === "cookies") await actionCookies(opts);
+		else if (opts.action === "history") await actionHistory(opts);
+		else if (opts.action === "bookmarks") await actionBookmarks(opts);
 		else await actionLaunch(opts);
 	} catch (err) {
 		process.stderr.write(
