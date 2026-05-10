@@ -1,0 +1,25 @@
+# bunlight — Bun runtime + bundler + test config.
+# Reference: https://bun.com/docs/runtime/bunfig
+
+[install]
+# Use the text-based lockfile (diffable, easier to review in PRs).
+saveTextLockfile = true
+
+# Run preinstall lifecycle scripts only for whitelisted packages — security
+# default. Add packages here when their postinstall is required.
+trustedDependencies = []
+
+[test]
+# Per-test timeout — keep generous for E2E (rosegriffon/azalee crawls).
+timeout = 30000
+# Coverage on demand only (`bun test --coverage`).
+coverage = false
+
+[run]
+# Match Bun's default but make it explicit so CI logs are predictable.
+silent = false
+
+# Pin the Bun runtime version locally — switch via `bun upgrade` only.
+# Keep commented so users don't get surprised by enforced upgrades.
+# [version]
+# bun = "1.3.14"

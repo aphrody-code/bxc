@@ -1,0 +1,99 @@
+{
+  "name": "@aphrody-code/bunlight",
+  "version": "0.1.0-alpha.0",
+  "description": "Bun + Lightpanda fusionnés — browser engine in-process pour Bun",
+  "type": "module",
+  "main": "./src/api/browser.ts",
+  "types": "./src/api/browser.ts",
+  "bin": {
+    "bunlight": "./bin/bunlight"
+  },
+  "exports": {
+    ".": "./src/api/browser.ts",
+    "./browser": "./src/api/browser.ts",
+    "./detect": "./src/detect.ts",
+    "./router/framework-strategy": "./src/router/framework-strategy.ts",
+    "./router/challenge-detect": "./src/router/challenge-detect.ts",
+    "./transport/InProcessTransport": "./src/transport/InProcessTransport.ts",
+    "./transport/SocketPairTransport": "./src/transport/SocketPairTransport.ts",
+    "./transport/StaticDomTransport": "./src/transport/StaticDomTransport.ts",
+    "./transport": "./src/transport/InProcessTransport.ts",
+    "./transport/socketpair": "./src/transport/SocketPairTransport.ts",
+    "./transport/static": "./src/transport/StaticDomTransport.ts",
+    "./types/ConnectionTransport": "./types/ConnectionTransport.ts",
+    "./ffi/curl-impersonate": "./src/ffi/curl-impersonate.ts",
+    "./ffi/zigquery": "./src/ffi/zigquery.ts",
+    "./cookies/cookie-loader": "./src/cookies/cookie-loader.ts",
+    "./scrapers/challonge": "./src/scrapers/challonge.ts"
+  },
+  "scripts": {
+    "build:cdylib": "bun scripts/build-lightpanda-static.ts",
+    "build:fork": "bun scripts/build-bun-fork.ts",
+    "build:exe": "bun scripts/build-standalone.ts",
+    "postinstall": "bun scripts/postinstall.ts",
+    "test": "bun test",
+    "lint": "biome check src test examples scripts",
+    "lint:fix": "biome check --write src test examples scripts",
+    "format": "biome format --write src test examples scripts",
+    "bench": "bun benchmarks/runner.ts",
+    "benchmark": "bun benchmarks/run-all.ts"
+  },
+  "files": [
+    "src/",
+    "vendor/zigquery-wrapper/zig-out/lib/liblightpanda_dom.so",
+    "vendor/curl-impersonate/libcurl-impersonate.so",
+    "vendor/curl-impersonate/libcurl-impersonate.so.4",
+    "vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
+    "bin/",
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LICENSE",
+    "scripts/postinstall.ts"
+  ],
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "peerDependencies": {
+    "bun": ">=1.3.0",
+    "puppeteer-core": ">=24.0.0"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer-core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@types/bun": "latest",
+    "puppeteer-core": "^24.43.0",
+    "typescript": "^5.9.0"
+  },
+  "keywords": [
+    "bun",
+    "lightpanda",
+    "browser",
+    "headless",
+    "scraper",
+    "agent",
+    "ai",
+    "cdp",
+    "puppeteer",
+    "zig"
+  ],
+  "author": "aphrody-code",
+  "license": "0BSD",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aphrody-code/bunlight.git"
+  },
+  "homepage": "https://github.com/aphrody-code/bunlight#readme",
+  "bugs": "https://github.com/aphrody-code/bunlight/issues",
+  "dependencies": {
+    "browserforge": "^0.1.1"
+  }
+}

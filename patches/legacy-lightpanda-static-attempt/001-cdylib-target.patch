@@ -1,0 +1,428 @@
+--- a/build.zig
++++ b/build.zig
+@@ -38,6 +38,12 @@ pub fn build(b: *Build) !void {
+     const target = b.standardTargetOptions(.{});
+     const optimize = b.standardOptimizeOption(.{});
+
++    // DOM-only build option.  When true:
++    //   - V8 is NOT linked (no libc_v8.a dependency)
++    //   - A shared/static library target 'lib' is added
++    //   - The caller must apply the no_v8 source patches (see below)
++    const no_v8 = b.option(bool, "no_v8", "Build without V8 (DOM-only, cdylib mode)") orelse false;
++
+     const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
+     const snapshot_path = b.option([]const u8, "snapshot_path", "Path to v8 snapshot");
+     const wpt_extensions = b.option(bool, "wpt_extensions", "Extend WebAPI with WPT driver behavior") orelse false;
+@@ -83,7 +89,13 @@ pub fn build(b: *Build) !void {
+         // Set default behavior
+         b.default_step.dependOn(fmt_step);
+
+-        try linkV8(b, mod, enable_asan, enable_tsan, prebuilt_v8_path);
++        if (!no_v8) {
++            try linkV8(b, mod, enable_asan, enable_tsan, prebuilt_v8_path);
++        }
+         try linkCurl(b, mod, enable_tsan);
+         try linkHtml5Ever(b, mod);
+
+@@ -97,6 +109,57 @@ pub fn build(b: *Build) !void {
+     const check_lib = b.addLibrary(.{
+         .name = "lightpanda_check",
+         .root_module = lightpanda_module,
+     });
+     check.dependOn(&check_lib.step);
+
++    // -----------------------------------------------------------------------
++    // 'lib' build step: liblightpanda.{so,a} — DOM-only cdylib
++    //
++    // Usage (after applying all source patches):
++    //   zig build -Dno_v8=true -Doptimize=ReleaseFast lib
++    //
++    // The exports_path option points to the C-ABI entry point.
++    // Default: ../bunlight/src/zig-bridge/exports.zig
++    // -----------------------------------------------------------------------
++    if (no_v8) {
++        const lib_step = b.step("lib", "Build liblightpanda.{so,a} (DOM-only cdylib, requires -Dno_v8=true and source patches)");
++
++        const exports_path_opt = b.option(
++            []const u8,
++            "exports_path",
++            "Path to the C-ABI exports.zig (default: ../bunlight/src/zig-bridge/exports.zig)",
++        ) orelse "../bunlight/src/zig-bridge/exports.zig";
++
++        // Shared library (.so / .dylib)
++        {
++            const exports_mod = b.createModule(.{
++                .root_source_file = .{ .cwd_relative = exports_path_opt },
++                .target = target,
++                .optimize = optimize,
++                .link_libc = true,
++            });
++            exports_mod.addImport("lightpanda", lightpanda_module);
++
++            const shared = b.addLibrary(.{
++                .name = "lightpanda",
++                .linkage = .dynamic,
++                .root_module = exports_mod,
++                .use_llvm = true,
++            });
++            lib_step.dependOn(&b.addInstallArtifact(shared, .{}).step);
++        }
++
++        // Static library (.a)
++        {
++            const exports_mod = b.createModule(.{
++                .root_source_file = .{ .cwd_relative = exports_path_opt },
++                .target = target,
++                .optimize = optimize,
++                .link_libc = true,
++            });
++            exports_mod.addImport("lightpanda", lightpanda_module);
++
++            const static = b.addLibrary(.{
++                .name = "lightpanda",
++                .linkage = .static,
++                .root_module = exports_mod,
++                .use_llvm = true,
++            });
++            lib_step.dependOn(&b.addInstallArtifact(static, .{}).step);
++        }
++    }
++
+     // Extras (snapshot_creator, legacy_test) are off the default install to
+--- /dev/null
++++ b/src/browser/js/stub.zig
+@@ -0,0 +1,211 @@
++// Bunlight stub — src/browser/js/stub.zig
++//
++// Replaces the ENTIRE js/ binding layer for the -Dno_v8=true build.
++//
++// HOW IT WORKS:
++//   The companion hunk modifies src/browser/js/js.zig to detect the
++//   build_config.no_v8 option and @import("stub.zig") instead of the
++//   real V8-backed modules.  Individual files like Platform.zig and
++//   Snapshot.zig import js.zig, so they transitively get the stubs.
++//
++// TYPES:
++//   Every V8 type that appears as a struct field must have matching ABI.
++//   All stub types are zero-size or contain a single usize (for handles).
++//
++// RUNTIME BEHAVIOUR:
++//   Methods that would require V8 call noV8Panic() which panics.
++//   DOM-only code paths must never reach these methods.
++
++const std = @import("std");
++
++pub const v8 = struct {
++    // v8.Global is used as a field type in Page.globals/Page.temps.
++    // The real v8.Global is an extern struct; we match with a usize sentinel.
++    pub const Global = extern struct { _opaque: usize = 0 };
++    pub const Isolate = opaque {};
++};
++
++// ── Primitive JS value types ─────────────────────────────────────────────────
++pub const Value = struct {
++    pub fn toStringSlice(_: *const Value) ![]const u8 { return noV8("Value.toStringSlice"); }
++    pub fn toStringSliceWithAlloc(_: *const Value, _: std.mem.Allocator) ![]const u8 { return noV8("Value.toStringSliceWithAlloc"); }
++};
++pub const String    = struct { pub fn init(_: []const u8) String { return .{}; } };
++pub const Number    = struct { pub fn value(_: *const Number) f64 { return 0; } };
++pub const Integer   = struct { pub fn value(_: *const Integer) i64 { return 0; } };
++pub const BigInt    = struct {};
++pub const RegExp    = struct {};
++pub const Array     = struct { pub fn length(_: *const Array) u32 { return 0; } };
++pub const Module    = struct {};
++pub const Undefined = struct {};
++pub const Exception = struct { message: []const u8 = "" };
++pub const NullableString = struct { value: ?[]const u8 = null };
++pub const ArrayBuffer = struct { data: [*]const u8 = undefined, byte_length: usize = 0 };
++pub const ArrayType = enum(u8) {
++    int8=0, uint8, uint8_clamped, int16, uint16,
++    int32, uint32, float32, float64, bigint64, biguint64,
++};
++
++// ── Object / Function ────────────────────────────────────────────────────────
++pub const Object = struct {
++    pub const Global = struct {
++        _inner: usize = 0,
++        pub fn deinit(_: *Global) void {}
++    };
++    pub const Temp = struct {
++        _inner: usize = 0,
++        pub fn deinit(_: *Temp) void {}
++    };
++    pub fn global(_: *const Object) !Global { return noV8("Object.global"); }
++};
++pub const Function = struct {
++    pub const Global = struct {
++        _inner: usize = 0,
++        pub fn deinit(_: *Global) void {}
++        pub fn toLocal(_: *const Global, _: *const Local) Function { return .{}; }
++        pub fn isEqual(_: *const Global, _: *const Global) bool { return false; }
++    };
++    pub const Temp = struct {
++        _inner: usize = 0,
++        pub fn deinit(_: *Temp) void {}
++    };
++    pub fn persist(_: *const Function) !Global { return noV8("Function.persist"); }
++    pub fn persistWithThis(_: *const Function, _: anytype) !Global { return noV8("Function.persistWithThis"); }
++    pub fn temp(_: *const Function) !Temp { return noV8("Function.temp"); }
++    pub fn tempWithThis(_: *const Function, _: anytype) !Temp { return noV8("Function.tempWithThis"); }
++};
++pub const Promise = struct {
++    pub const Global = struct {
++        _inner: usize = 0,
++        pub fn deinit(_: *Global) void {}
++    };
++};
++pub const PromiseResolver = struct {
++    pub fn resolve(_: *PromiseResolver, _: anytype) !void { return noV8("PromiseResolver.resolve"); }
++    pub fn reject(_: *PromiseResolver, _: anytype) !void { return noV8("PromiseResolver.reject"); }
++};
++pub const PromiseRejection = struct {
++    pub fn promise(_: *PromiseRejection) Promise { return .{}; }
++};
++
++// ── Execution / Local / TryCatch ─────────────────────────────────────────────
++pub const Execution = struct {
++    pub fn local(_: *const Execution) *Local { noV8Panic("Execution.local"); }
++};
++pub const Local = struct {
++    pub const Scope = struct {
++        local: Local = .{},
++        pub fn deinit(_: *Scope) void {}
++    };
++    pub fn exec(_: *const Local, _: []const u8, _: []const u8) !Value { return noV8("Local.exec"); }
++};
++pub const TryCatch = struct {
++    pub fn init(_: *TryCatch, _: *const Local) void {}
++    pub fn deinit(_: *TryCatch) void {}
++    pub fn caughtOrError(_: *TryCatch, _: std.mem.Allocator, _: anyerror) ![]const u8 { return noV8("TryCatch.caughtOrError"); }
++};
++pub const HandleScope = struct {
++    pub fn init(_: *HandleScope, _: *Isolate) void {}
++    pub fn deinit(_: *HandleScope) void {}
++};
++
++// ── Isolate / Context / Env ──────────────────────────────────────────────────
++pub const Isolate = struct {
++    pub fn init(_: anytype) !Isolate { return noV8("Isolate.init"); }
++    pub fn deinit(_: *Isolate) void {}
++};
++pub const Context = struct {
++    pub fn localScope(_: *Context, _: *Local.Scope) void {}
++    pub fn enter(_: *Context, _: anytype) bool { return false; }
++    pub fn setOrigin(_: *Context, _: ?[]const u8) !void {}
++    pub const Scheduler = struct {
++        pub fn add(_: *Scheduler, _: anytype, _: anytype) !void {}
++    };
++    scheduler: Scheduler = .{},
++};
++pub const Env = struct {
++    pub const InitOpts = struct {};
++    pub fn init(_: anytype, _: InitOpts) !Env { return .{}; }
++    pub fn deinit(_: *Env) void {}
++    // createContext is called in Frame.init.  In DOM-only mode frame.js is
++    // set to `undefined` so this pointer is never dereferenced.
++    var _dummy_ctx: Context = .{};
++    pub fn createContext(_: *Env, _: anytype, _: anytype) !*Context { return &_dummy_ctx; }
++    pub fn destroyContext(_: *Env, _: *Context) void {}
++};
++
++// ── Platform stub ────────────────────────────────────────────────────────────
++// Platform.zig does `const js = @import("js.zig"); const v8 = js.v8;`
++// then calls v8.v8__V8__InitializeICU() etc.  When js.zig is the stub,
++// those symbols resolve to the stub v8 namespace, which must expose the
++// required functions.  We add them here as no-ops.
++pub const platform_v8_compat = struct {
++    pub fn v8__V8__InitializeICU() bool { return true; }
++    pub fn v8__V8__InitializeExternalStartupData(_: [*:0]const u8) void {}
++    pub fn v8__Platform__NewDefaultPlatform(_: c_int, _: c_int) ?*anyopaque { return @ptrFromInt(1); }
++    pub fn v8__V8__InitializePlatform(_: ?*anyopaque) void {}
++    pub fn v8__V8__Initialize() void {}
++    pub fn v8__V8__Dispose() bool { return true; }
++    pub fn v8__V8__DisposePlatform() void {}
++    pub fn v8__Platform__Delete(_: ?*anyopaque) void {}
++};
++
++// ── Inspector / Snapshot ─────────────────────────────────────────────────────
++pub const Inspector = struct {};
++// Snapshot.zig calls v8 functions to load a snapshot blob.
++// In DOM-only mode no snapshot is needed.
++pub const Snapshot = struct {
++    pub fn load() !Snapshot { return .{}; }
++    pub fn deinit(_: *const Snapshot) void {}
++};
++
++// ── Identity / Origin / Caller ───────────────────────────────────────────────
++pub const Identity = struct {};
++pub const Origin   = struct { pub fn deinit(_: *Origin) void {} };
++pub const Caller   = struct {
++    pub fn local(_: *const Caller) *const Local { noV8Panic("Caller.local"); }
++};
++
++// ── bridge stub ──────────────────────────────────────────────────────────────
++pub const bridge = struct {
++    pub fn Builder(comptime _: type) type { return struct {}; }
++    pub fn accessor(_: anytype, _: anytype, _: anytype) void {}
++    pub fn function(_: anytype, _: anytype) void {}
++    pub fn setter(_: anytype, _: anytype) void {}
++};
++pub fn Bridge(comptime T: type) type { return bridge.Builder(T); }
++
++// ── Error helpers ─────────────────────────────────────────────────────────────
++fn noV8(comptime ctx: []const u8) error{NoV8Stub} {
++    std.log.err("no_v8 stub: " ++ ctx, .{});
++    return error.NoV8Stub;
++}
++fn noV8Panic(comptime ctx: []const u8) noreturn {
++    @panic("no_v8 stub: " ++ ctx);
++}
+--- a/src/browser/js/js.zig
++++ b/src/browser/js/js.zig
+@@ -17,7 +17,23 @@ const std = @import("std");
+-pub const v8 = @import("v8").c;
+-
+-const string = @import("../../string.zig");
+-
+-pub const Env = @import("Env.zig");
+-pub const bridge = @import("bridge.zig");
+-pub const Caller = @import("Caller.zig");
+-pub const Origin = @import("Origin.zig");
+-pub const Identity = @import("Identity.zig");
+-pub const Context = @import("Context.zig");
+-pub const Execution = @import("Execution.zig");
+-pub const Local = @import("Local.zig");
+-pub const Inspector = @import("Inspector.zig");
+-pub const Snapshot = @import("Snapshot.zig");
+-pub const Platform = @import("Platform.zig");
+-pub const Isolate = @import("Isolate.zig");
+-pub const HandleScope = @import("HandleScope.zig");
+-
+-pub const Value = @import("Value.zig");
+-pub const Array = @import("Array.zig");
+-pub const String = @import("String.zig");
+-pub const Object = @import("Object.zig");
+-pub const TryCatch = @import("TryCatch.zig");
+-pub const Function = @import("Function.zig");
+-pub const Promise = @import("Promise.zig");
+-pub const RegExp = @import("RegExp.zig");
+-pub const Module = @import("Module.zig");
+-pub const BigInt = @import("BigInt.zig");
+-pub const Number = @import("Number.zig");
+-pub const Integer = @import("Integer.zig");
+-pub const PromiseResolver = @import("PromiseResolver.zig");
+-pub const PromiseRejection = @import("PromiseRejection.zig");
++// When -Dno_v8=true is active the build system injects a "js_stub" module.
++// We detect it via build_config.no_v8 (added by the build.zig hunk above).
++const build_config = @import("build_config");
++const no_v8: bool = if (@hasDecl(build_config, "no_v8")) build_config.no_v8 else false;
++
++// In no_v8 mode, re-export everything from stub.zig.
++// In normal mode, re-export from the real V8-backed files.
++pub usingnamespace if (no_v8)
++    @import("stub.zig")
++else
++    struct {
++        pub const v8 = @import("v8").c;
++        const string = @import("../../string.zig");
++        pub const Env = @import("Env.zig");
++        pub const bridge = @import("bridge.zig");
++        pub const Caller = @import("Caller.zig");
++        pub const Origin = @import("Origin.zig");
++        pub const Identity = @import("Identity.zig");
++        pub const Context = @import("Context.zig");
++        pub const Execution = @import("Execution.zig");
++        pub const Local = @import("Local.zig");
++        pub const Inspector = @import("Inspector.zig");
++        pub const Snapshot = @import("Snapshot.zig");
++        pub const Platform = @import("Platform.zig");
++        pub const Isolate = @import("Isolate.zig");
++        pub const HandleScope = @import("HandleScope.zig");
++        pub const Value = @import("Value.zig");
++        pub const Array = @import("Array.zig");
++        pub const String = @import("String.zig");
++        pub const Object = @import("Object.zig");
++        pub const TryCatch = @import("TryCatch.zig");
++        pub const Function = @import("Function.zig");
++        pub const Promise = @import("Promise.zig");
++        pub const RegExp = @import("RegExp.zig");
++        pub const Module = @import("Module.zig");
++        pub const BigInt = @import("BigInt.zig");
++        pub const Number = @import("Number.zig");
++        pub const Integer = @import("Integer.zig");
++        pub const PromiseResolver = @import("PromiseResolver.zig");
++        pub const PromiseRejection = @import("PromiseRejection.zig");
++    };
+--- a/build.zig
++++ b/build.zig
+@@ -53,6 +53,9 @@ pub fn build(b: *Build) !void {
+     var opts = b.addOptions();
+     opts.addOption([]const u8, "version", version_string);
+     opts.addOption([]const u8, "version_encoded", version_encoded);
+     opts.addOption(?[]const u8, "snapshot_path", snapshot_path);
+     opts.addOption(bool, "wpt_extensions", wpt_extensions);
++    // Expose no_v8 to comptime code via build_config (detected in js.zig).
++    opts.addOption(bool, "no_v8", no_v8);
+--- a/src/browser/Browser.zig
++++ b/src/browser/Browser.zig
+@@ -120,3 +120,37 @@ pub fn runIdleTasks(self: *const Browser) void {
+     if (self.session) |*session| {
+         session.runIdleTasks();
+     }
+ }
++
++// ---------------------------------------------------------------------------
++// parseStatic — synchronous DOM-only parse (no_v8 mode)
++// ---------------------------------------------------------------------------
++// Creates a Session + Page, parses the HTML synchronously (no scripts), and
++// returns the root Frame.  The Frame is owned by the Browser/Session and is
++// freed when the Browser is deinitialized.
++
++const Parser = @import("parser/Parser.zig");
++const Frame  = @import("Frame.zig");
++const Node   = @import("webapi/Node.zig");
++const Notification = @import("../Notification.zig");
++
++pub fn parseStatic(self: *Browser, html: []const u8) !*Frame {
++    const notification = try Notification.init(self.app.allocator);
++    defer notification.deinit();
++
++    var session = try self.newSession(notification);
++    const frame = try session.createPage();
++    try frame.parseHtmlDocument(html);
++    return frame;
++}
+--- a/src/browser/Frame.zig
++++ b/src/browser/Frame.zig
+@@ -498,3 +498,30 @@ pub fn navigate(self: *Frame, request_url: [:0]const u8, opts: NavigateOpts) !v
+     lp.assert(self._load_state == .waiting, "frame.renavigate", .{});
++
++// ---------------------------------------------------------------------------
++// parseHtmlDocument — synchronous HTML parse (DOM-only mode)
++// ---------------------------------------------------------------------------
++// Parses HTML bytes into this Frame's document without executing scripts.
++// Used by Browser.parseStatic().
++
++pub fn parseHtmlDocument(self: *Frame, html: []const u8) !void {
++    const previous_parse_mode = self._parse_mode;
++    self._parse_mode = .document;
++    defer self._parse_mode = previous_parse_mode;
++
++    var parser = Parser.init(self.call_arena, self.document.asNode(), self);
++    parser.parse(html);
++
++    if (parser.err) |err_val| return err_val.err;
++    self.document._ready_state = .complete;
++}
+--- a/src/lightpanda.zig
++++ b/src/lightpanda.zig
+@@ -33,6 +33,11 @@ pub const js = @import("browser/js/js.zig");
+ pub const dump = @import("browser/dump.zig");
+ pub const markdown = @import("browser/markdown.zig");
++
++// DOM types and selector engine re-exported for the cdylib layer.
++pub const selector   = @import("browser/webapi/selector/Selector.zig");
++pub const DomNode    = @import("browser/webapi/Node.zig");
++pub const DomElement = @import("browser/webapi/Element.zig");
++
+ pub const SemanticTree = @import("SemanticTree.zig");

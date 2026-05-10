@@ -1,0 +1,26 @@
+{
+  "name": "bunlight-mcp",
+  "version": "0.2.0",
+  "description": "Bunlight MCP server: exposes scrape, detect, cookie-extract, and pool-run as MCP tools.",
+  "transport": "stdio",
+  "command": "bun",
+  "args": ["${CLAUDE_PLUGIN_ROOT}/.claude/mcp/bunlight-mcp/index.ts"],
+  "tools": [
+    {
+      "name": "bunlight_scrape",
+      "description": "Open a URL with the chosen Bunlight profile and return title, URL, and content length. Profile is one of static, fast, http, stealth, max."
+    },
+    {
+      "name": "bunlight_detect",
+      "description": "Detect frameworks, CMS, and WAF on a URL using wappalyzergo, then suggest the cheapest Bunlight profile that will succeed."
+    },
+    {
+      "name": "bunlight_extract_cookies",
+      "description": "Load a cookie jar file from cookies/private/<domain>.json (CDP or Playwright format) and return its parsed contents."
+    },
+    {
+      "name": "bunlight_pool_run",
+      "description": "Run a list of URLs through PagePool with the given profile and concurrency, return JSONL of {url,title,latencyMs} per result."
+    }
+  ]
+}
