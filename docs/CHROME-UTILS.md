@@ -231,10 +231,89 @@ cookies = tab.Network.getAllCookies()
 
 ## 3. Outils Rust
 
-### 3.1 rookie (cookie reader cross-platform) — 352⭐
+> **Voir aussi le doc dédié [`CHROMIUM-RUST.md`](./CHROMIUM-RUST.md)** — catalog complet (driver CDP, embed CEF, WebView Tauri, parsers User Data, cross-compile) avec verdicts maintenance + comparaison stars + quick-start scripts.
+
+### 3.1 chromiumoxide (Rust CDP client) — 1275⭐ — RECOMMANDÉ
 
 ```bash
-cargo install rookie
+cargo add chromiumoxide --features tokio-runtime
+cargo add tokio --features full
+cargo add futures
+```
+
+```rust
+use chromiumoxide::Browser;
+
+// Connect existing Chrome (le cas real-browser)
+let (browser, mut handler) = Browser::connect("http://127.0.0.1:9222").await?;
+let page = browser.new_page("https://github.com/notifications").await?;
+
+// Stealth built-in
+page.enable_stealth_mode().await?;
+
+// Cookies (Chrome 127+ ABE bypass via CDP — Chrome decrypts server-side)
+let cookies = page.get_cookies().await?;
+```
+
+Standard de facto. Async tokio, supporte launch + connect existing, stealth mode intégré, cookies CDP. Maintenu (mattsse).
+
+### 3.2 chrome-remote-interface-rs (yskszk63)
+
+```bash
+cargo add chrome-remote-interface
+```
+
+CDP client bas niveau. Updates rares (2023). Préférer chromiumoxide.
+
+### 3.3 fantoccini (WebDriver) — 2003⭐
+
+```bash
+cargo add fantoccini
+```
+
+WebDriver protocol (pas CDP) — demande chromedriver. Plus stable mais moins de features.
+
+### 3.4 thirtyfour (Selenium WebDriver) — 1412⭐
+
+```bash
+cargo add thirtyfour
+```
+
+Selenium client complet, multi-browser. Pour tests E2E.
+
+### 3.5 cef-rs (Chromium Embedded Framework) — 62⭐
+
+```bash
+cargo add cef
+# Plus actif: dylanede/cef-rs, dernière update 2026-05
+```
+
+Pour embed Chromium dans une app Rust native (Tauri-like).
+
+### 3.6 cef-ui (hytopiagg) — 30⭐
+
+[hytopiagg/cef-ui](https://github.com/hytopiagg/cef-ui) — bridge moderne builder-pattern.
+
+### 3.7 wry (Tauri WebView) — 4773⭐
+
+```bash
+cargo add wry tao
+```
+
+Cross-platform WebView (WebKit macOS/Linux + WebView2 Windows). Standard Tauri.
+
+### 3.8 webview2-rs (Edge WebView2) — 69⭐
+
+```bash
+cargo add webview2
+```
+
+Bindings COM Windows pour Edge WebView2 Runtime.
+
+### 3.9 rookie (cookie reader cross-platform) — 352⭐
+
+```bash
+cargo add rookie
 # ou
 pip install rookiepy
 # ou
@@ -243,42 +322,45 @@ npm i rookie-node
 
 ```rust
 use rookie::chrome;
-
 let cookies = chrome(Some(vec!["github.com".to_string()]))?;
-for c in cookies {
-    println!("{}={}", c.name, c.value);
-}
 ```
 
-DPAPI Windows + Keychain macOS + libsecret Linux. ABE Chrome 127+ : pas encore (issue ouverte upstream).
+DPAPI Windows + Keychain macOS + libsecret Linux. **ABE Chrome 127+ : pas encore** (issue ouverte upstream).
 
-### 3.2 chrome-cookies-rs (search bench)
+### 3.10 bypass_v20_chrome_cookies (Rust ABE bypass)
 
 ```bash
-cargo install --git https://github.com/<author>/chrome-cookies-rs
+git clone https://github.com/exiton0x/bypass_v20_chrome_cookies
+cd bypass_v20_chrome_cookies && cargo build --release
 ```
 
-Plusieurs forks publics ; pas de leader clair.
+[exiton0x/bypass_v20_chrome_cookies](https://github.com/exiton0x/bypass_v20_chrome_cookies) — PoC Rust pour cookies Chrome v20+ (ABE 127+). Audit code avant adoption.
 
-### 3.3 chromiumoxide (Rust CDP client)
+### 3.11 Chrome-Cookie-Decryptor (CCD)
 
-```toml
-# Cargo.toml
-[dependencies]
-chromiumoxide = { version = "0.6", features = ["tokio-runtime"] }
+[1101-1/Chrome-Cookie-Decryptor](https://github.com/1101-1/Chrome-Cookie-Decryptor) — Rust, 2026-01, fast cookie decryptor. Supporte v20+.
+
+### 3.12 chrome_cookies (pkptzx)
+
+[pkptzx/chrome_cookies](https://github.com/pkptzx/chrome_cookies) — Rust + docs CN, retrieve passwords + cookies.
+
+### 3.13 rusqlite (SQLite reader pour History/Bookmarks)
+
+```bash
+cargo add rusqlite --features bundled
 ```
 
-```rust
-use chromiumoxide::Browser;
+Lecture History/Cookies SQLite quand Chrome est fermé. `bundled` embarque SQLite.
 
-let (browser, mut handler) = Browser::connect("ws://127.0.0.1:9222/...").await?;
-let page = browser.new_page("https://example.com").await?;
-let cookies = page.get_cookies().await?;
+### 3.14 keyring (secrets cross-platform)
+
+```bash
+cargo add keyring
 ```
 
-Équivalent puppeteer-core en Rust. Bien maintenu (foncé sur fantoccini/CDP).
+[hwchen/keyring-rs](https://github.com/hwchen/keyring-rs). DPAPI/Keychain/libsecret abstractés.
 
-### 3.4 cargo-xwin (cross-compile Rust → Windows MSVC)
+### 3.15 cargo-xwin (cross-compile Rust → Windows MSVC)
 
 ```bash
 sudo apt install -y build-essential pkg-config libssl-dev
