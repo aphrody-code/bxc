@@ -132,7 +132,7 @@ jobs:
           .\scripts\build-windows.ps1 -SkipLightpanda
 
       - name: Upload Windows zip to GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/standalone/windows/bunlight-windows-*.zip
           fail_on_unmatched_files: false
