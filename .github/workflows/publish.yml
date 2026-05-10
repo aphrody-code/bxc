@@ -122,10 +122,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build Windows release (bunlight.exe + lightpanda.exe + libcurl-impersonate.dll)
+      - name: Build Windows release (bunlight.exe + libcurl-impersonate.dll)
         shell: pwsh
+        # Skip Lightpanda native build for now: Lightpanda master needs Zig
+        # 0.13.0 features and doesn't ship a Windows prebuilt yet. Bunlight's
+        # static/http profiles work without Lightpanda; fast/stealth/max
+        # require it and will warn at runtime when missing.
         run: |
-          .\scripts\build-windows.ps1
+          .\scripts\build-windows.ps1 -SkipLightpanda
 
       - name: Upload Windows zip to GitHub release
         uses: softprops/action-gh-release@v2
