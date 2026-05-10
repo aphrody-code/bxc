@@ -1,0 +1,13 @@
+{
+  "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+  "content-encoding": "gzip",
+  "content-security-policy": "frame-ancestors 'self' https://cms-dot-gweb-design-prod.uc.r.appspot.com https://cms-dot-gd-wagtail-staging.uc.r.appspot.com https://feedback-pa.clients6.google.com/ https://scone-pa.clients6.google.com/",
+  "content-type": "text/html; charset=utf-8",
+  "date": "Sun, 10 May 2026 13:53:19 GMT",
+  "etag": "\"152ci5cq4h31zfh\"",
+  "server": "Google Frontend",
+  "transfer-encoding": "chunked",
+  "vary": "Accept-Encoding",
+  "x-cloud-trace-context": "6717a8b9db01cc21839f064b66da669d",
+  "x-powered-by": "Next.js"
+}

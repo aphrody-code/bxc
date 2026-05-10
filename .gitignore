@@ -1,0 +1,55 @@
+# Build outputs
+/build
+/dist
+/zig-out
+/zig-cache
+/.zig-cache
+
+# Vendor (re-cloned via submodule or downloaded via postinstall)
+/vendor/lightpanda
+/vendor/bun
+/vendor/v8-cache
+/vendor/lightpanda-bin/
+/vendor/camoufox/
+/vendor/zigquery-wrapper/
+/vendor/wappalyzergo/
+/vendor/curl-impersonate/*.tar.gz
+/vendor/curl-impersonate/*.la
+
+# Forks (Bun fork build outputs)
+/forks/
+
+# Node
+/node_modules
+*.log
+*.tsbuildinfo
+
+# IDE
+.vscode
+.idea
+*.swp
+*~
+.DS_Store
+
+# Tests
+/coverage
+/test-results
+*.snap.tmp
+
+# Build artifacts
+*.so
+*.dylib
+*.dll
+*.a
+*.o
+
+# Standalone exe builds
+/examples/agent
+/examples/*.bin
+/benchmarks/results/*.json
+cookies/private/
+
+# npm credentials — never commit
+.npmrc
+.npm-token
+.npmrc-publish-tmp

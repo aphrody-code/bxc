@@ -1,0 +1,131 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish-github-packages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Fetch curl-impersonate Linux x64 binary
+        # The Linux .so is referenced in `package.json#files` and bundled into
+        # the npm tarball. CI runner doesn't have it locally, so we download
+        # from lexiforest/curl-impersonate releases (matches the version pinned
+        # in src/ffi/curl-impersonate.ts).
+        run: |
+          set -euo pipefail
+          CURL_VER="${BUNLIGHT_CURL_VERSION:-v1.5.6}"
+          mkdir -p vendor/curl-impersonate
+          curl -#SfLo /tmp/curl-impersonate.tar.gz \
+            "https://github.com/lexiforest/curl-impersonate/releases/download/${CURL_VER}/libcurl-impersonate-${CURL_VER}.x86_64-linux-gnu.tar.gz"
+          tar -xzf /tmp/curl-impersonate.tar.gz -C vendor/curl-impersonate
+          cd vendor/curl-impersonate
+          ln -sf libcurl-impersonate.so.4.* libcurl-impersonate.so.4 || true
+          ln -sf libcurl-impersonate.so.4 libcurl-impersonate.so || true
+          ls -la
+
+      - name: Build zigquery cdylib (liblightpanda_dom.so)
+        # Listed in package.json#files. Best-effort build — non-blocking if
+        # zig isn't trivially installable in CI; the tarball will publish
+        # without it and the FFI layer falls back to disabled features.
+        continue-on-error: true
+        run: |
+          if command -v zig >/dev/null 2>&1; then
+            bun scripts/build-lightpanda-static.ts || echo "zigquery build failed (non-blocking)"
+          else
+            echo "zig not in CI image — skipping zigquery cdylib build."
+          fi
+
+      - name: Run tests
+        run: bun test
+
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "@aphrody-code:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+          bun publish --access public
+
+  publish-npm:
+    runs-on: ubuntu-latest
+    needs: publish-github-packages
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Fetch curl-impersonate Linux x64 binary
+        run: |
+          set -euo pipefail
+          CURL_VER="${BUNLIGHT_CURL_VERSION:-v1.5.6}"
+          mkdir -p vendor/curl-impersonate
+          curl -#SfLo /tmp/curl-impersonate.tar.gz \
+            "https://github.com/lexiforest/curl-impersonate/releases/download/${CURL_VER}/libcurl-impersonate-${CURL_VER}.x86_64-linux-gnu.tar.gz"
+          tar -xzf /tmp/curl-impersonate.tar.gz -C vendor/curl-impersonate
+          cd vendor/curl-impersonate
+          ln -sf libcurl-impersonate.so.4.* libcurl-impersonate.so.4 || true
+          ln -sf libcurl-impersonate.so.4 libcurl-impersonate.so || true
+
+      - name: Build zigquery cdylib (best-effort)
+        continue-on-error: true
+        run: |
+          if command -v zig >/dev/null 2>&1; then
+            bun scripts/build-lightpanda-static.ts || echo "zigquery build failed (non-blocking)"
+          fi
+
+      - name: Publish to npm public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          bun publish --access public --registry https://registry.npmjs.org
+
+  windows-release:
+    runs-on: windows-latest
+    needs: publish-github-packages
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.0
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Windows release (bunlight.exe + lightpanda.exe + libcurl-impersonate.dll)
+        shell: pwsh
+        run: |
+          .\scripts\build-windows.ps1
+
+      - name: Upload Windows zip to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/standalone/windows/bunlight-windows-*.zip
+          fail_on_unmatched_files: false

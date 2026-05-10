@@ -1,0 +1,8 @@
+vendor/
+dist/
+node_modules/
+storage/
+cookies/private/
+benchmarks/results/
+forks/
+.claude/

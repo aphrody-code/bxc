@@ -1,0 +1,251 @@
+{
+	"meta": {
+		"generated": "2026-05-10",
+		"total": 100,
+		"note": "All URLs are public. For heavy bench runs use a local mock server instead of hitting real sites. See benchmarks/README."
+	},
+	"static": {
+		"description": "30 static / SSR pages: minimal JS, raw HTML or server-rendered content",
+		"urls": [
+			{ "id": "hn-home", "url": "https://news.ycombinator.com/", "expect": "Hacker News" },
+			{ "id": "hn-newest", "url": "https://news.ycombinator.com/newest", "expect": "Hacker News" },
+			{ "id": "hn-ask", "url": "https://news.ycombinator.com/ask", "expect": "Hacker News" },
+			{ "id": "lobsters", "url": "https://lobste.rs/", "expect": "Lobsters" },
+			{ "id": "bun-docs-home", "url": "https://bun.sh/", "expect": "Bun" },
+			{ "id": "bun-docs-api", "url": "https://bun.sh/docs/runtime/bunfig", "expect": "Bun" },
+			{ "id": "deno-docs", "url": "https://docs.deno.com/runtime/", "expect": "Deno" },
+			{ "id": "node-docs", "url": "https://nodejs.org/en/docs/", "expect": "Node" },
+			{
+				"id": "wikipedia-en",
+				"url": "https://en.wikipedia.org/wiki/Web_scraping",
+				"expect": "Wikipedia"
+			},
+			{
+				"id": "wikipedia-de",
+				"url": "https://de.wikipedia.org/wiki/Bun_(Laufzeitumgebung)",
+				"expect": "Wikipedia"
+			},
+			{ "id": "github-trending", "url": "https://github.com/trending", "expect": "GitHub" },
+			{ "id": "github-explore", "url": "https://github.com/explore", "expect": "GitHub" },
+			{ "id": "go-pkg", "url": "https://pkg.go.dev/net/http", "expect": "pkg.go" },
+			{ "id": "pypi-requests", "url": "https://pypi.org/project/requests/", "expect": "requests" },
+			{ "id": "npmjs-bun", "url": "https://www.npmjs.com/package/bun", "expect": "bun" },
+			{ "id": "rust-docs", "url": "https://doc.rust-lang.org/book/", "expect": "The Rust" },
+			{ "id": "zig-docs", "url": "https://ziglang.org/documentation/master/", "expect": "Zig" },
+			{ "id": "crates-tokio", "url": "https://crates.io/crates/tokio", "expect": "tokio" },
+			{ "id": "devto-home", "url": "https://dev.to/", "expect": "DEV" },
+			{ "id": "hashnode-home", "url": "https://hashnode.com/", "expect": "Hashnode" },
+			{ "id": "medium-home", "url": "https://medium.com/", "expect": "Medium" },
+			{
+				"id": "stackoverflow",
+				"url": "https://stackoverflow.com/questions/tagged/bun",
+				"expect": "Stack Overflow"
+			},
+			{ "id": "reddit-hn", "url": "https://old.reddit.com/r/hackernews/", "expect": "reddit" },
+			{ "id": "htmx-home", "url": "https://htmx.org/", "expect": "htmx" },
+			{ "id": "alpine-home", "url": "https://alpinejs.dev/", "expect": "Alpine" },
+			{
+				"id": "tailwind-docs",
+				"url": "https://tailwindcss.com/docs/installation",
+				"expect": "Tailwind"
+			},
+			{
+				"id": "mdnweb-html",
+				"url": "https://developer.mozilla.org/en-US/docs/Web/HTML",
+				"expect": "HTML"
+			},
+			{ "id": "news-bbc", "url": "https://www.bbc.com/news/technology", "expect": "BBC" },
+			{ "id": "rss-techcrunch", "url": "https://techcrunch.com/feed/", "expect": "TechCrunch" },
+			{ "id": "sitemap-bun", "url": "https://bun.sh/sitemap.xml", "expect": "sitemap" }
+		]
+	},
+	"spa": {
+		"description": "30 Single Page Apps: require JS execution for meaningful content",
+		"urls": [
+			{ "id": "react-home", "url": "https://react.dev/", "expect": "React" },
+			{ "id": "react-learn", "url": "https://react.dev/learn", "expect": "React" },
+			{ "id": "nuxt-home", "url": "https://nuxt.com/", "expect": "Nuxt" },
+			{
+				"id": "nuxt-docs",
+				"url": "https://nuxt.com/docs/getting-started/introduction",
+				"expect": "Nuxt"
+			},
+			{ "id": "nextjs-home", "url": "https://nextjs.org/", "expect": "Next" },
+			{ "id": "nextjs-docs", "url": "https://nextjs.org/docs", "expect": "Next" },
+			{ "id": "svelte-home", "url": "https://svelte.dev/", "expect": "Svelte" },
+			{ "id": "svelte-docs", "url": "https://svelte.dev/docs/svelte/overview", "expect": "Svelte" },
+			{ "id": "vuejs-home", "url": "https://vuejs.org/", "expect": "Vue" },
+			{ "id": "vuejs-guide", "url": "https://vuejs.org/guide/introduction", "expect": "Vue" },
+			{ "id": "vite-home", "url": "https://vite.dev/", "expect": "Vite" },
+			{ "id": "astro-home", "url": "https://astro.build/", "expect": "Astro" },
+			{ "id": "remix-home", "url": "https://remix.run/", "expect": "Remix" },
+			{ "id": "solidjs-home", "url": "https://www.solidjs.com/", "expect": "Solid" },
+			{ "id": "qwik-home", "url": "https://qwik.builder.io/", "expect": "Qwik" },
+			{ "id": "angular-home", "url": "https://angular.dev/", "expect": "Angular" },
+			{ "id": "vercel-home", "url": "https://vercel.com/", "expect": "Vercel" },
+			{ "id": "netlify-home", "url": "https://www.netlify.com/", "expect": "Netlify" },
+			{ "id": "supabase-home", "url": "https://supabase.com/", "expect": "Supabase" },
+			{ "id": "planetscale", "url": "https://planetscale.com/", "expect": "PlanetScale" },
+			{ "id": "prisma-home", "url": "https://www.prisma.io/", "expect": "Prisma" },
+			{ "id": "drizzle-home", "url": "https://orm.drizzle.team/", "expect": "Drizzle" },
+			{ "id": "trpc-home", "url": "https://trpc.io/", "expect": "tRPC" },
+			{ "id": "turbo-home", "url": "https://turbo.build/", "expect": "Turbo" },
+			{ "id": "hono-home", "url": "https://hono.dev/", "expect": "Hono" },
+			{ "id": "elysia-home", "url": "https://elysiajs.com/", "expect": "Elysia" },
+			{ "id": "payload-home", "url": "https://payloadcms.com/", "expect": "Payload" },
+			{ "id": "clerk-home", "url": "https://clerk.com/", "expect": "Clerk" },
+			{ "id": "resend-home", "url": "https://resend.com/", "expect": "Resend" },
+			{ "id": "anthropic-home", "url": "https://www.anthropic.com/", "expect": "Anthropic" },
+			{ "id": "rosegriffon-home", "url": "https://rosegriffon.fr/", "expect": "Rose" },
+			{ "id": "azalee-home", "url": "https://azalee.rosegriffon.fr/", "expect": "Azalee" }
+		]
+	},
+	"cloudflare_basic": {
+		"description": "20 URLs behind Cloudflare basic protection (IUAM / JS challenge). Success rate is the primary metric.",
+		"urls": [
+			{ "id": "nowsecure", "url": "https://nowsecure.nl/", "expect": "nowSecure" },
+			{ "id": "browserleaks", "url": "https://browserleaks.com/", "expect": "BrowserLeaks" },
+			{ "id": "httpbin-get", "url": "https://httpbin.org/get", "expect": "headers" },
+			{ "id": "httpbin-ua", "url": "https://httpbin.org/user-agent", "expect": "user-agent" },
+			{ "id": "ipinfo", "url": "https://ipinfo.io/", "expect": "ip" },
+			{ "id": "whatismybrowser", "url": "https://www.whatismybrowser.com/", "expect": "browser" },
+			{ "id": "cf-trace", "url": "https://cloudflare.com/cdn-cgi/trace", "expect": "ip" },
+			{ "id": "uacheck", "url": "https://www.useragentstring.com/", "expect": "user" },
+			{ "id": "fingerprintjs", "url": "https://fingerprint.com/", "expect": "Fingerprint" },
+			{ "id": "demo-cf", "url": "https://www.cloudflare.com/", "expect": "Cloudflare" },
+			{ "id": "sucuri-demo", "url": "https://sucuri.net/", "expect": "Sucuri" },
+			{ "id": "imperva-home", "url": "https://www.imperva.com/", "expect": "Imperva" },
+			{ "id": "datadome-site", "url": "https://datadome.co/", "expect": "DataDome" },
+			{ "id": "perimeterx-site", "url": "https://www.perimeterx.com/", "expect": "HUMAN" },
+			{ "id": "akamai-site", "url": "https://www.akamai.com/", "expect": "Akamai" },
+			{ "id": "f5-site", "url": "https://www.f5.com/", "expect": "F5" },
+			{ "id": "tlsfingerprint", "url": "https://tls.peet.ws/api/all", "expect": "ja3" },
+			{ "id": "ja4-check", "url": "https://tools.tlsfingerprint.io/", "expect": "TLS" },
+			{ "id": "bot-sanity", "url": "https://bot.sannysoft.com/", "expect": "sannysoft" },
+			{ "id": "hsts-preload", "url": "https://hstspreload.org/", "expect": "HSTS" }
+		]
+	},
+	"cloudflare_turnstile": {
+		"description": "10 mock/demo Turnstile endpoints — do NOT use production Turnstile keys. These are sitekey=1x00000000000000000000AA (always-passes test key) or static challenge pages.",
+		"urls": [
+			{
+				"id": "cf-turnstile-demo",
+				"url": "https://developers.cloudflare.com/turnstile/",
+				"expect": "Turnstile",
+				"mock": true
+			},
+			{
+				"id": "cf-turnstile-test",
+				"url": "https://demo.turnstile.workers.dev/",
+				"expect": "Turnstile",
+				"mock": true
+			},
+			{
+				"id": "cf-turnstile-widget",
+				"url": "https://challenges.cloudflare.com/turnstile/v0/api.js",
+				"expect": "function",
+				"mock": true
+			},
+			{
+				"id": "turnstile-local-1",
+				"url": "http://localhost:9999/turnstile/1",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			},
+			{
+				"id": "turnstile-local-2",
+				"url": "http://localhost:9999/turnstile/2",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			},
+			{
+				"id": "turnstile-local-3",
+				"url": "http://localhost:9999/turnstile/3",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			},
+			{
+				"id": "turnstile-local-4",
+				"url": "http://localhost:9999/turnstile/4",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			},
+			{
+				"id": "turnstile-local-5",
+				"url": "http://localhost:9999/turnstile/5",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			},
+			{
+				"id": "turnstile-local-6",
+				"url": "http://localhost:9999/turnstile/6",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			},
+			{
+				"id": "turnstile-local-7",
+				"url": "http://localhost:9999/turnstile/7",
+				"expect": "mock",
+				"mock": true,
+				"local": true
+			}
+		]
+	},
+	"ecommerce": {
+		"description": "10 public e-commerce listing pages (no login required). Rate-limit friendly — bench uses only 3 per run.",
+		"urls": [
+			{
+				"id": "amazon-search",
+				"url": "https://www.amazon.com/s?k=headless+browser",
+				"expect": "results"
+			},
+			{
+				"id": "ebay-search",
+				"url": "https://www.ebay.com/sch/i.html?_nkw=javascript",
+				"expect": "results"
+			},
+			{
+				"id": "etsy-search",
+				"url": "https://www.etsy.com/search?q=developer+tools",
+				"expect": "results"
+			},
+			{
+				"id": "walmart-search",
+				"url": "https://www.walmart.com/search?q=nodejs",
+				"expect": "results"
+			},
+			{ "id": "shopify-themes", "url": "https://themes.shopify.com/", "expect": "theme" },
+			{
+				"id": "aliexpress-list",
+				"url": "https://www.aliexpress.com/wholesale?SearchText=zig",
+				"expect": "product"
+			},
+			{
+				"id": "newegg-search",
+				"url": "https://www.newegg.com/p/pl?d=bun+runtime",
+				"expect": "result"
+			},
+			{
+				"id": "bestbuy-search",
+				"url": "https://www.bestbuy.com/site/searchpage.jsp?st=bun",
+				"expect": "result"
+			},
+			{
+				"id": "target-search",
+				"url": "https://www.target.com/s?searchTerm=nodejs",
+				"expect": "result"
+			},
+			{
+				"id": "booking-search",
+				"url": "https://www.booking.com/searchresults.html?ss=Berlin",
+				"expect": "Berlin"
+			}
+		]
+	}
+}
