@@ -205,6 +205,12 @@ async function _runSubcommand(subcommand: string | undefined): Promise<void> {
 			break;
 		}
 
+		case "real-browser": {
+			const mod = await import("./real-browser.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
 		case "--version":
 		case "-V": {
 			process.stdout.write(`bunlight ${_pkgVersion}\n`);
