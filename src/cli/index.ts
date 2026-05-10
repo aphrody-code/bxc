@@ -133,90 +133,99 @@ For server-grade anti-detection use launchGhostBrowser
 
 // ---------------------------------------------------------------------------
 // Router
+//
+// Wrapped in an async main so `bun build --compile --target=bun-windows-x64`
+// doesn't reject the top-level awaits (cross-compile pipeline limitation).
 // ---------------------------------------------------------------------------
 
-const subcommand = process.argv[2];
-
-switch (subcommand) {
-	case "serve": {
-		// serve.ts reads process.argv directly. It already handles the case
-		// where argv[0] (after "bun" + script stripping) is "serve" and
-		// removes it via parseArgs(). So importing it is sufficient —
-		// the top-level `main().catch(...)` call at the bottom of serve.ts
-		// is invoked when the module is evaluated as a side effect.
-		await import("./serve.ts");
-		break;
-	}
-
-	case "install": {
-		const mod = await import("./install.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "recon":
-	case "docs": {
-		const mod = await import("./recon.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "detect": {
-		const mod = await import("./detect.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "scrape": {
-		const mod = await import("./scrape.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "cookies": {
-		const mod = await import("./cookies.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "har": {
-		const mod = await import("./har.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "mirror": {
-		const mod = await import("./mirror.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "challonge": {
-		const mod = await import("./challonge.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "api": {
-		const mod = await import("./api.ts");
-		await mod.main(process.argv.slice(3));
-		break;
-	}
-
-	case "--version":
-	case "-V": {
-		process.stdout.write(`bunlight ${_pkgVersion}\n`);
-		break;
-	}
-
-	case "--help":
-	case "-h":
-	default: {
-		printUsage();
-		if (subcommand !== undefined && subcommand !== "--help" && subcommand !== "-h") {
-			process.stderr.write(`Unknown subcommand: ${subcommand}\n`);
-			process.exit(1);
+async function _runSubcommand(subcommand: string | undefined): Promise<void> {
+	switch (subcommand) {
+		case "serve": {
+			// serve.ts reads process.argv directly. It already handles the case
+			// where argv[0] (after "bun" + script stripping) is "serve" and
+			// removes it via parseArgs(). So importing it is sufficient —
+			// the top-level `main().catch(...)` call at the bottom of serve.ts
+			// is invoked when the module is evaluated as a side effect.
+			await import("./serve.ts");
+			break;
 		}
-		break;
+
+		case "install": {
+			const mod = await import("./install.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "recon":
+		case "docs": {
+			const mod = await import("./recon.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "detect": {
+			const mod = await import("./detect.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "scrape": {
+			const mod = await import("./scrape.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "cookies": {
+			const mod = await import("./cookies.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "har": {
+			const mod = await import("./har.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "mirror": {
+			const mod = await import("./mirror.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "challonge": {
+			const mod = await import("./challonge.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "api": {
+			const mod = await import("./api.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "--version":
+		case "-V": {
+			process.stdout.write(`bunlight ${_pkgVersion}\n`);
+			break;
+		}
+
+		case "--help":
+		case "-h":
+		default: {
+			printUsage();
+			if (subcommand !== undefined && subcommand !== "--help" && subcommand !== "-h") {
+				process.stderr.write(`Unknown subcommand: ${subcommand}\n`);
+				process.exit(1);
+			}
+			break;
+		}
 	}
 }
+
+_runSubcommand(process.argv[2]).catch((err: unknown) => {
+	const message = err instanceof Error ? err.message : String(err);
+	process.stderr.write(`bunlight: ${message}\n`);
+	process.exit(1);
+});
