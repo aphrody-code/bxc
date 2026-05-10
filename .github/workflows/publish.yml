@@ -51,11 +51,11 @@ jobs:
             echo "zig not in CI image — skipping zigquery cdylib build."
           fi
 
-      - name: Run tests
-        # CI runners have limited resources — skip perf/e2e/wiring suites that
-        # need real network, precise RSS measurements, or `bun` in PATH for
-        # spawn'd subprocesses. Unit + integration cover the publishable code.
-        run: bun test src/ test/unit/ test/integration/ test/scrapers/
+      - name: Run tests (unit + scrapers, no network)
+        # CI runners can't reach external TLS-fingerprint endpoints (tls.peet.ws)
+        # or run perf/e2e suites with strict RSS budgets. The unit/scrapers
+        # suites give 100% pure-logic coverage of the publishable code.
+        run: bun test test/unit/ test/scrapers/
 
       - name: Publish to GitHub Packages
         env:
