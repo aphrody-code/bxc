@@ -97,12 +97,22 @@ jobs:
             bun scripts/build-lightpanda-static.ts || echo "zigquery build failed (non-blocking)"
           fi
 
-      - name: Publish to npm public
+      - name: Publish to npm public (renamed to @rosegriffon/bunlight)
+        # The @aphrody-code scope only exists on GitHub Packages.
+        # npm public lives under the existing @rosegriffon org (yohan971 = owner).
+        # We swap the package name on-disk for this step only — the source
+        # tree, GitHub repo, and GitHub Packages keep @aphrody-code/bunlight.
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          set -euo pipefail
+          ORIG_NAME=$(jq -r .name package.json)
+          jq '.name = "@rosegriffon/bunlight"' package.json > package.json.tmp && mv package.json.tmp package.json
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
           bun publish --access public --registry https://registry.npmjs.org
+          # Restore in-tree name so subsequent steps (windows-release) see
+          # the canonical scope.
+          jq --arg n "$ORIG_NAME" '.name = $n' package.json > package.json.tmp && mv package.json.tmp package.json
 
   windows-release:
     runs-on: windows-latest
