@@ -67,7 +67,7 @@
     "@biomejs/biome": "^2.0.0",
     "@types/bun": "latest",
     "puppeteer-core": "^24.43.0",
-    "typescript": "^5.9.0"
+    "typescript": "^6.0.3"
   },
   "keywords": [
     "bun",
