@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Removed
+
+- Module `depot_tools` (`src/depot_tools/`, `python-bridge/depot_manager.py`, sous-module `vendor/depot_tools`) — depot_tools extrait en installation standalone hors du paquet
+
 ## [0.1.0-alpha.1] - 2026-05-12
 
 ### Added

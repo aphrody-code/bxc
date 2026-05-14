@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# bunlight — thin wrapper around src/cli/serve.ts.
+#
+# Resolves the script relative to this file so the wrapper works whether it is
+# called via an absolute path, a $PATH entry, or a symlink.
+
+set -e
+
+# Resolve symlinks so SCRIPT_DIR points at the real bin/ directory.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+BUNLIGHT_ROOT="$(cd -P "$SCRIPT_DIR/.." && pwd)"
+
+BUN_BIN="${BUN_BIN:-bun}"
+if ! command -v "$BUN_BIN" >/dev/null 2>&1; then
+  echo "bunlight: \`bun\` not found on PATH. Install from https://bun.sh" >&2
+  exit 127
+fi
+
+exec "$BUN_BIN" run "$BUNLIGHT_ROOT/src/cli/index.ts" "$@"

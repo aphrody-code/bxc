@@ -4,7 +4,10 @@
 	"description": "Bunlight: High-performance browser automation engine (Bun + Lightpanda fusion)",
 	"packageManager": "bun@1.3.14",
 	"type": "module",
-	"workspaces": ["extensions/*", "packages/*"],
+	"workspaces": [
+		"extensions/*",
+		"packages/*"
+	],
 	"main": "./src/api/browser.ts",
 	"types": "./src/api/browser.ts",
 	"bin": {
@@ -59,7 +62,7 @@
 		"vendor/curl-impersonate/libcurl-impersonate.so",
 		"vendor/curl-impersonate/libcurl-impersonate.so.4",
 		"vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
-		"bin/",
+		"bin/bunlight",
 		"README.md",
 		"AGENTS.md",
 		"CLAUDE.md",
