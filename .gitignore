@@ -1,0 +1,34 @@
+node_modules
+dist
+.bun
+.env
+rust-bridge/target
+bin
+docs_gemini
+
+# secrets — NEVER commit
+admin-sa-key.json
+client_secret*.json
+*-sa-key.json
+*.key
+*.pem
+cookies/
+cookie.json
+
+# build artifacts / vendored sources
+out
+build
+.git-history
+forks
+vendor
+target
+.zig-cache
+.lp-cache
+
+# junk
+nano-banana*
+*.tgz
+
+.venv
+__pycache__
+*.pyc

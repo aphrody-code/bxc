@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+</head>
+<body>
+  <main>
+    <h1>Sign In</h1>
+    <form id="login-form" method="POST" action="/login">
+      <div>
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" placeholder="you@example.com" required>
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" placeholder="Your password" required>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" name="remember" id="remember">
+          Remember me
+        </label>
+      </div>
+      <button type="submit">Sign In</button>
+      <a href="/forgot">Forgot password?</a>
+    </form>
+  </main>
+</body>
+</html>

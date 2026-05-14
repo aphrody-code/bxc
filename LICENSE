@@ -1,0 +1,34 @@
+BSD Zero Clause License (0BSD)
+
+Copyright (c) 2026 Bunmium / Bunlight contributors.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+---
+
+NOTE ON LIGHTPANDA AGPL-3.0 LICENSE
+
+Bunlight glue code is 0BSD. Pas d'attribution requise, pas de copyleft,
+fais ce que tu veux.
+
+Cependant : ce projet link statiquement contre Lightpanda
+(https://github.com/lightpanda-io/browser), licensé AGPL-3.0. Quand le binaire
+combiné est distribué (e.g., dist/standalone/bunlight-linux-x64), les
+obligations AGPL-3.0 s'appliquent au combiné — usage réseau inclus doit
+fournir le source.
+
+Le code Bunlight seul, consommé comme lib dans ton propre projet
+(non-distribué), n'est pas affecté. Si tu n'embarques pas Lightpanda, tu n'as
+aucune obligation copyleft sur ton code.
+
+Voir docs/LICENSING.md pour les détails complets et le cas curl-impersonate
+(MIT) et zigquery (MIT).

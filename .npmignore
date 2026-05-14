@@ -1,0 +1,63 @@
+# Bunlight .npmignore — excludes everything not in package.json "files".
+# The "files" allowlist already controls what is included, but .npmignore acts
+# as a defense-in-depth against accidental inclusion of secrets/large dirs.
+
+# Secrets and persistent state (NEVER ship)
+cookies/
+cookies/private/
+*.env
+*.key
+*.pem
+.env*
+
+# Forks (large, unrelated to runtime)
+forks/
+
+# Benchmarks results (regenerable, large)
+benchmarks/
+benchmarks/results/
+
+# Tests
+test/
+**/*.test.ts
+**/*.spec.ts
+tests/
+
+# Local dev artifacts
+node_modules/
+bun.lockb
+bun.lock
+.cache/
+.turbo/
+tmp/
+.tmp/
+
+# Claude Code plugin assets (separate distribution channel)
+.claude/
+.claude-plugin/
+
+# Heavy vendor binaries that should be lazily downloaded
+vendor/camoufox/
+vendor/wappalyzergo/
+vendor/zigquery-wrapper/src/
+vendor/zigquery-wrapper/zig-cache/
+vendor/zigquery-wrapper/.zig-cache/
+
+# Patches and examples (kept in repo, not in package)
+patches/
+examples/
+
+# Editor and CI
+.github/
+.vscode/
+.idea/
+.gitignore
+.gitattributes
+.gitmodules
+
+# Misc docs not needed at install time (keep README at top-level via "files")
+docs/
+AGENTS-SKILLS-BEST-PRACTICES.md
+NEXT-SESSION.md
+*.log
+*.tgz

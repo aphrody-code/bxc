@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hidden Checkbox Test</title>
+</head>
+<body>
+  <form>
+    <!-- Visually styled checkbox: the native input is visually hidden via CSS,
+         but it remains accessible because its label is visible. -->
+    <label class="custom-checkbox" for="terms">
+      <input type="checkbox" id="terms" name="terms" style="position:absolute;opacity:0;width:1px;height:1px">
+      I accept the terms and conditions
+    </label>
+
+    <!-- aria-hidden checkbox: should be ignored -->
+    <label>
+      <input type="checkbox" aria-hidden="true" name="hidden-check">
+      Hidden checkbox (aria-hidden)
+    </label>
+
+    <!-- display:none label: should be ignored -->
+    <div style="display:none">
+      <label for="secret">Secret field</label>
+      <input type="text" id="secret" name="secret">
+    </div>
+
+    <!-- Standard visible checkbox -->
+    <label for="newsletter">
+      <input type="checkbox" id="newsletter" name="newsletter" checked>
+      Subscribe to newsletter
+    </label>
+
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>

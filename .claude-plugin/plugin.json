@@ -1,0 +1,33 @@
+{
+  "name": "bunlight",
+  "version": "0.2.0",
+  "description": "Bun + Lightpanda fused — production-grade browser automation in 50 KB. In-process CDP, 5 profiles (static, fast, http, stealth, max), pool/queue/dataset storage, auto-routing for challenges, MCP-exposed scraping tools.",
+  "author": {
+    "name": "Bunmium",
+    "url": "https://github.com/bunmium"
+  },
+  "homepage": "https://github.com/bunmium/bunlight",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bunmium/bunlight"
+  },
+  "bugs": {
+    "url": "https://github.com/bunmium/bunlight/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "bun",
+    "lightpanda",
+    "browser-automation",
+    "scraping",
+    "crawling",
+    "ai-agents",
+    "headless",
+    "cdp",
+    "puppeteer",
+    "stealth",
+    "cloudflare",
+    "turnstile",
+    "fingerprint"
+  ]
+}
