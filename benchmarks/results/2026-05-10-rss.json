@@ -1,0 +1,23 @@
+{
+  "date": "2026-05-10",
+  "navCount": 10,
+  "results": [
+    {
+      "profile": "static",
+      "idleRssMB": 38.95703125,
+      "chargedRssMB": 56.34375,
+      "navCount": 10,
+      "idleTargetMB": 45,
+      "chargedTargetMB": 65,
+      "idlePass": true,
+      "chargedPass": true
+    }
+  ],
+  "allPassed": true,
+  "targets": {
+    "idleRssMB": 45,
+    "chargedRssMB": 65
+  },
+  "bunRuntimeBaselineMB": 37,
+  "notes": "Bun runtime floor ~36-38 MB; 30 MB spec target requires runtime patch"
+}

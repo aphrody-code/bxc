@@ -1,0 +1,26 @@
+[Unit]
+Description=Bunlight Browser Automation API Server
+After=network.target
+
+[Service]
+# Environment setup
+# adjust WorkingDirectory/ExecStart to your deploy path
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/vps/packages/bunlight
+ExecStart=/usr/local/bin/bun run packages/api/src/index.ts
+Restart=always
+RestartSec=5
+
+# Resources & Security
+MemoryMax=2G
+CPUWeight=100
+StandardOutput=append:/var/log/bunlight/api.log
+StandardError=append:/var/log/bunlight/error.log
+
+# Ensure /var/log/bunlight exists and is writable
+# Environment=PORT=3000
+# Environment=BUNLIGHT_DB_PATH=./data/bunlight.sqlite
+
+[Install]
+WantedBy=multi-user.target
