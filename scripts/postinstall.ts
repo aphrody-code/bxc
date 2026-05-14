@@ -21,7 +21,11 @@
  * Bun-native APIs only : Bun.file, Bun.write, Bun.$, fetch.
  */
 
-type LightpandaPlatform = "x86_64-linux" | "aarch64-linux" | "x86_64-macos" | "aarch64-macos";
+type LightpandaPlatform =
+	| "x86_64-linux"
+	| "aarch64-linux"
+	| "x86_64-macos"
+	| "aarch64-macos";
 
 type DetectedPlatform = {
 	id: LightpandaPlatform;
@@ -82,7 +86,10 @@ export function detectPlatform(
  * Returns a reason string if it should skip, or null if it should proceed.
  */
 export function shouldSkip(
-	env: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
+	env: Record<string, string | undefined> = process.env as Record<
+		string,
+		string | undefined
+	>,
 ): string | null {
 	if (env.BUNLIGHT_NO_AUTOINSTALL === "1") {
 		return "BUNLIGHT_NO_AUTOINSTALL=1 (user opt-out)";
@@ -101,7 +108,9 @@ export function resolveTargetPath(
 	rootDir: string = import.meta.dir,
 	vendorOverride: string | undefined = VENDOR_DIR_ENV,
 ): string {
-	const baseDir = vendorOverride ? vendorOverride : `${rootDir}/../vendor/lightpanda-bin`;
+	const baseDir = vendorOverride
+		? vendorOverride
+		: `${rootDir}/../vendor/lightpanda-bin`;
 	return `${baseDir}/${platform.dirName}/lightpanda`;
 }
 
@@ -141,7 +150,11 @@ async function fetchReleaseAsset(
 		return null;
 	}
 	const body = (await res.json()) as {
-		assets?: Array<{ name: string; size: number; browser_download_url: string }>;
+		assets?: Array<{
+			name: string;
+			size: number;
+			browser_download_url: string;
+		}>;
 	};
 	const asset = body.assets?.find((a) => a.name === platform.assetName);
 	if (!asset) {
@@ -192,7 +205,9 @@ async function streamDownload(
 		throw err;
 	}
 	if (expectedSize > 0 && written !== expectedSize) {
-		throw new Error(`size mismatch : expected ${expectedSize} bytes, got ${written}`);
+		throw new Error(
+			`size mismatch : expected ${expectedSize} bytes, got ${written}`,
+		);
 	}
 	await Bun.$`mv ${partial} ${targetPath}`.quiet();
 	return { written };
@@ -202,7 +217,9 @@ async function streamDownload(
  * Run the postinstall flow. Always resolves (never throws) — exit code is always 0
  * to avoid breaking `bun install` on transient errors.
  */
-export async function runPostinstall(rootDir: string = import.meta.dir): Promise<{
+export async function runPostinstall(
+	rootDir: string = import.meta.dir,
+): Promise<{
 	status: "skipped" | "downloaded" | "present" | "failed";
 	reason?: string;
 	path?: string;
@@ -230,13 +247,17 @@ export async function runPostinstall(rootDir: string = import.meta.dir): Promise
 	if (await existing.exists()) {
 		const size = existing.size;
 		if (size > 0) {
-			log(`already present : ${targetPath} (${fmtMB(size)}) — skipping download`);
+			log(
+				`already present : ${targetPath} (${fmtMB(size)}) — skipping download`,
+			);
 			return { status: "present", path: targetPath };
 		}
 		warn(`existing file is empty, re-downloading : ${targetPath}`);
 	}
 
-	log(`detected ${platform.dirName} (${platform.id}), looking up release '${TAG}'`);
+	log(
+		`detected ${platform.dirName} (${platform.id}), looking up release '${TAG}'`,
+	);
 	const asset = await fetchReleaseAsset(platform, TAG);
 	if (!asset) {
 		warn(
@@ -245,7 +266,9 @@ export async function runPostinstall(rootDir: string = import.meta.dir): Promise
 		return { status: "failed", reason: "release asset lookup failed" };
 	}
 
-	log(`downloading ${asset.url} → ${targetPath}${asset.size ? ` (${fmtMB(asset.size)})` : ""}`);
+	log(
+		`downloading ${asset.url} → ${targetPath}${asset.size ? ` (${fmtMB(asset.size)})` : ""}`,
+	);
 	try {
 		const { written } = await streamDownload(asset.url, targetPath, asset.size);
 		await Bun.$`chmod +x ${targetPath}`.quiet();
@@ -290,8 +313,13 @@ export async function runProfileInstalls(): Promise<void> {
 		.split(",")
 		.map((s) => s.trim());
 	const wantStealth =
-		tokens.includes("stealth") || tokens.includes("all") || tokens.includes("chromium");
-	const wantMax = tokens.includes("max") || tokens.includes("all") || tokens.includes("camoufox");
+		tokens.includes("stealth") ||
+		tokens.includes("all") ||
+		tokens.includes("chromium");
+	const wantMax =
+		tokens.includes("max") ||
+		tokens.includes("all") ||
+		tokens.includes("camoufox");
 
 	if (!wantStealth && !wantMax) return;
 
@@ -316,7 +344,9 @@ export async function runProfileInstalls(): Promise<void> {
 		try {
 			const result = await installChromium(false);
 			if (result.status === "failed") {
-				warn("[profile-install] Chrome for Testing install failed (non-fatal).");
+				warn(
+					"[profile-install] Chrome for Testing install failed (non-fatal).",
+				);
 			}
 		} catch (err) {
 			warn(
@@ -334,7 +364,9 @@ export async function runProfileInstalls(): Promise<void> {
 			);
 			return;
 		}
-		log("[profile-install] BUNLIGHT_INSTALL_PROFILES includes max — installing Camoufox...");
+		log(
+			"[profile-install] BUNLIGHT_INSTALL_PROFILES includes max — installing Camoufox...",
+		);
 		try {
 			const result = await installCamoufox(false);
 			if (result.status === "failed") {
@@ -349,13 +381,17 @@ export async function runProfileInstalls(): Promise<void> {
 }
 
 if (import.meta.main) {
-	const result = await runPostinstall();
-	// Run additional profile installs if BUNLIGHT_INSTALL_PROFILES is set.
-	// This is fire-and-forget; failures are logged but do not affect exit code.
-	await runProfileInstalls();
-	// Always exit 0 — postinstall must not break the install flow.
-	if (result.status === "failed") {
-		process.exit(0);
+	// Hard guard : a postinstall must NEVER break `bun install` / `bun update`,
+	// even on a module-load throw or an unexpected rejection. Any error here is
+	// logged and swallowed — exit code is unconditionally 0.
+	try {
+		await runPostinstall();
+		// Fire-and-forget : failures are logged, never affect the exit code.
+		await runProfileInstalls();
+	} catch (err) {
+		warn(
+			`postinstall aborted (non-fatal) : ${err instanceof Error ? err.message : String(err)}`,
+		);
 	}
 	process.exit(0);
 }

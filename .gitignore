@@ -28,7 +28,3 @@ target
 # junk
 nano-banana*
 *.tgz
-
-.venv
-__pycache__
-*.pyc
