@@ -1,0 +1,28 @@
+{
+	"name": "@aphrody-code/llm-extract",
+	"version": "0.1.0",
+	"description": "Structured extraction from scraped HTML via the local Gemma 4 E2B llama.cpp server.",
+	"module": "src/index.ts",
+	"type": "module",
+	"private": true,
+	"exports": {
+		".": "./src/index.ts",
+		"./client": "./src/client.ts",
+		"./extract": "./src/extract.ts",
+		"./preclean": "./src/preclean.ts",
+		"./queue": "./src/queue.ts",
+		"./gemma-template": "./src/gemma-template.ts"
+	},
+	"scripts": {
+		"dev": "bun --watch src/index.ts",
+		"test": "bun test",
+		"lint": "bunx oxlint src test benchmarks",
+		"bench": "bun benchmarks/extract.bench.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"zod": "^4"
+	}
+}

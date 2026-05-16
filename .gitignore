@@ -5,6 +5,11 @@ dist
 rust-bridge/target
 bin
 docs_gemini
+.bunlight/
+.turbo/
+.tsbuildinfo
+*.log
+.cargo/
 
 # secrets — NEVER commit
 admin-sa-key.json
@@ -24,7 +29,27 @@ vendor
 target
 .zig-cache
 .lp-cache
+vendor/*
+!vendor/gemma/
 
 # junk
 nano-banana*
 *.tgz
+vendor/chromiumoxide
+
+# vendor/gemma : whitelist code (scripts + config) — large artifacts stay ignored
+!vendor/gemma/
+!vendor/gemma/**
+vendor/gemma/.venv/
+vendor/gemma/models/
+vendor/gemma/build/
+vendor/gemma/logs/
+vendor/gemma/bench/
+vendor/gemma/uv.lock
+*.gguf
+*.safetensors
+*.bin
+
+# large generated artefacts (regenerable from cache)
+google-ecosystem-map.json
+mapping-and-atlas.log

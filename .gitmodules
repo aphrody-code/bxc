@@ -1,0 +1,6 @@
+[submodule "vendor/gemma/sources/upstream"]
+	path = vendor/gemma/sources/upstream
+	url = https://github.com/google-deepmind/gemma
+[submodule "vendor/gemma/sources/llama.cpp"]
+	path = vendor/gemma/sources/llama.cpp
+	url = https://github.com/ggml-org/llama.cpp
