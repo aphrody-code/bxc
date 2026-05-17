@@ -1,80 +1,35 @@
 # SKILLS.md
 
-Guide to Bunlight skills for AI agents. This file indexes all skills loaded via the Claude Code plugin (`/bunlight:*` namespace).
+Guide to Bunlight skills for AI agents. This file indexes all skills loaded natively via the Gemini CLI Extension.
 
-When Claude Code loads the Bunlight plugin, it auto-discovers a single skill `bunlight` whose body is `.claude/skills/bunlight/SKILL.md`. The skill loads progressive-disclosure references on demand:
+When Gemini CLI loads the Bunlight extension (`packages/bunlight-extension/`), it auto-discovers native skills via the `auto_detect_skills` MCP tool. 
 
-- `references/browser-basics.md` — core `Browser` API
-- `references/profiles.md` — when to use `static`, `fast`, `http`, `stealth`, `max`
-- `references/detect.md` — framework detection and strategy suggestion
-- `references/cookies.md` — cookie injection and session persistence
-- `references/pool.md` — `PagePool`, `SessionPool`, `ProxyPool`
-- `references/queue.md` — `RequestQueue` for massive crawls
-- `references/storage.md` — `Dataset` (JSONL append-only)
-- `references/cookbook.md` — 10 copy-paste examples
-- `references/troubleshooting.md` — error codes and fixes
-- `references/api.md` — full API reference
+The extension ships the following native Zero-Spawn components:
 
-In addition, the plugin ships:
-
-- 8 agents in `.claude/agents/` (scraper, crawler, debugger, cookie-extractor, test-runner, profile-router, bench-runner, publisher).
-- 8 commands in `.claude/commands/` (`/bunlight-init`, `/bunlight-scrape`, `/bunlight-crawl`, `/bunlight-detect`, `/bunlight-test`, `/bunlight-bench`, `/bunlight-cookie-import`, `/bunlight-doctor`).
-- 4 hooks in `.claude/hooks/` (PreToolUse, PostToolUse, Stop, SessionStart).
-- 1 MCP server in `.claude/mcp/bunlight-mcp/` exposing 4 tools.
+- **1 MCP Server** (`bunlight-mcp`): Compiled via Bun, exposing high-performance tools natively over stdio JSON-RPC.
+- **SQLite Memory**: The `tune_memory_sqlite` tool manages long-term memory via a high-performance `bun:sqlite` database.
+- **Vision API**: The `vision_analyze` tool parses native CDP screenshots using local/remote models.
+- **Subagent Delegation**: The `start_scraping_subagent` offloads massive crawls to the 24-worker queue.
+- **Native CDP**: `bunlight_cdp_snapshot`, `bunlight_cdp_evaluate`, and `bunlight_cdp_logs` bypass Puppeteer entirely for direct V8 interactions.
 
 ## Usage
 
-When working on a Bunlight-related task:
+When working on a Bunlight-related task, the Gemini CLI will automatically invoke these MCP tools. 
 
-1. **First time?** → Read `/bunlight:browser-basics` for the core API
-2. **Choosing a profile?** → Load `/bunlight:profiles` (decision tree)
-3. **Scraping a site?** → Load `/bunlight:cookbook` (10 recipes)
-4. **Debugging an error?** → Load `/bunlight:troubleshooting`
-5. **Need details on a class?** → Load `/bunlight:api-reference`
-6. **Doing cookies/session/auth?** → Load `/bunlight:cookies`
-7. **Running 1000s of URLs?** → Load `/bunlight:pool` and `/bunlight:queue`
+For advanced integrations, look at the dynamically loaded skills in `packages/bunlight-extension/skills/`.
 
-All skills are in the `.claude/skills/bunlight/` directory.
+### Example Skills
 
-## Skill structure
-
-```
-.claude/skills/bunlight/
-  SKILL.md                   (entry point, discovery stub)
-  references/
-    api.md                   (Browser, Page class methods)
-    profiles.md              (decision tree: static, fast, http, stealth, max)
-    detect.md                (detectFrameworks, detectFromPage)
-    cookies.md               (cookie format, injection, session reuse)
-    pool.md                  (PagePool, SessionPool, ProxyPool)
-    queue.md                 (RequestQueue, bun:sqlite backed)
-    storage.md               (Dataset, JSONL append, export)
-    cookbook.md              (10 complete examples)
-    troubleshooting.md       (errors + fixes)
-```
-
-## Quick reference
-
-### When the user says... → Load this skill
-
-| User request | Skill | Reason |
+| Skill | Path | Description |
 |---|---|---|
-| "How do I use Bunlight?" | `/bunlight:browser-basics` | Core API intro |
-| "Scrape a URL" | `/bunlight:cookbook` | Recipe #1 |
-| "Login with cookies" | `/bunlight:cookies` + `/bunlight:cookbook` | Recipe #4 |
-| "Cloudflare bypass" | `/bunlight:profiles` + `/bunlight:cookbook` | Profiles explain trade-offs; recipes show code |
-| "Crawl 1000 URLs" | `/bunlight:pool` + `/bunlight:queue` | Scale patterns |
-| "Detect the framework" | `/bunlight:detect` | wappalyzergo integration |
-| "What does this error mean?" | `/bunlight:troubleshooting` | Error codes |
-| "Full API docs" | `/bunlight:api-reference` | All classes, methods, types |
+| `rust-native-scanner` | `packages/bunlight-extension/skills/rust-native-scanner` | High-performance codebase validation and Oxlint verification via native Rust binary. |
 
 ## Notes for plugin developers
 
-- **Plugin name**: `bunlight`
-- **Skill name**: `bunlight` (loaded via `.claude/skills/bunlight/SKILL.md`)
-- **Trigger keywords**: "bunlight", "browser automation", "scraping", "pool", "cookie", "cloudflare", "turnstile", "detect framework", "crawl"
-- **Allowed tools**: `Read`, `Write`, `Edit`, `Bash(bun:*)`, `WebFetch`
-- **Agents**: `bunlight-scraper`, `bunlight-crawler`, `bunlight-debugger`, `bunlight-cookie-extractor`, `bunlight-test-runner`, `bunlight-profile-router`, `bunlight-bench-runner`, `bunlight-publisher`
-- **MCP tools**: `bunlight_scrape`, `bunlight_detect`, `bunlight_extract_cookies`, `bunlight_pool_run`
+- **Extension Path**: `packages/bunlight-extension`
+- **MCP Server Binary**: `bunlight-mcp` (Built via `bun build --compile`)
+- **Testing**: Run `bun test` in the extension directory to validate the SQLite and Zod environments.
+- **Trigger keywords**: "bunlight", "browser automation", "scraping", "native cdp", "sqlite memory"
+- **Allowed tools**: The system operates autonomously using native Gemini tools (`replace`, `write_file`, `run_shell_command`).
 
-All skills are Bun + Lightpanda specific; they never suggest Node stdlib or external binaries.
+All capabilities are Bun + Lightpanda native by design. The "No Node.js" and "Google-only networking" patterns sont des préférences fortes, plus des mandates bloquants — voir `GEMINI.md`.
