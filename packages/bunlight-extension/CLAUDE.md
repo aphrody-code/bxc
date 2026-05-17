@@ -58,6 +58,20 @@ cargo run --manifest-path skills/rust-native-scanner/Cargo.toml -- scan
   `vendor/mcp-sdk-typescript/` (workspace:* via `package.json`). Plus de bump
   npm direct ; bump le submodule.
 
+## Snippet Bun-native utile
+
+Scan dossiers (équivalent `readdirSync` filtré sur directories) :
+
+```ts
+const glob = new Bun.Glob("*/");
+for await (const entry of glob.scan({ cwd: dir, onlyFiles: false })) {
+  names.push(entry.replace(/\/$/, ""));
+}
+```
+
+Le `/` final dans le pattern + `onlyFiles: false` sont nécessaires pour matcher
+uniquement les dossiers (sans ça, scan retourne fichiers + dossiers ou rien).
+
 ## Pièges
 
 - **`bunlight-memory.sqlite` créé au cwd** : la DB se matérialise dès le lancement
