@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/transport/typed-rpc
  *
  * Compile-time-typed RPC wire protocol, vendored from
@@ -6,7 +22,7 @@
  * Used internally for typed message passing between bunlight processes
  * (CDP server / subprocess plugins / ghost profile control plane).
  *
- * Source : https://github.com/blackboardsh/electrobun
+ * Source : https://developers.google.com/blackboardsh/electrobun
  * License: MIT (preserved upstream).
  *
  * Why : OpenAPI runtime types are fine for HTTP boundaries, but for hot
@@ -382,7 +398,7 @@ export function createRPC<
 			requestTimeouts.delete(message.id);
 			const { resolve, reject } = requestListeners.get(message.id) ?? {};
 			requestListeners.delete(message.id);
-			if (!message.success) reject?.(new Error(message.error));
+			if (!message.success) reject?.(new Error((message as { success: false; error: string }).error));
 			else resolve?.(message.payload);
 			return;
 		}
@@ -476,7 +492,7 @@ export function defineElectrobunRPC<
 			// Provide a stub so addMessageListener doesn't throw before real transport is set
 			registerHandler: () => {},
 		},
-	} as _RPCAllOptions<LocalSchema>;
+	} as unknown as _RPCAllOptions<LocalSchema>;
 
 	const rpc = createRPC<LocalSchema, RemoteSchema>(rpcOptions);
 

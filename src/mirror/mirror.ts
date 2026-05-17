@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/mirror
  *
  * Site mirror — downloads the full HTML/CSS/JS/asset graph of a single
@@ -39,8 +55,9 @@
  * `Bun.CryptoHasher`, `Bun.Glob`, `fetch` global.
  */
 
-import { dirname, relative as relativePath, resolve as resolvePath } from "path";
-import { Browser, type HttpPage, type Page } from "../api/browser.ts";
+import { dirname, relative as relativePath, resolve as resolvePath } from "node:path";
+import { Browser } from "../api/browser.ts";
+import type { AnyPage } from "../api/types.ts";
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
 
 // ---------------------------------------------------------------------------
@@ -469,7 +486,7 @@ async function workerPool<T, U>(
 	concurrency: number,
 	worker: (item: T) => Promise<U>,
 ): Promise<U[]> {
-	const results: U[] = new Array(items.length);
+	const results: U[] = Array.from({ length: items.length });
 	let cursor = 0;
 	async function run(): Promise<void> {
 		while (cursor < items.length) {
@@ -524,7 +541,7 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 	let seedHtml = "";
 	let seedFinalUrl = seed;
 	let seedStatus = 0;
-	let page: Page | HttpPage | undefined;
+	let page: AnyPage | undefined;
 	try {
 		page = await Browser.newPage({
 			profile,

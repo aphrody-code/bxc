@@ -117,10 +117,10 @@ function makeTurnstileHtml(n: number): string {
 }
 
 export async function startMockServer(port = 0): Promise<number> {
-	if (server) return server.port;
+	if (server) return server.port!;
 	// port=0 lets the OS pick an ephemeral free port
 
-	server = Bun.serve({
+	const newServer = Bun.serve({
 		port,
 		fetch(req) {
 			const url = new URL(req.url);
@@ -177,7 +177,8 @@ export async function startMockServer(port = 0): Promise<number> {
 		},
 	});
 
-	return server.port ?? 0;
+	server = newServer;
+	return server.port!;
 }
 
 export async function stopMockServer(): Promise<void> {

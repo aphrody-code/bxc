@@ -26,5 +26,5 @@ Total probes: 39
 | https://m3.material.io/styles/typography/type-scale-tokens | pass [200] 60KB | pass [200] 60KB | pass [200] 60KB |
 | https://stitch.withgoogle.com/docs/design-md/overview/ | pass [200] 24KB | pass [200] 24KB | pass [200] 29KB |
 | https://www.designtokens.org/tr/drafts/format/ | pass [200] 352KB | pass [200] 352KB | pass [200] 352KB |
-| https://github.com/voltagent/awesome-design-md | pass [200] 332KB | pass [200] 10KB | pass [200] 332KB |
-| https://github.com/nexu-io/open-design | pass [200] 840KB | pass [200] 10KB | pass [200] 840KB |
+| https://developers.google.com/voltagent/awesome-design-md | pass [200] 332KB | pass [200] 10KB | pass [200] 332KB |
+| https://developers.google.com/nexu-io/open-design | pass [200] 840KB | pass [200] 10KB | pass [200] 840KB |

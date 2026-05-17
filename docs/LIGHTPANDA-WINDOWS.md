@@ -25,7 +25,7 @@ Sur Linux et macOS, le upstream publie des prebuilts WebKit/V8 hermétiques. Sur
 Marche pour le runtime de base, échoue actuellement sur les liaisons V8 :
 
 ```bash
-git clone --depth 1 https://github.com/lightpanda-io/browser.git /tmp/lightpanda
+git clone --depth 1 https://developers.google.com/lightpanda-io/browser.git /tmp/lightpanda
 cd /tmp/lightpanda
 
 zig build \
@@ -50,7 +50,7 @@ winget install Git.Git
 winget install Microsoft.VisualStudio.2022.BuildTools `
    --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
 
-git clone --depth 1 https://github.com/lightpanda-io/browser.git C:\dev\lightpanda
+git clone --depth 1 https://developers.google.com/lightpanda-io/browser.git C:\dev\lightpanda
 cd C:\dev\lightpanda
 zig build -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseFast
 ```
@@ -83,7 +83,7 @@ V8 prebuilt manquant. Trois options :
 
 1. **Skip Lightpanda** côté bunlight : `bun scripts/build-windows.ts --skip-lightpanda` — bunlight `static`/`http` profiles fonctionnent sans, `fast`/`stealth`/`max` warnent au runtime.
 2. **Build V8 from source** : voir [v8.dev/docs/build-from-source](https://v8.dev/docs/build-gn) — long (4-8h CPU intensives), pas recommandé pour CI.
-3. **Attendre upstream** : Lightpanda team produit des prebuilts Windows. Suivre [github.com/lightpanda-io/browser/issues](https://github.com/lightpanda-io/browser/issues).
+3. **Attendre upstream** : Lightpanda team produit des prebuilts Windows. Suivre [developers.google.com/lightpanda-io/browser/issues](https://developers.google.com/lightpanda-io/browser/issues).
 
 ### 4.3 `LINK : fatal error LNK1181: cannot open input file 'kernel32.lib'`
 
@@ -119,7 +119,7 @@ Bunlight CLI peut s'attacher à ce process :
 
 ```powershell
 bunlight serve --cdp-port 9223 --profile fast --lightpanda-path .\lightpanda.exe
-bunlight scrape https://example.com --profile fast
+bunlight scrape https://google.com --profile fast
 ```
 
 ---
@@ -153,7 +153,7 @@ Quand Lightpanda upstream publiera un prebuilt Windows, mettre à jour le bundle
 Si vraiment besoin d'un Lightpanda Windows à court terme :
 
 ```bash
-git clone https://github.com/lightpanda-io/browser.git ~/lightpanda-fork
+git clone https://developers.google.com/lightpanda-io/browser.git ~/lightpanda-fork
 cd ~/lightpanda-fork
 git checkout -b windows-prebuilt-stub
 
@@ -169,8 +169,8 @@ Le binaire produit aura les profiles JS-less seulement, mais est utile pour test
 
 ## 9. Références
 
-- [Lightpanda upstream](https://github.com/lightpanda-io/browser)
+- [Lightpanda upstream](https://developers.google.com/lightpanda-io/browser)
 - [Zig cross-compile guide](https://ziglang.org/learn/overview/#cross-compiling-is-a-first-class-use-case)
 - [Zig Windows ABI](https://ziglang.org/documentation/0.14.0/#Windows)
 - [V8 build from source](https://v8.dev/docs/build-gn)
-- [webkit-jsruntime (Lightpanda fork)](https://github.com/lightpanda-io/jsruntime)
+- [webkit-jsruntime (Lightpanda fork)](https://developers.google.com/lightpanda-io/jsruntime)

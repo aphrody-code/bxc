@@ -1,11 +1,28 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/google/fetch
  *
  * Enhanced web fetch specialized for Google infrastructure and anti-scraping.
+ * Refactored to use unified GoogleClient and ZigQuery extraction.
  */
 
-import { Browser, type Page } from "../api/browser.ts";
-import { launchGhostBrowser } from "../profiles/ghost/index.ts";
+import { google, type GoogleSessionOptions } from "./client.ts";
+import { parseHtml } from "../ffi/zigquery.ts";
 import { isGoogleDomain } from "./dns.ts";
 
 export interface StructuredData {
@@ -22,28 +39,24 @@ export interface FetchResult {
 	title: string;
 	metadata: Record<string, string>;
 	cleaned: boolean;
-	/** Structured data extracted when `extractStructured` is true (default: true). */
 	structured?: StructuredData;
 }
 
-export interface FetchOptions {
+export interface FetchOptions extends GoogleSessionOptions {
 	/** Whether to remove ads, navigation, and other noise. Default: true. */
 	clean?: boolean;
-	/** Profile to use. Default: "fast" (will auto-escalate if needed). */
-	profile?: "static" | "fast" | "stealth" | "max";
 	/** Timeout in ms. Default: 30s. */
 	timeoutMs?: number;
-	/** Lightpanda binary override. */
-	binaryPath?: string;
 	/** Extract JSON-LD / OpenGraph / Twitter cards. Default: true. */
 	extractStructured?: boolean;
+	/** Lightpanda binary override. */
+	binaryPath?: string;
 }
 
 /**
- * Extract JSON-LD, OpenGraph, Twitter Card, canonical URL and meta description
- * from a raw HTML string. Pure function — runs without a browser context.
+ * High-performance structured data extraction using ZigQuery.
  */
-export function extractStructuredData(html: string): StructuredData {
+export async function extractStructuredData(html: string): Promise<StructuredData> {
 	const out: StructuredData = {
 		jsonLd: [],
 		openGraph: {},
@@ -52,38 +65,38 @@ export function extractStructuredData(html: string): StructuredData {
 		description: null,
 	};
 
-	const ldRe =
-		/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-	let m: RegExpExecArray | null;
-	while ((m = ldRe.exec(html))) {
-		const raw = m[1].trim();
-		if (!raw) continue;
-		try {
-			const parsed = JSON.parse(raw);
-			if (Array.isArray(parsed)) out.jsonLd.push(...parsed);
-			else out.jsonLd.push(parsed);
-		} catch {
-			/* skip malformed */
+	const doc = await parseHtml(html);
+	try {
+		// 1. JSON-LD
+		const scripts = await doc.querySelectorAll("script[type='application/ld+json']");
+		for (const s of scripts) {
+			try {
+				const parsed = JSON.parse(s.textContent().trim());
+				if (Array.isArray(parsed)) out.jsonLd.push(...parsed);
+				else out.jsonLd.push(parsed);
+			} catch {}
 		}
-	}
 
-	const metaRe = /<meta\s+([^>]*)>/gi;
-	while ((m = metaRe.exec(html))) {
-		const attrs = m[1];
-		const propM = attrs.match(/(?:property|name)=["']([^"']+)["']/i);
-		const contentM = attrs.match(/content=["']([^"']*)["']/i);
-		if (!propM || !contentM) continue;
-		const key = propM[1].toLowerCase();
-		const value = contentM[1];
-		if (key.startsWith("og:")) out.openGraph[key.slice(3)] = value;
-		else if (key.startsWith("twitter:")) out.twitter[key.slice(8)] = value;
-		else if (key === "description") out.description = value;
-	}
+		// 2. Meta tags
+		const metas = await doc.querySelectorAll("meta");
+		for (const m of metas) {
+			const prop = m.getAttribute("property") || m.getAttribute("name");
+			const content = m.getAttribute("content");
+			if (!prop || !content) continue;
+			
+			const key = prop.toLowerCase();
+			if (key.startsWith("og:")) out.openGraph[key.slice(3)] = content;
+			else if (key.startsWith("twitter:")) out.twitter[key.slice(8)] = content;
+			else if (key === "description") out.description = content;
+		}
 
-	const canonM = html.match(
-		/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i,
-	);
-	if (canonM) out.canonical = canonM[1];
+		// 3. Canonical
+		const canon = await doc.querySelector("link[rel='canonical']");
+		out.canonical = canon?.getAttribute("href") || null;
+
+	} finally {
+		doc.destroy();
+	}
 
 	return out;
 }
@@ -91,85 +104,42 @@ export function extractStructuredData(html: string): StructuredData {
 /**
  * Fetch a URL with Google-specialized cleaning and challenge handling.
  */
-export async function googleWebFetch(
-	url: string,
-	opts: FetchOptions = {},
-): Promise<FetchResult> {
+export async function googleWebFetch(url: string, opts: FetchOptions = {}): Promise<FetchResult> {
 	const clean = opts.clean ?? true;
 	const isGoogle = isGoogleDomain(new URL(url).hostname);
 
-	// Default to 'fast' for speed, but use 'max' (via ghost) for Google domains by default
-	const profile = opts.profile ?? (isGoogle ? "max" : "fast");
-
-	let page: Page;
-	let closeFn: () => Promise<void>;
-
-	if (profile === "stealth" || profile === "max") {
-		const ghost = await launchGhostBrowser({
-			binaryPath: opts.binaryPath,
-			logLevel: "error",
-		});
-		page = ghost.page;
-		closeFn = () => ghost.close();
-	} else {
-		page = (await Browser.newPage({
-			profile: profile as "static" | "fast" | "http",
-			spawnOpts: {
-				binaryPath: opts.binaryPath,
-				readyTimeoutMs: 12000,
-			},
-		})) as Page;
-		closeFn = () => page.close();
-	}
-
 	try {
-		await page.goto(url, {
-			waitUntil: "domcontentloaded",
-			timeoutMs: opts.timeoutMs,
-		});
-
+		const { page } = await google.open(url);
+		
 		const title = await page.title();
 		let content = (await page.content()) || "";
 		let cleaned = false;
 
 		if (clean && content) {
-			// Extract meaningful text and remove junk
 			content = await page.evaluate(() => {
-				const junkSelector =
-					"nav, header, footer, aside, .ads, .advertisement, .social-share, script, style, iframe, noscript";
-				const elements = document.querySelectorAll(junkSelector);
-				for (const el of elements) el.remove();
-
-				// Prefer article or main content
-				const main = document.querySelector(
-					"article, main, #main, .main-content, #content, .post-content",
-				);
+				const junkSelector = "nav, header, footer, aside, .ads, .advertisement, .social-share, script, style, iframe, noscript";
+				document.querySelectorAll(junkSelector).forEach(el => el.remove());
+				const main = document.querySelector("article, main, #main, .main-content, #content, .post-content");
 				return main ? main.innerHTML : document.body.innerHTML;
 			});
 			cleaned = true;
 		}
 
-		const rawHtmlForStructured = await page.content().catch(() => content);
-		const structured =
-			(opts.extractStructured ?? true)
-				? extractStructuredData(rawHtmlForStructured ?? "")
-				: undefined;
+		const structured = (opts.extractStructured ?? true) ? await extractStructuredData(content) : undefined;
+
+		await page.close();
 
 		return {
 			url,
-			content: content || "",
-			title: title || "",
+			content,
+			title,
 			metadata: {
-				profile,
 				isGoogle: isGoogle.toString(),
 			},
 			cleaned,
 			structured,
 		};
 	} catch (err) {
-		console.error(
-			`[google-fetch] failed: ${err instanceof Error ? err.message : String(err)}`,
-		);
 		return {
 			url,
 			content: "",
@@ -177,43 +147,27 @@ export async function googleWebFetch(
 			metadata: { error: err instanceof Error ? err.message : String(err) },
 			cleaned: false,
 		};
-	} finally {
-		await closeFn();
 	}
 }
 
 /**
- * Parallel fetch for multiple URLs using AutoscaledPool to prevent resource exhaustion.
+ * Parallel fetch for multiple URLs.
  */
-export async function googleWebFetchAll(
-	urls: string[],
-	opts: FetchOptions = {},
-): Promise<FetchResult[]> {
+export async function googleWebFetchAll(urls: string[], opts: FetchOptions = {}): Promise<FetchResult[]> {
 	if (urls.length === 0) return [];
-
-	const results: FetchResult[] = new Array(urls.length);
+	const results: FetchResult[] = Array.from({ length: urls.length });
 	let nextIdx = 0;
 	let finishedIdx = 0;
 
 	const { AutoscaledPool } = await import("../pool/AutoscaledPool.ts");
-
 	const pool = new AutoscaledPool({
 		minConcurrency: 1,
-		maxConcurrency: 10, // Google is sensitive, keep it low
-		desiredConcurrency: Math.min(urls.length, 3),
+		maxConcurrency: 10,
 		runTaskFunction: async () => {
 			const idx = nextIdx++;
 			if (idx >= urls.length) return;
 			try {
 				results[idx] = await googleWebFetch(urls[idx], opts);
-			} catch (err) {
-				results[idx] = {
-					url: urls[idx],
-					content: "",
-					title: "",
-					metadata: { error: err instanceof Error ? err.message : String(err) },
-					cleaned: false,
-				};
 			} finally {
 				finishedIdx++;
 			}

@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * 05-puppeteer-zero-spawn.ts
  *
  * Demonstrates connecting puppeteer-core to Bunlight without spawning any
@@ -92,36 +108,32 @@ async function runStaticMode(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Mode 2 — SocketPairTransport (Lightpanda sub-process, no TCP port)
+// Mode 2 — WebSocketTransport (Chrome/bunlight-engine sub-process)
 // ---------------------------------------------------------------------------
 
 async function runFullMode(): Promise<void> {
-	section("Mode 2: SocketPairTransport (Lightpanda sub-process via stdin/stdout)");
+	section("Mode 2: WebSocketTransport (Chrome sub-process)");
 
-	// Dynamically import so we don't load Bun.spawn-dependent code in static-only builds
-	const { SocketPairTransport } = await import("../src/transport/SocketPairTransport.js");
+	const { WebSocketTransport } = await import("../src/transport/WebSocketTransport.ts");
 
-	console.log("Spawning lightpanda...");
-	let transport: InstanceType<typeof SocketPairTransport>;
+	console.log("Spawning chrome engine...");
+	let transport: any;
 
 	try {
-		transport = await SocketPairTransport.create({
-			binaryPath: process.env["LIGHTPANDA_BIN"] ?? "lightpanda",
+		transport = await WebSocketTransport.create({
+			headless: true,
 			readyTimeoutMs: 8000,
 		});
 	} catch (err) {
-		console.error("Failed to spawn lightpanda:", err instanceof Error ? err.message : err);
-		console.error("Install lightpanda and add it to $PATH, or set LIGHTPANDA_BIN=<path>.");
+		console.error("Failed to spawn engine:", err instanceof Error ? err.message : err);
 		process.exit(1);
 	}
-
-	console.log("lightpanda pid:", transport.pid);
 
 	const browser = await puppeteer.connect({ transport });
 	console.log("puppeteer.connect() succeeded");
 
 	const page = await browser.newPage();
-	await page.goto("https://example.com", { waitUntil: "domcontentloaded" });
+	await page.goto("https://google.com", { waitUntil: "domcontentloaded" });
 
 	const title = await page.title();
 	console.log("page.title() →", title);
@@ -130,7 +142,9 @@ async function runFullMode(): Promise<void> {
 	console.log("page.content() length →", content.length, "chars");
 
 	await browser.disconnect();
-	await transport.closeProcess();
+	if (typeof transport.closeProcess === 'function') {
+		await transport.closeProcess();
+	}
 
 	console.log("\nFull mode complete. Lightpanda sub-process terminated.");
 }

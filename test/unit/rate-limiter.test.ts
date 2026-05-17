@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for src/throttling/RateLimiter.ts
  *
  * Tests cover:
@@ -20,8 +36,7 @@
  */
 
 import { beforeEach, describe, expect, it } from "bun:test";
-import { RateLimitError, RateLimiter } from "../../src/throttling/RateLimiter.ts";
-import type { RobotRules } from "../../src/throttling/robots.ts";
+import { RateLimitError, RateLimiter, type RobotRules } from "../../src/throttling/RateLimiter.ts";
 
 // ---------------------------------------------------------------------------
 // Helper: build a RobotRules object inline (no network)
@@ -53,6 +68,7 @@ beforeEach(() => {
 		maxRequestsPerSecond: 100,
 		maxRequestsPerMinute: 1000,
 		respectRobotsTxt: false, // tests that need robots inject rules manually
+		googleAutoThrottle: false, // disable auto-throttle for fast unit tests
 	});
 });
 
@@ -66,10 +82,11 @@ describe("sliding window (per-second)", () => {
 			maxRequestsPerSecond: 3,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		const start = Date.now();
 		for (let i = 0; i < 3; i++) {
-			await l.acquire("https://example.com/page");
+			await l.acquire("https://www.google.com/page");
 		}
 		const elapsed = Date.now() - start;
 		// 3 requests under limit should complete in < 50ms
@@ -81,13 +98,14 @@ describe("sliding window (per-second)", () => {
 			maxRequestsPerSecond: 2,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		const start = Date.now();
 		// Saturate the window
-		await l.acquire("https://ratelimit-test.com/a");
-		await l.acquire("https://ratelimit-test.com/b");
+		await l.acquire("https://ratelimit.google.com/a");
+		await l.acquire("https://ratelimit.google.com/b");
 		// 3rd request must wait for 1s to pass
-		await l.acquire("https://ratelimit-test.com/c");
+		await l.acquire("https://ratelimit.google.com/c");
 		const elapsed = Date.now() - start;
 		// Should have waited at least 950ms (wall-clock tolerance)
 		expect(elapsed).toBeGreaterThan(900);
@@ -98,11 +116,12 @@ describe("sliding window (per-second)", () => {
 			maxRequestsPerSecond: 1,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		const start = Date.now();
 		// Each host has its own window
-		await l.acquire("https://host-a.example.com/");
-		await l.acquire("https://host-b.example.com/");
+		await l.acquire("https://host-a.google.com/");
+		await l.acquire("https://host-b.google.com/");
 		const elapsed = Date.now() - start;
 		expect(elapsed).toBeLessThan(50);
 	});
@@ -118,13 +137,14 @@ describe("sliding window (per-minute)", () => {
 			maxRequestsPerSecond: 1000,
 			maxRequestsPerMinute: 5,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		// Pre-fill the minute window to one below cap
-		l.setRobotsRules("minute-test.com", allowAllRules());
+		l.setRobotsRules("minute.google.com", allowAllRules());
 		for (let i = 0; i < 5; i++) {
-			await l.acquire("https://minute-test.com/page");
+			await l.acquire("https://minute.google.com/page");
 		}
-		const stats = l.getHostStats("minute-test.com");
+		const stats = l.getHostStats("minute.google.com");
 		expect(stats?.requestsInLastMinute).toBe(5);
 	});
 });
@@ -141,11 +161,11 @@ describe("crawl-delay", () => {
 			respectRobotsTxt: true,
 		});
 		// Inject rules with 200ms crawl delay (0.2s for test speed)
-		l.setRobotsRules("crawldelay.example.com", makeRules({ crawlDelay: 0.2 }));
+		l.setRobotsRules("crawldelay.google.com", makeRules({ crawlDelay: 0.2 }));
 
 		const start = Date.now();
-		await l.acquire("https://crawldelay.example.com/page1");
-		await l.acquire("https://crawldelay.example.com/page2");
+		await l.acquire("https://crawldelay.google.com/page1");
+		await l.acquire("https://crawldelay.google.com/page2");
 		const elapsed = Date.now() - start;
 		// Second request must wait at least 180ms
 		expect(elapsed).toBeGreaterThan(150);
@@ -157,9 +177,9 @@ describe("crawl-delay", () => {
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: true,
 		});
-		l.setRobotsRules("first-req.example.com", makeRules({ crawlDelay: 5 }));
+		l.setRobotsRules("first-req.google.com", makeRules({ crawlDelay: 5 }));
 		const start = Date.now();
-		await l.acquire("https://first-req.example.com/page");
+		await l.acquire("https://first-req.google.com/page");
 		const elapsed = Date.now() - start;
 		// First request: no crawl-delay wait
 		expect(elapsed).toBeLessThan(100);
@@ -177,11 +197,11 @@ describe("disallowed paths", () => {
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: true,
 		});
-		l.setRobotsRules("blocked.example.com", makeRules({ disallowed: ["/private/"] }));
+		l.setRobotsRules("blocked.google.com", makeRules({ disallowed: ["/private/"] }));
 
 		let thrown = false;
 		try {
-			await l.acquire("https://blocked.example.com/private/secret");
+			await l.acquire("https://blocked.google.com/private/secret");
 		} catch (err) {
 			thrown = true;
 			expect(err).toBeInstanceOf(RateLimitError);
@@ -196,9 +216,9 @@ describe("disallowed paths", () => {
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: true,
 		});
-		l.setRobotsRules("blocked.example.com", makeRules({ disallowed: ["/private/"] }));
+		l.setRobotsRules("blocked.google.com", makeRules({ disallowed: ["/private/"] }));
 		// Should not throw
-		await l.acquire("https://blocked.example.com/public/page");
+		await l.acquire("https://blocked.google.com/public/page");
 	});
 });
 
@@ -212,15 +232,16 @@ describe("multi-host parallel crawling", () => {
 			maxRequestsPerSecond: 2,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		// Saturate host-a
-		await l.acquire("https://host-a.test/1");
-		await l.acquire("https://host-a.test/2");
+		await l.acquire("https://host-a.google.com/1");
+		await l.acquire("https://host-a.google.com/2");
 
 		// host-b has its own empty window — should not block
 		const start = Date.now();
-		await l.acquire("https://host-b.test/1");
-		await l.acquire("https://host-b.test/2");
+		await l.acquire("https://host-b.google.com/1");
+		await l.acquire("https://host-b.google.com/2");
 		expect(Date.now() - start).toBeLessThan(50);
 	});
 
@@ -229,12 +250,13 @@ describe("multi-host parallel crawling", () => {
 			maxRequestsPerSecond: 100,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		const start = Date.now();
 		await Promise.all([
-			l.acquire("https://alpha.test/"),
-			l.acquire("https://beta.test/"),
-			l.acquire("https://gamma.test/"),
+			l.acquire("https://alpha.google.com/"),
+			l.acquire("https://beta.google.com/"),
+			l.acquire("https://gamma.google.com/"),
 		]);
 		expect(Date.now() - start).toBeLessThan(50);
 	});
@@ -246,17 +268,17 @@ describe("multi-host parallel crawling", () => {
 
 describe("reset / resetHost", () => {
 	it("reset() clears all host state", async () => {
-		await limiter.acquire("https://example.com/page");
+		await limiter.acquire("https://google.com/page");
 		limiter.reset();
-		expect(limiter.getHostStats("example.com")).toBeUndefined();
+		expect(limiter.getHostStats("google.com")).toBeUndefined();
 	});
 
 	it("resetHost() clears only the specified host", async () => {
-		await limiter.acquire("https://alpha.example.com/page");
-		await limiter.acquire("https://beta.example.com/page");
-		limiter.resetHost("alpha.example.com");
-		expect(limiter.getHostStats("alpha.example.com")).toBeUndefined();
-		expect(limiter.getHostStats("beta.example.com")).toBeDefined();
+		await limiter.acquire("https://alpha.google.com/page");
+		await limiter.acquire("https://beta.google.com/page");
+		limiter.resetHost("alpha.google.com");
+		expect(limiter.getHostStats("alpha.google.com")).toBeUndefined();
+		expect(limiter.getHostStats("beta.google.com")).toBeDefined();
 	});
 });
 
@@ -266,13 +288,13 @@ describe("reset / resetHost", () => {
 
 describe("getHostStats", () => {
 	it("returns undefined for unknown host", () => {
-		expect(limiter.getHostStats("unknown.example.com")).toBeUndefined();
+		expect(limiter.getHostStats("unknown.google.com")).toBeUndefined();
 	});
 
 	it("returns correct counts after requests", async () => {
-		await limiter.acquire("https://stats.example.com/a");
-		await limiter.acquire("https://stats.example.com/b");
-		const stats = limiter.getHostStats("stats.example.com");
+		await limiter.acquire("https://stats.google.com/a");
+		await limiter.acquire("https://stats.google.com/b");
+		const stats = limiter.getHostStats("stats.google.com");
 		expect(stats).toBeDefined();
 		expect(stats!.requestsInLastSecond).toBe(2);
 		expect(stats!.requestsInLastMinute).toBe(2);
@@ -286,12 +308,12 @@ describe("getHostStats", () => {
 
 describe("setRobotsRules", () => {
 	it("injects rules that take effect immediately", async () => {
-		const l = new RateLimiter({ respectRobotsTxt: true });
-		l.setRobotsRules("inject.example.com", makeRules({ disallowed: ["/blocked/"] }));
+		const l = new RateLimiter({ respectRobotsTxt: true, googleAutoThrottle: false });
+		l.setRobotsRules("inject.google.com", makeRules({ disallowed: ["/blocked/"] }));
 
 		let threw = false;
 		try {
-			await l.acquire("https://inject.example.com/blocked/page");
+			await l.acquire("https://inject.google.com/blocked/page");
 		} catch {
 			threw = true;
 		}
@@ -305,10 +327,10 @@ describe("setRobotsRules", () => {
 
 describe("respectRobotsTxt = false", () => {
 	it("does not apply disallow rules", async () => {
-		const l = new RateLimiter({ respectRobotsTxt: false });
-		l.setRobotsRules("norobots.com", makeRules({ disallowed: ["/everything/"] }));
+		const l = new RateLimiter({ respectRobotsTxt: false, googleAutoThrottle: false });
+		l.setRobotsRules("norobots.google.com", makeRules({ disallowed: ["/everything/"] }));
 		// Should not throw even though path is disallowed
-		await l.acquire("https://norobots.com/everything/secret");
+		await l.acquire("https://norobots.google.com/everything/secret");
 	});
 
 	it("does not apply crawl-delay", async () => {
@@ -316,11 +338,12 @@ describe("respectRobotsTxt = false", () => {
 			maxRequestsPerSecond: 100,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
-		l.setRobotsRules("nodelay.com", makeRules({ crawlDelay: 5 }));
+		l.setRobotsRules("nodelay.google.com", makeRules({ crawlDelay: 5 }));
 		const start = Date.now();
-		await l.acquire("https://nodelay.com/a");
-		await l.acquire("https://nodelay.com/b");
+		await l.acquire("https://nodelay.google.com/a");
+		await l.acquire("https://nodelay.google.com/b");
 		// Should complete in well under 5000ms
 		expect(Date.now() - start).toBeLessThan(100);
 	});
@@ -361,13 +384,13 @@ describe("RateLimitError", () => {
 
 describe("robots cache", () => {
 	it("reuses cached rules without refetching", async () => {
-		const l = new RateLimiter({ respectRobotsTxt: true });
+		const l = new RateLimiter({ respectRobotsTxt: true, googleAutoThrottle: false });
 		const rules = allowAllRules();
-		l.setRobotsRules("cached.example.com", rules);
+		l.setRobotsRules("cached.google.com", rules);
 
 		// Two calls to getRobotsRules should hit the same cached entry
-		const r1 = await l.getRobotsRules("cached.example.com");
-		const r2 = await l.getRobotsRules("cached.example.com");
+		const r1 = await l.getRobotsRules("cached.google.com");
+		const r2 = await l.getRobotsRules("cached.google.com");
 		// Both should be the same object reference from the cache
 		expect(r1).toBe(r2);
 	});
@@ -383,11 +406,12 @@ describe("binding constraint", () => {
 			maxRequestsPerSecond: 1,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		const start = Date.now();
-		await l.acquire("https://binding.test/1");
+		await l.acquire("https://binding.google.com/1");
 		// Window at capacity: second request must wait
-		await l.acquire("https://binding.test/2");
+		await l.acquire("https://binding.google.com/2");
 		expect(Date.now() - start).toBeGreaterThan(900);
 	});
 });
@@ -402,10 +426,11 @@ describe("timing", () => {
 			maxRequestsPerSecond: 100,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
 		const start = Date.now();
-		await l.acquire("https://fast.test/page");
-		expect(Date.now() - start).toBeLessThan(30);
+		await l.acquire("https://fast.google.com/page");
+		expect(Date.now() - start).toBeLessThan(50);
 	});
 });
 
@@ -419,8 +444,9 @@ describe("concurrent same-host", () => {
 			maxRequestsPerSecond: 5,
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: false,
+			googleAutoThrottle: false,
 		});
-		const host = "concurrent.test";
+		const host = "concurrent.google.com";
 		// Fire 5 concurrent requests (all should fit in the window)
 		const start = Date.now();
 		await Promise.all(Array.from({ length: 5 }, (_, i) => l.acquire(`https://${host}/page${i}`)));

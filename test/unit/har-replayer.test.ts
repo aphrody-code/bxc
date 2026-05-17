@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for HarReplayer
  *
  * Tests cover:
@@ -16,8 +32,8 @@
  */
 
 import { afterEach, describe, expect, test } from "bun:test";
-import { tmpdir } from "os";
-import { join } from "path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { HarReplayer } from "../../src/recorder/HarReplayer.ts";
 import type { HarEntry, HarFile } from "../../src/recorder/types.ts";
 
@@ -97,8 +113,8 @@ afterEach(async () => {
 describe("HarReplayer factory", () => {
 	test("fromEntries() creates a replayer with correct size", () => {
 		const entries = [
-			makeHarEntry("GET", "https://example.com/", 200, "<html></html>"),
-			makeHarEntry("GET", "https://example.com/api", 200, "{}"),
+			makeHarEntry("GET", "https://google.com/", 200, "<html></html>"),
+			makeHarEntry("GET", "https://google.com/api", 200, "{}"),
 		];
 		const replayer = HarReplayer.fromEntries(entries);
 		expect(replayer.size).toBe(2);
@@ -110,7 +126,7 @@ describe("HarReplayer factory", () => {
 	});
 
 	test("load() reads valid HAR file from disk", async () => {
-		const entries = [makeHarEntry("GET", "https://example.com/", 200, "<html></html>")];
+		const entries = [makeHarEntry("GET", "https://google.com/", 200, "<html></html>")];
 		const path = await writeTempHar(entries);
 		const replayer = await HarReplayer.load(path);
 		expect(replayer.size).toBe(1);
@@ -124,13 +140,13 @@ describe("HarReplayer factory", () => {
 
 	test("load() deduplicates entries by method+url (first wins)", async () => {
 		const entries = [
-			makeHarEntry("GET", "https://example.com/", 200, "first"),
-			makeHarEntry("GET", "https://example.com/", 200, "second"),
+			makeHarEntry("GET", "https://google.com/", 200, "first"),
+			makeHarEntry("GET", "https://google.com/", 200, "second"),
 		];
 		const path = await writeTempHar(entries);
 		const replayer = await HarReplayer.load(path);
 		expect(replayer.size).toBe(1);
-		const entry = replayer.lookup("GET", "https://example.com/");
+		const entry = replayer.lookup("GET", "https://google.com/");
 		expect(entry?.response.content.text).toBe("first");
 	});
 });
@@ -141,25 +157,25 @@ describe("HarReplayer factory", () => {
 
 describe("HarReplayer.lookup()", () => {
 	test("exact method+url match returns entry", () => {
-		const entry = makeHarEntry("GET", "https://example.com/page", 200, "hello");
+		const entry = makeHarEntry("GET", "https://google.com/page", 200, "hello");
 		const replayer = HarReplayer.fromEntries([entry]);
-		const found = replayer.lookup("GET", "https://example.com/page");
+		const found = replayer.lookup("GET", "https://google.com/page");
 		expect(found).toBeDefined();
 		expect(found?.response.status).toBe(200);
 	});
 
 	test("method case-insensitive lookup works", () => {
-		const entry = makeHarEntry("POST", "https://example.com/submit", 201, "created");
+		const entry = makeHarEntry("POST", "https://google.com/submit", 201, "created");
 		const replayer = HarReplayer.fromEntries([entry]);
-		expect(replayer.lookup("post", "https://example.com/submit")).toBeDefined();
-		expect(replayer.lookup("POST", "https://example.com/submit")).toBeDefined();
+		expect(replayer.lookup("post", "https://google.com/submit")).toBeDefined();
+		expect(replayer.lookup("POST", "https://google.com/submit")).toBeDefined();
 	});
 
 	test("unknown URL returns undefined", () => {
 		const replayer = HarReplayer.fromEntries([
-			makeHarEntry("GET", "https://example.com/", 200, "x"),
+			makeHarEntry("GET", "https://google.com/", 200, "x"),
 		]);
-		expect(replayer.lookup("GET", "https://unknown.example.com/")).toBeUndefined();
+		expect(replayer.lookup("GET", "https://unknown.google.com/")).toBeUndefined();
 	});
 
 	test("multiple entries are indexed independently", () => {
@@ -190,14 +206,14 @@ describe("HarReplayer.serve()", () => {
 	});
 
 	test("serve() responds to known URL with recorded status and body", async () => {
-		const targetUrl = "https://example.com/test-page";
+		const targetUrl = "https://google.com/test-page";
 		const replayer = HarReplayer.fromEntries([
 			makeHarEntry("GET", targetUrl, 200, "<h1>Hello HAR</h1>", "text/html"),
 		]);
 		const server = await replayer.serve();
 		serversToStop.push(server);
 
-		// Path-prefixed routing: /https://example.com/test-page
+		// Path-prefixed routing: /https://google.com/test-page
 		const res = await fetch(`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`);
 		expect(res.status).toBe(200);
 		const body = await res.text();
@@ -206,19 +222,19 @@ describe("HarReplayer.serve()", () => {
 
 	test("serve() returns 404 for unknown URLs", async () => {
 		const replayer = HarReplayer.fromEntries([
-			makeHarEntry("GET", "https://example.com/", 200, "known"),
+			makeHarEntry("GET", "https://google.com/", 200, "known"),
 		]);
 		const server = await replayer.serve();
 		serversToStop.push(server);
 
 		const res = await fetch(
-			`http://localhost:${server.port}/${encodeURIComponent("https://unknown.example.com/")}`,
+			`http://localhost:${server.port}/${encodeURIComponent("https://unknown.google.com/")}`,
 		);
 		expect(res.status).toBe(404);
 	});
 
 	test("serve() forwards custom response headers", async () => {
-		const targetUrl = "https://api.example.com/data";
+		const targetUrl = "https://api.google.com/data";
 		const replayer = HarReplayer.fromEntries([
 			makeHarEntry("GET", targetUrl, 200, '{"ok":true}', "application/json", [
 				{ name: "x-request-id", value: "abc-123" },
@@ -245,7 +261,7 @@ describe("HarReplayer.serve()", () => {
 	});
 
 	test("serve() with ?url= query parameter routing", async () => {
-		const targetUrl = "https://example.com/query-route";
+		const targetUrl = "https://google.com/query-route";
 		const replayer = HarReplayer.fromEntries([
 			makeHarEntry("GET", targetUrl, 200, "query-routed", "text/plain"),
 		]);

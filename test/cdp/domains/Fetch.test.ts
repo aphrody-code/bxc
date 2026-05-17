@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Fetch domain handler tests.
  *
  * Tests cover:
@@ -138,7 +154,7 @@ describe("Fetch domain handler", () => {
 		};
 
 		// Navigate to a URL that will be intercepted
-		await cdpCall(transport, "Page.navigate", { url: "https://example.com" }, sessionId);
+		await cdpCall(transport, "Page.navigate", { url: "https://google.com" }, sessionId);
 		transport.onmessage = prev;
 
 		expect(pausedRequestId).not.toBeNull();
@@ -188,7 +204,7 @@ describe("Fetch domain handler", () => {
 
 		// The navigate should fail (transport re-throws the error from #navigate)
 		await expect(
-			cdpCall(transport, "Page.navigate", { url: "https://example.com" }, sessionId),
+			cdpCall(transport, "Page.navigate", { url: "https://google.com" }, sessionId),
 		).rejects.toThrow();
 		transport.onmessage = prev;
 	});
@@ -319,7 +335,7 @@ describe("Fetch domain handler", () => {
 			}
 		};
 
-		await cdpCall(transport, "Page.navigate", { url: "https://example.com/missing" }, sessionId);
+		await cdpCall(transport, "Page.navigate", { url: "https://google.com/missing" }, sessionId);
 		transport.onmessage = prev;
 
 		const { result } = (await cdpCall(

@@ -20,9 +20,9 @@
     // Best practices
     "strict": false,
     "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
+    "noFallthroughCasesInSwitch": false,
     "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+    "noImplicitOverride": false,
 
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,

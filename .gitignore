@@ -25,17 +25,23 @@ out
 build
 .git-history
 forks
-vendor
 target
 .zig-cache
 .lp-cache
+
 vendor/*
+!vendor/
 !vendor/gemma/
+!vendor/chrome-devtools-mcp/
 
 # junk
 nano-banana*
 *.tgz
 vendor/chromiumoxide
+
+# vendor/gemini-cli : temporarily whitelist to explore
+!vendor/gemini-cli/
+!vendor/gemini-cli/**
 
 # vendor/gemma : whitelist code (scripts + config) — large artifacts stay ignored
 !vendor/gemma/

@@ -1,4 +1,4 @@
-# E2E full-crawl report — https://www.rosegriffon.fr
+# E2E full-crawl report — https://www.gemini.google.com
 
 Date: 2026-05-12
 Pages discovered: 7  (source: cache)
@@ -27,10 +27,10 @@ Total samples: 35
 
 ## Pages crawled
 
-- https://www.rosegriffon.fr
-- https://www.rosegriffon.fr/apropos
-- https://www.rosegriffon.fr/association
-- https://www.rosegriffon.fr/contact
-- https://www.rosegriffon.fr/evenements
-- https://www.rosegriffon.fr/llm.txt
-- https://www.rosegriffon.fr/projets/nostalgie
+- https://www.gemini.google.com
+- https://www.gemini.google.com/apropos
+- https://www.gemini.google.com/association
+- https://www.gemini.google.com/contact
+- https://www.gemini.google.com/evenements
+- https://www.gemini.google.com/llm.txt
+- https://www.gemini.google.com/projets/nostalgie

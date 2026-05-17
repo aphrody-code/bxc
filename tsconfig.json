@@ -19,7 +19,10 @@
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false,
 
-		"types": ["bun-types"]
+		"incremental": true,
+		"tsBuildInfoFile": ".tsbuildinfo",
+
+		"types": ["@types/bun"]
 	},
 	"include": ["src/**/*", "test/**/*", "examples/**/*", "benchmarks/**/*", "types/**/*"],
 	"exclude": ["vendor", "node_modules", "../../node_modules", "patches"]

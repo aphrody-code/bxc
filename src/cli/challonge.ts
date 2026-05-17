@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight challonge <url-or-path>` — extract a full typed snapshot
  * of a Challonge tournament page.
  *
@@ -20,7 +36,7 @@
  * Exit codes : 0 OK, 2 misuse, 65 upstream / IO error, 70 software error.
  */
 
-import { isAbsolute, resolve as resolvePath } from "path";
+import { isAbsolute, resolve as resolvePath } from "node:path";
 import { Browser } from "../api/browser.ts";
 import {
 	type ChallongeTournamentSnapshot,
@@ -37,7 +53,7 @@ interface CliOptions {
 }
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight challonge — extract a typed Challonge tournament snapshot
 
 Usage:
@@ -97,7 +113,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		}
 	}
 	if (positional.length < 1) {
-		process.stderr.write("bunlight challonge: requires <url-or-path>\n");
+		Bun.stderr.write("bunlight challonge: requires <url-or-path>\n");
 		return null;
 	}
 	opts.target = positional[0];
@@ -195,10 +211,10 @@ export async function main(argv: readonly string[]): Promise<void> {
 		if (opts.summary) {
 			printSummary(snap);
 		} else {
-			process.stdout.write(JSON.stringify(snap, null, opts.pretty ? 2 : 0) + "\n");
+			Bun.stdout.write(JSON.stringify(snap, null, opts.pretty ? 2 : 0) + "\n");
 		}
 	} catch (err) {
-		process.stderr.write(
+		Bun.stderr.write(
 			`bunlight challonge: ${err instanceof Error ? err.message : String(err)}\n`,
 		);
 		process.exit(65);

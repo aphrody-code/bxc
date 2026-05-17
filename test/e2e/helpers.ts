@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module test/e2e/helpers
  *
  * Shared helpers for the rosegriffon and azalee full-crawl E2E suites.
@@ -49,7 +65,7 @@ export interface ReportInput {
 // without importing the modules (keep helpers cheap, avoid double init).
 // ---------------------------------------------------------------------------
 
-const HOME = process.env.HOME ?? "";
+const HOME = Bun.env.HOME ?? "";
 
 async function fileExists(path: string): Promise<boolean> {
 	try {
@@ -75,18 +91,18 @@ async function anyExists(candidates: readonly string[]): Promise<string | null> 
  */
 export async function resolveLightpandaBin(): Promise<string | null> {
 	const candidates = [
-		process.env.BUNLIGHT_LIGHTPANDA_BIN,
-		process.env.BUNLIGHT_LIGHTPANDA_PATH,
-		"/home/ubuntu/vps/packages/bunlight/vendor/lightpanda-bin/linux-x64/lightpanda",
+		Bun.env.BUNLIGHT_LIGHTPANDA_BIN,
+		Bun.env.BUNLIGHT_LIGHTPANDA_PATH,
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/lightpanda-bin/linux-x64/lightpanda",
 		`${HOME}/.cache/lightpanda-node/lightpanda`,
 		`${HOME}/.local/bin/lightpanda`,
 		`${HOME}/lightpanda`,
 		"/usr/local/bin/lightpanda",
 	].filter(Boolean) as string[];
 	const found = await anyExists(candidates);
-	if (found && !process.env.BUNLIGHT_LIGHTPANDA_BIN) {
-		process.env.BUNLIGHT_LIGHTPANDA_BIN = found;
-		process.env.BUNLIGHT_LIGHTPANDA_PATH = found;
+	if (found && !Bun.env.BUNLIGHT_LIGHTPANDA_BIN) {
+		Bun.env.BUNLIGHT_LIGHTPANDA_BIN = found;
+		Bun.env.BUNLIGHT_LIGHTPANDA_PATH = found;
 	}
 	return found;
 }
@@ -106,7 +122,7 @@ async function chromiumAvailable(): Promise<boolean> {
 	// A bare `/usr/local/bin/chromium` is not enough — patchright drives only
 	// the playwright-managed binary. So we ONLY look in the ms-playwright cache.
 	const playwrightCacheDir = `${HOME}/.cache/ms-playwright`;
-	const cacheCandidates: string[] = [process.env.PLAYWRIGHT_CHROMIUM_PATH ?? ""].filter(Boolean);
+	const cacheCandidates: string[] = [Bun.env.PLAYWRIGHT_CHROMIUM_PATH ?? ""].filter(Boolean);
 
 	// Glob-scan the cache for any installed chromium bundle.
 	try {
@@ -152,20 +168,21 @@ async function camoufoxAvailable(): Promise<boolean> {
 // otherwise the API will throw on first newPage call and we surface it as fail.
 async function curlImpersonateAvailable(): Promise<boolean> {
 	const candidates = [
-		process.env.BUNLIGHT_CURL_IMPERSONATE_LIB,
-		"/home/ubuntu/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
-		"/home/ubuntu/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so.4",
-		"/home/ubuntu/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so",
-		"/home/ubuntu/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate-chrome.so.4.8.0",
-		"/home/ubuntu/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate-chrome.so",
+		Bun.env.BUNLIGHT_CURL_IMPERSONATE_LIB,
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so.4",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate-chrome.so.4.8.0",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate-chrome.so",
 	].filter(Boolean) as string[];
 	return (await anyExists(candidates)) !== null;
 }
 
 async function zigqueryAvailable(): Promise<boolean> {
+	const root = new URL("../../", import.meta.url).pathname;
 	const candidates = [
-		process.env.BUNLIGHT_ZIGQUERY_LIB,
-		"/home/ubuntu/vps/packages/bunlight/vendor/zigquery-wrapper/zig-out/lib/liblightpanda_dom.so",
+		Bun.env.BUNLIGHT_ZIGQUERY_LIB,
+		`${root}vendor/zigquery-wrapper/zig-out/lib/liblightpanda_dom.so`,
 	].filter(Boolean) as string[];
 	return (await anyExists(candidates)) !== null;
 }

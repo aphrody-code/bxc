@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * measure-coldstart.ts — Cold start measurement for `bunlight serve`.
  *
  * Spawns the server in a child process and measures the wall-clock time from
@@ -18,7 +34,7 @@
  *   COLDSTART_PROFILES         Comma-separated profiles (default static,fast)
  */
 
-import { join } from "path";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -45,14 +61,14 @@ function argValue(flag: string, fallback: string): string {
 }
 
 const runs = Number.parseInt(
-	argValue("--runs", String(process.env.COLDSTART_RUNS ?? DEFAULT_RUNS)),
+	argValue("--runs", String(Bun.env.COLDSTART_RUNS ?? DEFAULT_RUNS)),
 	10,
 );
 const timeoutMs = Number.parseInt(
-	argValue("--timeout-ms", String(process.env.COLDSTART_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS)),
+	argValue("--timeout-ms", String(Bun.env.COLDSTART_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS)),
 	10,
 );
-const rawProfiles = argValue("--profiles", process.env.COLDSTART_PROFILES ?? "static,fast");
+const rawProfiles = argValue("--profiles", Bun.env.COLDSTART_PROFILES ?? "static,fast");
 const profiles = rawProfiles.split(",").map((p) => p.trim()) as Profile[];
 
 // ---------------------------------------------------------------------------
@@ -122,7 +138,7 @@ async function measure(profile: Profile): Promise<Sample> {
 			stdin: "ignore",
 			stdout: "ignore",
 			stderr: "ignore",
-			env: { ...process.env, BUNLIGHT_SKIP_WARMUP: "1" },
+			env: { ...Bun.env, BUNLIGHT_SKIP_WARMUP: "1" },
 		},
 	);
 
@@ -180,7 +196,7 @@ interface ProfileResult {
 }
 
 async function runProfile(profile: Profile): Promise<ProfileResult> {
-	process.stderr.write(`[measure-coldstart] profile=${profile} runs=${runs}\n`);
+	Bun.stderr.write(`[measure-coldstart] profile=${profile} runs=${runs}\n`);
 
 	const samples: number[] = [];
 	let timeouts = 0;
@@ -189,10 +205,10 @@ async function runProfile(profile: Profile): Promise<ProfileResult> {
 		const s = await measure(profile);
 		if (s.timedOut) {
 			timeouts++;
-			process.stderr.write(`  run ${i + 1}/${runs}: TIMEOUT\n`);
+			Bun.stderr.write(`  run ${i + 1}/${runs}: TIMEOUT\n`);
 		} else {
 			samples.push(s.elapsedMs);
-			process.stderr.write(`  run ${i + 1}/${runs}: ${s.elapsedMs.toFixed(1)} ms\n`);
+			Bun.stderr.write(`  run ${i + 1}/${runs}: ${s.elapsedMs.toFixed(1)} ms\n`);
 		}
 		// Brief cooldown between runs to avoid port reuse races.
 		await new Promise((r) => setTimeout(r, 80));
@@ -221,7 +237,7 @@ function printTable(results: ProfileResult[]): void {
 	const header = cols.map((c, i) => pad(c, widths[i])).join("  ");
 	const sep = widths.map((w) => "-".repeat(w)).join("  ");
 
-	process.stdout.write("\n" + header + "\n" + sep + "\n");
+	Bun.stdout.write("\n" + header + "\n" + sep + "\n");
 
 	for (const r of results) {
 		const target = targets[r.profile];
@@ -237,9 +253,9 @@ function printTable(results: ProfileResult[]): void {
 			pad(String(r.timeouts), widths[6]),
 			pad(`${targetStr} ${p50Pass}`.trim(), widths[7]),
 		].join("  ");
-		process.stdout.write(row + "\n");
+		Bun.stdout.write(row + "\n");
 	}
-	process.stdout.write("\n");
+	Bun.stdout.write("\n");
 }
 
 const results: ProfileResult[] = [];
@@ -247,7 +263,7 @@ const results: ProfileResult[] = [];
 for (const profile of profiles) {
 	// Skip profiles that require external binaries unless they are present.
 	if (profile === "stealth" || profile === "max") {
-		process.stderr.write(
+		Bun.stderr.write(
 			`[measure-coldstart] skipping profile=${profile} (requires patchright/camoufox)\n`,
 		);
 		continue;
@@ -256,7 +272,7 @@ for (const profile of profiles) {
 		const r = await runProfile(profile);
 		results.push(r);
 	} catch (err) {
-		process.stderr.write(`[measure-coldstart] profile=${profile} error: ${String(err)}\n`);
+		Bun.stderr.write(`[measure-coldstart] profile=${profile} error: ${String(err)}\n`);
 	}
 }
 
@@ -270,13 +286,13 @@ if (results.length > 0) {
 		return t !== undefined && r.p50 >= t;
 	});
 	if (failures.length > 0) {
-		process.stderr.write(
+		Bun.stderr.write(
 			`[measure-coldstart] FAILED: profiles with p50 above target: ${failures.map((f) => f.profile).join(", ")}\n`,
 		);
-		Bun.exit(1);
+		process.exit(1);
 	} else {
-		process.stderr.write("[measure-coldstart] All measured profiles within target.\n");
+		Bun.stderr.write("[measure-coldstart] All measured profiles within target.\n");
 	}
 } else {
-	process.stderr.write("[measure-coldstart] No profiles measured.\n");
+	Bun.stderr.write("[measure-coldstart] No profiles measured.\n");
 }

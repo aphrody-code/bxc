@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/captcha/capsolver
  *
  * CapSolver API wrapper — supports Turnstile, reCAPTCHA v2/v3, hCaptcha.
@@ -157,7 +173,7 @@ async function postJson<TReq, TRes>(url: string, body: TReq): Promise<TRes> {
  * ```
  */
 export async function solve(opts: CapSolverTaskOptions): Promise<CapSolverResult> {
-	const apiKey = opts.apiKey ?? process.env.CAPSOLVER_API_KEY ?? "";
+	const apiKey = opts.apiKey ?? Bun.env.CAPSOLVER_API_KEY ?? "";
 
 	if (!apiKey) {
 		console.warn(
@@ -205,7 +221,7 @@ export async function solve(opts: CapSolverTaskOptions): Promise<CapSolverResult
 	const getBody: CapSolverGetResultBody = { clientKey: apiKey, taskId };
 
 	for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
-		await new Promise<void>((r) => setTimeout(r, POLL_INTERVAL_MS));
+		await Bun.sleep(POLL_INTERVAL_MS);
 
 		const result = await postJson<CapSolverGetResultBody, CapSolverGetResultResponse>(
 			`${CAPSOLVER_BASE_URL}/getTaskResult`,
@@ -320,7 +336,7 @@ export function solveHCaptcha(
 
 /** Returns the remaining CapSolver account balance in USD. */
 export async function getBalance(apiKey?: string): Promise<number> {
-	const key = apiKey ?? process.env.CAPSOLVER_API_KEY ?? "";
+	const key = apiKey ?? Bun.env.CAPSOLVER_API_KEY ?? "";
 	if (!key) return 0;
 
 	const resp = await postJson<{ clientKey: string }, { balance?: number; errorId: number }>(

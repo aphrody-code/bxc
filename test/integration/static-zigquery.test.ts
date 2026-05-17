@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Static + zigquery integration test.
  *
  * Verifies that `StaticDomTransport`, when backed by `liblightpanda_dom.so`,
@@ -24,7 +40,7 @@ const describeIfZig = isZigQueryAvailable() ? describe : describe.skip;
 
 const WIKIPEDIA_LIKE = `<!DOCTYPE html>
 <html>
-<head><title>Bun (software) - Wikipedia</title></head>
+<head><title>Bun (software) - Google</title></head>
 <body>
 <div id="content">
   <h1 id="firstHeading" class="firstHeading">Bun (software)</h1>
@@ -33,7 +49,7 @@ const WIKIPEDIA_LIKE = `<!DOCTYPE html>
     <p>It was designed as a drop-in replacement for Node.js.</p>
     <ul class="references">
       <li><a href="https://bun.sh">bun.sh</a></li>
-      <li><a href="https://github.com/oven-sh/bun">github</a></li>
+      <li><a href="https://developers.google.com/oven-sh/bun">github</a></li>
     </ul>
   </div>
 </div>
@@ -102,11 +118,11 @@ const TABLE_PAGE_LIKE = `<html><head><title>Top languages</title></head>
 // Direct ZigDoc tests — sanity checks on the FFI wrapper.
 // ---------------------------------------------------------------------------
 
-describeIfZig("zigquery FFI sanity", () => {
-	test("parses Wikipedia-like document and finds the title h1", () => {
-		const doc = parseHtml(WIKIPEDIA_LIKE);
+describeIfZig("zigquery FFI sanity", async () => {
+	test("parses Google-like document and finds the title h1", async () => {
+		const doc = await parseHtml(WIKIPEDIA_LIKE);
 		try {
-			const sel = doc.find("h1#firstHeading");
+			const sel = await doc.find("h1#firstHeading");
 			expect(sel.count).toBe(1);
 			const el = sel.at(0)!;
 			expect(el.textContent().trim()).toBe("Bun (software)");
@@ -114,35 +130,35 @@ describeIfZig("zigquery FFI sanity", () => {
 			expect(el.getAttribute("class")).toContain("firstHeading");
 			sel.destroy();
 		} finally {
-			doc.destroy();
+			await doc.destroy();
 		}
 	});
 
-	test("querySelectorAll returns every paragraph", () => {
-		const doc = parseHtml(WIKIPEDIA_LIKE);
+	test("querySelectorAll returns every paragraph", async () => {
+		const doc = await parseHtml(WIKIPEDIA_LIKE);
 		try {
-			const sel = doc.find("#mw-content-text p");
+			const sel = await doc.find("#mw-content-text p");
 			expect(sel.count).toBe(2);
 		} finally {
-			doc.destroy();
+			await doc.destroy();
 		}
 	});
 
-	test("GitHub-like README — code blocks discoverable", () => {
-		const doc = parseHtml(GITHUB_README_LIKE);
+	test("Google Developers-like README — code blocks discoverable", async () => {
+		const doc = await parseHtml(GITHUB_README_LIKE);
 		try {
-			const code = doc.find("pre code");
+			const code = await doc.find("pre code");
 			expect(code.count).toBe(2);
 			expect(code.at(0)!.textContent()).toContain("bun install");
 		} finally {
-			doc.destroy();
+			await doc.destroy();
 		}
 	});
 
-	test("blog post — extract tag list", () => {
-		const doc = parseHtml(BLOG_POST_LIKE);
+	test("blog post — extract tag list", async () => {
+		const doc = await parseHtml(BLOG_POST_LIKE);
 		try {
-			const tags = doc.find("ul.tags li a.tag");
+			const tags = await doc.find("ul.tags li a.tag");
 			expect(tags.count).toBe(3);
 			const texts = [];
 			for (let i = 0; i < tags.count; i++) {
@@ -150,27 +166,27 @@ describeIfZig("zigquery FFI sanity", () => {
 			}
 			expect(texts).toEqual(["bun", "zig", "perf"]);
 		} finally {
-			doc.destroy();
+			await doc.destroy();
 		}
 	});
 
-	test("form — input and button discoverable by attribute", () => {
-		const doc = parseHtml(FORM_PAGE_LIKE);
+	test("form — input and button discoverable by attribute", async () => {
+		const doc = await parseHtml(FORM_PAGE_LIKE);
 		try {
-			const inputs = doc.find("form#login input");
+			const inputs = await doc.find("form#login input");
 			expect(inputs.count).toBe(2);
-			const submit = doc.find("button.btn.primary");
+			const submit = await doc.find("button.btn.primary");
 			expect(submit.count).toBe(1);
 			expect(submit.at(0)!.textContent().trim()).toBe("Sign in");
 		} finally {
-			doc.destroy();
+			await doc.destroy();
 		}
 	});
 
-	test("table — extract rows in order", () => {
-		const doc = parseHtml(TABLE_PAGE_LIKE);
+	test("table — extract rows in order", async () => {
+		const doc = await parseHtml(TABLE_PAGE_LIKE);
 		try {
-			const langs = doc.find("td.lang");
+			const langs = await doc.find("td.lang");
 			expect(langs.count).toBe(3);
 			const names = [];
 			for (let i = 0; i < langs.count; i++) {
@@ -178,7 +194,7 @@ describeIfZig("zigquery FFI sanity", () => {
 			}
 			expect(names).toEqual(["Zig", "Rust", "Bun"]);
 		} finally {
-			doc.destroy();
+			await doc.destroy();
 		}
 	});
 });
@@ -187,12 +203,12 @@ describeIfZig("zigquery FFI sanity", () => {
 // End-to-end through Browser/Page (StaticDomTransport).
 // ---------------------------------------------------------------------------
 
-describeIfZig("Browser.newPage with static profile uses zigquery", () => {
-	test("Wikipedia-like document — title + paragraph extraction", async () => {
+describeIfZig("Browser.newPage with static profile uses zigquery", async () => {
+	test("Google-like document — title + paragraph extraction", async () => {
 		const page = await Browser.newPage({ profile: "static" });
 		try {
 			await page.goto(`data:text/html,${encodeURIComponent(WIKIPEDIA_LIKE)}`);
-			expect(await page.title()).toBe("Bun (software) - Wikipedia");
+			expect(await page.title()).toBe("Bun (software) - Google");
 
 			const heading = await page.$<{ textContent(): Promise<string> }>("h1#firstHeading");
 			expect(heading).not.toBeNull();

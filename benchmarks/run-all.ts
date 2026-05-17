@@ -20,7 +20,7 @@
 
 import type { BenchmarkReport, ScenarioResult } from "./types.ts";
 import { rssNow } from "./types.ts";
-import { join } from "path";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Environment & CLI
@@ -241,7 +241,7 @@ async function main(): Promise<void> {
 
 	for (const scenarioName of SCENARIOS_TO_RUN) {
 		console.log(`\n=== Running scenario: ${scenarioName} ===`);
-		const t0 = performance.now();
+		const t0 = Bun.nanoseconds() / 1e6;
 
 		try {
 			let results: ScenarioResult[] = [];
@@ -264,7 +264,7 @@ async function main(): Promise<void> {
 			}
 
 			allResults.push(...results);
-			console.log(`Scenario ${scenarioName} done in ${Math.round(performance.now() - t0)}ms`);
+			console.log(`Scenario ${scenarioName} done in ${Math.round(Bun.nanoseconds() / 1e6 - t0)}ms`);
 		} catch (err) {
 			console.error(`Scenario ${scenarioName} failed:`, err);
 		}

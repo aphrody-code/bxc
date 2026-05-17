@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/plugin/tailwind-plugin
  *
  * Bun plugin that compiles Tailwind CSS (v3 + v4) at build time.
@@ -17,12 +33,12 @@
  *      stderr warning — better than failing the entire build.
  *
  * Reference:
- *   https://github.com/tailwindlabs/tailwindcss
+ *   https://developers.google.com/tailwindlabs/tailwindcss
  *   https://tailwindcss.com/docs/installation/using-postcss
  *   https://bun.com/docs/runtime/plugins
  */
 
-import { dirname, resolve as resolvePath } from "path";
+import { dirname, resolve as resolvePath } from "node:path";
 import type { BunPlugin } from "bun";
 
 // ---------------------------------------------------------------------------
@@ -209,7 +225,7 @@ export function tailwindPlugin(options: TailwindPluginOptions = {}): BunPlugin {
 					cliCache = await resolveCli(options, cwd);
 					cliResolved = true;
 					if (!cliCache) {
-						process.stderr.write(
+						Bun.stderr.write(
 							`tailwind-plugin: tailwindcss CLI not found (tried ${[
 								"binaryPath",
 								`${cwd}/node_modules/.bin/tailwindcss`,
@@ -228,7 +244,7 @@ export function tailwindPlugin(options: TailwindPluginOptions = {}): BunPlugin {
 					const compiled = await compileTailwind(css, cliCache, options, cwd);
 					return { contents: compiled, loader: "css" };
 				} catch (err) {
-					process.stderr.write(
+					Bun.stderr.write(
 						`tailwind-plugin: compile failed for ${args.path} — ${err instanceof Error ? err.message : String(err)}\n`,
 					);
 					return { contents: css, loader: "css" };

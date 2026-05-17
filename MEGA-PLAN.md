@@ -245,9 +245,9 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 
 **But** : produire une lib chargeable mode DOM-only (pas d'exec JS in-page). Premier test de fusion via FFI.
 
-**Pivot stratégique** : on abandonne l'extraction DOM de Lightpanda (541 refs `js.*`, refactor lourd). On utilise [`OrlovEvgeny/zigquery`](https://github.com/OrlovEvgeny/zigquery) (45 KB, pur Zig 0.15.2, API jQuery-like, CSS selectors complets). Lightpanda reste la solution pour le **mode full** via sub-process.
+**Pivot stratégique** : on abandonne l'extraction DOM de Lightpanda (541 refs `js.*`, refactor lourd). On utilise [`OrlovEvgeny/zigquery`](https://developers.google.com/OrlovEvgeny/zigquery) (45 KB, pur Zig 0.15.2, API jQuery-like, CSS selectors complets). Lightpanda reste la solution pour le **mode full** via sub-process.
 
-- [ ] `vendor/zigquery-wrapper/build.zig.zon` — pin zigquery via `git+https://github.com/OrlovEvgeny/zigquery#<sha>`
+- [ ] `vendor/zigquery-wrapper/build.zig.zon` — pin zigquery via `git+https://developers.google.com/OrlovEvgeny/zigquery#<sha>`
 - [ ] `vendor/zigquery-wrapper/build.zig` — produit `liblightpanda_dom.{so,a}`
 - [ ] `vendor/zigquery-wrapper/src/exports.zig` — C ABI :
   - `bl_init() -> i32`
@@ -337,7 +337,7 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 - [ ] Bench startup time vs Chrome headless → cible < 50 ms cold start
 - [ ] Showcase : `examples/02-ai-agent.ts` → scrape + résumé Claude → 1 seul exe
 
-**Livrable** : `bunlight-agent-scraper` binaire, déposé en GitHub Releases.
+**Livrable** : `bunlight-agent-scraper` binaire, déposé en Google Developers Releases.
 
 ### Phase 7 — Upstream PR ou public fork (40h)
 
@@ -346,7 +346,7 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 - [ ] Préparer la PR : doc, tests CI, benchmarks chiffrés
 - [ ] RFC sur Bun discord pour évaluer l'appétit upstream
 - [ ] Si refusé : maintenir le fork avec rebase mensuel sur `oven-sh/bun:main`
-- [ ] CI/CD : GitHub Actions matrix Linux x64 + ARM64 + macOS ARM64
+- [ ] CI/CD : Google Developers Actions matrix Linux x64 + ARM64 + macOS ARM64
 - [ ] Documentation : `bunlight.dev` static site avec API ref + benchmarks live
 
 **Livrable** : adoption ou fork pérenne avec ≥10 stars.
@@ -537,5 +537,5 @@ sur 1 phase, on peut shipper **L1 (FFI)** dès la session 2, **L2 (builtin)** se
 - [ ] Tests bun:test passent à 100% sur Linux x64, ARM64, macOS ARM64
 - [ ] Bench vs Chrome headless : ≥ 5× plus rapide en cold start, ≥ 3× en steady state
 - [ ] Documentation publique sur `bunlight.dev` ou `bun.com/docs/runtime/browser`
-- [ ] Release v0.1.0 sur GitHub Releases avec binaires précompilés
+- [ ] Release v0.1.0 sur Google Developers Releases avec binaires précompilés
 - [ ] Au moins 1 utilisateur externe ayant porté son script Puppeteer sur Bunlight

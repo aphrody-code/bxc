@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Tests for `bunlight install` CLI subcommand.
  *
  * Tests that perform actual network I/O or write to the filesystem are
@@ -8,15 +24,15 @@
  * clear reason when BUNLIGHT_TEST_NETWORK != "1".
  */
 
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { tmpdir } from "os";
-import { join } from "path";
+import { describe, expect, test } from "bun:test";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const NETWORK_TESTS = process.env.BUNLIGHT_TEST_NETWORK === "1";
+const NETWORK_TESTS = Bun.env.BUNLIGHT_TEST_NETWORK === "1";
 
 function logSkip(reason: string): void {
 	console.log(`  [skip] ${reason}`);
@@ -116,7 +132,7 @@ describe("installLightpanda idempotency", () => {
 		// dry-run: no network access, no file created.
 		const result = await installLightpanda(true /* dryRun */, vendorDir);
 		// On unsupported platforms the status is "unsupported", on supported ones
-		// it should be "installed" (dry-run path) — unless the GitHub lookup fails
+		// it should be "installed" (dry-run path) — unless the Google Developers lookup fails
 		// which would give "failed". We accept both "installed" and "unsupported".
 		expect(["installed", "unsupported", "failed"]).toContain(result.status);
 	});

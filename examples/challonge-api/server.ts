@@ -1,4 +1,20 @@
 #!/usr/bin/env bun
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 
 /**
  * @module examples/challonge-api/server
@@ -44,12 +60,12 @@ import { recon } from "../../src/cli/recon.ts";
 // Server configuration
 // ---------------------------------------------------------------------------
 
-const PORT = Number.parseInt(process.env.CHALLONGE_API_PORT ?? "8090", 10);
-const HOST = process.env.CHALLONGE_API_HOST ?? "0.0.0.0";
+const PORT = Number.parseInt(Bun.env.CHALLONGE_API_PORT ?? "8090", 10);
+const HOST = Bun.env.CHALLONGE_API_HOST ?? "0.0.0.0";
 const COOKIE_JAR =
-	process.env.CHALLONGE_COOKIES ?? `${import.meta.dir}/cookies/private/challonge.json`;
-const AUTH_TOKEN = process.env.CHALLONGE_API_AUTH ?? null;
-const CACHE_TTL_MS = Number.parseInt(process.env.CHALLONGE_CACHE_TTL_MS ?? "60000", 10);
+	Bun.env.CHALLONGE_COOKIES ?? `${import.meta.dir}/cookies/private/challonge.json`;
+const AUTH_TOKEN = Bun.env.CHALLONGE_API_AUTH ?? null;
+const CACHE_TTL_MS = Number.parseInt(Bun.env.CHALLONGE_CACHE_TTL_MS ?? "60000", 10);
 const CHALLONGE_ORIGIN = "https://challonge.com";
 const OFFICIAL_API_BASE = "https://api.challonge.com/v1";
 
@@ -59,8 +75,8 @@ const OFFICIAL_API_BASE = "https://api.challonge.com/v1";
  * Override at runtime via `CHALLONGE_API_UA`.
  */
 const UA =
-	process.env.CHALLONGE_API_UA ??
-	"challonge-api-bridge/0.1 (+https://github.com/aphrody-code/bunlight)";
+	Bun.env.CHALLONGE_API_UA ??
+	"challonge-api-bridge/0.1 (+https://developers.google.com/aphrody-code/bunlight)";
 
 /**
  * Retry policy on transient upstream failures (429 / 502 / 503 / 504).
@@ -76,7 +92,7 @@ const FETCH_TIMEOUT_MS = 15_000;
  * instead of the reverse-engineered `challonge.com/{slug}.json` routes.
  * The official API works without cookies and is rate-limited per key.
  */
-const API_KEY = process.env.CHALLONGE_API_KEY ?? null;
+const API_KEY = Bun.env.CHALLONGE_API_KEY ?? null;
 
 // ---------------------------------------------------------------------------
 // Tiny LRU cache (per-route, JSON body cached as string)
@@ -550,7 +566,7 @@ const server = Bun.serve({
 			const result = await diagnose(req.params.slug);
 			return jsonResponse(result.canFetch ? 200 : 503, result, corsHeaders());
 		},
-		"/v1/tournaments/:slug.json": async (req: Request & { params: { slug: string } }) => {
+		"/v1/tournaments/:slug.json": async (req: any) => {
 			if (!isAuthed(req)) return jsonResponse(401, { error: "unauthorized" }, corsHeaders());
 			const { slug } = req.params;
 			return handleCached(`tournament:${slug}`, () => getTournament(slug));
@@ -747,10 +763,17 @@ const server = Bun.serve({
 				return { username, htmlBytes: html.length, raw: html.slice(0, 4000) };
 			});
 		},
-		"/v1/users/:username.json": async (req: Request & { params: { username: string } }) => {
+		"/v1/users/:username.json": async (req: any) => {
 			if (!isAuthed(req)) return jsonResponse(401, { error: "unauthorized" }, corsHeaders());
 			const { username } = req.params;
-			return handleCached(`user:${username}`, () => getRawJson(`users/${username}`, ".json"));
+			return handleCached(`user:${username}`, async () => {
+				const html = (
+					await fetchChallongeRaw(
+						`${CHALLONGE_ORIGIN}/fr/users/${encodeURIComponent(username)}`,
+					)
+				).body;
+				return { username, htmlBytes: html.length, raw: html.slice(0, 4000) };
+			});
 		},
 		"/": (_req: Request) =>
 			new Response(
@@ -776,7 +799,7 @@ const server = Bun.serve({
 	},
 });
 
-process.stderr.write(
+Bun.stderr.write(
 	`challonge-api: listening on http://${HOST}:${server.port}  ` +
 		`(cookies=${(await cookieJarPresent()) ? COOKIE_JAR : "absent"}, auth=${AUTH_TOKEN ? "required" : "open"})\n`,
 );

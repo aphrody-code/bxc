@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/detect
  *
  * Framework / CMS / library / waf detection backed by the
@@ -32,7 +48,7 @@
  * ```
  */
 
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { detectGoogleSpecifics, googleToTech } from "./google/index.ts";
 
 // ---------------------------------------------------------------------------
@@ -87,7 +103,7 @@ const HERE = import.meta.dir;
  *   2. `<repo>/vendor/wappalyzergo/wappalyzergo-cli`.
  */
 export async function resolveBinary(): Promise<string> {
-	const fromEnv = process.env.BUNLIGHT_WAPPALYZERGO_BIN;
+	const fromEnv = Bun.env.BUNLIGHT_WAPPALYZERGO_BIN;
 	if (fromEnv && (await Bun.file(fromEnv).exists())) return fromEnv;
 
 	// `src/detect.ts` lives one level under repo root.

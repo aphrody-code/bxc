@@ -57,14 +57,14 @@ async function runParallelScenario(
 	urls: string[],
 	concurrency: number,
 ): Promise<ScenarioResult> {
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds() / 1e6;
 	const ramBefore = rssNow();
 
 	const tasks = urls.map((url) => () => runFn(url));
 	const allResults = await runConcurrentBatch(tasks, concurrency);
 
 	const peakRam = Math.max(ramBefore, rssNow());
-	const totalMs = Math.round(performance.now() - t0);
+	const totalMs = Math.round(Bun.nanoseconds() / 1e6 - t0);
 	const stats = summarise(allResults);
 
 	return {

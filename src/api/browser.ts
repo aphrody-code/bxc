@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/browser
  *
  * Public high-level API for Bunlight.  Provides a `Browser` singleton and a
@@ -42,11 +58,12 @@ import type { Cookie } from "../cookies/cookie-loader.ts";
 import { loadCookieJar } from "../cookies/cookie-loader.ts";
 import type { ImpersonatedClientOptions } from "../ffi/curl-impersonate.ts";
 import { cdpCall as cdpCallShared } from "../internal/cdp-call.ts";
-import type { SocketPairTransportOptions } from "../transport/SocketPairTransport.js";
+import type { WebSocketTransportOptions } from "../transport/WebSocketTransport.ts";
 import { StaticDomTransport } from "../transport/StaticDomTransport.js";
 import { Locator } from "./Locator.ts";
 import { Frame } from "./Frame.ts";
 import { BrowserContext } from "./BrowserContext.ts";
+import type { AnyPage } from "./types.ts";
 export { Locator, Frame, BrowserContext };
 
 // ---------------------------------------------------------------------------
@@ -59,31 +76,30 @@ export interface PageOptions {
 	 * Execution mode.
 	 *
 	 * - `"static"` (default): in-process, DOM-only, no binary required.
-	 * - `"full"`: spawns a `lightpanda` sub-process and connects via CDP
-	 *   WebSocket.  Equivalent to `profile: "fast"`.
+	 * - `"full"`: spawns the engine and connects via CDP WebSocket.
 	 */
 	mode?: "static" | "full";
+	/**
+	 * Headless override:
+	 * - Default on Linux: `true` (Headless Dominance).
+	 * - Default on Windows: `false` (Native Power - UI/GPU active).
+	 */
+	headless?: boolean;
 	/**
 	 * Bunlight profile name.  When set, takes precedence over `mode`.
 	 *
 	 * - `"static"` -> in-process StaticDomTransport
-	 * - `"fast"`   -> SocketPairTransport spawning Lightpanda
+	 * - `"fast"` / `"stealth"` / `"max"` -> WebSocketTransport spawning Chrome/bunlight-engine
 	 * - `"http"`   -> ImpersonatedClient (curl-impersonate) — TLS-fingerprinted
 	 *                 HTTP only; no DOM, no JS execution, no binary required.
-	 *                 Use `httpOpts` to configure the impersonation profile.
-	 *
-	 * Forbidden by design : Chrome / Chromium / Firefox / Edge / Safari and any
-	 * derivative (patchright, puppeteer, Playwright Chromium, Camoufox FF).
-	 * For server-grade anti-detection use the Lightpanda-backed `ghost`
-	 * profile in `src/profiles/ghost/` (profile=fast + CDP stealth injects).
 	 */
-	profile?: "static" | "fast" | "http";
+	profile?: "static" | "fast" | "http" | "stealth" | "max";
 	/** Viewport dimensions (informational in static mode, forwarded in full mode). */
 	viewport?: { width: number; height: number };
 	/** User-agent override (forwarded as fetch header in static mode). */
 	userAgent?: string;
-	/** Options forwarded to `SocketPairTransport` in full mode. */
-	spawnOpts?: SocketPairTransportOptions;
+	/** Options forwarded to `WebSocketTransport` in full mode. */
+	spawnOpts?: WebSocketTransportOptions;
 	/**
 	 * Options for the `"http"` profile (curl-impersonate).
 	 * `profile` defaults to `"chrome131"`, `timeoutMs` to `30_000`.
@@ -202,6 +218,25 @@ export interface ScreenshotOptions {
 	fullPage?: boolean;
 }
 
+/** Options for PDF generation (lightpanda-bin/chrome only). */
+export interface PDFOptions {
+	path?: string;
+	scale?: number;
+	displayHeaderFooter?: boolean;
+	headerTemplate?: string;
+	footerTemplate?: string;
+	printBackground?: boolean;
+	landscape?: boolean;
+	pageRanges?: string;
+	format?: string;
+	width?: string | number;
+	height?: string | number;
+	margin?: { top?: string | number; right?: string | number; bottom?: string | number; left?: string | number };
+	preferCSSPageSize?: boolean;
+	omitBackground?: boolean;
+	timeout?: number;
+}
+
 /** Minimal HTTP-response-like object returned by `Page.goto()`. */
 export interface NavigationResponse {
 	/** Final URL after redirects. */
@@ -238,7 +273,7 @@ interface CDPMessage {
  * Methods that require a JS engine in static mode return sensible stubs or
  * throw a descriptive error.
  */
-export class Page implements AsyncDisposable {
+export class Page implements AnyPage {
 	readonly #transport: ConnectionTransport;
 	readonly #sessionId: string;
 	readonly #targetId: string;
@@ -402,15 +437,16 @@ export class Page implements AsyncDisposable {
 		this._traceRecorder?.recordAction({ type: "goto", target: url });
 		const result = (await this._send("Page.navigate", { url })) as {
 			frameId: string;
+			status?: number;
 		};
 		void result;
 		this.#url = url;
-		// In static mode the transport resolves to the final URL — approximate here
+		// In static mode the transport resolves to the final URL
 		return {
 			url,
-			status: url.startsWith("data:") || url === "about:blank" ? 0 : 200,
-			statusText: "OK",
-			ok: true,
+			status: result.status ?? (url.startsWith("data:") || url === "about:blank" ? 0 : 200),
+			statusText: result.status === 200 ? "OK" : "Error",
+			ok: result.status ? result.status >= 200 && result.status < 300 : true,
 		};
 	}
 
@@ -459,7 +495,7 @@ export class Page implements AsyncDisposable {
 			const { Frame } = require("./Frame.ts");
 			this.#mainFrame = new Frame(this, "");
 		}
-		return this.#mainFrame;
+		return this.#mainFrame!;
 	}
 
 	frames(): Frame[] {
@@ -596,20 +632,25 @@ export class Page implements AsyncDisposable {
 	 * Evaluates `fn` in the page context.  In static mode only trivial
 	 * expressions are supported; for real JS execution use `mode: "full"`.
 	 */
-	async evaluate<T>(fn: () => T): Promise<T> {
+	async evaluate<T, R = unknown>(fn: (arg: R) => T, arg?: R): Promise<T> {
 		this.#assertOpen();
 		const expression = fn.toString();
 		const { result } = (await this._send("Runtime.evaluate", {
-			expression: `(${expression})()`,
+			expression: `(${expression})(${arg !== undefined ? JSON.stringify(arg) : ""})`,
 			returnByValue: true,
 		})) as { result: { value?: unknown } };
 		return result.value as T;
 	}
 
+	async pdf(_options?: PDFOptions): Promise<Uint8Array> {
+		this.#assertOpen();
+		throw new Error("Page.pdf() is not fully implemented in static profile. Use fast profile for PDF.");
+	}
+
 	/**
 	 * Returns the first element matching `selector`, or `null`.
 	 */
-	async $<E = Element>(sel: string): Promise<E | null> {
+	async $<E = unknown>(sel: string): Promise<E | null> {
 		this.#assertOpen();
 		const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
 			root: { nodeId: number };
@@ -626,7 +667,7 @@ export class Page implements AsyncDisposable {
 	/**
 	 * Returns all elements matching `selector`.
 	 */
-	async $$<E = Element>(sel: string): Promise<E[]> {
+	async $$<E = unknown>(sel: string): Promise<E[]> {
 		this.#assertOpen();
 		const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
 			root: { nodeId: number };
@@ -798,7 +839,7 @@ export class Page implements AsyncDisposable {
 			try {
 				const handle = await this.$(sel);
 				if (handle) return;
-			} catch (err) {
+			} catch {
 				// Ignore errors like "Cannot find context with specified id" during navigation
 			}
 			await Bun.sleep(100);
@@ -1050,7 +1091,7 @@ function globToRegExp(glob: string): RegExp {
  * client.close();
  * ```
  */
-export class HttpPage implements AsyncDisposable {
+export class HttpPage implements AnyPage {
 	readonly #client: import("../ffi/curl-impersonate.ts").ImpersonatedClient;
 	readonly #cookies: Cookie[];
 	readonly #userAgent?: string;
@@ -1087,9 +1128,9 @@ export class HttpPage implements AsyncDisposable {
 	async upgradeProfile(
 		newProfile: string,
 		options?: PageOptions,
-	): Promise<import("./types.ts").AnyPage> {
+	): Promise<AnyPage> {
 		this.#assertOpen();
-		let newPage: import("./types.ts").AnyPage;
+		let newPage: AnyPage;
 		if (this.#context) {
 			newPage = await this.#context.newPage({
 				...options,
@@ -1157,25 +1198,61 @@ export class HttpPage implements AsyncDisposable {
 		return this.#url;
 	}
 
+	async setContent(_html: string, _opts?: GotoOptions): Promise<void> {
+		throw new Error('HttpPage does not support setContent()');
+	}
+
+	async addCookies(_cookies: any[]): Promise<void> {}
+
+	locator(selector: string): Locator {
+		const { Locator } = require("./Locator.ts");
+		return new Locator(this as any, selector);
+	}
+
+	mainFrame(): Frame {
+		const { Frame } = require("./Frame.ts");
+		return new Frame(this as any, "");
+	}
+
+	frames(): Frame[] {
+		return [this.mainFrame()];
+	}
+
 	/** Not supported in `http` profile — throws `Error`. */
-	async evaluate<T>(_fn: () => T): Promise<T> {
+	async evaluate<T, R = unknown>(_fn: (arg: R) => T, _arg?: R): Promise<T> {
 		throw new Error(
 			'HttpPage does not support evaluate() — use profile "static" or "fast" for JS execution',
 		);
 	}
 
 	/** Not supported in `http` profile — returns `null`. */
-	async $<E = Element>(_sel: string): Promise<E | null> {
+	async $<E = unknown>(_sel: string): Promise<E | null> {
 		throw new Error(
 			'HttpPage does not support $() — use profile "static" or "fast" for DOM queries',
 		);
 	}
 
 	/** Not supported in `http` profile — returns `[]`. */
-	async $$<E = Element>(_sel: string): Promise<E[]> {
+	async $$<E = unknown>(_sel: string): Promise<E[]> {
 		throw new Error(
 			'HttpPage does not support $$() — use profile "static" or "fast" for DOM queries',
 		);
+	}
+
+	async screenshot(_options?: ScreenshotOptions): Promise<Uint8Array> {
+		throw new Error('HttpPage does not support screenshot() — use profile "fast"');
+	}
+
+	async pdf(_options?: PDFOptions): Promise<Uint8Array> {
+		throw new Error('HttpPage does not support pdf() — use profile "fast"');
+	}
+
+	async aiExtract(_instruction: string): Promise<{ data: Record<string, string | string[]>; selectors: Record<string, string> }> {
+		throw new Error('HttpPage does not support aiExtract()');
+	}
+
+	async aiAct(_instruction: string): Promise<void> {
+		throw new Error('HttpPage does not support aiAct()');
 	}
 
 	/**
@@ -1316,7 +1393,7 @@ class BrowserSingleton {
 	async newPage(
 		opts: PageOptions = {},
 		context: BrowserContext | null = null,
-	): Promise<Page | HttpPage> {
+	): Promise<AnyPage> {
 		const profile = opts.profile ?? (opts.mode === "full" ? "fast" : "static");
 
 		// Resolve cookies once up-front so all profiles share the same input.
@@ -1332,18 +1409,16 @@ class BrowserSingleton {
 			return page;
 		}
 
-		if (profile === "fast") {
-			// Lazily import to avoid loading Bun.spawn-dependent code in static-only
-			// environments (e.g., edge runtimes).
-			const { SocketPairTransport } = await import(
-				"../transport/SocketPairTransport.js"
+		if (profile === "fast" || profile === "stealth" || profile === "max") {
+			const { WebSocketTransport } = await import(
+				"../transport/WebSocketTransport.ts"
 			);
-			const fullTransport = await SocketPairTransport.create(opts.spawnOpts);
-			// Each fast-mode page gets its own sub-process (Lightpanda CDP is
-			// 1-connection / 1-context / 1-page per process).
+			const fullTransport = await WebSocketTransport.create({
+				headless: opts.headless,
+			});
 			const page = await Page.create(fullTransport, opts, context);
 			this.#pages.push(page);
-			this.#fastTransports.set(page, fullTransport);
+			this.#fastTransports.set(page, fullTransport as any);
 
 			if (cookies.length > 0) {
 				await injectCookies(
@@ -1353,15 +1428,14 @@ class BrowserSingleton {
 				).catch(() => undefined);
 			}
 
-			// Wrap close() so the sub-process is torn down with the page.
 			const originalClose = page.close.bind(page);
 			(page as unknown as { close: () => Promise<void> }).close = async () => {
 				try {
 					await originalClose();
 				} finally {
-					const transport = this.#fastTransports.get(page);
+					const transport = this.#fastTransports.get(page) as any;
 					this.#fastTransports.delete(page);
-					if (transport) {
+					if (transport && typeof transport.closeProcess === 'function') {
 						await transport.closeProcess().catch(() => undefined);
 					}
 				}
@@ -1474,13 +1548,13 @@ export const Browser: {
 	newPage(
 		opts?: PageOptions,
 		context?: BrowserContext | null,
-	): Promise<Page | HttpPage>;
+	): Promise<AnyPage>;
 	/**
 	 * Creates a new browser context. Contexts provide isolation between pages.
 	 */
 	newContext(): Promise<BrowserContext>;
 	/** Returns all CDP-backed pages managed by this browser instance. */
-	pages(): Page[];
+	pages(): AnyPage[];
 	/** Returns the Bunlight version string. */
 	version(): string;
 	/** Closes all pages and disposes the underlying transport. */

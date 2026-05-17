@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Page domain handler.
  *
  * Handles all Page.* methods used by agent-browser, with static-profile
@@ -50,12 +66,24 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 		// ------------------------------------------------------------------
 		case "Page.enable":
 		case "Page.setLifecycleEventsEnabled":
-		case "Page.createIsolatedWorld":
 		case "Page.setBypassCSP":
 		case "Page.setCacheEnabled":
 		case "Page.bringToFront":
 		case "Page.resetNavigationHistory":
 			return {};
+
+		// ------------------------------------------------------------------
+		// Page.createIsolatedWorld
+		// ------------------------------------------------------------------
+		case "Page.createIsolatedWorld": {
+			const { worldName } = params as { worldName?: string };
+			const page = ctx.pageBySession(sessionId);
+			if (worldName) {
+				page.utilityWorldName = worldName;
+			}
+			// In static mode, isolated world ID is always loaderCounter * 2 + 2
+			return { executionContextId: page.loaderCounter * 2 + 2 };
+		}
 
 		// ------------------------------------------------------------------
 		// Page.addScriptToEvaluateOnNewDocument
@@ -64,8 +92,11 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 		// In static mode the scripts are stored but never executed (no JS engine).
 		// ------------------------------------------------------------------
 		case "Page.addScriptToEvaluateOnNewDocument": {
-			const { source } = params as { source: string };
+			const { source, worldName } = params as { source: string; worldName?: string };
 			const page = ctx.pageBySession(sessionId);
+			if (worldName) {
+				page.utilityWorldName = worldName;
+			}
 			const identifier = nextScriptId();
 			page.scripts.set(identifier, { identifier, source });
 			return { identifier };
@@ -178,7 +209,7 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			// Emit execution contexts so Puppeteer can bind evaluate calls.
 			ctx.emitExecutionContexts(page);
 
-			return { frameId: page.frameId, loaderId };
+			return { frameId: page.frameId, loaderId, status: page.lastStatus };
 		}
 
 		// ------------------------------------------------------------------

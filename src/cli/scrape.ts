@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight scrape <url> <css-selector>` — extract textContent of matched elements.
  *
  * Output contract:
@@ -20,7 +36,7 @@ interface ScrapeOptions {
 }
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight scrape — extract textContent of CSS-selected elements
 
 Usage:
@@ -33,8 +49,8 @@ Options:
   --help, -h         this help
 
 Examples:
-  bunlight scrape https://news.ycombinator.com "td.title > span.titleline > a"
-  bunlight scrape https://example.com h1 --profile fast
+  bunlight scrape https://google.com "td.title > span.titleline > a"
+  bunlight scrape https://google.com h1 --profile fast
 
 Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
 `,
@@ -56,7 +72,7 @@ function parseArgs(argv: readonly string[]): ScrapeOptions | null {
 			case "--profile": {
 				const v = argv[++i];
 				if (v !== "static" && v !== "fast" && v !== "http") {
-					process.stderr.write(`Invalid profile: ${v}\n`);
+					Bun.stderr.write(`Invalid profile: ${v}\n`);
 					return null;
 				}
 				opts.profile = v;
@@ -76,7 +92,7 @@ function parseArgs(argv: readonly string[]): ScrapeOptions | null {
 		}
 	}
 	if (positional.length < 2) {
-		process.stderr.write("bunlight scrape: requires <url> and <selector>\n");
+		Bun.stderr.write("bunlight scrape: requires <url> and <selector>\n");
 		return null;
 	}
 	opts.url = positional[0];
@@ -106,9 +122,9 @@ export async function main(argv: readonly string[]): Promise<void> {
 			const text = (await el.textContent?.()) ?? "";
 			out.push({ index: i, text: text.trim().slice(0, 500) });
 		}
-		process.stdout.write(JSON.stringify(out, null, 2) + "\n");
+		Bun.stdout.write(JSON.stringify(out, null, 2) + "\n");
 	} catch (err) {
-		process.stderr.write(`bunlight scrape: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bunlight scrape: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	} finally {
 		try {

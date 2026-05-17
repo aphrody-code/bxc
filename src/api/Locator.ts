@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/api/locator
  */
 
@@ -127,10 +143,8 @@ export class Locator {
 		if (this.#selector.startsWith("@semantic:")) {
 			const query = this.#selector.slice(10).trim();
 			const html = await this.#page.content();
-			const proc = Bun.spawn(["python3", "python-bridge/semantic_resolver.py"], { stdin: "pipe" });
-			proc.stdin.write(JSON.stringify({ query, html }));
-			proc.stdin.end();
-			const output = await new Response(proc.stdout).json();
+			const { resolveSemantic } = await import("../ai/extractor.ts");
+			const output = await resolveSemantic(query, html);
 			if (output.status === "success" && output.selector) resolvedSelector = output.selector;
 			else throw new Error(`Failed to resolve semantic selector: ${output.message}`);
 		}
@@ -186,22 +200,16 @@ export class Locator {
 		if (this.#selector.startsWith("@semantic:")) {
 			const query = this.#selector.slice(10).trim();
 			const html = await this.#page.content();
-			
-			// Call python bridge
-			const proc = Bun.spawn(["python3", "python-bridge/semantic_resolver.py"], {
-				stdin: "pipe",
-			});
-			proc.stdin.write(JSON.stringify({ query, html }));
-			proc.stdin.end();
-			
-			const output = await new Response(proc.stdout).json();
+
+			const { resolveSemantic } = await import("../ai/extractor.ts");
+			const output = await resolveSemantic(query, html);
+
 			if (output.status === "success" && output.selector) {
 				resolvedSelector = output.selector;
 			} else {
 				throw new Error(`Failed to resolve semantic selector: ${output.message}`);
 			}
 		}
-
 		const parts = resolvedSelector.split(" >> ");
 		const baseSelector = parts[0];
 		const internalFilters = parts.slice(1);
@@ -306,7 +314,7 @@ export class Locator {
 						return nodeId;
 					}
 				}
-			} catch (err) {
+			} catch {
 				// Navigation or CDP errors, retry
 			}
 			await Bun.sleep(100);

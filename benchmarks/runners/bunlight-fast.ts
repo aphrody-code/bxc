@@ -21,11 +21,12 @@ import { Browser } from "../../src/api/browser.ts";
 
 export const RUNNER_ID = "bunlight-fast";
 
+const ROOT = new URL("../../", import.meta.url).pathname;
 const KNOWN_CANDIDATES = [
 	process.env.BUNLIGHT_LIGHTPANDA_BIN,
 	`${process.env.HOME}/bunmium/lightpanda`,
 	`${process.env.HOME}/lightpanda`,
-	"/home/ubuntu/vps/packages/bunlight/vendor/lightpanda-bin/linux-x64/lightpanda",
+	`${ROOT}vendor/lightpanda-bin/linux-x64/lightpanda`,
 	"/usr/local/bin/lightpanda",
 	`${process.env.HOME}/.local/bin/lightpanda`,
 	`${process.env.HOME}/.cache/lightpanda-node/lightpanda`,
@@ -71,7 +72,7 @@ export async function run(url: string): Promise<RunResult> {
 	}
 
 	const ramBefore = rssNow();
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds() / 1e6;
 
 	try {
 		await using page = await Browser.newPage({
@@ -80,7 +81,7 @@ export async function run(url: string): Promise<RunResult> {
 		});
 		await page.goto(url, { timeoutMs: 30_000 });
 		const content = await page.content();
-		const latencyMs = Math.round(performance.now() - t0);
+		const latencyMs = Math.round(Bun.nanoseconds() / 1e6 - t0);
 		const ramAfter = rssNow();
 
 		return {
@@ -97,7 +98,7 @@ export async function run(url: string): Promise<RunResult> {
 			runner: RUNNER_ID,
 			url,
 			success: false,
-			latencyMs: Math.round(performance.now() - t0),
+			latencyMs: Math.round(Bun.nanoseconds() / 1e6 - t0),
 			ramMb: rssNow(),
 			contentLength: 0,
 			statusCode: 0,

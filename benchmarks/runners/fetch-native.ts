@@ -25,7 +25,7 @@ const DEFAULT_UA =
 
 export async function run(url: string): Promise<RunResult> {
 	const ramBefore = rssNow();
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds() / 1e6;
 
 	try {
 		const resp = await fetch(url, {
@@ -40,7 +40,7 @@ export async function run(url: string): Promise<RunResult> {
 		});
 
 		const body = await resp.text();
-		const latencyMs = Math.round(performance.now() - t0);
+		const latencyMs = Math.round(Bun.nanoseconds() / 1e6 - t0);
 		const ramAfter = rssNow();
 
 		return {
@@ -57,7 +57,7 @@ export async function run(url: string): Promise<RunResult> {
 			runner: RUNNER_ID,
 			url,
 			success: false,
-			latencyMs: Math.round(performance.now() - t0),
+			latencyMs: Math.round(Bun.nanoseconds() / 1e6 - t0),
 			ramMb: rssNow(),
 			contentLength: 0,
 			statusCode: 0,

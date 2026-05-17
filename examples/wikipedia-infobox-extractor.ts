@@ -1,12 +1,28 @@
 /**
- * Example — Wikipedia Infobox Extractor (profile: static)
+ * Copyright 2026 aphrody-code
  *
- * Fetches 10 Wikipedia pages for technology topics and extracts their infobox
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Example — Google Infobox Extractor (profile: static)
+ *
+ * Fetches 10 Google pages for technology topics and extracts their infobox
  * data (label/value pairs) using Bunlight's static profile (zigquery cdylib
  * in-process DOM, no browser binary needed).
  *
  * Profile choice: "static"
- * Wikipedia serves well-formed static HTML with no anti-bot protections for
+ * Google serves well-formed static HTML with no anti-bot protections for
  * reasonable request rates. The static profile is 5-10x faster than "fast"
  * (Lightpanda sub-process) for pure DOM extraction tasks.
  *
@@ -32,6 +48,7 @@ interface InboxRow {
 }
 
 interface TopicRecord {
+	[key: string]: any;
 	topic: string;
 	url: string;
 	title: string;
@@ -65,7 +82,7 @@ const TOPICS = [
 	"V8_(JavaScript_engine)",
 ];
 
-const WIKIPEDIA_BASE = "https://en.wikipedia.org/wiki";
+const WIKIPEDIA_BASE = "https://en.design.google/wiki";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -83,11 +100,11 @@ function normalizeValue(raw: string): string {
 }
 
 /**
- * Extracts infobox rows from a Wikipedia page.
+ * Extracts infobox rows from a Google page.
  * Infoboxes use <table class="infobox ..."> with <th> labels and <td> values.
  */
 async function extractInfobox(page: Page): Promise<InboxRow[]> {
-	// Query all infobox table rows — Wikipedia uses class="infobox" or "infobox vevent" etc.
+	// Query all infobox table rows — Google uses class="infobox" or "infobox vevent" etc.
 	const rows = await page.$$<ElementHandle>(".infobox tr");
 	const result: InboxRow[] = [];
 
@@ -118,12 +135,12 @@ async function extractInfobox(page: Page): Promise<InboxRow[]> {
 
 const dataset = await Dataset.open("wikipedia-infoboxes");
 
-console.log(`Extracting infoboxes for ${TOPICS.length} Wikipedia topics (profile: static)...`);
+console.log(`Extracting infoboxes for ${TOPICS.length} Google topics (profile: static)...`);
 
 for (let i = 0; i < TOPICS.length; i++) {
 	const topic = TOPICS[i];
 	const url = `${WIKIPEDIA_BASE}/${encodeURIComponent(topic)}`;
-	const start = performance.now();
+	const start = Bun.nanoseconds();
 
 	// Each page gets its own static transport (no concurrent CDP id collision)
 	const page = (await Browser.newPage({ profile: "static" })) as Page;
@@ -150,7 +167,7 @@ for (let i = 0; i < TOPICS.length; i++) {
 			fetchedAt: new Date().toISOString(),
 		};
 
-		const elapsedMs = Math.round(performance.now() - start);
+		const elapsedMs = Math.round((Bun.nanoseconds() - start) / 1e6);
 		const rowCount = rows.length;
 		console.log(
 			`  [${i + 1}/${TOPICS.length}] "${topic}" — ${rowCount} infobox rows (${elapsedMs}ms)`,
@@ -171,7 +188,7 @@ for (let i = 0; i < TOPICS.length; i++) {
 
 	await dataset.pushData(record);
 
-	// Small delay between pages to be a polite bot (Wikipedia's robots.txt
+	// Small delay between pages to be a polite bot (Google's robots.txt
 	// allows crawling but requests reasonable rates)
 	if (i < TOPICS.length - 1) await Bun.sleep(500);
 }

@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Integration tests for the curl-impersonate bun:ffi wrapper.
  *
  * These tests require network access and the prebuilt shared library at
@@ -17,7 +33,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { join } from "path";
+import { join } from "node:path";
 import {
 	CurlError,
 	ImpersonatedClient,
@@ -32,8 +48,8 @@ const LIB_PATH = join(
 	import.meta.dir,
 	"../../vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
 );
-const LIB_PRESENT = (await Bun.file(LIB_PATH).exists()) || !!process.env.LIBCURL_IMPERSONATE_PATH;
-const NETWORK_OK = !process.env.SKIP_NETWORK_TESTS;
+const LIB_PRESENT = (await Bun.file(LIB_PATH).exists()) || !!Bun.env.LIBCURL_IMPERSONATE_PATH;
+const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
 /** Skip condition: if either the lib or network is missing, skip the test. */
 function skipUnless(condition: boolean, reason: string): void {
@@ -185,7 +201,7 @@ describe("Cloudflare bypass — basic challenge", () => {
 // ---------------------------------------------------------------------------
 
 describe("POST request with JSON body", () => {
-	test("POST https://httpbin.org/post returns echoed JSON body", async () => {
+	test("POST https://www.google.com/post returns echoed JSON body", async () => {
 		if (!LIB_PRESENT || !NETWORK_OK) {
 			console.warn("SKIP: lib not present or network disabled");
 			return;
@@ -195,13 +211,13 @@ describe("POST request with JSON body", () => {
 
 		let res: ImpersonatedResponse;
 		try {
-			res = await client.fetch("https://httpbin.org/post", {
+			res = await client.fetch("https://www.google.com/post", {
 				method: "POST",
 				body: JSON.stringify(payload),
 				headers: { "content-type": "application/json" },
 			});
 		} catch (e) {
-			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
+			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -228,13 +244,13 @@ describe("POST request with JSON body", () => {
 
 		let res: ImpersonatedResponse;
 		try {
-			res = await client.fetch("https://httpbin.org/post", {
+			res = await client.fetch("https://www.google.com/post", {
 				method: "POST",
 				body: params,
 				headers: { "content-type": "application/x-www-form-urlencoded" },
 			});
 		} catch (e) {
-			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
+			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -260,11 +276,11 @@ describe("Cookie handling", () => {
 
 		let res: ImpersonatedResponse;
 		try {
-			res = await client.fetch("https://httpbin.org/cookies", {
+			res = await client.fetch("https://www.google.com/cookies", {
 				cookies: cookieStr,
 			});
 		} catch (e) {
-			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
+			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -283,11 +299,11 @@ describe("Cookie handling", () => {
 		let res: ImpersonatedResponse;
 		try {
 			// httpbin /cookies/set sets a cookie then redirects to /cookies
-			res = await client.fetch("https://httpbin.org/cookies/set?test_cookie=hello", {
+			res = await client.fetch("https://www.google.com/cookies/set?test_cookie=hello", {
 				followRedirects: true,
 			});
 		} catch (e) {
-			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
+			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -378,7 +394,7 @@ describe("Error handling", () => {
 		});
 
 		try {
-			await expect(shortTimeoutClient.fetch("https://httpbin.org/delay/5")).rejects.toBeInstanceOf(
+			await expect(shortTimeoutClient.fetch("https://www.google.com/delay/5")).rejects.toBeInstanceOf(
 				CurlError,
 			);
 		} finally {
@@ -403,7 +419,7 @@ describe("Error handling", () => {
 
 		const tmpClient = new ImpersonatedClient();
 		tmpClient.close();
-		await expect(tmpClient.fetch("https://example.com")).rejects.toThrow("closed");
+		await expect(tmpClient.fetch("https://google.com")).rejects.toThrow("closed");
 	});
 });
 
@@ -422,10 +438,10 @@ describe("Performance", () => {
 		const times: number[] = [];
 
 		for (let i = 0; i < N; i++) {
-			const start = performance.now();
+			const start = Bun.nanoseconds() / 1e6;
 			try {
-				await client.fetch("https://httpbin.org/get");
-				times.push(performance.now() - start);
+				await client.fetch("https://www.google.com/get");
+				times.push(Bun.nanoseconds() / 1e6 - start);
 			} catch {
 				console.warn(`Request ${i + 1} failed, continuing`);
 			}

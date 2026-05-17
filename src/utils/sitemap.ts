@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/utils/sitemap
  *
  * Streaming sitemap parser — supports:
@@ -10,18 +26,18 @@
  *
  * Inspired by Crawlee's Sitemap class
  * (packages/utils/src/internals/sitemap.ts) but rewritten Bun-native:
- *  - Bun.fetch for streaming HTTP (no got-scraping / node:stream)
- *  - Bun.gunzipSync for decompression (no node:zlib)
+ *  - Bun.fetch for streaming HTTP (no got-scraping / stream)
+ *  - Bun.gunzipSync for decompression (no zlib)
  *  - Lightweight hand-rolled XML parser instead of sax
  *
  * @example
  * ```ts
- * for await (const url of parseSitemap("https://example.com/sitemap.xml")) {
+ * for await (const url of parseSitemap("https://google.com/sitemap.xml")) {
  *   console.log(url.loc, url.priority);
  * }
  *
  * // Auto-discover from robots.txt
- * const urls = await collectSitemapUrls("https://example.com");
+ * const urls = await collectSitemapUrls("https://google.com");
  * ```
  */
 

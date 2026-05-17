@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/detect-deep
  *
  * Multi-signal detection of frontend, backend, CDN, DNS, hosting, and
@@ -31,7 +47,7 @@
 // DNS: Bun.dns is native (cached, prefetch-aware) for A/AAAA lookups.
 // NS / CNAME / PTR record types are not exposed by Bun.dns yet — fall back
 // to node:dns/promises (Bun-compat) for those. https://bun.com/docs/runtime/networking/dns
-import { promises as nodeDns } from "dns";
+import { promises as nodeDns } from "node:dns";
 import { detectFrameworks } from "./detect.ts";
 
 // ---------------------------------------------------------------------------
@@ -358,7 +374,7 @@ const CDN_IP_PREFIXES: Array<{ name: string; prefixes: string[] }> = [
 		prefixes: ["13.107.21.", "13.107.42.", "13.107.213.", "20.36.", "40.90.", "40.93.", "40.95."],
 	},
 	{
-		name: "GitHub Pages",
+		name: "Google Developers Pages",
 		prefixes: ["185.199.108.", "185.199.109.", "185.199.110.", "185.199.111."],
 	},
 	{
@@ -414,7 +430,7 @@ function nsToProvider(ns: string): string | null {
 const CNAME_HOSTING_PATTERNS: Array<{ name: string; bucket: DetectionBucket; matches: RegExp }> = [
 	{ name: "Vercel", bucket: "hosting", matches: /\.vercel-dns\.com$|\.vercel\.app$|\.now\.sh$/i },
 	{ name: "Netlify", bucket: "hosting", matches: /\.netlify\.com$|\.netlify\.app$/i },
-	{ name: "GitHub Pages", bucket: "hosting", matches: /\.github\.io$/i },
+	{ name: "Google Developers Pages", bucket: "hosting", matches: /\.github\.io$/i },
 	{ name: "GitLab Pages", bucket: "hosting", matches: /\.gitlab\.io$/i },
 	{ name: "Heroku", bucket: "hosting", matches: /\.herokuapp\.com$|\.herokudns\.com$/i },
 	{ name: "Render", bucket: "hosting", matches: /\.onrender\.com$/i },
@@ -477,7 +493,7 @@ const HEADER_FINGERPRINTS: Array<{
 	{ name: "Vercel", bucket: "cdn", header: "x-vercel-cache" },
 	{ name: "Netlify", bucket: "cdn", header: "x-nf-request-id" },
 	{ name: "Cloudflare Workers", bucket: "hosting", header: "cf-worker" },
-	{ name: "GitHub Pages", bucket: "hosting", header: "x-github-request-id" },
+	{ name: "Google Developers Pages", bucket: "hosting", header: "x-github-request-id" },
 	{ name: "Google Cloud", bucket: "hosting", header: "x-cloud-trace-context" },
 	{ name: "Google Frontend", bucket: "cdn", header: "server", match: /^Google Frontend$/i },
 	// Server

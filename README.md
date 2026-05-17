@@ -23,12 +23,17 @@ Spawning heavy Chromium processes for simple scraping is a legacy pattern. Bunli
 - **🗺️ Google Ecosystem Atlas**: Native awareness of 5600+ Google domains with automated Smart Routing for Wiz, Angular, and Lit.
 - **🛡️ Invisible Stealth**: In-process CDP injection beats advanced WAFs (Cloudflare, reCAPTCHA Enterprise) by eliminating TCP-level fingerprinting.
 - **⚙️ MSVC 2026 Ready**: Native Windows binaries targeting x86-64-v3 (AVX2) with Static CRT linking.
+- **🤖 Native Gemini MCP Extension**: Ships with an embedded `@modelcontextprotocol/sdk` server. Surpasses Chrome DevTools MCP with Zero-Spawn native snapshotting, JS evaluation, massive subagent delegation (24/5656 concurrency), and native `bun:sqlite` memory.
 
 ---
 
 ## 📦 Quick Start
 
-### 1. Install
+### 1. Install (1-Click)
+```bash
+curl -fsSL https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.sh | bash
+```
+Or manually via npm/bun:
 ```bash
 bun add @aphrody-code/bunlight
 ```

@@ -1,62 +1,106 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/google/cache
  *
- * SQLite-backed cache for Google SERP / fetch results with TTL.
- * Uses bun:sqlite (WAL, prepared statements). Lazy-init, file-or-memory.
+ * Reinforced SQLite-backed cache for Google SERP / fetch results.
+ * 
+ * Features:
+ * - High-performance Bun native SQLite driver (Zig-powered).
+ * - WAL (Write-Ahead Logging) enabled for concurrent read/write.
+ * - Native BLOB support for binary snapshots (compressed HTML/images).
+ * - Strict parameter binding.
+ * - Automatic eviction (LRU-ish based on creation time).
  */
 
 import { Database } from "bun:sqlite";
-
-export interface CacheEntry<T = unknown> {
-	key: string;
-	payload: T;
-	createdAt: number;
-	expiresAt: number;
-}
+import { join } from "node:path";
+import { mkdirSync } from "node:fs";
 
 export interface CacheOptions {
-	/** Path to sqlite file. Defaults to in-memory. */
+	/** 
+	 * Path to sqlite file. 
+	 * Defaults to `~/.bunlight/cache.sqlite` or `:memory:`.
+	 */
 	path?: string;
-	/** Default TTL in ms. Defaults to 6h. */
+	/** Default TTL in ms. Defaults to 24h. */
 	defaultTtlMs?: number;
-	/** Cap entries (LRU-style purge). Defaults to 5000. */
+	/** Cap entries (LRU-style purge). Defaults to 10000. */
 	maxEntries?: number;
+	/** Enable strict mode for binding. */
+	strict?: boolean;
 }
 
-const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000;
-const DEFAULT_MAX_ENTRIES = 5000;
+const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_MAX_ENTRIES = 10000;
 
 export class GoogleCache {
-	#db: Database;
-	#ttl: number;
-	#max: number;
-	#getStmt: ReturnType<Database["prepare"]>;
-	#setStmt: ReturnType<Database["prepare"]>;
-	#delStmt: ReturnType<Database["prepare"]>;
-	#purgeStmt: ReturnType<Database["prepare"]>;
-	#countStmt: ReturnType<Database["prepare"]>;
-	#evictStmt: ReturnType<Database["prepare"]>;
+	readonly #db: Database;
+	readonly #ttl: number;
+	readonly #max: number;
+	
+	// Prepared statements for maximum speed (compiled once)
+	readonly #getStmt: any;
+	readonly #setStmt: any;
+	readonly #delStmt: any;
+	readonly #purgeStmt: any;
+	readonly #countStmt: any;
+	readonly #evictStmt: any;
 
 	constructor(opts: CacheOptions = {}) {
-		this.#db = new Database(opts.path ?? ":memory:", { create: true });
+		let dbPath = opts.path;
+		
+		if (!dbPath && process.env.HOME) {
+			const dir = join(process.env.HOME, ".bunlight");
+			try {
+				mkdirSync(dir, { recursive: true });
+				dbPath = join(dir, "cache.sqlite");
+			} catch {
+				dbPath = ":memory:";
+			}
+		}
+
+		this.#db = new Database(dbPath ?? ":memory:", { 
+			create: true,
+			strict: opts.strict ?? true 
+		});
+
+		// WAL mode is crucial for performance on VPS with multiple workers
 		this.#db.exec("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
+		
 		this.#db.exec(`
 			CREATE TABLE IF NOT EXISTS cache (
 				key TEXT PRIMARY KEY,
-				payload TEXT NOT NULL,
+				payload BLOB NOT NULL,
+				is_json INTEGER NOT NULL DEFAULT 0,
 				created_at INTEGER NOT NULL,
 				expires_at INTEGER NOT NULL
 			);
 			CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache(expires_at);
 		`);
+
 		this.#ttl = opts.defaultTtlMs ?? DEFAULT_TTL_MS;
 		this.#max = opts.maxEntries ?? DEFAULT_MAX_ENTRIES;
 
 		this.#getStmt = this.#db.prepare(
-			"SELECT payload, created_at, expires_at FROM cache WHERE key = ? AND expires_at > ?",
+			"SELECT payload, is_json FROM cache WHERE key = ? AND expires_at > ?",
 		);
 		this.#setStmt = this.#db.prepare(
-			"INSERT OR REPLACE INTO cache (key, payload, created_at, expires_at) VALUES (?, ?, ?, ?)",
+			"INSERT OR REPLACE INTO cache (key, payload, is_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
 		);
 		this.#delStmt = this.#db.prepare("DELETE FROM cache WHERE key = ?");
 		this.#purgeStmt = this.#db.prepare(
@@ -68,24 +112,53 @@ export class GoogleCache {
 		);
 	}
 
+	/**
+	 * Retrieve a value from the cache.
+	 * Handles both JSON objects and raw Uint8Array (BLOB).
+	 */
 	get<T>(key: string): T | null {
 		const row = this.#getStmt.get(key, Date.now()) as {
-			payload: string;
-			created_at: number;
-			expires_at: number;
+			payload: Uint8Array | string;
+			is_json: number;
 		} | null;
+
 		if (!row) return null;
-		try {
-			return JSON.parse(row.payload) as T;
-		} catch {
-			return null;
+
+		if (row.is_json === 1) {
+			try {
+				// Bun handles Uint8Array -> string conversion efficiently
+				const text = typeof row.payload === "string" ? row.payload : new TextDecoder().decode(row.payload);
+				return JSON.parse(text) as T;
+			} catch {
+				return null;
+			}
 		}
+
+		return row.payload as unknown as T;
 	}
 
+	/**
+	 * Store a value in the cache with an optional TTL.
+	 * Automatically detects if the value should be stored as JSON or raw BLOB.
+	 */
 	set<T>(key: string, value: T, ttlMs?: number): void {
 		const now = Date.now();
 		const expires = now + (ttlMs ?? this.#ttl);
-		this.#setStmt.run(key, JSON.stringify(value), now, expires);
+		
+		let payload: Uint8Array | string;
+		let isJson = 0;
+
+		if (value instanceof Uint8Array) {
+			payload = value;
+		} else if (typeof value === "string") {
+			payload = value;
+		} else {
+			payload = JSON.stringify(value);
+			isJson = 1;
+		}
+
+		this.#setStmt.run(key, payload, isJson, now, expires);
+
 		this.#maybeEvict();
 	}
 
@@ -93,17 +166,27 @@ export class GoogleCache {
 		this.#delStmt.run(key);
 	}
 
+	/**
+	 * Remove all expired entries. Returns number of removed rows.
+	 */
 	purgeExpired(): number {
 		const res = this.#purgeStmt.run(Date.now());
-		return Number(res.changes);
+		return res.changes;
 	}
 
+	/**
+	 * Returns the current number of entries in the cache.
+	 */
 	size(): number {
 		const row = this.#countStmt.get() as { n: number };
 		return row.n;
 	}
 
+	/**
+	 * Force a WAL checkpoint and close the database.
+	 */
 	close(): void {
+		this.#db.exec("PRAGMA wal_checkpoint(TRUNCATE);");
 		this.#db.close();
 	}
 
@@ -117,7 +200,7 @@ export class GoogleCache {
 let _shared: GoogleCache | null = null;
 
 /**
- * Lazy shared in-memory cache instance (created on first call).
+ * Global reinforced cache instance for the Bunlight process.
  */
 export function sharedCache(): GoogleCache {
 	if (!_shared) _shared = new GoogleCache();

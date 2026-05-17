@@ -1,19 +1,27 @@
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { CString, dlopen, FFIType, ptr, suffix } from "bun:ffi";
-import { join } from "path";
+import { join } from "node:path";
 
 /**
  * Resolves the rust-bridge cdylib path.
- *
- * `cargo build` emits a platform-specific shared library:
- *   - Linux   : libbunlight_rust_bridge.so
- *   - macOS   : libbunlight_rust_bridge.dylib
- *   - Windows : bunlight_rust_bridge.dll  (no `lib` prefix on the MSVC toolchain)
- *
- * `suffix` from bun:ffi is "so" | "dylib" | "dll" for the current platform.
- * Override with BUNLIGHT_RUST_BRIDGE_LIB (absolute path).
  */
 function resolveRustBridgePath(): string {
-	const envOverride = process.env["BUNLIGHT_RUST_BRIDGE_LIB"];
+	const envOverride = Bun.env["BUNLIGHT_RUST_BRIDGE_LIB"];
 	if (envOverride) return envOverride;
 
 	const repoRoot = join(import.meta.dir, "..", "..");
@@ -28,23 +36,101 @@ function resolveRustBridgePath(): string {
 const libPath = resolveRustBridgePath();
 
 const lib = dlopen(libPath, {
-	markdown_to_html: {
+	bunlight_parse_html: {
 		args: [FFIType.ptr],
 		returns: FFIType.ptr,
 	},
-	free_string: {
+	bunlight_tree_destroy: {
 		args: [FFIType.ptr],
 		returns: FFIType.void,
 	},
+	bunlight_query_selector: {
+		args: [FFIType.ptr, FFIType.ptr],
+		returns: FFIType.ptr,
+	},
+	bunlight_query_selector_all: {
+		args: [FFIType.ptr, FFIType.ptr],
+		returns: FFIType.ptr,
+	},
+	bunlight_free_string: {
+		args: [FFIType.ptr],
+		returns: FFIType.void,
+	},
+	bunlight_html_to_markdown: {
+		args: [FFIType.ptr],
+		returns: FFIType.ptr,
+	},
+	bunlight_extract_title: {
+		args: [FFIType.ptr],
+		returns: FFIType.ptr,
+	},
+	bunlight_strip_tags: {
+		args: [FFIType.ptr],
+		returns: FFIType.ptr,
+	},
 });
 
-export function markdownToHtml(md: string): string {
-	const buf = Buffer.from(md + "\0");
-	const resultPtr = lib.symbols.markdown_to_html(ptr(buf));
+export type DomTreePtr = number;
+
+export function parseHtml(html: string): DomTreePtr {
+	const htmlPtr = ptr(Buffer.from(html + "\0"));
+	return lib.symbols.bunlight_parse_html(htmlPtr) as DomTreePtr;
+}
+
+export function destroyTree(tree: DomTreePtr): void {
+	lib.symbols.bunlight_tree_destroy(tree as any);
+}
+
+export function querySelector(tree: DomTreePtr, selector: string): string | null {
+	const selPtr = ptr(Buffer.from(selector + "\0"));
+	const resultPtr = lib.symbols.bunlight_query_selector(tree as any, selPtr);
+	if (!resultPtr) return null;
+
+	const result = new CString(resultPtr).toString();
+	lib.symbols.bunlight_free_string(resultPtr);
+	return result;
+}
+
+export function querySelectorAll(tree: DomTreePtr, selector: string): string[] {
+	const selPtr = ptr(Buffer.from(selector + "\0"));
+	const resultPtr = lib.symbols.bunlight_query_selector_all(tree as any, selPtr);
+	if (!resultPtr) return [];
+
+	const json = new CString(resultPtr).toString();
+	lib.symbols.bunlight_free_string(resultPtr);
+	try {
+		return JSON.parse(json);
+	} catch {
+		return [];
+	}
+}
+
+export function htmlToMarkdown(html: string): string {
+	const htmlPtr = ptr(Buffer.from(html + "\0"));
+	const resultPtr = lib.symbols.bunlight_html_to_markdown(htmlPtr);
 	if (!resultPtr) return "";
 
 	const result = new CString(resultPtr).toString();
+	lib.symbols.bunlight_free_string(resultPtr);
+	return result;
+}
 
-	lib.symbols.free_string(resultPtr);
+export function extractTitle(html: string): string {
+	const htmlPtr = ptr(Buffer.from(html + "\0"));
+	const resultPtr = lib.symbols.bunlight_extract_title(htmlPtr);
+	if (!resultPtr) return "";
+
+	const result = new CString(resultPtr).toString();
+	lib.symbols.bunlight_free_string(resultPtr);
+	return result;
+}
+
+export function stripTags(html: string): string {
+	const htmlPtr = ptr(Buffer.from(html + "\0"));
+	const resultPtr = lib.symbols.bunlight_strip_tags(htmlPtr);
+	if (!resultPtr) return html;
+
+	const result = new CString(resultPtr).toString();
+	lib.symbols.bunlight_free_string(resultPtr);
 	return result;
 }

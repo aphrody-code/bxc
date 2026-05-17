@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for enqueueLinks helper.
  *
  * These tests use an in-process mock Page (no real browser, no network)
@@ -21,7 +37,7 @@ import { RequestQueue } from "../../src/queue/RequestQueue.ts";
  */
 function makeMockPage(
 	links: Array<string | null>,
-	pageUrl = "https://example.com/page",
+	pageUrl = "https://google.com/page",
 ): EnqueueLinksOptions["page"] {
 	const handles = links.map((href) => ({
 		async getAttribute(name: string): Promise<string | null> {
@@ -94,8 +110,8 @@ describe("enqueueLinks", () => {
 	// 1. Basic: same hostname — accepts matching, rejects foreign
 	it("enqueues links on the same hostname", async () => {
 		const page = makeMockPage([
-			"https://example.com/about",
-			"https://example.com/contact",
+			"https://google.com/about",
+			"https://google.com/contact",
 			"https://other.com/page",
 		]);
 		const { added, skipped } = await enqueueLinks({ page, queue });
@@ -106,7 +122,7 @@ describe("enqueueLinks", () => {
 	// 2. strategy: "all" accepts any HTTP/HTTPS URL
 	it('strategy "all" accepts links from any domain', async () => {
 		const page = makeMockPage([
-			"https://example.com/a",
+			"https://google.com/a",
 			"https://totally-different.io/b",
 			"http://another.net/c",
 		]);
@@ -122,48 +138,48 @@ describe("enqueueLinks", () => {
 	// 3. strategy: "same-domain" accepts subdomains
 	it('strategy "same-domain" accepts sub-domains', async () => {
 		const page = makeMockPage(
-			["https://sub.example.com/x", "https://example.com/y", "https://evil.com/z"],
-			"https://example.com/",
+			["https://sub.google.com/x", "https://google.com/y", "https://evil.com/z"],
+			"https://google.com/",
 		);
 		const { added, skipped } = await enqueueLinks({
 			page,
 			queue,
 			strategy: "same-domain",
 		});
-		expect(added).toBe(2); // sub.example.com + example.com
+		expect(added).toBe(2); // sub.google.com + google.com
 		expect(skipped).toBe(1); // evil.com
 	});
 
 	// 4. strategy: "same-hostname" rejects subdomains
 	it('strategy "same-hostname" rejects sub-domains', async () => {
 		const page = makeMockPage(
-			["https://sub.example.com/x", "https://example.com/y"],
-			"https://example.com/",
+			["https://sub.google.com/x", "https://google.com/y"],
+			"https://google.com/",
 		);
 		const { added, skipped } = await enqueueLinks({
 			page,
 			queue,
 			strategy: "same-hostname",
 		});
-		expect(added).toBe(1); // only example.com/y
-		expect(skipped).toBe(1); // sub.example.com/x
+		expect(added).toBe(1); // only google.com/y
+		expect(skipped).toBe(1); // sub.google.com/x
 	});
 
 	// 5. Glob patterns filter links
 	it("glob patterns filter links", async () => {
 		const page = makeMockPage(
 			[
-				"https://example.com/blog/post-1",
-				"https://example.com/shop/product",
-				"https://example.com/blog/post-2",
+				"https://google.com/blog/post-1",
+				"https://google.com/shop/product",
+				"https://google.com/blog/post-2",
 			],
-			"https://example.com/",
+			"https://google.com/",
 		);
 		const { added, skipped } = await enqueueLinks({
 			page,
 			queue,
 			strategy: "all",
-			globs: ["https://example.com/blog/**"],
+			globs: ["https://google.com/blog/**"],
 		});
 		expect(added).toBe(2);
 		expect(skipped).toBe(1);
@@ -173,11 +189,11 @@ describe("enqueueLinks", () => {
 	it("regexp patterns filter links", async () => {
 		const page = makeMockPage(
 			[
-				"https://example.com/products/123",
-				"https://example.com/about",
-				"https://example.com/products/456",
+				"https://google.com/products/123",
+				"https://google.com/about",
+				"https://google.com/products/456",
 			],
-			"https://example.com/",
+			"https://google.com/",
 		);
 		const { added, skipped } = await enqueueLinks({
 			page,
@@ -192,14 +208,14 @@ describe("enqueueLinks", () => {
 	// 7. regexps take precedence over globs
 	it("regexp takes precedence over glob when both provided", async () => {
 		const page = makeMockPage(
-			["https://example.com/blog/1", "https://example.com/shop/2"],
-			"https://example.com/",
+			["https://google.com/blog/1", "https://google.com/shop/2"],
+			"https://google.com/",
 		);
 		const { added } = await enqueueLinks({
 			page,
 			queue,
 			strategy: "all",
-			globs: ["https://example.com/shop/**"], // would match shop/2 only
+			globs: ["https://google.com/shop/**"], // would match shop/2 only
 			regexps: [/\/blog\//], // overrides: only blog/1
 		});
 		expect(added).toBe(1); // blog/1 via regexp, shop/2 excluded
@@ -208,10 +224,10 @@ describe("enqueueLinks", () => {
 	// 8. limit caps the number of enqueued links
 	it("limit caps enqueued links", async () => {
 		const page = makeMockPage([
-			"https://example.com/1",
-			"https://example.com/2",
-			"https://example.com/3",
-			"https://example.com/4",
+			"https://google.com/1",
+			"https://google.com/2",
+			"https://google.com/3",
+			"https://google.com/4",
 		]);
 		const { added, skipped } = await enqueueLinks({ page, queue, limit: 2 });
 		expect(added).toBe(2);
@@ -221,9 +237,9 @@ describe("enqueueLinks", () => {
 	// 9. Deduplication: same URL extracted twice is only added once
 	it("deduplicates links extracted from the same page", async () => {
 		const page = makeMockPage([
-			"https://example.com/dup",
-			"https://example.com/dup", // same URL twice
-			"https://example.com/unique",
+			"https://google.com/dup",
+			"https://google.com/dup", // same URL twice
+			"https://google.com/unique",
 		]);
 		const { added, skipped } = await enqueueLinks({ page, queue, strategy: "all" });
 		expect(added).toBe(2);
@@ -233,8 +249,8 @@ describe("enqueueLinks", () => {
 	// 10. transform function can rewrite or discard URLs
 	it("transform can discard URLs by returning null", async () => {
 		const page = makeMockPage([
-			"https://example.com/keep-this",
-			"https://example.com/discard-this",
+			"https://google.com/keep-this",
+			"https://google.com/discard-this",
 		]);
 		const { added, skipped } = await enqueueLinks({
 			page,
@@ -248,7 +264,7 @@ describe("enqueueLinks", () => {
 
 	// 11. transform can rewrite URLs
 	it("transform can rewrite URLs before enqueueing", async () => {
-		const page = makeMockPage(["https://example.com/path?session=abc123"]);
+		const page = makeMockPage(["https://google.com/path?session=abc123"]);
 		const { added } = await enqueueLinks({
 			page,
 			queue,
@@ -262,29 +278,29 @@ describe("enqueueLinks", () => {
 		expect(added).toBe(1);
 		// The URL stored in queue should be without session param
 		const queued = queue.fetchBatch(10);
-		expect(queued[0].url).toBe("https://example.com/path");
+		expect(queued[0].url).toBe("https://google.com/path");
 	});
 
 	// 12. Edge case: relative hrefs are resolved against baseUrl
 	it("resolves relative hrefs correctly", async () => {
-		const page = makeMockPage(["/about", "../contact", "help.html"], "https://example.com/sub/");
+		const page = makeMockPage(["/about", "../contact", "help.html"], "https://google.com/sub/");
 		const { added } = await enqueueLinks({ page, queue, strategy: "all" });
 		const queued = queue.fetchBatch(10);
 		const urls = queued.map((r) => r.url).sort();
-		expect(urls).toContain("https://example.com/about");
-		expect(urls).toContain("https://example.com/contact");
-		expect(urls).toContain("https://example.com/sub/help.html");
+		expect(urls).toContain("https://google.com/about");
+		expect(urls).toContain("https://google.com/contact");
+		expect(urls).toContain("https://google.com/sub/help.html");
 		expect(added).toBe(3);
 	});
 
 	// 13. Edge case: mailto:, javascript:, data:, # links are discarded
 	it("discards non-HTTP hrefs (mailto, javascript, data, hash)", async () => {
 		const page = makeMockPage([
-			"mailto:user@example.com",
+			"mailto:user@google.com",
 			"javascript:void(0)",
 			"data:text/html,<h1>x</h1>",
 			"#anchor",
-			"https://example.com/valid",
+			"https://google.com/valid",
 		]);
 		const { added, skipped } = await enqueueLinks({
 			page,
@@ -297,11 +313,11 @@ describe("enqueueLinks", () => {
 
 	// 14. Fragments are stripped from URLs
 	it("strips fragments from URLs before enqueueing", async () => {
-		const page = makeMockPage(["https://example.com/page#section1"]);
+		const page = makeMockPage(["https://google.com/page#section1"]);
 		const { added } = await enqueueLinks({ page, queue, strategy: "all" });
 		expect(added).toBe(1);
 		const queued = queue.fetchBatch(10);
-		expect(queued[0].url).toBe("https://example.com/page");
+		expect(queued[0].url).toBe("https://google.com/page");
 	});
 
 	// 15. Empty link list returns 0,0
@@ -314,7 +330,7 @@ describe("enqueueLinks", () => {
 
 	// 16. Null href attributes are skipped
 	it("skips elements with null href attribute", async () => {
-		const page = makeMockPage([null, "https://example.com/real"]);
+		const page = makeMockPage([null, "https://google.com/real"]);
 		const { added, skipped } = await enqueueLinks({ page, queue, strategy: "all" });
 		expect(added).toBe(1);
 		expect(skipped).toBe(1);
@@ -322,9 +338,9 @@ describe("enqueueLinks", () => {
 
 	// 17. Cross-session dedup via queue's SQLite unique constraint
 	it("skips URLs already present in the queue from a previous call", async () => {
-		const page = makeMockPage(["https://example.com/existing"]);
+		const page = makeMockPage(["https://google.com/existing"]);
 		// Pre-populate the queue with the same URL
-		queue.addRequest("https://example.com/existing");
+		queue.addRequest("https://google.com/existing");
 		const { added, skipped } = await enqueueLinks({ page, queue, strategy: "all" });
 		expect(added).toBe(0);
 		expect(skipped).toBe(1);

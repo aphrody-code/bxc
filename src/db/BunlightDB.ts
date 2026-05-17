@@ -1,16 +1,32 @@
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Database } from "bun:sqlite";
-import { resolve } from "path";
+import { resolve } from "node:path";
+import { mkdirSync } from "node:fs";
 
 export class BunlightDB {
     private db: Database;
 
     constructor(path?: string) {
-        const dbPath = path ?? process.env.BUNLIGHT_DB_PATH ?? resolve(process.cwd(), "data/bunlight.sqlite");
-        
+        const dbPath = path ?? Bun.env.BUNLIGHT_DB_PATH ?? resolve(process.cwd(), "data/bunlight.sqlite");
+
         // Ensure directory exists
-        const fs = require("node:fs");
         const dir = resolve(dbPath, "..");
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        mkdirSync(dir, { recursive: true });
 
         this.db = new Database(dbPath);
 

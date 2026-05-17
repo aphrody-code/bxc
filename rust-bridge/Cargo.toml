@@ -1,3 +1,50 @@
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    "crates/obscura-dom",
+    "crates/obscura-net",
+    "crates/obscura-browser",
+    "crates/obscura-cdp",
+    "crates/obscura-js",
+    "crates/obscura-mcp",
+    "crates/bunlight-engine",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+obscura-dom = { path = "crates/obscura-dom" }
+obscura-net = { path = "crates/obscura-net" }
+obscura-browser = { path = "crates/obscura-browser" }
+obscura-cdp = { path = "crates/obscura-cdp" }
+obscura-js = { path = "crates/obscura-js" }
+obscura-mcp = { path = "crates/obscura-mcp" }
+
+html5ever = "0.39"
+markup5ever = "0.39"
+selectors = "0.38"
+servo_arc = "0.4"
+cssparser = "0.37"
+tokio = { version = "1.52", features = ["full"] }
+tokio-tungstenite = "0.26"
+reqwest = { version = "0.13", features = ["cookies", "gzip", "brotli", "deflate", "native-tls-vendored", "socks"], default-features = false }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+url = "2.5"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4.6", features = ["derive"] }
+uuid = { version = "1.23", features = ["v4"] }
+thiserror = "2.0"
+anyhow = "1.0"
+base64 = "0.22"
+deno_error = "0.7.1"
+v8 = "147.4.0"
+
 [package]
 name = "bunlight-rust-bridge"
 version = "0.1.0"
@@ -7,7 +54,16 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-serde_json = "1.0"
-pulldown-cmark = "0.10"
-lol_html = "0.4.0"
-cxx = "1.0"
+serde_json = { workspace = true }
+obscura-dom = { workspace = true }
+# V8 and browser engine REMOVED from cdylib to fix linker errors
+# Dynamic features are now provided by the 'bunlight' binary
+html2md = "0.2.15"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+overflow-checks = false
+incremental = false

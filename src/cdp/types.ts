@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Shared types for the modular CDP domain handlers.
  *
  * Each domain (Page, Target, Browser, DOM, Runtime, ...) exposes a
@@ -408,6 +424,10 @@ export interface PageState {
 	scriptCounter: number;
 	/** Whether a screencast is currently active on this page. */
 	screencastActive: boolean;
+	/** HTTP status code of the last navigation. */
+	lastStatus?: number;
+	/** The expected name for the isolated utility world. */
+	utilityWorldName: string;
 }
 
 /**
@@ -419,8 +439,8 @@ export interface ParsedDocumentLike {
 	readonly url: string;
 	readonly title: string;
 	readonly rootId: number;
-	querySelectorAll(selector: string): ParsedNodeLike[];
-	querySelector(selector: string): ParsedNodeLike | undefined;
+	querySelectorAll(selector: string): Promise<ParsedNodeLike[]>;
+	querySelector(selector: string): Promise<ParsedNodeLike | undefined>;
 	getNodeById(nodeId: number): ParsedNodeLike | undefined;
 	toCDPNode(node: ParsedNodeLike): DOMNode;
 	destroy(): void;
