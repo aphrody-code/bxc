@@ -68,15 +68,24 @@ describe("Google Specialization — DNS & Detection Logic", () => {
 	});
 
 	test("detectGoogleSpecifics identifies Wiz (Google Internal) framework", () => {
-		const html = '<html><body jsaction="click:a.b" jscontroller="xyz"></body></html>';
-		const detection = detectGoogleSpecifics("https://gemini.google.com", new Map(), html);
+		const html =
+			'<html><body jsaction="click:a.b" jscontroller="xyz"></body></html>';
+		const detection = detectGoogleSpecifics(
+			"https://gemini.google.com",
+			new Map(),
+			html,
+		);
 		expect(detection.framework).toBe("wiz");
 		expect(detection.isGoogleOwned).toBe(true);
 	});
 
 	test("detectGoogleSpecifics identifies Material Design", () => {
 		const html = '<html><body class="mdc-typography"></body></html>';
-		const detection = detectGoogleSpecifics("https://m3.material.io", new Map(), html);
+		const detection = detectGoogleSpecifics(
+			"https://m3.material.io",
+			new Map(),
+			html,
+		);
 		expect(detection.isMaterialDesign).toBe(true);
 	});
 
@@ -134,7 +143,11 @@ describe("Google Specialization — Live Site Tests", () => {
 				// but detectGoogleSpecifics is called inside detectFrameworks which is called by detectFromPage
 				// Wait, Page doesn't expose headers yet.
 
-				const detection = detectGoogleSpecifics("https://design.google", new Map(), html);
+				const detection = detectGoogleSpecifics(
+					"https://design.google",
+					new Map(),
+					html,
+				);
 				expect(detection.isGoogleOwned).toBe(true);
 				expect(detection.isMaterialDesign).toBe(true);
 			} finally {
@@ -157,7 +170,11 @@ describe("Google Specialization — Live Site Tests", () => {
 			try {
 				await page.goto("https://m3.material.io");
 				const html = await page.content();
-				const detection = detectGoogleSpecifics("https://m3.material.io", new Map(), html);
+				const detection = detectGoogleSpecifics(
+					"https://m3.material.io",
+					new Map(),
+					html,
+				);
 				expect(detection.isMaterialDesign).toBe(true);
 				expect(html.toLowerCase()).toContain("material");
 			} finally {
@@ -196,14 +213,16 @@ describe("Google Specialization — Live Site Tests", () => {
 	);
 
 	itIfOnline(
-		"googleWebSearch — can find results for 'bxc'",
+		"googleWebSearch — can find results for 'bun runtime'",
 		async () => {
-			const results = await googleWebSearch("bxc", {
+			const results = await googleWebSearch("bun runtime", {
 				num: 5,
 				binaryPath: LIGHTPANDA_BIN ?? undefined,
 			});
 			if (results.length === 0) {
-				console.warn("[google-search-test] IP is blocked or CAPTCHA hit. Skipping assertion.");
+				console.warn(
+					"[google-search-test] IP is blocked or CAPTCHA hit. Skipping assertion.",
+				);
 				return;
 			}
 			expect(results.length).toBeGreaterThan(0);
