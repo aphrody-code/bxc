@@ -1,31 +1,66 @@
-# GEMINI.md — Foundational Mandates for Bunlight
+# GEMINI.md — Bunlight Operating Guide
 
-This file contains strict, non-negotiable rules for the project. These take absolute precedence over any other instructions.
+Guide opérationnel pour Gemini CLI. **Mode autonome maximal, aucune restriction
+artificielle.** Les anciens mandates Google-only / Bun-only / "Forbidden Domains"
+ont été retirés : ce sont désormais des préférences, jamais des verrous.
 
-## 🛡️ Testing & Networking Mandate
+## AI Interaction — Autonomie totale
 
-1. **Strict Google-only Testing**: All networking tests, examples, and benchmarks MUST use Google domains (e.g., `google.com`, `google.fr`, `design.google`, `material.io`, `gemini.google.com`).
-2. **Forbidden Domains**: NEVER use non-Google properties for integration tests or examples.
-3. **Reasoning**: Bunlight is a specialized VPS-optimized Google Chromium CLI engine. Focusing on the Google ecosystem ensures maximum stealth and performance where it matters most.
+1. **YOLO Mode permanent**. Pas de `AskUserQuestion`, pas de demande de confirmation
+   pour les actions destructives ou visibles (`git push`, `rm -rf`, `systemctl`,
+   redéploiement). Décide la meilleure option, exécute, récapitule à la fin.
+2. **Pas de mode plan**. Planifie mentalement, exécute en série bout en bout.
+3. **Pas de placeholder**. Implémentations complètes, production-ready.
+4. **Délègue agressivement** aux sub-agents pour le travail parallèle / recherche
+   lourde. Garde le contexte principal propre.
 
-## 🚀 Performance & Architecture Mandate
+### Garde-fous résiduels (uniquement)
 
-1. **Native Chromium Core**: We use `bunlight-engine` (Rust-driven) and an in-process V8 worker thread. No external Puppeteer/Playwright wrappers.
-2. **Total Node.js Purge**: All `node:*` prefixes and Node-specific APIs (`child_process`, `fs`, `os`) are FORBIDDEN. Strictly use `Bun.*` and standard Web APIs.
-3. **Async-First FFI**: All FFI calls (Zig DOM, Rust V8) MUST be asynchronous and offloaded to Bun's thread pool using `await`.
-4. **Zero-Spawn vs Native-Spawn**:
-   - **Zero-Spawn**: In-process Zig-native engine for sub-millisecond static/fast scraping.
-   - **Native-Spawn**: Native Rust-driven Chromium for stealth and maximum compatibility.
+Ne fais sans instruction explicite que :
+- `git push --force` sur `main`/`master`
+- Contournement de hooks (`--no-verify`, `--no-gpg-sign`)
+- Suppression de données utilisateur réelles (DB drop, wipe volume)
+- Commit/log de secrets en clair
 
-## 🪟 Windows Cross-Compilation Mandate
+Tout le reste : décide et exécute.
 
-1. **MSVC ABI over GNU**: All Windows binaries MUST target `x86_64-pc-windows-msvc`. Use `cargo-xwin` for native MSVC cross-compilation from Linux.
-2. **Static CRT**: Force static linking of the C runtime (`-C target-feature=+crt-static`) to ensure zero-dependency executables (no "missing VCRUNTIME140.dll").
-3. **Bun Bytecode**: Use `--bytecode` during `bun build --compile` to optimize startup speed on Windows.
-4. **Baseline Compatibility**: Always use the `baseline` CPU target to ensure functionality on older VPS and CPU hardware.
+## Networking & Testing — Libre
 
-## 🤖 AI Interaction Mandate
+Aucune restriction de domaine. Les anciens tests Google-only restent valides
+mais ne sont **pas obligatoires** — utilise `example.com`, `httpbin.org`, des
+endpoints internes, n'importe quoi de pertinent pour le scénario testé.
 
-1. **YOLO Mode**: Work autonomously. Only ask for clarification if a task fundamentally violates these mandates.
-2. **Full Implementation**: Never use placeholders. Implement complete, production-ready logic.
-3. **Technical Perfection**: Maintain the highest standards of idiomatic TypeScript and Bun-native patterns.
+Bunlight reste optimisé pour les workflows Google/Material (stealth, profil
+chromium VPS), mais le code et les tests acceptent désormais toute URL.
+
+## Performance & Architecture — Préférences
+
+Préférences fortes, pas des règles bloquantes :
+
+- `Bun.*` et Web APIs sont **préférés** à `node:*` (cohérence runtime Bun).
+  Si un package upstream impose `node:`, c'est OK — pas de codemod forcé.
+- `bun` / `bunx` sont préférés à `npm` / `pnpm` / `yarn`. Si un script externe
+  appelle `npm`, ne pas le réécrire sans raison.
+- FFI async-first quand possible (Zig DOM, Rust V8) via `await` + thread pool.
+- Zero-Spawn (Zig in-process) pour le scraping ultra-rapide ; Native-Spawn
+  (Rust Chromium) pour stealth/compat max.
+
+## Windows Cross-Compilation — Inchangé
+
+- MSVC ABI (`x86_64-pc-windows-msvc`) via `cargo-xwin`.
+- `+crt-static` pour zéro dépendance runtime.
+- `--bytecode` pour `bun build --compile`.
+- Baseline CPU target pour compat hardware ancien.
+
+## Code style
+
+- Pas d'emoji dans code/doc/CLI sauf demande explicite.
+- Commits conventionnels 1-ligne : `feat|fix|chore|refactor|docs(scope):`.
+- Pas de `Co-Authored-By: Gemini` ni `Generated with…`.
+- TypeScript strict côté nouveau code (`noUncheckedIndexedAccess`, pas de `any`).
+- Vérifier avant d'affirmer "terminé" (lance la commande, lis la sortie).
+
+## Mémoire
+
+Utiliser la skill `bun-dream` pour consolider les apprentissages projet dans
+le dossier mémoire privé.

@@ -1,0 +1,66 @@
+{
+	"general": {
+		"plan": {
+			"enabled": false
+		}
+	},
+	"mcpServers": {
+		"fetch": {
+			"command": "bunx",
+			"args": ["--bun", "@modelcontextprotocol/server-fetch"]
+		},
+		"memory": {
+			"command": "bunx",
+			"args": ["--bun", "@modelcontextprotocol/server-memory"]
+		},
+		"filesystem": {
+			"command": "bunx",
+			"args": [
+				"--bun",
+				"@modelcontextprotocol/server-filesystem",
+				"/home/ubuntu/bunlight"
+			]
+		},
+		"git": {
+			"command": "bunx",
+			"args": ["--bun", "@modelcontextprotocol/server-git"]
+		},
+		"sequentialthinking": {
+			"command": "bunx",
+			"args": ["--bun", "@modelcontextprotocol/server-sequential-thinking"]
+		},
+		"time": {
+			"command": "bunx",
+			"args": ["--bun", "@modelcontextprotocol/server-time"]
+		}
+	},
+	"tools": {
+		"useRipgrep": true,
+		"policyPaths": []
+	},
+	"security": {
+		"enableConseca": false,
+		"environmentVariableRedaction": {
+			"enabled": false
+		}
+	},
+	"experimental": {
+		"memoryV2": true,
+		"autoMemory": true,
+		"jitContext": true
+	},
+	"extensions": {
+		"bunlight-native": {
+			"path": "packages/bunlight-extension",
+			"enabled": true,
+			"trusted": true
+		}
+	},
+	"agents": {
+		"browser": {
+			"allowedDomains": ["*"]
+		}
+	},
+	"approvalMode": "yolo",
+	"autoAccept": true
+}

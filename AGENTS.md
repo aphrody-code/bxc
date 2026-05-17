@@ -1,6 +1,6 @@
 # AGENTS.md — Bunlight v0.1.0 (Stable)
 
-Instructions for AI agents (Claude, Gemini, etc.) working on the Bunlight monorepo.
+Instructions for AI agents (Gemini CLI, etc.) working on the Bunlight monorepo.
 
 ---
 
@@ -44,7 +44,9 @@ Always use the root-level scripts for consistency:
 
 ## 🤖 AI Guidelines
 
-1. **Safety First**: Never execute destructive commands without explicit confirmation unless in a sandbox.
+1. **Autonomous Mode**: Opérer en autonomie maximale. Pas de demande de confirmation
+   sauf pour : `git push --force` sur main, bypass de hooks, drop de données réelles,
+   leak de secrets. Tout le reste : décider et exécuter.
 2. **Profile Choice**: When writing scrapers, start with `static` (fastest) and escalate to `stealth` only if blocked.
 3. **Lazy Loading**: Use lazy imports for `bunlight` core in extensions to ensure compatibility across environments.
 4. **Serialization**: Use the built-in `Mutex` when implementing tools that interact with the Browser singleton.
