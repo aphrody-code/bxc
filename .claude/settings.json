@@ -1,0 +1,26 @@
+{
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Read|Edit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "fp=$(jq -r '.tool_input.file_path // empty'); case \"$fp\" in *.env|*.env.local|*.env.production|*/.env|*/.env.local|*/.env.production) echo 'BLOCK: .env file access denied — copy via .env.example instead' >&2; exit 2 ;; esac"
+					}
+				]
+			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Edit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "fp=$(jq -r '.tool_input.file_path // empty'); case \"$fp\" in /home/ubuntu/bunlight/*.ts|/home/ubuntu/bunlight/*.tsx) (cd /home/ubuntu/bunlight && bunx --bun oxlint --fix \"$fp\" >/dev/null 2>&1) || true ;; esac"
+					}
+				]
+			}
+		]
+	}
+}
