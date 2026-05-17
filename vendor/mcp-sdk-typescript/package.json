@@ -1,0 +1,98 @@
+{
+  "name": "@modelcontextprotocol/sdk",
+  "private": true,
+  "version": "2.0.0-alpha.0",
+  "description": "Model Context Protocol implementation for TypeScript",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Model Context Protocol a Series of LF Projects, LLC.",
+  "homepage": "https://modelcontextprotocol.io",
+  "bugs": "https://github.com/modelcontextprotocol/typescript-sdk/issues",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/modelcontextprotocol/typescript-sdk.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.26.1",
+  "keywords": [
+    "modelcontextprotocol",
+    "mcp"
+  ],
+  "exports": {
+    "./server/mcp.js": "./packages/server/src/server/mcp.ts",
+    "./server/stdio.js": "./packages/server/src/server/stdio.ts"
+  },
+  "scripts": {
+    "fetch:spec-types": "tsx scripts/fetch-spec-types.ts",
+    "sync:snippets": "tsx scripts/sync-snippets.ts",
+    "examples:simple-server:w": "pnpm --filter @modelcontextprotocol/examples-server exec tsx --watch src/simpleStreamableHttp.ts --oauth",
+    "docs": "typedoc",
+    "docs:multi": "bash scripts/generate-multidoc.sh",
+    "docs:check": "typedoc",
+    "typecheck:all": "bun run --workspaces typecheck",
+    "build:all": "bun run --workspaces build",
+    "ci:publish": "bun run build:all && bunx changeset publish",
+    "prepack:all": "bun run --workspaces prepack",
+    "lint:all": "bun run sync:snippets --check && bun run --workspaces lint",
+    "lint:fix:all": "bun run sync:snippets && bun run --workspaces lint:fix",
+    "check:all": "bun run --workspaces typecheck && bun run --workspaces lint && bun run docs:check",
+    "test:all": "bun run --workspaces test",
+    "prepare": "bunx --no-install lefthook install",
+    "test:conformance:client": "pnpm --filter @modelcontextprotocol/test-conformance run test:conformance:client",
+    "test:conformance:client:all": "pnpm --filter @modelcontextprotocol/test-conformance run test:conformance:client:all",
+    "test:conformance:client:run": "pnpm --filter @modelcontextprotocol/test-conformance run test:conformance:client:run",
+    "test:conformance:server": "pnpm --filter @modelcontextprotocol/test-conformance run test:conformance:server",
+    "test:conformance:server:all": "pnpm --filter @modelcontextprotocol/test-conformance run test:conformance:server:all",
+    "test:conformance:server:run": "pnpm --filter @modelcontextprotocol/test-conformance run test:conformance:server:run",
+    "test:conformance:all": "bun run test:conformance:client:all && bun run test:conformance:server:all"
+  },
+  "devDependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
+    "@eslint/js": "^9.39.2",
+    "@modelcontextprotocol/client": "workspace:^",
+    "@modelcontextprotocol/node": "workspace:^",
+    "@modelcontextprotocol/server": "workspace:^",
+    "@types/bun": "^1.3.14",
+    "@types/content-type": "^1.1.8",
+    "@types/cors": "^2.8.17",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/eventsource": "^1.1.15",
+    "@types/express": "^5.0.6",
+    "@types/express-serve-static-core": "^5.1.0",
+    "@types/node": "^24.10.1",
+    "@types/supertest": "^6.0.2",
+    "@typescript/native-preview": "^7.0.0-dev.20251217.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^17.23.1",
+    "fast-glob": "^3.3.3",
+    "lefthook": "^2.0.16",
+    "prettier": "3.6.2",
+    "supertest": "^7.0.0",
+    "tsdown": "^0.18.0",
+    "tslib": "^2.8.1",
+    "tsx": "^4.16.5",
+    "typedoc": "^0.28.14",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.1",
+    "vitest": "^4.0.15",
+    "zod": "^4.2.0"
+  },
+  "resolutions": {
+    "strip-ansi": "6.0.1"
+  },
+  "workspaces": [
+    "packages/**/*",
+    "common/**/*",
+    "examples/**/*",
+    "test/**/*"
+  ],
+  "trustedDependencies": [
+    "better-sqlite3",
+    "esbuild"
+  ]
+}
