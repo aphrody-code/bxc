@@ -2,7 +2,7 @@
 
 > Cible : Windows x64 (et ARM64 best-effort) sans WSL, sans MSYS2, sans Cygwin.
 > Toolchain : Windows-native via winget OU cross-compilation depuis Linux/macOS.
-> Maintainer : @aphrody-code, @yohan971.
+> Maintainer : @aphrody-code, @aphrody-code.
 
 ---
 
