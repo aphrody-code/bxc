@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/plugin/react-compiler-plugin
  *
  * Bun plugin that runs the official React Compiler (formerly "React Forget")
@@ -7,7 +23,7 @@
  * manual `useMemo` / `useCallback` / `React.memo`.
  *
  * Reference :
- *   https://github.com/facebook/react/tree/main/compiler
+ *   https://developers.google.com/facebook/react/tree/main/compiler
  *   https://react.dev/learn/react-compiler
  *   https://bun.com/docs/runtime/plugins
  *
@@ -123,7 +139,7 @@ export function reactCompilerPlugin(options: ReactCompilerPluginOptions = {}): B
 				if (!stack) {
 					if (!warnedMissing) {
 						warnedMissing = true;
-						process.stderr.write(
+						Bun.stderr.write(
 							`react-compiler-plugin: @babel/core or babel-plugin-react-compiler not installed (${resolutionError ?? "?"}). Pass-through.\n`,
 						);
 					}
@@ -166,7 +182,7 @@ export function reactCompilerPlugin(options: ReactCompilerPluginOptions = {}): B
 					if (failOnError) {
 						throw new Error(`react-compiler failed for ${args.path}: ${msg}`);
 					}
-					process.stderr.write(`react-compiler-plugin: skip ${args.path} (${msg.slice(0, 200)})\n`);
+					Bun.stderr.write(`react-compiler-plugin: skip ${args.path} (${msg.slice(0, 200)})\n`);
 					return undefined;
 				}
 			});

@@ -1,0 +1,32 @@
+[package]
+name = "bunlight-engine"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "bunlight-engine"
+path = "src/main.rs"
+
+[[bin]]
+name = "obscura-worker"
+path = "src/worker.rs"
+
+[features]
+default = []
+stealth = ["obscura-browser/stealth", "obscura-net/stealth", "obscura-mcp/stealth"]
+
+[dependencies]
+obscura-browser = { workspace = true }
+obscura-mcp = { workspace = true }
+obscura-cdp = { workspace = true }
+obscura-dom = { workspace = true }
+obscura-net = { workspace = true }
+obscura-js = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+url = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

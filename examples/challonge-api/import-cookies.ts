@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * import-cookies.ts — convert a Chrome DevTools "Cookies" tab-separated dump
  * into the Playwright/CDP JSON format expected by `bunlight`'s cookie-loader.
  *
@@ -118,9 +134,9 @@ export async function importCookies(source: string, target: string): Promise<Coo
 	if (target !== "-") {
 		await Bun.write(target, json);
 	} else {
-		process.stdout.write(json + "\n");
+		Bun.stdout.write(json + "\n");
 	}
-	process.stderr.write(
+	Bun.stderr.write(
 		`import-cookies: ${cookies.length} cookies → ${target === "-" ? "stdout" : target}\n`,
 	);
 	return cookies;
@@ -129,7 +145,7 @@ export async function importCookies(source: string, target: string): Promise<Coo
 if (import.meta.main) {
 	const [, , source, target] = process.argv;
 	if (!source || !target) {
-		process.stderr.write(
+		Bun.stderr.write(
 			"Usage: bun import-cookies.ts <source.tsv|-> <target.json|->\n" +
 				"Example: bun import-cookies.ts cookies.tsv cookies/private/challonge.json\n",
 		);

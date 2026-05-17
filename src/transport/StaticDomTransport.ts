@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * StaticDomTransport — 100% in-process CDP transport that implements a DOM-only
  * subset of the Chrome DevTools Protocol using Bun's built-in `fetch` for
  * navigation, and a minimal HTML parser for selector queries.
@@ -191,8 +207,10 @@ interface InternalDOMNode extends DOMNode {}
  * (real CSS selector engine, full HTML5 tokenizer) and silently falls back to
  * the regex implementation when the cdylib is not available.
  */
-function parseHTML(html: string): ParsedDocument {
-	return new ParsedDocument(html);
+async function parseHTML(html: string): Promise<ParsedDocument> {
+	const doc = new ParsedDocument(html);
+    await doc.initialize();
+    return doc;
 }
 
 // ---------------------------------------------------------------------------
@@ -265,15 +283,15 @@ class ParsedDocument implements ParsedDocumentLike {
 	#nextId = 1;
 
 	// Whether zigquery FFI is available at all.
-	readonly #useZig: boolean;
+	#useZig = false;
 
 	// WeakRef allows the GC to reclaim the ZigDoc (and its native heap) when
 	// memory pressure is high.  Queries that arrive after GC re-parse from rawHtml.
-	#zigDocRef: WeakRef<ZigDoc> | null;
+	#zigDocRef: WeakRef<ZigDoc> | null = null;
 
 	// Token used to unregister from the FinalizationRegistry.  Kept as a
 	// separate object from the ZigDoc so it can serve as the held value.
-	#finalizerToken: ZigDocCleanupToken | null;
+	#finalizerToken: ZigDocCleanupToken | null = null;
 
 	constructor(html: string, url = "about:blank") {
 		this.rawHtml = html;
@@ -287,10 +305,12 @@ class ParsedDocument implements ParsedDocumentLike {
 			textContent: stripTags(html),
 			attributes: {},
 		});
+    }
 
+    async initialize() {
 		if (isZigQueryAvailable()) {
 			try {
-				const doc = zigParseHtml(html);
+				const doc = await zigParseHtml(this.rawHtml);
 				this.#zigDocRef = new WeakRef(doc);
 				// Register for automatic cleanup when GC collects the ZigDoc.
 				// The token is a separate object (held value != target) and also
@@ -315,13 +335,13 @@ class ParsedDocument implements ParsedDocumentLike {
 	 * Returns the live `ZigDoc` — creates a fresh one from `rawHtml` if the
 	 * WeakRef target has been garbage-collected.
 	 */
-	#ensureZigDoc(): ZigDoc | null {
+	async #ensureZigDoc(): Promise<ZigDoc | null> {
 		if (!this.#useZig) return null;
 		const existing = this.#zigDocRef?.deref();
 		if (existing) return existing;
 		// Re-parse — GC collected the previous doc.
 		try {
-			const doc = zigParseHtml(this.rawHtml);
+			const doc = await zigParseHtml(this.rawHtml);
 			this.#zigDocRef = new WeakRef(doc);
 			const token: ZigDocCleanupToken = { doc };
 			zigDocFinalizer.register(doc, token, token);
@@ -357,10 +377,10 @@ class ParsedDocument implements ParsedDocumentLike {
 		return this.#nextId++;
 	}
 
-	querySelectorAll(selector: string): ParsedNode[] {
-		const zigDoc = this.#ensureZigDoc();
+	async querySelectorAll(selector: string): Promise<ParsedNode[]> {
+		const zigDoc = await this.#ensureZigDoc();
 		if (zigDoc) {
-			const sel = zigDoc.find(selector);
+			const sel = await zigDoc.find(selector);
 			const out: ParsedNode[] = [];
 			for (let i = 0; i < sel.count; i++) {
 				const el = sel.at(i);
@@ -387,10 +407,10 @@ class ParsedDocument implements ParsedDocumentLike {
 		);
 	}
 
-	querySelector(selector: string): ParsedNode | undefined {
-		const zigDoc = this.#ensureZigDoc();
+	async querySelector(selector: string): Promise<ParsedNode | undefined> {
+		const zigDoc = await this.#ensureZigDoc();
 		if (zigDoc) {
-			const sel = zigDoc.find(selector);
+			const sel = await zigDoc.find(selector);
 			if (sel.count === 0) {
 				sel.destroy();
 				return undefined;
@@ -413,7 +433,7 @@ class ParsedDocument implements ParsedDocumentLike {
 			sel.destroy();
 			return node;
 		}
-		return this.querySelectorAll(selector)[0];
+		return (await this.querySelectorAll(selector))[0];
 	}
 
 	getNodeById(nodeId: number): ParsedNode | undefined {
@@ -594,6 +614,7 @@ class StaticDomHandler {
 			scripts: new Map(),
 			scriptCounter: 0,
 			screencastActive: false,
+			utilityWorldName: "__puppeteer_utility_world__24.43.0",
 		};
 		this.#pages.set(id, page);
 		return page;
@@ -632,7 +653,7 @@ class StaticDomHandler {
 	 * after each navigation so Puppeteer can bind evaluation functions.
 	 */
 	#emitExecutionContexts(page: PageState): void {
-		const UTILITY_WORLD_NAME = `__puppeteer_utility_world__24.43.0`;
+		const UTILITY_WORLD_NAME = page.utilityWorldName;
 		const ts = Date.now() / 1000;
 		void ts;
 		// Main world context (isDefault: true)
@@ -700,18 +721,18 @@ class StaticDomHandler {
 		if (url.startsWith("data:")) {
 			const commaIndex = url.indexOf(",");
 			if (commaIndex === -1) {
-				page.doc = parseHTML("");
+				page.doc = await parseHTML("");
 				page.title = "";
 				return;
 			}
 			const body = decodeURIComponent(url.slice(commaIndex + 1));
-			page.doc = parseHTML(body);
+			page.doc = await parseHTML(body);
 			page.title = page.doc.title;
 			return;
 		}
 
 		if (url === "about:blank") {
-			page.doc = parseHTML("");
+			page.doc = await parseHTML("");
 			page.title = "";
 			return;
 		}
@@ -838,7 +859,7 @@ class StaticDomHandler {
 						req.finished = true;
 						this.#networkCtx.requestRegistry.set(requestId, req);
 					}
-					page.doc = parseHTML("");
+					page.doc = await parseHTML("");
 					page.title = "";
 					// Throw so Page.navigate propagates the error to the CDP client
 					throw new Error(`net::ERR_FAILED: ${failReason}`);
@@ -899,7 +920,7 @@ class StaticDomHandler {
 						},
 					});
 
-					page.doc = parseHTML(bodyText);
+					page.doc = await parseHTML(bodyText);
 					page.title = page.doc.title;
 					return;
 				}
@@ -926,6 +947,7 @@ class StaticDomHandler {
 		// Real HTTP fetch via Bun
 		try {
 			const res = await fetch(url, fetchOptions);
+			page.lastStatus = res.status;
 			const bodyBytes = new Uint8Array(await res.arrayBuffer());
 			const html = new TextDecoder().decode(bodyBytes);
 			page.url = res.url; // follow redirects
@@ -987,7 +1009,7 @@ class StaticDomHandler {
 				},
 			});
 
-			page.doc = parseHTML(html);
+			page.doc = await parseHTML(html);
 			page.title = page.doc.title;
 
 			// Hint to the GC that prior-page objects (ParsedDocument, ZigDoc native

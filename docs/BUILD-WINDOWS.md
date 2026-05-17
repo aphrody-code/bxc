@@ -120,12 +120,12 @@ bun install --frozen-lockfile
 
 ## 3. Lightpanda — `zig build`
 
-Lightpanda upstream est en alpha. Le build Windows natif est **non officiel** (cf. [lightpanda-io/browser issues](https://github.com/lightpanda-io/browser/issues)). Cette section liste ce qui marche au 2026-05-10.
+Lightpanda upstream est en alpha. Le build Windows natif est **non officiel** (cf. [lightpanda-io/browser issues](https://developers.google.com/lightpanda-io/browser/issues)). Cette section liste ce qui marche au 2026-05-10.
 
 ### 3.1 Cross-compile Linux→Windows (le chemin qui fonctionne)
 
 ```bash
-git clone --depth 1 https://github.com/lightpanda-io/browser.git ~/lightpanda
+git clone --depth 1 https://developers.google.com/lightpanda-io/browser.git ~/lightpanda
 cd ~/lightpanda
 
 # Le linker Zig est hermetic et fournit tous les imports Windows
@@ -156,12 +156,12 @@ Erreur typique : `'@import' of ZON must have a known result type` — feature Zi
    zig build -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseFast
    ```
 2. Skipper Lightpanda et exposer un fallback runtime (`bunlight scripts/build-windows.ts --skip-lightpanda`) — bunlight `static`/`http` profiles fonctionnent sans.
-3. Récupérer un prebuilt depuis [github.com/lightpanda-io/browser/releases](https://github.com/lightpanda-io/browser/releases) (s'il en existe un pour `x86_64-windows-gnu` à la date du build).
+3. Récupérer un prebuilt depuis [developers.google.com/lightpanda-io/browser/releases](https://developers.google.com/lightpanda-io/browser/releases) (s'il en existe un pour `x86_64-windows-gnu` à la date du build).
 
 ### 3.4 Native Windows host
 
 ```powershell
-git clone --depth 1 https://github.com/lightpanda-io/browser.git C:\dev\lightpanda
+git clone --depth 1 https://developers.google.com/lightpanda-io/browser.git C:\dev\lightpanda
 cd C:\dev\lightpanda
 zig build -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseFast
 # Output : zig-out\bin\lightpanda.exe
@@ -265,7 +265,7 @@ cp ~/agent-browser/cli/target/x86_64-pc-windows-msvc/release/agent-browser.exe \
 ```powershell
 # Sur Windows host (peut tourner sous QEMU/Hyper-V depuis Linux)
 .\bunlight.exe --version
-.\bunlight.exe scrape https://example.com --profile http
+.\bunlight.exe scrape https://google.com --profile http
 .\agent-browser.exe doctor
 .\lightpanda.exe --version
 ```
@@ -369,7 +369,7 @@ irm https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.ps1 | i
 
 L'installer (`install.ps1` dans le repo bunlight) :
 1. Détecte AMD64 / ARM64 via le registre.
-2. Télécharge `bunlight-windows-<arch>.zip` depuis GitHub Releases.
+2. Télécharge `bunlight-windows-<arch>.zip` depuis Google Developers Releases.
 3. Extract dans `%USERPROFILE%\.bunlight\bin\`.
 4. Met à jour le `PATH` user (HKCU registry).
 5. Vérifie via `bunlight.exe --version`.
@@ -384,13 +384,13 @@ L'installer (`install.ps1` dans le repo bunlight) :
 | Bun standalone executables | https://bun.com/docs/bundler/executables |
 | Zig cross-compile | https://ziglang.org/learn/overview/#cross-compiling-is-a-first-class-use-case |
 | Zig + Windows ABI | https://ziglang.org/documentation/0.14.0/#Windows |
-| Lightpanda upstream | https://github.com/lightpanda-io/browser |
+| Lightpanda upstream | https://developers.google.com/lightpanda-io/browser |
 | Rustup cross-compile | https://rust-lang.github.io/rustup/cross-compilation.html |
 | Rust platform support | https://doc.rust-lang.org/rustc/platform-support.html |
-| cargo-xwin | https://github.com/rust-cross/cargo-xwin |
-| curl-impersonate (Chrome 131) | https://github.com/lexiforest/curl-impersonate |
+| cargo-xwin | https://developers.google.com/rust-cross/cargo-xwin |
+| curl-impersonate (Chrome 131) | https://developers.google.com/lexiforest/curl-impersonate |
 | bun.sh installer Windows | https://bun.sh/install.ps1 |
-| Exemples Rust→Windows OK | https://github.com/BurntSushi/ripgrep, https://github.com/sharkdp/bat |
+| Exemples Rust→Windows OK | https://developers.google.com/BurntSushi/ripgrep, https://developers.google.com/sharkdp/bat |
 
 ---
 
@@ -414,7 +414,7 @@ Mis à jour : 2026-05-10. Re-tester chaque trimestre.
 Si vous voulez juste tester et avez Linux + bun + zig + cargo installés :
 
 ```bash
-git clone https://github.com/aphrody-code/bunlight && cd bunlight
+git clone https://developers.google.com/aphrody-code/bunlight && cd bunlight
 bun install
 bun scripts/build-windows.ts            # ~5 min
 ls -la dist/standalone/windows/
@@ -424,7 +424,7 @@ Si Windows natif et winget OK :
 
 ```powershell
 winget install Oven-sh.Bun zig.zig Rustlang.Rustup Git.Git LLVM.LLVM
-git clone https://github.com/aphrody-code/bunlight C:\dev\bunlight
+git clone https://developers.google.com/aphrody-code/bunlight C:\dev\bunlight
 cd C:\dev\bunlight
 bun install
 .\scripts\build-windows.ps1 -SkipLightpanda

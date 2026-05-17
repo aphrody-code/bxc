@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for src/cdp/domains/Page.ts
  *
  * Tests cover (Phase 1 additions):
@@ -23,7 +39,7 @@
  * 19.  emitDownloadProgress helper emits correct event shape
  */
 
-import { beforeEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
 	emitDownloadProgress,
 	emitDownloadWillBegin,
@@ -42,8 +58,8 @@ function makeDoc(html: string) {
 		url: "about:blank",
 		title: "",
 		rootId: 1,
-		querySelectorAll: () => [],
-		querySelector: () => undefined,
+		querySelectorAll: async () => [],
+		querySelector: async () => undefined,
 		getNodeById: () => undefined,
 		toCDPNode: () => ({
 			nodeId: 1,
@@ -142,7 +158,6 @@ describe("no-op stubs", () => {
 	const stubs = [
 		"Page.enable",
 		"Page.setLifecycleEventsEnabled",
-		"Page.createIsolatedWorld",
 		"Page.setBypassCSP",
 		"Page.setCacheEnabled",
 		"Page.bringToFront",
@@ -155,6 +170,11 @@ describe("no-op stubs", () => {
 			expect(result).toEqual({});
 		});
 	}
+
+	it("Page.createIsolatedWorld returns executionContextId", async () => {
+		const result = await call("Page.createIsolatedWorld", { worldName: "test" });
+		expect(result).toEqual({ executionContextId: expect.any(Number) });
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -245,12 +265,12 @@ describe("Page.removeScriptToEvaluateOnNewDocument", () => {
 
 describe("Page.getFrameTree", () => {
 	it("returns a frameTree with correct id and loaderId", async () => {
-		const page = makePageState({ url: "https://example.com/" });
+		const page = makePageState({ url: "https://google.com/" });
 		const result = (await call("Page.getFrameTree", {}, page)) as Record<string, unknown>;
 		const tree = result.frameTree as Record<string, unknown>;
 		const frame = tree.frame as Record<string, unknown>;
 		expect(frame.id).toBe("frame-1");
-		expect(frame.url).toBe("https://example.com/");
+		expect(frame.url).toBe("https://google.com/");
 		expect(frame.loaderId).toBe("frame-1-loader-0");
 	});
 
@@ -342,7 +362,7 @@ describe("Page.reload", () => {
 describe("Page.setDocumentContent", () => {
 	it("replaces the page doc and emits lifecycle events", async () => {
 		const page = makePageState({
-			url: "https://example.com/",
+			url: "https://google.com/",
 			doc: makeDoc("<html><body>old</body></html>"),
 		});
 		const events: Array<{ method: string; params: unknown }> = [];
@@ -365,7 +385,7 @@ describe("Page.setDocumentContent", () => {
 	});
 
 	it("preserves the original page URL after setDocumentContent", async () => {
-		const page = makePageState({ url: "https://example.com/page" });
+		const page = makePageState({ url: "https://google.com/page" });
 		const ctx = makeCtx(page);
 		await PageHandler(
 			"Page.setDocumentContent",
@@ -374,7 +394,7 @@ describe("Page.setDocumentContent", () => {
 			"session-1",
 		);
 		// URL must not become the data: URI used internally
-		expect(page.url).toBe("https://example.com/page");
+		expect(page.url).toBe("https://google.com/page");
 	});
 });
 
@@ -496,7 +516,7 @@ describe("emitDownloadWillBegin helper", () => {
 
 		emitDownloadWillBegin(ctx, page, {
 			guid: "dl-001",
-			url: "https://example.com/file.pdf",
+			url: "https://google.com/file.pdf",
 			suggestedFilename: "file.pdf",
 		});
 

@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * HttpProfileTransport — degraded CDP server backed by curl-impersonate for
  * HTTP navigation and zigquery for DOM queries.
  *
@@ -64,8 +80,8 @@ class ParsedDocument {
 
 	readonly #nodes = new Map<number, ParsedNode>();
 	#nextId = 1;
-	readonly #zigDoc: ZigDoc | null;
-	readonly #useZig: boolean;
+	#zigDoc: ZigDoc | null = null;
+	#useZig: boolean = false;
 
 	constructor(html: string, url = "about:blank") {
 		this.rawHtml = html;
@@ -79,10 +95,12 @@ class ParsedDocument {
 			textContent: stripTags(html),
 			attributes: {},
 		});
+	}
 
+	async initialize() {
 		if (isZigQueryAvailable()) {
 			try {
-				this.#zigDoc = zigParseHtml(html);
+				this.#zigDoc = await zigParseHtml(this.rawHtml);
 				this.#useZig = true;
 			} catch {
 				this.#zigDoc = null;
@@ -93,7 +111,6 @@ class ParsedDocument {
 			this.#useZig = false;
 		}
 	}
-
 	destroy(): void {
 		this.#zigDoc?.destroy();
 	}
@@ -102,9 +119,9 @@ class ParsedDocument {
 		return this.#nextId++;
 	}
 
-	querySelectorAll(selector: string): ParsedNode[] {
+	async querySelectorAll(selector: string): Promise<ParsedNode[]> {
 		if (this.#useZig && this.#zigDoc) {
-			const sel = this.#zigDoc.find(selector);
+			const sel = await this.#zigDoc.find(selector);
 			const out: ParsedNode[] = [];
 			for (let i = 0; i < sel.count; i++) {
 				const el = sel.at(i);
@@ -127,8 +144,8 @@ class ParsedDocument {
 		return [];
 	}
 
-	querySelector(selector: string): ParsedNode | undefined {
-		return this.querySelectorAll(selector)[0];
+	async querySelector(selector: string): Promise<ParsedNode | undefined> {
+		return (await this.querySelectorAll(selector))[0];
 	}
 
 	getNodeById(nodeId: number): ParsedNode | undefined {
@@ -591,7 +608,7 @@ export class HttpProfileTransport implements ConnectionTransport {
 				};
 				const page = this.#pageBySession(sessionId);
 				if (!page.doc) return { nodeId: 0 };
-				const node = page.doc.querySelector(selector);
+				const node = await page.doc.querySelector(selector);
 				if (!node) return { nodeId: 0 };
 				return { nodeId: node.nodeId };
 			}
@@ -603,8 +620,8 @@ export class HttpProfileTransport implements ConnectionTransport {
 				};
 				const page = this.#pageBySession(sessionId);
 				if (!page.doc) return { nodeIds: [] };
-				const nodes = page.doc.querySelectorAll(selector);
-				return { nodeIds: nodes.map((n) => n.nodeId) };
+				const nodes = await page.doc.querySelectorAll(selector);
+				return { nodeIds: nodes.map((n: any) => n.nodeId) };
 			}
 
 			case "DOM.getOuterHTML": {

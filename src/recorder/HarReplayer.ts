@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/recorder/HarReplayer
  *
  * Replays a HAR archive as a local HTTP server. Any fetch() to the server
@@ -11,7 +27,7 @@
  *
  * const replayer = await HarReplayer.load("/tmp/example.har");
  * const { stop, port } = await replayer.serve();
- * const res = await fetch(`http://localhost:${port}/https://example.com`);
+ * const res = await fetch(`http://localhost:${port}/https://google.com`);
  * console.log(await res.text());
  * await stop();
  * ```
@@ -145,15 +161,13 @@ export class HarReplayer {
 	 * @param port - TCP port to listen on (0 = OS-assigned ephemeral port).
 	 */
 	async serve(port = 0): Promise<ReplayServer> {
-		const replayer = this;
-
 		const server = Bun.serve({
 			port,
-			fetch(req: Request): Response {
+			fetch: (req: Request): Response => {
 				// Extract the original URL from the request path.
 				// Accept two formats:
-				//   1. Path-prefixed: GET /https://example.com/path
-				//   2. Query-encoded: GET /?url=https%3A%2F%2Fexample.com%2Fpath
+				//   1. Path-prefixed: GET /https://google.com/path
+				//   2. Query-encoded: GET /?url=https%3A%2F%2Fgoogle.com%2Fpath
 				const reqUrl = new URL(req.url);
 				let targetUrl: string;
 				let targetMethod = req.method;
@@ -185,10 +199,10 @@ export class HarReplayer {
 					);
 				}
 
-				const entry = replayer.lookup(targetMethod, targetUrl) ?? replayer.lookup("GET", targetUrl);
+				const entry = this.lookup(targetMethod, targetUrl) ?? this.lookup("GET", targetUrl);
 
 				if (!entry) {
-					const available = Array.from(replayer.#entries.keys()).slice(0, 10).join(", ");
+					const available = Array.from(this.#entries.keys()).slice(0, 10).join(", ");
 					return new Response(
 						JSON.stringify({
 							error: `No HAR entry for ${targetMethod} ${targetUrl}`,
@@ -251,8 +265,7 @@ function buildResponseBody(content: HarEntry["response"]["content"]): string | A
 
 	if (content.encoding === "base64") {
 		// Decode base64 to binary
-		const bytes = Buffer.from(content.text, "base64");
-		return bytes.buffer as ArrayBuffer;
+		return Uint8Array.fromBase64(content.text).buffer as ArrayBuffer;
 	}
 
 	return content.text;

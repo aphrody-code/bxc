@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/stats/Statistics
  *
  * Request statistics tracker inspired by Crawlee's Statistics class.
@@ -25,7 +41,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { join } from "path";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -116,8 +132,7 @@ export class Statistics {
 	// Cumulative sum of ALL successful durations (never evicted — used for mean).
 	#totalDurationSum = 0;
 	// Sum of durations in the current sliding window (evicted when full).
-	#windowDurationSum = 0;
-
+	
 	// Error breakdown
 	readonly #errorBreakdown: Map<string, number> = new Map();
 
@@ -244,7 +259,6 @@ export class Statistics {
 		this.#requestsRetried = 0;
 		this.#durations.length = 0;
 		this.#totalDurationSum = 0;
-		this.#windowDurationSum = 0;
 		this.#errorBreakdown.clear();
 	}
 
@@ -269,12 +283,10 @@ export class Statistics {
 
 	#addDuration(ms: number): void {
 		this.#totalDurationSum += ms;
-		this.#windowDurationSum += ms;
-		if (this.#durations.length >= this.#maxSamples) {
+				if (this.#durations.length >= this.#maxSamples) {
 			// Evict oldest sample from window sum only
-			const evicted = this.#durations.shift()!;
-			this.#windowDurationSum -= evicted;
-		}
+			this.#durations.shift();
+					}
 		this.#durations.push(ms);
 	}
 
@@ -350,8 +362,7 @@ export class Statistics {
 				}
 				// Restore total sum for accurate mean computation
 				this.#totalDurationSum = snap.requestAvgFinishedDurationMs * snap.requestsFinished;
-				this.#windowDurationSum = snap.requestAvgFinishedDurationMs * seedCount;
-			}
+							}
 		} catch {
 			// Ignore malformed persisted data
 		}

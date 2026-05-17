@@ -1,259 +1,63 @@
 /**
- * Unit tests for src/throttling/robots.ts
+ * Copyright 2026 aphrody-code
  *
- * Covers:
- *   - parseRobotsTxt: User-agent, Disallow, Allow, Crawl-delay, blank lines,
- *     comments, multi-agent groups, EOF without blank line
- *   - buildRobotRules: agent matching, allow/disallow precedence, wildcard
- *   - fetchRobotRules: error handling (no network calls in unit tests)
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-import { describe, expect, it } from "bun:test";
-import { buildRobotRules, fetchRobotRules, parseRobotsTxt } from "../../src/throttling/robots.ts";
+import { describe, expect, test } from "bun:test";
+import { RobotsFile } from "../../src/utils/robots.ts";
 
-// ---------------------------------------------------------------------------
-// parseRobotsTxt
-// ---------------------------------------------------------------------------
-
-describe("parseRobotsTxt", () => {
-	it("parses a simple Disallow group", () => {
+describe("RobotsFile Parser (Unified)", () => {
+	test("parses basic Allow/Disallow rules", () => {
 		const content = `
 User-agent: *
-Disallow: /private/
+Disallow: /private
+Allow: /public
 `;
-		const groups = parseRobotsTxt(content);
-		expect(groups).toHaveLength(1);
-		expect(groups[0].agents).toContain("*");
-		expect(groups[0].rules).toHaveLength(1);
-		expect(groups[0].rules[0].allow).toBe(false);
+		const robots = RobotsFile.parse("https://example.com/robots.txt", content);
+		expect(robots.isAllowed("https://example.com/public")).toBe(true);
+		expect(robots.isAllowed("https://example.com/private")).toBe(false);
 	});
 
-	it("parses Allow rules", () => {
-		const content = `
-User-agent: *
-Allow: /public/
-Disallow: /
-`;
-		const groups = parseRobotsTxt(content);
-		const rules = groups[0].rules;
-		expect(rules.some((r) => r.allow === true)).toBe(true);
-		expect(rules.some((r) => r.allow === false)).toBe(true);
-	});
-
-	it("parses Crawl-delay", () => {
-		const content = `
-User-agent: *
-Crawl-delay: 3
-`;
-		const groups = parseRobotsTxt(content);
-		expect(groups[0].crawlDelay).toBe(3);
-	});
-
-	it("parses Crawl-delay as float", () => {
-		const content = `
-User-agent: *
-Crawl-delay: 0.5
-`;
-		const groups = parseRobotsTxt(content);
-		expect(groups[0].crawlDelay).toBe(0.5);
-	});
-
-	it("parses multiple agents in one group (before any rule)", () => {
-		const content = `
-User-agent: Googlebot
-User-agent: Bingbot
-Disallow: /admin/
-`;
-		const groups = parseRobotsTxt(content);
-		expect(groups).toHaveLength(1);
-		expect(groups[0].agents).toContain("googlebot");
-		expect(groups[0].agents).toContain("bingbot");
-	});
-
-	it("parses multiple distinct groups", () => {
-		const content = `
-User-agent: Googlebot
-Disallow: /private/
-
-User-agent: *
-Disallow: /
-`;
-		const groups = parseRobotsTxt(content);
-		expect(groups).toHaveLength(2);
-	});
-
-	it("strips inline comments", () => {
-		const content = `
-User-agent: * # this is a comment
-Disallow: /admin/ # also a comment
-`;
-		const groups = parseRobotsTxt(content);
-		expect(groups[0].rules).toHaveLength(1);
-	});
-
-	it("handles file without trailing blank line", () => {
-		const content = `User-agent: *\nDisallow: /private/`;
-		const groups = parseRobotsTxt(content);
-		expect(groups).toHaveLength(1);
-	});
-
-	it("returns empty array for empty content", () => {
-		expect(parseRobotsTxt("")).toHaveLength(0);
-	});
-
-	it("ignores lines without a colon", () => {
-		const content = `
-User-agent: *
-Disallow /bad-line
-Disallow: /private/
-`;
-		const groups = parseRobotsTxt(content);
-		expect(groups[0].rules).toHaveLength(1);
-	});
-
-	it("ignores unknown directives (Sitemap: etc.)", () => {
-		const content = `
-User-agent: *
-Sitemap: https://example.com/sitemap.xml
-Disallow: /private/
-`;
-		const groups = parseRobotsTxt(content);
-		// Sitemap is an unknown directive in this minimal parser, ignored
-		expect(groups[0].rules).toHaveLength(1);
-	});
-
-	it("handles empty Disallow (allow everything)", () => {
-		const content = `
-User-agent: *
-Disallow:
-`;
-		const groups = parseRobotsTxt(content);
-		// Empty Disallow produces no rules
-		expect(groups[0].rules).toHaveLength(0);
-	});
-
-	it("handles CRLF line endings", () => {
-		const content = "User-agent: *\r\nDisallow: /private/\r\n";
-		const groups = parseRobotsTxt(content);
-		expect(groups).toHaveLength(1);
-		expect(groups[0].rules).toHaveLength(1);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// buildRobotRules
-// ---------------------------------------------------------------------------
-
-describe("buildRobotRules", () => {
-	it("allows all paths when no groups match", () => {
-		const rules = buildRobotRules([], "*");
-		expect(rules.allowed("/anything")).toBe(true);
-	});
-
-	it("disallows a path matched by Disallow rule", () => {
-		const content = `
-User-agent: *
-Disallow: /private/
-`;
-		const groups = parseRobotsTxt(content);
-		const rules = buildRobotRules(groups, "*");
-		expect(rules.allowed("/private/")).toBe(false);
-		expect(rules.allowed("/public/")).toBe(true);
-	});
-
-	it("Allow overrides Disallow when Allow is more specific (longer pattern)", () => {
+	test("respects user-agent specificity", () => {
 		const content = `
 User-agent: *
 Disallow: /
-Allow: /public/
-`;
-		const groups = parseRobotsTxt(content);
-		const rules = buildRobotRules(groups, "*");
-		expect(rules.allowed("/public/page")).toBe(true);
-		expect(rules.allowed("/private/data")).toBe(false);
-	});
 
-	it("prefers exact agent match over wildcard", () => {
-		const content = `
-User-agent: mybot
-Disallow: /
-
-User-agent: *
+User-agent: MyBot
 Allow: /
 `;
-		const groups = parseRobotsTxt(content);
-		const mybotRules = buildRobotRules(groups, "mybot");
-		const otherRules = buildRobotRules(groups, "otherbot");
-		expect(mybotRules.allowed("/anything")).toBe(false);
-		expect(otherRules.allowed("/anything")).toBe(true);
+		const robots = RobotsFile.parse("https://example.com/robots.txt", content);
+		expect(robots.isAllowed("https://example.com/any", "OtherBot")).toBe(false);
+		expect(robots.isAllowed("https://example.com/any", "MyBot")).toBe(true);
 	});
 
-	it("returns crawlDelay from exact agent group", () => {
+	test("parses Crawl-delay", () => {
 		const content = `
-User-agent: mybot
+User-agent: *
 Crawl-delay: 5
-
-User-agent: *
-Crawl-delay: 2
 `;
-		const groups = parseRobotsTxt(content);
-		const mybotRules = buildRobotRules(groups, "mybot");
-		const otherRules = buildRobotRules(groups, "otherbot");
-		expect(mybotRules.crawlDelay).toBe(5);
-		expect(otherRules.crawlDelay).toBe(2);
+		const robots = RobotsFile.parse("https://example.com/robots.txt", content);
+		expect(robots.crawlDelay("*")).toBe(5);
 	});
 
-	it("normalises path without leading slash", () => {
+	test("parses Sitemaps", () => {
 		const content = `
-User-agent: *
-Disallow: /private/
+Sitemap: https://example.com/sitemap1.xml
+Sitemap: https://example.com/sitemap2.xml
 `;
-		const groups = parseRobotsTxt(content);
-		const rules = buildRobotRules(groups, "*");
-		// Should accept paths without leading slash by prepending /
-		expect(rules.allowed("private/")).toBe(false);
-	});
-
-	it("supports wildcard * in pattern matching", () => {
-		const content = `
-User-agent: *
-Disallow: /search?*
-`;
-		const groups = parseRobotsTxt(content);
-		const rules = buildRobotRules(groups, "*");
-		expect(rules.allowed("/search?q=hello")).toBe(false);
-		expect(rules.allowed("/page")).toBe(true);
-	});
-
-	it("supports $ anchor in pattern", () => {
-		const content = `
-User-agent: *
-Disallow: /trap$
-`;
-		const groups = parseRobotsTxt(content);
-		const rules = buildRobotRules(groups, "*");
-		expect(rules.allowed("/trap")).toBe(false);
-		expect(rules.allowed("/trap/subpage")).toBe(true);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// fetchRobotRules - error handling (no network)
-// ---------------------------------------------------------------------------
-
-describe("fetchRobotRules", () => {
-	it("returns permissive rules for an invalid URL", async () => {
-		const rules = await fetchRobotRules("not-a-url");
-		expect(rules.allowed("/anything")).toBe(true);
-		expect(rules.crawlDelay).toBeUndefined();
-	});
-
-	it("returns permissive rules when network fails (unreachable host)", async () => {
-		// 192.0.2.0/24 is TEST-NET-1 per RFC 5737, guaranteed unreachable
-		const rules = await fetchRobotRules("http://192.0.2.1/some/page", "TestBot/1.0", {
-			timeoutMs: 500,
-		});
-		expect(rules.allowed("/anything")).toBe(true);
-		expect(rules.crawlDelay).toBeUndefined();
+		const robots = RobotsFile.parse("https://example.com/robots.txt", content);
+		expect(robots.sitemaps).toContain("https://example.com/sitemap1.xml");
+		expect(robots.sitemaps).toContain("https://example.com/sitemap2.xml");
 	});
 });

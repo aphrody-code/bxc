@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Example 08 — Massive crawl 1000+ URLs with auto-routing and profile escalation.
  *
  * Strategy:
@@ -29,7 +45,7 @@ interface CrawlResult {
 
 const urls: string[] = (await Bun.file("urls.txt").exists())
 	? (await Bun.file("urls.txt").text()).trim().split("\n").filter(Boolean)
-	: ["https://example.com", "https://httpbin.org/get"];
+	: ["https://google.com", "https://www.google.com/get"];
 
 console.log(`Crawling ${urls.length} URLs with stealth/max profile routing…`);
 
@@ -37,7 +53,7 @@ const results: CrawlResult[] = [];
 const profileStats = { stealth: 0, max: 0 };
 
 for (const url of urls) {
-	const start = performance.now();
+	const start = Bun.nanoseconds();
 	let profile: "stealth" | "max" = "stealth";
 
 	try {
@@ -62,7 +78,7 @@ for (const url of urls) {
 			profile = "max";
 			profileStats.max++;
 			// TODO: Add max profile logic back
-			const elapsedMs = performance.now() - start;
+			const elapsedMs = (Bun.nanoseconds() - start) / 1e6;
 			results.push({ url, ok: true, title: "MAX PROFILE NOT IMPLEMENTED", profile, elapsedMs });
 			console.log(
 				`[${results.length}/${urls.length}] max profile | "MAX PROFILE NOT IMPLEMENTED" (${elapsedMs.toFixed(0)}ms)`,
@@ -70,14 +86,14 @@ for (const url of urls) {
 		} else {
 			profile = "stealth";
 			profileStats.stealth++;
-			const elapsedMs = performance.now() - start;
+			const elapsedMs = (Bun.nanoseconds() - start) / 1e6;
 			results.push({ url, ok: true, title, profile, elapsedMs });
 			console.log(
 				`[${results.length}/${urls.length}] stealth profile | "${title}" (${elapsedMs.toFixed(0)}ms)`,
 			);
 		}
 	} catch (err) {
-		const elapsedMs = performance.now() - start;
+		const elapsedMs = (Bun.nanoseconds() - start) / 1e6;
 		results.push({ url, ok: false, title: "", profile, elapsedMs });
 		console.error(`[${results.length}/${urls.length}] FAILED: ${url} — ${String(err)}`);
 	}

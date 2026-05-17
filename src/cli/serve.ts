@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight serve` — CLI entrypoint that spawns Bunlight as a CDP server on
  * a local TCP port.  Designed to be invoked by external clients (such as
  * agent-browser's Rust orchestrator) which expect a Chrome-DevTools-Protocol
@@ -32,13 +48,11 @@
  */
 
 import type { Server, ServerWebSocket } from "bun";
-import type { HttpProfileTransport } from "../transport/HttpProfileTransport.ts";
 import type { CDPEvent } from "../transport/InProcessTransport.ts";
 // NOTE: StaticDomTransport and HttpProfileTransport are loaded lazily via
 // dynamic import inside startStatic / startHttp.  This prevents FFI libraries
 // (zigquery cdylib, curl-impersonate) from loading when the user picks
 // profile=fast or profile=stealth, which reduces cold start by ~30-60 ms.
-import type { StaticDomTransport } from "../transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Argv parsing
@@ -141,7 +155,7 @@ Options:
   --log-level <level>      debug | info | warn | error | silent
   -h, --help               Show this message
 `;
-	process.stdout.write(usage);
+	Bun.stdout.write(usage);
 }
 
 // ---------------------------------------------------------------------------
@@ -357,7 +371,7 @@ async function waitForLightpanda(host: string, port: number, timeoutMs: number):
 		// Use a 10 ms poll interval instead of 50 ms to detect Lightpanda readiness
 		// faster.  Lightpanda typically becomes ready in 60-90 ms so the tighter
 		// interval saves ~40 ms of wasted sleep on average.
-		await new Promise((r) => setTimeout(r, 10));
+		await Bun.sleep(10);
 	}
 	throw new Error(
 		`lightpanda did not become ready within ${timeoutMs}ms` +
@@ -372,11 +386,11 @@ interface FastState {
 }
 
 async function findLightpandaBinary(): Promise<string> {
-	if (process.env.BUNLIGHT_LIGHTPANDA_PATH) {
-		return process.env.BUNLIGHT_LIGHTPANDA_PATH;
+	if (Bun.env.BUNLIGHT_LIGHTPANDA_PATH) {
+		return Bun.env.BUNLIGHT_LIGHTPANDA_PATH;
 	}
 
-	const home = process.env.HOME ?? "";
+	const home = Bun.env.HOME ?? "";
 	// Order matters: the @lightpanda/browser npm package downloads the real
 	// native binary into ~/.cache/lightpanda-node/lightpanda but installs a
 	// JS wrapper at ~/.bun/bin/lightpanda that only prints help.  We must

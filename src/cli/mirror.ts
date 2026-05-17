@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight mirror <url> <out-dir>` — download a complete site (HTML/CSS/JS/
  * fonts/images) into a relocatable directory with rewritten relative links.
  *
@@ -20,7 +36,7 @@
  *   exit   — 0 OK, 2 misuse, 65 fetch / IO error, 70 software error
  */
 
-import { resolve as resolvePath } from "path";
+import { resolve as resolvePath } from "node:path";
 import { type MirrorProfile, mirrorSite } from "../mirror/index.ts";
 
 interface CliOptions {
@@ -37,7 +53,7 @@ interface CliOptions {
 }
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight mirror — download a complete site to a local directory
 
 Usage:
@@ -55,7 +71,7 @@ Options:
   --help, -h            this help
 
 Examples:
-  bunlight mirror https://news.ycombinator.com ./mirror-hn
+  bunlight mirror https://google.com ./mirror-hn
   bunlight mirror https://challonge.com/fr/B_TS5 ./mirror-bts5 \\
       --cookies cookies/private/challonge.json --verbose
 
@@ -92,7 +108,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 			case "--profile": {
 				const v = argv[++i];
 				if (v !== "static" && v !== "fast" && v !== "http") {
-					process.stderr.write(`Invalid profile: ${v} (expected static|fast|http)\n`);
+					Bun.stderr.write(`Invalid profile: ${v} (expected static|fast|http)\n`);
 					return null;
 				}
 				opts.profile = v;
@@ -128,7 +144,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		}
 	}
 	if (positional.length < 2) {
-		process.stderr.write("bunlight mirror: requires <url> and <out-dir>\n");
+		Bun.stderr.write("bunlight mirror: requires <url> and <out-dir>\n");
 		return null;
 	}
 	opts.url = positional[0];
@@ -145,7 +161,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 
 	const log = opts.verbose
 		? (msg: string): void => {
-				process.stderr.write(`${msg}\n`);
+				Bun.stderr.write(`${msg}\n`);
 			}
 		: undefined;
 
@@ -162,7 +178,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 			log,
 		});
 
-		process.stdout.write(
+		Bun.stdout.write(
 			JSON.stringify(
 				{
 					seed: manifest.seed,
@@ -180,7 +196,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 			) + "\n",
 		);
 	} catch (err) {
-		process.stderr.write(`bunlight mirror: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bunlight mirror: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	}
 }

@@ -71,7 +71,7 @@ export async function run(url: string): Promise<RunResult> {
 	}
 
 	const ramBefore = rssNow();
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds() / 1e6;
 
 	let page: import("playwright").Page | null = null;
 	try {
@@ -87,7 +87,7 @@ export async function run(url: string): Promise<RunResult> {
 		});
 
 		const content = await page.content();
-		const latencyMs = Math.round(performance.now() - t0);
+		const latencyMs = Math.round(Bun.nanoseconds() / 1e6 - t0);
 		const ramAfter = rssNow();
 
 		await ctx.close();
@@ -107,7 +107,7 @@ export async function run(url: string): Promise<RunResult> {
 			runner: RUNNER_ID,
 			url,
 			success: false,
-			latencyMs: Math.round(performance.now() - t0),
+			latencyMs: Math.round(Bun.nanoseconds() / 1e6 - t0),
 			ramMb: rssNow(),
 			contentLength: 0,
 			statusCode: 0,

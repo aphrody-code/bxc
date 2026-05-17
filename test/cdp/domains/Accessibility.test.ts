@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Accessibility domain handler tests — Phase 1.
  *
  * Tests cover:
@@ -14,7 +30,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { join } from "path";
+import { join } from "node:path";
 import { CDPError } from "../../../src/transport/InProcessTransport.js";
 import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
 
@@ -90,6 +106,7 @@ async function readFixture(name: string): Promise<string> {
 interface AXNode {
 	nodeId: string;
 	ignored: boolean;
+	ignoredReasons?: Array<{ name: string; value: unknown }>;
 	role?: { type: string; value: string };
 	name?: { type: string; value: string };
 	properties?: Array<{ name: string; value: { type: string; value: unknown } }>;
@@ -268,7 +285,7 @@ describe("Accessibility.getFullAXTree — login form", () => {
 			(n) =>
 				!n.ignored &&
 				n.role?.value === "textbox" &&
-				(n.name?.value === "Email" || n.name?.value === "you@example.com"),
+				(n.name?.value === "Email" || n.name?.value === "you@google.com"),
 		);
 		expect(emailNode).toBeDefined();
 	});
@@ -421,7 +438,7 @@ describe("Accessibility.getFullAXTree — hidden elements", () => {
 		};
 
 		const hiddenNode = result.nodes.find(
-			(n) => n.ignored && n.ignoredReasons?.some((r) => r.value === "ariaHiddenElement"),
+			(n) => n.ignored && n.ignoredReasons?.some((r: any) => r.value === "ariaHiddenElement"),
 		);
 		// display:none sets isHidden which adds ariaHiddenElement reason.
 		expect(hiddenNode).toBeDefined();
@@ -435,7 +452,7 @@ describe("Accessibility.getFullAXTree — hidden elements", () => {
 		};
 
 		const noneNode = result.nodes.find(
-			(n) => n.ignored && n.ignoredReasons?.some((r) => r.value === "presentationalRole"),
+			(n) => n.ignored && n.ignoredReasons?.some((r: any) => r.value === "presentationalRole"),
 		);
 		expect(noneNode).toBeDefined();
 	});

@@ -1,4 +1,20 @@
 #!/usr/bin/env bun
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 
 /**
  * dump-tournament.ts — full HTML/JSON harvest of a Challonge tournament.
@@ -25,12 +41,12 @@
  * Bun-native only.
  */
 
-import { resolve as resolvePath } from "path";
+import { resolve as resolvePath } from "node:path";
 import { Browser, type HttpPage } from "../../src/api/browser.ts";
 
 const CHALLONGE_ORIGIN = "https://challonge.com";
 const COOKIE_JAR =
-	process.env.CHALLONGE_COOKIES ?? `${import.meta.dir}/cookies/private/challonge.json`;
+	Bun.env.CHALLONGE_COOKIES ?? `${import.meta.dir}/cookies/private/challonge.json`;
 
 interface TargetUrl {
 	id: string;
@@ -414,7 +430,7 @@ async function main(): Promise<void> {
 	const slug = process.argv[2];
 	const outDir = resolvePath(process.argv[3] ?? `./out/${slug}`);
 	if (!slug) {
-		process.stderr.write("Usage: bun dump-tournament.ts <slug> [outDir]\n");
+		Bun.stderr.write("Usage: bun dump-tournament.ts <slug> [outDir]\n");
 		process.exit(2);
 	}
 
@@ -422,19 +438,19 @@ async function main(): Promise<void> {
 
 	const cookies = (await cookieJarPresent()) ? COOKIE_JAR : undefined;
 	if (!cookies) {
-		process.stderr.write(
+		Bun.stderr.write(
 			`Warning: cookie jar ${COOKIE_JAR} missing. Cloudflare will return 403 on most pages.\n`,
 		);
 	}
 
 	const targets = tournamentTargets(slug);
-	process.stderr.write(`dump-tournament: ${targets.length} URLs for slug=${slug}\n`);
+	Bun.stderr.write(`dump-tournament: ${targets.length} URLs for slug=${slug}\n`);
 
 	const results: DownloadResult[] = [];
 	for (const t of targets) {
 		const r = await downloadOne(t, outDir, cookies);
 		results.push(r);
-		process.stderr.write(
+		Bun.stderr.write(
 			`  ${r.id}  ${r.status || "ERR"}  ${r.bytes}b  ${r.durationMs.toFixed(0)}ms  ${t.url}\n`,
 		);
 	}
@@ -447,7 +463,7 @@ async function main(): Promise<void> {
 	const md = await analyse(results, outDir, slug);
 	await Bun.write(resolvePath(outDir, "analysis.md"), md);
 
-	process.stderr.write(
+	Bun.stderr.write(
 		`\ndump-tournament: done\n  output : ${outDir}\n  manifest : ${outDir}/manifest.json\n  analysis : ${outDir}/analysis.md\n`,
 	);
 }

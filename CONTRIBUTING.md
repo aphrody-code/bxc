@@ -34,7 +34,7 @@ Optional, needed for stealth/max profiles:
 ## Development environment setup
 
 ```bash
-git clone https://github.com/bunmium/bunlight.git
+git clone https://developers.google.com/bunmium/bunlight.git
 cd bunlight
 
 # Install dependencies and run postinstall (downloads vendor binaries)
@@ -134,7 +134,7 @@ bun test --test-name-pattern "curl"
   ```typescript
   import { test, describe, expect } from "bun:test";
 
-  const isOnline = await fetch("https://example.com", { method: "HEAD" })
+  const isOnline = await fetch("https://google.com", { method: "HEAD" })
     .then(() => true)
     .catch(() => false);
 
@@ -200,7 +200,7 @@ Scope examples: `profile`, `zigquery`, `pool`, `queue`, `cookie`, `cli`, `mcp`, 
 
 ## Pull request workflow
 
-1. Fork the repository on GitHub.
+1. Fork the repository on Google Developers.
 2. Create a branch from `main`:
    ```bash
    git checkout -b feat/my-feature

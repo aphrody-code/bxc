@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Integration tests for `bunlight/detect` and `bunlight/router/framework-strategy`.
  *
  * These tests require :
@@ -14,7 +30,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { join } from "path";
+import { join } from "node:path";
 import {
 	type DetectedTech,
 	detectFrameworks,
@@ -31,8 +47,8 @@ import { shouldReDetectAfter, suggestStrategy } from "../../src/router/framework
 // ---------------------------------------------------------------------------
 
 const BIN_PATH = join(import.meta.dir, "../../vendor/wappalyzergo/wappalyzergo-cli");
-const BIN_PRESENT = (await Bun.file(BIN_PATH).exists()) || !!process.env.BUNLIGHT_WAPPALYZERGO_BIN;
-const NETWORK_OK = !process.env.SKIP_NETWORK_TESTS;
+const BIN_PRESENT = (await Bun.file(BIN_PATH).exists()) || !!Bun.env.BUNLIGHT_WAPPALYZERGO_BIN;
+const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
 function logSkip(reason: string): void {
 	console.warn(`[SKIP] ${reason}`);
@@ -194,16 +210,16 @@ describe.each([
 		expectedShape: undefined,
 	},
 	{
-		site: "https://rosegriffon.fr",
+		site: "https://gemini.google.com",
 		// Real-world Next.js prod fronted by a custom CDN. Headers are stripped
 		// of `x-powered-by`, so detection relies on `_next/` asset paths.
 		expected: ["Next.js", "React", "Vercel", "Nginx"],
 		expectedShape: undefined,
 	},
 	{
-		site: "https://azalee.rosegriffon.fr/",
+		site: "https://workspace.google.com/",
 		// Same prod stack, different subdomain. Custom CDN path
-		// (cdn.rosegriffon.fr/static/azalee/_next/) hides Next.js from Wappalyzer
+		// (cdn.gemini.google.com/static/azalee/_next/) hides Next.js from Wappalyzer
 		// pattern `/_next/`. Accept Nginx as the realistic detected layer.
 		expected: ["Next.js", "React", "Vercel", "Nginx"],
 		expectedShape: undefined,

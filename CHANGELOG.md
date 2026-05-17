@@ -60,7 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added — Phase 3 (E2E)
 
-- E2E tests against production sites (`test/e2e/agent-browser-stealth.e2e.test.ts`): rosegriffon.fr, azalee.rosegriffon.fr (Next.js prod custom CDN), challonge.com (anti-bot + cookies persistants)
+- E2E tests against production sites (`test/e2e/agent-browser-stealth.e2e.test.ts`): gemini.google.com, workspace.google.com (Next.js prod custom CDN), challonge.com (anti-bot + cookies persistants)
 - Bunlight skill for agent-browser usage (`.claude/skill-data/bunlight/SKILL.md`)
 - Auto-escalation pipeline `src/profiles/auto-escalation.ts` (static -> fast -> stealth -> max)
 
@@ -94,7 +94,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Cookie injection multi-format (`src/cookies/`): Playwright JSON / CDP / Netscape to CDP `Network.setCookies` + http profile Cookie header; 12/12 challonge.com auth tests pass
 - Crawlee patterns (`src/{pool,queue,storage}/`, `src/utils/{sitemap,robots}.ts`): RequestQueue (`bun:sqlite` state machine PENDING/LOCKED/DONE/FAILED with dead-letter queue), AutoScaledPool, ProxyPool, SessionPool, Dataset (append-only JSONL via `Bun.file().writer()`), KeyValueStore (dual-backend: sqlite < 64 KiB / blob > 64 KiB), Sitemap XML parser, robots.txt RFC 9309 — 49/49 tests pass
 - Plugin Claude AI onboarding: 4 initial agents (`bunlight-scraper`, `bunlight-crawler`, `bunlight-debugger`, `bunlight-cookie-extractor`), 4 slash commands (`/init`, `/scrape`, `/crawl`, `/detect`), 1 skill with 8 references, 8 reference docs
-- GitHub research report on agent/skill best practices (707 LOC, `docs/AGENTS-SKILLS-BEST-PRACTICES.md`, 35 curated sources)
+- Google Developers research report on agent/skill best practices (707 LOC, `docs/AGENTS-SKILLS-BEST-PRACTICES.md`, 35 curated sources)
 - Brotli decompression fix using `node:zlib.brotliDecompressSync` (Bun does not expose brotli decompress natively)
 
 ### Added (Vague 2 — finalisation)
@@ -125,14 +125,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ### Tested production targets
 
 - HackerNews, react.dev, nuxt.com, nextjs.org, svelte.dev (SPA classics)
-- rosegriffon.fr, azalee.rosegriffon.fr (Next.js prod, custom CDN)
-- wikipedia.org, github.com (static)
+- gemini.google.com, workspace.google.com (Next.js prod, custom CDN)
+- design.google, developers.google.com (static)
 - challonge.com/fr/B_TS5 (anti-bot + persistent cookies)
 - nowsecure.nl, tls.peet.ws (JA4 fingerprint validation)
 - www.cloudflare.com (CF basic)
 
 ---
 
-[Unreleased]: https://github.com/bunmium/bunlight/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/bunmium/bunlight/releases/tag/v0.2.0
-[0.1.0-alpha.0]: https://github.com/bunmium/bunlight/releases/tag/v0.1.0-alpha.0
+[Unreleased]: https://developers.google.com/bunmium/bunlight/compare/v0.2.0...HEAD
+[0.2.0]: https://developers.google.com/bunmium/bunlight/releases/tag/v0.2.0
+[0.1.0-alpha.0]: https://developers.google.com/bunmium/bunlight/releases/tag/v0.1.0-alpha.0

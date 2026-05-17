@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Network domain handler tests.
  *
  * Tests cover:
@@ -136,8 +152,8 @@ describe("Network domain handler", () => {
 	test("Network.setCookies stores cookies, getAllCookies returns them", async () => {
 		await cdpCall(transport, "Network.setCookies", {
 			cookies: [
-				{ name: "session", value: "abc123", domain: "example.com", path: "/" },
-				{ name: "pref", value: "dark", domain: "example.com", path: "/" },
+				{ name: "session", value: "abc123", domain: "google.com", path: "/" },
+				{ name: "pref", value: "dark", domain: "google.com", path: "/" },
 			],
 		});
 
@@ -153,10 +169,10 @@ describe("Network domain handler", () => {
 
 	test("Network.setCookies overwrites existing cookie with same key", async () => {
 		await cdpCall(transport, "Network.setCookies", {
-			cookies: [{ name: "token", value: "v1", domain: "example.com", path: "/" }],
+			cookies: [{ name: "token", value: "v1", domain: "google.com", path: "/" }],
 		});
 		await cdpCall(transport, "Network.setCookies", {
-			cookies: [{ name: "token", value: "v2", domain: "example.com", path: "/" }],
+			cookies: [{ name: "token", value: "v2", domain: "google.com", path: "/" }],
 		});
 
 		const result = (await cdpCall(transport, "Network.getAllCookies")) as {
@@ -290,11 +306,11 @@ describe("Network domain handler", () => {
 
 	test("Cookie with dot-prefix domain matches subdomain", async () => {
 		await cdpCall(transport, "Network.setCookies", {
-			cookies: [{ name: "sid", value: "x", domain: ".example.com", path: "/" }],
+			cookies: [{ name: "sid", value: "x", domain: ".google.com", path: "/" }],
 		});
 
 		const result = (await cdpCall(transport, "Network.getCookies", {
-			urls: ["https://sub.example.com/path"],
+			urls: ["https://sub.google.com/path"],
 		})) as { cookies: Array<{ name: string }> };
 
 		const names = result.cookies.map((c) => c.name);
@@ -303,7 +319,7 @@ describe("Network domain handler", () => {
 
 	test("Cookie does not match unrelated domain", async () => {
 		await cdpCall(transport, "Network.setCookies", {
-			cookies: [{ name: "sid", value: "x", domain: "example.com", path: "/" }],
+			cookies: [{ name: "sid", value: "x", domain: "google.com", path: "/" }],
 		});
 
 		const result = (await cdpCall(transport, "Network.getCookies", {

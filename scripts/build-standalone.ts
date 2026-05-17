@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * build-standalone.ts — Production-grade standalone Bunlight executables.
  *
  * Output : dist/standalone/bunlight-{linux-x64,linux-arm64,darwin-x64,darwin-arm64}
@@ -42,7 +58,7 @@ interface BuildTarget {
 
 // Baseline (pre-2013 Nehalem CPUs without AVX2) variant only applies to x64.
 // macOS arm64 + linux arm64 do not have a baseline distinction.
-const BASELINE = process.env.BUNLIGHT_BASELINE === "1";
+const BASELINE = Bun.env.BUNLIGHT_BASELINE === "1";
 const ALL_TARGETS: readonly BuildTarget[] = [
 	{
 		target: BASELINE ? "bun-linux-x64-baseline" : "bun-linux-x64",
@@ -82,7 +98,7 @@ interface BuildResult {
 }
 
 function pickTargets(): readonly BuildTarget[] {
-	const env = process.env.BUNLIGHT_TARGETS?.trim();
+	const env = Bun.env.BUNLIGHT_TARGETS?.trim();
 	if (env && env.length > 0) {
 		const wanted = new Set(
 			env
@@ -100,7 +116,7 @@ function pickTargets(): readonly BuildTarget[] {
 		}
 		return ALL_TARGETS.filter((t) => wanted.has(t.suffix));
 	}
-	if (process.env.BUNLIGHT_HOST_ONLY === "1") {
+	if (Bun.env.BUNLIGHT_HOST_ONLY === "1") {
 		const arch = process.arch;
 		const platform = process.platform;
 		const wantedSuffix =
@@ -252,16 +268,16 @@ async function main(): Promise<void> {
 		__BUNLIGHT_BUILD_TIME__: buildTime,
 		BUILD_VERSION: version,
 		BUILD_TIME: buildTime,
-		"process.env.NODE_ENV": "production",
+		"Bun.env.NODE_ENV": "production",
 	};
-	const enableBytecode = process.env.BUNLIGHT_NO_BYTECODE !== "1";
+	const enableBytecode = Bun.env.BUNLIGHT_NO_BYTECODE !== "1";
 
 	const targets = pickTargets();
 	if (targets.length === 0) {
 		console.error(
 			"[build-standalone] No targets selected (empty BUNLIGHT_TARGETS ?)",
 		);
-		Bun.exit(1);
+		process.exit(1);
 	}
 	console.log(
 		`[build-standalone] version=${version} time=${buildTime} bytecode=${enableBytecode} baseline=${BASELINE}`,
@@ -270,10 +286,11 @@ async function main(): Promise<void> {
 		`[build-standalone] Targets : ${targets.map((t) => t.suffix).join(", ")}`,
 	);
 
-	const results: BuildResult[] = [];
-	for (const t of targets) {
-		const r = await buildOne(t, entry, outDir, defines, enableBytecode);
-		results.push(r);
+	const results: BuildResult[] = await Promise.all(
+		targets.map((t) => buildOne(t, entry, outDir, defines, enableBytecode))
+	);
+
+	for (const r of results) {
 		if (r.ok) {
 			console.log(`  ok ${r.out} -> ${r.sizeMb} MB`);
 		} else {
@@ -293,7 +310,7 @@ async function main(): Promise<void> {
 
 	if (okCount === 0) {
 		console.error("[build-standalone] All builds failed");
-		Bun.exit(1);
+		process.exit(1);
 	}
 	if (failCount > 0) {
 		console.warn(

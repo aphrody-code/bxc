@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Integration tests for Google-specific specialization.
  * Focuses on domains requested: gemini.google, geminicli.com, design.google, m3.material.io.
  */
@@ -19,13 +35,14 @@ import { suggestStrategy } from "../../src/router/framework-strategy.ts";
 // ---------------------------------------------------------------------------
 
 async function locateLightpanda(): Promise<string | null> {
-	const envBin = process.env.BUNLIGHT_LIGHTPANDA_BIN;
+	const root = new URL("../../", import.meta.url).pathname;
+	const envBin = Bun.env.BUNLIGHT_LIGHTPANDA_BIN;
 	if (envBin && (await Bun.file(envBin).exists())) return envBin;
 
 	const candidates = [
-		`${process.env.HOME}/.local/bin/lightpanda`,
-		`${process.env.HOME}/lightpanda`,
-		"/home/ubuntu/vps/packages/bunlight/vendor/lightpanda-bin/linux-x64/lightpanda",
+		`${Bun.env.HOME}/.local/bin/lightpanda`,
+		`${Bun.env.HOME}/lightpanda`,
+		`${root}vendor/lightpanda-bin/linux-x64/lightpanda`,
 		"/usr/local/bin/lightpanda",
 	];
 	for (const c of candidates) {
@@ -69,6 +86,9 @@ describe("Google Specialization — DNS & Detection Logic", () => {
 			isMaterialDesign: false,
 			framework: "wiz",
 			hasAntiBot: true,
+			antiBotKind: null,
+			products: [],
+			hosting: "none",
 			evidence: ["manual"],
 		});
 		const strategy = suggestStrategy(tech, "https://gemini.google.com");
@@ -83,7 +103,7 @@ describe("Google Specialization — DNS & Detection Logic", () => {
 
 async function isOnline(): Promise<boolean> {
 	try {
-		await fetch("https://example.com", {
+		await fetch("https://google.com", {
 			signal: AbortSignal.timeout(2000),
 			method: "HEAD",
 		});

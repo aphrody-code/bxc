@@ -61,6 +61,13 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
 fi
 
+# 5. Developer Runtime Check (Optional but recommended for Bunlight)
+if command -v bun &> /dev/null; then
+    echo ""
+    echo "💎 Bunlight is optimized for Bun Canary."
+    echo "To switch to Canary: bun upgrade --canary"
+fi
+
 echo ""
 echo "🚀 Try running: bunlight --version"
 echo "📖 Documentation: https://github.com/$REPO"

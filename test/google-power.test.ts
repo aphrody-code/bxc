@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for the powered-up google module helpers.
  * No network — pure functions and the in-memory cache only.
  */
@@ -35,7 +51,7 @@ describe("google/dns extras", () => {
 
 	test("isGoogleDomain matches subdomains", () => {
 		expect(isGoogleDomain("foo.bar.gemini.google.com")).toBe(true);
-		expect(isGoogleDomain("not.related.example.com")).toBe(false);
+		expect(isGoogleDomain("not-google.com")).toBe(false);
 	});
 });
 
@@ -77,7 +93,7 @@ describe("google/rate-limit AdaptiveTokenBucket", () => {
 });
 
 describe("google/fetch.extractStructuredData", () => {
-	test("parses JSON-LD, OpenGraph and meta description", () => {
+	test("parses JSON-LD, OpenGraph and meta description", async () => {
 		const html = `
 			<html><head>
 				<meta property="og:title" content="Hello" />
@@ -88,7 +104,7 @@ describe("google/fetch.extractStructuredData", () => {
 				<script type="application/ld+json">{"@type":"Article","name":"X"}</script>
 				<script type="application/ld+json">[{"@type":"Person","name":"Y"}]</script>
 			</head></html>`;
-		const out = extractStructuredData(html);
+		const out = await extractStructuredData(html);
 		expect(out.openGraph.title).toBe("Hello");
 		expect(out.openGraph.image).toBe("https://x/i.png");
 		expect(out.twitter.card).toBe("summary");
@@ -106,7 +122,7 @@ describe("google/detector enrichments", () => {
 			<script>grecaptcha.execute("key", {action: "homepage"})</script>
 			<meta gemini="true" />`;
 		const det = detectGoogleSpecifics(
-			"https://example.com",
+			"https://google.com",
 			new Headers(),
 			html,
 		);

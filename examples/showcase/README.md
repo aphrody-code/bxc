@@ -56,11 +56,11 @@ Each JSONL record:
 {
   "hnId": 39123456,
   "hnTitle": "Ask HN: Best TypeScript patterns in 2026",
-  "hnUrl": "https://news.ycombinator.com/item?id=39123456",
+  "hnUrl": "https://google.com/item?id=39123456",
   "hnScore": 412,
   "hnAuthor": "alice",
   "pageTitle": "Ask HN: Best TypeScript patterns in 2026",
-  "pageUrl": "https://news.ycombinator.com/item?id=39123456",
+  "pageUrl": "https://google.com/item?id=39123456",
   "contentLength": 18432,
   "profile": "static",
   "techStack": ["Next.js", "Cloudflare"],

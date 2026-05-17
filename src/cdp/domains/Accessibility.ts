@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Accessibility domain handler.
  *
  * Implements:
@@ -433,93 +449,119 @@ function buildAXNode(
  * querySelectorAll("*") for enumeration and reconstruct parent-child
  * relationships via a flat index.
  */
-function buildAXTree(
+async function buildAXTree(
 	doc: {
 		rawHtml: string;
-		querySelectorAll(sel: string): ParsedNodeLike[];
-		querySelector(sel: string): ParsedNodeLike | undefined;
+		querySelectorAll(sel: string): Promise<ParsedNodeLike[]>;
+		querySelector(sel: string): Promise<ParsedNodeLike | undefined>;
 		getNodeById(id: number): ParsedNodeLike | undefined;
 		rootId: number;
 	},
 	scopeNodeId?: number,
-): AXNode[] {
-	// Gather all nodes.
-	let nodes: ParsedNodeLike[];
+): Promise<AXNode[]> {
+	const allNodes = await doc.querySelectorAll("*");
+	if (allNodes.length === 0) return [];
 
-	if (scopeNodeId !== undefined) {
-		// Partial tree: get the scoped node and its descendants.
-		const scopeNode = doc.getNodeById(scopeNodeId);
-		if (!scopeNode) return [];
+	// 1. Reconstruct the tree structure from rawHtml using a stack.
+	// Since allNodes are in document order, we can match them back to the tags.
+	const parentMap = new Map<number, number>(); // childId -> parentId
+	const stack: Array<{ nodeId: number; tagName: string }> = [];
+	
+	// We use a simplified tag scanner to match nodes in allNodes.
+	const TAG_RE = /<(\/?[a-zA-Z][a-zA-Z0-9-]*)/g;
+	let nodeIdx = 0;
+	let match: RegExpExecArray | null;
 
-		// We need to find all nodes inside the scope. Parse the outerHTML of the
-		// scope node and collect all descendant elements via querySelectorAll("*").
-		// We reconstruct a virtual sub-document from the outerHTML.
-		// Because ParsedDocumentLike does not support subtree queries by nodeId,
-		// we use the outerHTML text to determine scope membership: a node is "in
-		// scope" if its outerHTML is a substring of the scope node's outerHTML.
-		const scopeHtml = scopeNode.outerHTML;
-		const allNodes = doc.querySelectorAll("*");
-		nodes = [
-			scopeNode,
-			...allNodes.filter((n) => n.nodeId !== scopeNodeId && scopeHtml.includes(n.outerHTML)),
-		];
-	} else {
-		nodes = doc.querySelectorAll("*");
-	}
-
-	if (nodes.length === 0) return [];
-
-	// Assign a stable AX node ID (string) per DOM node.
-	const axIdMap = new Map<number, string>();
-	nodes.forEach((n, i) => {
-		axIdMap.set(n.nodeId, String(i + 1));
-	});
-
-	// Build a simple nesting model.  We approximate parent-child by HTML
-	// containment: node B is a child of node A if A's outerHTML contains B's
-	// outerHTML and A is the "smallest" container for B among all nodes.
-	//
-	// This is O(n^2) but is acceptable for typical page sizes.
-	const parentMap = new Map<number, number>(); // nodeId -> parentNodeId
-	for (let i = 0; i < nodes.length; i++) {
-		let bestParentIdx = -1;
-		let bestParentLen = Infinity;
-		for (let j = 0; j < nodes.length; j++) {
-			if (i === j) continue;
-			const candidate = nodes[j];
-			if (
-				candidate.outerHTML.length < nodes[i].outerHTML.length &&
-				candidate.outerHTML.includes(nodes[i].outerHTML) &&
-				candidate.outerHTML.length < bestParentLen
-			) {
-				bestParentIdx = j;
-				bestParentLen = candidate.outerHTML.length;
+	while ((match = TAG_RE.exec(doc.rawHtml)) !== null) {
+		const fullTag = match[1];
+		if (fullTag.startsWith("/")) {
+			// Closing tag - pop from stack if it matches.
+			const tagName = fullTag.slice(1).toLowerCase();
+			// Pop until we find the matching opening tag (handling unclosed tags gracefully).
+			while (stack.length > 0 && stack[stack.length - 1].tagName !== tagName) {
+				stack.pop();
+			}
+			stack.pop();
+		} else {
+			// Opening tag.
+			const tagName = fullTag.toLowerCase();
+			const isSelfClosing = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].includes(tagName);
+			
+			// Match this tag to the next node in allNodes.
+			// (querySelectorAll might skip some tags like <head> depending on implementation,
+			// but zigquery is usually consistent).
+			if (nodeIdx < allNodes.length && allNodes[nodeIdx].tagName.toLowerCase() === tagName) {
+				const currentNode = allNodes[nodeIdx];
+				if (stack.length > 0) {
+					parentMap.set(currentNode.nodeId, stack[stack.length - 1].nodeId);
+				}
+				if (!isSelfClosing) {
+					stack.push({ nodeId: currentNode.nodeId, tagName });
+				}
+				nodeIdx++;
+			} else if (!isSelfClosing) {
+				// Node not in allNodes (e.g. text or comment), but still push to stack to maintain depth.
+				stack.push({ nodeId: -1, tagName });
 			}
 		}
-		if (bestParentIdx !== -1) {
-			parentMap.set(nodes[i].nodeId, nodes[bestParentIdx].nodeId);
+	}
+
+	// 2. Identify target nodes for partial tree.
+	let targetNodeIds: Set<number> | null = null;
+	if (scopeNodeId !== undefined) {
+		targetNodeIds = new Set<number>();
+		
+		// Find the scope node (handle ID stability).
+		let rootId = scopeNodeId;
+		if (!allNodes.some(n => n.nodeId === scopeNodeId)) {
+			const scopeNode = doc.getNodeById(scopeNodeId);
+			if (scopeNode) {
+				const match = allNodes.find(n => n.outerHTML === scopeNode.outerHTML);
+				if (match) rootId = match.nodeId;
+			}
+		}
+
+		targetNodeIds.add(rootId);
+		
+		// Multi-pass to find all descendants.
+		let added = true;
+		while (added) {
+			added = false;
+			for (const [childId, parentId] of parentMap) {
+				if (targetNodeIds.has(parentId) && !targetNodeIds.has(childId)) {
+					targetNodeIds.add(childId);
+					added = true;
+				}
+			}
 		}
 	}
 
-	// Build children map.
+	// 3. Filter and build.
+	const filteredNodes = targetNodeIds 
+		? allNodes.filter(n => targetNodeIds!.has(n.nodeId))
+		: allNodes;
+	
+	const filteredIds = new Set(filteredNodes.map(n => n.nodeId));
 	const childrenMap = new Map<number, number[]>();
 	for (const [childId, parentId] of parentMap) {
-		const list = childrenMap.get(parentId) ?? [];
-		list.push(childId);
-		childrenMap.set(parentId, list);
+		if (filteredIds.has(childId) && filteredIds.has(parentId)) {
+			const list = childrenMap.get(parentId) ?? [];
+			list.push(childId);
+			childrenMap.set(parentId, list);
+		}
 	}
 
-	// Emit AXNodes.
-	const axNodes: AXNode[] = [];
-	for (const node of nodes) {
-		const axId = axIdMap.get(node.nodeId)!;
-		const parentNodeId = parentMap.get(node.nodeId);
-		const parentAxId = parentNodeId !== undefined ? axIdMap.get(parentNodeId) : undefined;
-		const childNodeIds = childrenMap.get(node.nodeId) ?? [];
-		const childAxIds = childNodeIds.map((id) => axIdMap.get(id) ?? "").filter(Boolean);
+	const axIdMap = new Map<number, string>();
+	filteredNodes.forEach((n, i) => axIdMap.set(n.nodeId, String(i + 1)));
 
-		const axNode = buildAXNode(node, axId, parentAxId, childAxIds, nodes);
-		axNodes.push(axNode);
+	const axNodes: AXNode[] = [];
+	for (const node of filteredNodes) {
+		const axId = axIdMap.get(node.nodeId)!;
+		const parentId = parentMap.get(node.nodeId);
+		const parentAxId = (parentId !== undefined && filteredIds.has(parentId)) ? axIdMap.get(parentId) : undefined;
+		const childAxIds = (childrenMap.get(node.nodeId) ?? []).map(id => axIdMap.get(id)!).filter(Boolean);
+
+		axNodes.push(buildAXNode(node, axId, parentAxId, childAxIds, allNodes));
 	}
 
 	return axNodes;
@@ -631,7 +673,7 @@ export const AccessibilityHandler: DomainHandler = async (method, params, ctx, s
 				return { nodes: cached };
 			}
 
-			const nodes = buildAXTree(page.doc);
+			const nodes = await buildAXTree(page.doc);
 			axCacheSet(sid, page.loaderId, nodes);
 			return { nodes };
 		}
@@ -660,7 +702,7 @@ export const AccessibilityHandler: DomainHandler = async (method, params, ctx, s
 				throw new CDPError(`Node not found: ${id}`, -32602);
 			}
 
-			const nodes = buildAXTree(page.doc, id);
+			const nodes = await buildAXTree(page.doc, id);
 			return { nodes };
 		}
 

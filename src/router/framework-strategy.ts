@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/router/framework-strategy
  *
  * Maps the output of {@link detectFrameworks} onto a Bunlight scraping
@@ -14,7 +30,7 @@
  * import { suggestStrategy } from "bunlight/router/framework-strategy";
  * import { Browser } from "bunlight/browser";
  *
- * const tech = await detectFrameworks("https://shop.example.com");
+ * const tech = await detectFrameworks("https://shop.google.com");
  * const plan = suggestStrategy(tech);
  * const page = await Browser.newPage({ profile: plan.profile });
  * ```
@@ -22,8 +38,6 @@
 
 import type { DetectedTech } from "../detect.ts";
 import {
-	detectGoogleSpecifics,
-	googleToTech,
 	isGoogleDomain,
 	suggestGoogleStrategy,
 } from "../google/index.ts";
@@ -222,6 +236,9 @@ export function suggestStrategy(detected: DetectedTech[], url?: string): Strateg
 							? "wiz"
 							: "none") as any,
 				hasAntiBot: names.has("google anti-bot"),
+				antiBotKind: null,
+				products: [],
+				hosting: "none" as const,
 				evidence: ["suggestStrategy: domain match"],
 			};
 			return suggestGoogleStrategy(googleDetection, url);

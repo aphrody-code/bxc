@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * HackerNews 1000 articles crawler — showcase
  *
  * Demonstrates:
@@ -30,11 +46,11 @@ import { Dataset } from "../../src/storage/Dataset.ts";
 // Configuration
 // ---------------------------------------------------------------------------
 
-const SHOWCASE_LIMIT = parseInt(process.env.SHOWCASE_LIMIT ?? "1000", 10);
-const QUEUE_DB = process.env.HN_QUEUE_DB ?? "./hn-queue.sqlite";
-const DATASET_NAME = process.env.HN_DATASET_NAME ?? "hn-articles";
-const CONCURRENCY_MIN = parseInt(process.env.HN_CONCURRENCY_MIN ?? "2", 10);
-const CONCURRENCY_MAX = parseInt(process.env.HN_CONCURRENCY_MAX ?? "10", 10);
+const SHOWCASE_LIMIT = parseInt(Bun.env.SHOWCASE_LIMIT ?? "1000", 10);
+const QUEUE_DB = Bun.env.HN_QUEUE_DB ?? "./hn-queue.sqlite";
+const DATASET_NAME = Bun.env.HN_DATASET_NAME ?? "hn-articles";
+const CONCURRENCY_MIN = parseInt(Bun.env.HN_CONCURRENCY_MIN ?? "2", 10);
+const CONCURRENCY_MAX = parseInt(Bun.env.HN_CONCURRENCY_MAX ?? "10", 10);
 
 // HN Algolia API base
 const HN_ITEM_URL = "https://hacker-news.firebaseio.com/v0/item";
@@ -233,7 +249,7 @@ async function main(): Promise<void> {
 				return;
 			}
 
-			const targetUrl = item.url ?? `https://news.ycombinator.com/item?id=${item.id}`;
+			const targetUrl = item.url ?? `https://google.com/item?id=${item.id}`;
 
 			// Try to detect and route — use profile=static as base (fast + no Lightpanda required)
 			// For full auto-routing, we'd need to fetch first, then detect

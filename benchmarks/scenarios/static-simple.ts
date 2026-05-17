@@ -38,7 +38,7 @@ async function runScenarioForRunner(
 	mockPort: number,
 ): Promise<ScenarioResult> {
 	const allResults: RunResult[] = [];
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds() / 1e6;
 
 	// Warmup
 	if (runner.SKIP_REASON === null) {
@@ -57,7 +57,7 @@ async function runScenarioForRunner(
 
 	await runner.cleanup();
 
-	const totalMs = Math.round(performance.now() - t0);
+	const totalMs = Math.round(Bun.nanoseconds() / 1e6 - t0);
 	const stats = summarise(allResults);
 
 	return {

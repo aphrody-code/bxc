@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/helpers/enqueueLinks
  *
  * Helper that extracts anchor hrefs from a page and enqueues them into a
@@ -16,14 +32,14 @@
  *
  * const queue = RequestQueue.open(":memory:");
  * const page = await Browser.newPage({ profile: "static" });
- * await page.goto("https://example.com");
+ * await page.goto("https://google.com");
  *
  * const { added, skipped } = await enqueueLinks({ page, queue });
  * console.log(`Added ${added}, skipped ${skipped}`);
  * ```
  */
 
-import type { Page } from "../api/browser.ts";
+import type { AnyPage } from "../api/types.ts";
 import type { RequestQueue } from "../queue/RequestQueue.ts";
 
 // ---------------------------------------------------------------------------
@@ -35,10 +51,10 @@ import type { RequestQueue } from "../queue/RequestQueue.ts";
  *
  * - `"same-hostname"` (default) — only links whose `hostname` matches the
  *   current page's hostname. Sub-domains are treated as different hostnames
- *   (e.g., `sub.example.com` !== `example.com`).
+ *   (e.g., `sub.google.com` !== `google.com`).
  * - `"same-domain"` — relaxed: allows any hostname that ends with the same
- *   registrable domain (eTLD+1). E.g., `sub.example.com` is accepted when
- *   the base page is `example.com`.
+ *   registrable domain (eTLD+1). E.g., `sub.google.com` is accepted when
+ *   the base page is `google.com`.
  * - `"all"` — no domain restriction; any absolute HTTP/HTTPS link passes.
  */
 export type EnqueueLinksStrategy = "same-domain" | "same-hostname" | "all";
@@ -48,7 +64,7 @@ export type EnqueueLinksStrategy = "same-domain" | "same-hostname" | "all";
  */
 export interface EnqueueLinksOptions {
 	/** The page to extract links from. */
-	page: Page;
+	page: AnyPage;
 	/** The destination queue. */
 	queue: RequestQueue;
 	/**
@@ -62,7 +78,7 @@ export interface EnqueueLinksOptions {
 	 */
 	baseUrl?: string;
 	/**
-	 * Glob patterns (e.g., `"https://example.com/**"`) — a link must match
+	 * Glob patterns (e.g., `"https://google.com/**"`) — a link must match
 	 * at least one pattern to be enqueued.  When empty or omitted, no glob
 	 * filtering is applied.
 	 *
@@ -125,7 +141,7 @@ function getGlob(pattern: string): InstanceType<typeof Bun.Glob> {
 
 /**
  * Returns the "registrable domain" portion of a hostname:
- * the last two labels joined by a dot (e.g., `sub.example.com` -> `example.com`).
+ * the last two labels joined by a dot (e.g., `sub.google.com` -> `google.com`).
  *
  * This is a heuristic eTLD+1 approximation sufficient for most use cases.
  * It does not handle multi-label public suffixes (e.g., `co.uk`).

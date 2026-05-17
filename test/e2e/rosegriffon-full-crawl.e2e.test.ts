@@ -1,5 +1,21 @@
 /**
- * E2E full-crawl suite — rosegriffon.fr
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * E2E full-crawl suite — gemini.google.com
  *
  * Walks every URL discovered for the origin and exercises each of the five
  * Bunlight profiles (static, fast, http, stealth, max) against it. The
@@ -38,7 +54,7 @@ import {
 	writeReport,
 } from "./helpers.ts";
 
-const ORIGIN = "https://www.rosegriffon.fr";
+const ORIGIN = "https://www.gemini.google.com";
 const REPORT_DATE = new Date().toISOString().slice(0, 10);
 const REPORT_PATH = `${import.meta.dir}/results/${REPORT_DATE}-rosegriffon.md`;
 const PER_TEST_TIMEOUT_MS = 60_000;
@@ -65,7 +81,7 @@ function emptySummary(): ProfileSummary {
 
 async function isOnline(): Promise<boolean> {
 	try {
-		const r = await fetch("https://www.rosegriffon.fr/sitemap.xml", {
+		const r = await fetch("https://www.gemini.google.com/sitemap.xml", {
 			method: "HEAD",
 			signal: AbortSignal.timeout(4000),
 		});
@@ -78,7 +94,7 @@ async function isOnline(): Promise<boolean> {
 beforeAll(async () => {
 	online = await isOnline();
 	if (!online) {
-		console.log("[rosegriffon] SKIP: rosegriffon.fr unreachable, running cache-only mode");
+		console.log("[rosegriffon] SKIP: gemini.google.com unreachable, running cache-only mode");
 	}
 	lightpandaBin = await resolveLightpandaBin();
 	discovery = await discoverPages(ORIGIN, {
@@ -139,7 +155,7 @@ async function runOne(profile: ProfileName, url: string): Promise<SiteResult> {
 				readyTimeoutMs: 10_000,
 				binaryPath: lightpandaBin ?? undefined,
 				stderrLogger: (s) => {
-					if (process.env.BUNLIGHT_E2E_VERBOSE) process.stderr.write(`[lp] ${s}`);
+					if (Bun.env.BUNLIGHT_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
 				},
 			},
 		})) as Page;
@@ -205,7 +221,7 @@ function recordResult(profile: ProfileName, r: SiteResult): void {
 // ---------------------------------------------------------------------------
 
 for (const profile of PROFILES) {
-	describe(`rosegriffon.fr — profile=${profile}`, () => {
+	describe(`gemini.google.com — profile=${profile}`, () => {
 		test(
 			`crawl all pages with profile=${profile}`,
 			async () => {
@@ -273,7 +289,7 @@ for (const profile of PROFILES) {
 // Final acceptance gate
 // ---------------------------------------------------------------------------
 
-describe("rosegriffon.fr — acceptance", () => {
+describe("gemini.google.com — acceptance", () => {
 	test("profile=fast has >= 95% pass rate (Lightpanda primary target)", () => {
 		if (!online) {
 			console.log("[rosegriffon acceptance] SKIP: offline");

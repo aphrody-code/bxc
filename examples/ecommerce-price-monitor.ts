@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Example — E-Commerce Price Monitor (profile: auto-detected via suggestStrategy)
  *
  * Demonstrates Bunlight's profile escalation pipeline:
@@ -25,7 +41,6 @@
 import type { Page } from "../src/api/browser.ts";
 import { Browser } from "../src/api/browser.ts";
 import type { DetectedTech } from "../src/detect.ts";
-import type { Profile } from "../src/router/framework-strategy.ts";
 import { suggestStrategy } from "../src/router/framework-strategy.ts";
 
 // ---------------------------------------------------------------------------
@@ -116,28 +131,6 @@ async function extractPrice(page: Page): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Profile resolution
-// ---------------------------------------------------------------------------
-
-/**
- * Maps a profile name onto a Page-compatible profile for Browser.newPage.
- * For "fast" and "stealth"/"max", data: URIs won't hydrate meaningfully, so
- * we always cap at "static" for data: URI targets in this demo.
- */
-function resolveProfileForUrl(url: string, suggestedProfile: Profile): Profile {
-	if (url.startsWith("data:")) {
-		// data: URIs are served in-process, no binary spawn needed
-		return "static";
-	}
-	// "http" profile doesn't support DOM queries — fall back to "static" for
-	// pages where the http profile would be suggested but we need CSS selectors
-	if (suggestedProfile === "http") return "static";
-	// For this demo, escalate "fast" SPAs to static (no Lightpanda binary assumed)
-	if (suggestedProfile === "fast") return "static";
-	return suggestedProfile;
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -155,16 +148,16 @@ console.log();
 for (const product of PRODUCT_PAGES) {
 	// Step 1: Determine strategy from simulated framework detection
 	const strategy = suggestStrategy(product.simulatedTech);
-	const finalProfile = resolveProfileForUrl(product.url, strategy.profile);
+	const finalProfile = strategy.profile;
 
 	console.log(
 		`  "${product.name}"`,
 		`| detected: ${product.simulatedTech.map((t) => t.name).join(", ") || "none"}`,
-		`| suggested: ${strategy.profile} => using: ${finalProfile}`,
+		`| suggested: ${strategy.profile}`,
 	);
 
 	// Step 2: Open page with resolved profile
-	const page = (await Browser.newPage({ profile: finalProfile })) as Page;
+	const page = (await Browser.newPage({ profile: finalProfile })) as any;
 	let currentPrice: string | null = null;
 
 	try {

@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Example — Reddit JSON Crawler (profile: http)
  *
  * Fetches the top 25 posts from /r/programming using Reddit's public JSON API,
@@ -60,6 +76,7 @@ interface RedditCommentListing {
 }
 
 interface PostRecord {
+	[key: string]: any;
 	id: string;
 	title: string;
 	url: string;
@@ -84,7 +101,7 @@ const REDDIT_HEADERS: Record<string, string> = {
 	"accept-language": "en-US,en;q=0.9",
 	// Reddit requires a descriptive UA for API access — generic browser UA
 	// is rejected by the JSON API with a 429; identify as a bot script.
-	"user-agent": "bunlight-example/0.1 (educational scraping demo; contact: dev@example.com)",
+	"user-agent": "bunlight-example/0.1 (educational scraping demo; contact: dev@google.com)",
 };
 
 async function fetchJson<T>(page: HttpPage, url: string): Promise<T> {

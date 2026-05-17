@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module test/e2e/discover-pages
  *
  * Discovers all crawlable URLs for a given origin, used by the rosegriffon
@@ -213,7 +229,7 @@ export async function discoverPages(
 	origin: string,
 	opts: DiscoverOptions = {},
 ): Promise<DiscoverResult> {
-	const userAgent = opts.userAgent ?? "Bunlight-E2E/1.0 (+https://github.com/bunmium/bunlight)";
+	const userAgent = opts.userAgent ?? "Bunlight-E2E/1.0 (+https://developers.google.com/bunmium/bunlight)";
 	const requestTimeoutMs = opts.requestTimeoutMs ?? 10_000;
 	const cacheFile = cachePathFor(origin, opts.cacheFile);
 

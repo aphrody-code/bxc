@@ -1,0 +1,17 @@
+{
+  "name": "bunlight-gemini",
+  "version": "1.0.0",
+  "description": "Bunlight native extension for Gemini CLI with auto-detect, subagent scraping, vision API, and SQLite memory.",
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./server.ts --compile --target=bun-linux-x64 --outfile bunlight-mcp",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

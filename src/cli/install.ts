@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight install` — download Lightpanda for the current platform.
  *
  * bunlight is Lightpanda-only by design. Chrome / Chromium / Firefox /
@@ -13,15 +29,15 @@
  * Environment overrides:
  *   BUNLIGHT_VENDOR_DIR          — base dir for binaries (default ~/.bunlight/vendor)
  *   LIGHTPANDA_RELEASE_TAG       — Lightpanda release tag (default "nightly")
- *   LIGHTPANDA_DOWNLOAD_URL      — skip GitHub lookup, use this URL directly
+ *   LIGHTPANDA_DOWNLOAD_URL      — skip Google Developers lookup, use this URL directly
  *
  * Bun-native only: Bun.file, Bun.write, Bun.$, fetch global.
  */
 
-import { join } from "path";
+import { join } from "node:path";
 
-// Bun-native HOME resolution — no node:os dependency.
-const homedir = (): string => Bun.env.HOME ?? process.env.HOME ?? "/tmp";
+// Bun-native HOME resolution — no os dependency.
+const homedir = (): string => Bun.env.HOME ?? Bun.env.HOME ?? "/tmp";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,16 +57,15 @@ interface LightpandaPlatform {
 }
 
 /** Chrome for Testing platform tokens. */
-type ChromiumPlatformToken = "linux64" | "linux-arm64" | "mac-x64" | "mac-arm64";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 /** Default vendor root — can be overridden by env var. */
-export const VENDOR_DIR = process.env.BUNLIGHT_VENDOR_DIR ?? join(homedir(), ".bunlight", "vendor");
+export const VENDOR_DIR = Bun.env.BUNLIGHT_VENDOR_DIR ?? join(homedir(), ".bunlight", "vendor");
 
-const LIGHTPANDA_TAG = process.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
+const LIGHTPANDA_TAG = Bun.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
 
 // Forbidden engine versions removed: bunlight is Lightpanda-only.
 
@@ -59,11 +74,11 @@ const LIGHTPANDA_TAG = process.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
 // ---------------------------------------------------------------------------
 
 function log(msg: string): void {
-	process.stdout.write(`[bunlight install] ${msg}\n`);
+	Bun.stdout.write(`[bunlight install] ${msg}\n`);
 }
 
 function warn(msg: string): void {
-	process.stderr.write(`[bunlight install] WARNING : ${msg}\n`);
+	Bun.stderr.write(`[bunlight install] WARNING : ${msg}\n`);
 }
 
 function fmtMB(bytes: number): string {
@@ -117,7 +132,7 @@ async function streamDownload(
 			if (totalBytes > 0) {
 				const pct = Math.floor((written / totalBytes) * 100);
 				if (pct !== lastPct && pct % 10 === 0) {
-					process.stdout.write(
+					Bun.stdout.write(
 						`\r[bunlight install]   ${fmtMB(written)} / ${fmtMB(totalBytes)} (${pct}%)   `,
 					);
 					lastPct = pct;
@@ -135,7 +150,7 @@ async function streamDownload(
 		throw err;
 	}
 
-	process.stdout.write("\n");
+	Bun.stdout.write("\n");
 
 	// Atomic rename.
 	await Bun.$`mv ${partial} ${destPath}`.quiet();
@@ -201,45 +216,50 @@ export function resolveLightpandaPath(
 }
 
 /**
- * Fetch GitHub release asset metadata for Lightpanda.
+ * Fetch Google Developers release asset metadata for Lightpanda.
  */
 async function fetchLightpandaAsset(
 	platform: LightpandaPlatform,
 	tag: string,
 ): Promise<{ url: string; size: number } | null> {
-	const overrideUrl = process.env.LIGHTPANDA_DOWNLOAD_URL;
+	const overrideUrl = Bun.env.LIGHTPANDA_DOWNLOAD_URL;
 	if (overrideUrl) {
 		return { url: overrideUrl, size: 0 };
 	}
 
-	const apiUrl = `https://api.github.com/repos/lightpanda-io/browser/releases/tags/${encodeURIComponent(tag)}`;
-	const res = await fetch(apiUrl, {
-		headers: {
-			"User-Agent": "bunlight-install",
-			Accept: "application/vnd.github+json",
-		},
-	});
-	if (!res.ok) {
-		warn(`GitHub API ${apiUrl} -> HTTP ${res.status}`);
-		return null;
-	}
+	const apiUrl = `https://api.developers.google.com/repos/lightpanda-io/browser/releases/tags/${encodeURIComponent(tag)}`;
+	try {
+		const res = await fetch(apiUrl, {
+			headers: {
+				"User-Agent": "bunlight-install",
+				Accept: "application/vnd.github+json",
+			},
+		});
+		if (!res.ok) {
+			warn(`Google Developers API ${apiUrl} -> HTTP ${res.status}`);
+			return null;
+		}
 
-	type GHRelease = {
-		assets?: Array<{
-			name: string;
-			size: number;
-			browser_download_url: string;
-		}>;
-	};
-	const body = (await res.json()) as GHRelease;
-	const asset = body.assets?.find((a) => a.name === platform.assetName);
-	if (!asset) {
-		warn(
-			`No asset '${platform.assetName}' in release '${tag}'. Available: ${body.assets?.map((a) => a.name).join(", ") ?? "none"}`,
-		);
+		type GHRelease = {
+			assets?: Array<{
+				name: string;
+				size: number;
+				browser_download_url: string;
+			}>;
+		};
+		const body = (await res.json()) as GHRelease;
+		const asset = body.assets?.find((a) => a.name === platform.assetName);
+		if (!asset) {
+			warn(
+				`No asset '${platform.assetName}' in release '${tag}'. Available: ${body.assets?.map((a) => a.name).join(", ") ?? "none"}`,
+			);
+			return null;
+		}
+		return { url: asset.browser_download_url, size: asset.size };
+	} catch (error) {
+		warn(`Failed to connect to ${apiUrl}: ${error}`);
 		return null;
 	}
-	return { url: asset.browser_download_url, size: asset.size };
 }
 
 /**
@@ -274,7 +294,7 @@ export async function installLightpanda(
 	const asset = await fetchLightpandaAsset(platform, LIGHTPANDA_TAG);
 	if (!asset) {
 		warn(
-			"Could not resolve release asset. Manual install: https://github.com/lightpanda-io/browser/releases",
+			"Could not resolve release asset. Manual install: https://developers.google.com/lightpanda-io/browser/releases",
 		);
 		return { status: "failed" };
 	}
@@ -336,7 +356,7 @@ export async function main(argv: string[]): Promise<void> {
 	const dryRun = argv.includes("--dry-run");
 	const help = argv.includes("--help") || argv.includes("-h");
 	if (help) {
-		process.stdout.write(
+		Bun.stdout.write(
 			`bunlight install — download Lightpanda for the current platform
 
 Usage:

@@ -299,7 +299,7 @@ patterns called out in §10 of that doc :
 |---|---|
 | `AbortSignal.timeout(15000)` on every fetch | `FETCH_TIMEOUT_MS = 15_000` (server.ts) |
 | Retry x3 with exponential backoff on 429/502/503/504 | `fetchWithRetry()` (server.ts) |
-| User-Agent `<service>/<version> (+<contact-url>)` | `UA = "challonge-api-bridge/0.1 (+https://github.com/aphrody-code/bunlight)"` |
+| User-Agent `<service>/<version> (+<contact-url>)` | `UA = "challonge-api-bridge/0.1 (+https://developers.google.com/aphrody-code/bunlight)"` |
 | Cookies under gitignored `storage/cookies/` | `cookies/private/challonge.json` (gitignored via `.gitignore`) |
 | Cloudflare-protected static HTML → `curl-impersonate` + `Bun.HTMLRewriter` | bunlight `http` profile (FFI) + HTMLRewriter in `dump-tournament.ts` |
 | API key route preferred when available (avoid scraping) | `CHALLONGE_API_KEY` env triggers official mode |

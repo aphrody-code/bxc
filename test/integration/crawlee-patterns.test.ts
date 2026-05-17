@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @file test/integration/crawlee-patterns.test.ts
  *
  * Integration tests for Bunlight's Crawlee-inspired patterns.
@@ -9,8 +25,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { join } from "path";
-import { tmpdir } from "os";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { AutoscaledPool } from "../../src/pool/AutoscaledPool.ts";
 import { RequestQueue } from "../../src/queue/RequestQueue.ts";
 import { Dataset } from "../../src/storage/Dataset.ts";
@@ -49,8 +65,8 @@ describe("RequestQueue", () => {
 	});
 
 	test("addRequest inserts new URL and deduplicates", () => {
-		const first = q.addRequest("https://example.com/a");
-		const second = q.addRequest("https://example.com/a"); // duplicate
+		const first = q.addRequest("https://google.com/a");
+		const second = q.addRequest("https://google.com/a"); // duplicate
 		expect(first).toBe(true);
 		expect(second).toBe(false);
 		expect(q.stats().total).toBe(1);
@@ -58,18 +74,18 @@ describe("RequestQueue", () => {
 
 	test("addRequests bulk-inserts and returns count of new items", () => {
 		const count = q.addRequests([
-			"https://example.com/1",
-			"https://example.com/2",
-			"https://example.com/1", // dup
+			"https://google.com/1",
+			"https://google.com/2",
+			"https://google.com/1", // dup
 		]);
 		expect(count).toBe(2);
 		expect(q.stats().pending).toBe(2);
 	});
 
 	test("fetchBatch transitions requests PENDING → LOCKED", () => {
-		q.addRequest("https://example.com/a");
-		q.addRequest("https://example.com/b");
-		q.addRequest("https://example.com/c");
+		q.addRequest("https://google.com/a");
+		q.addRequest("https://google.com/b");
+		q.addRequest("https://google.com/c");
 
 		const batch = q.fetchBatch(2);
 		expect(batch.length).toBe(2);
@@ -82,7 +98,7 @@ describe("RequestQueue", () => {
 	});
 
 	test("markDone transitions LOCKED → DONE", () => {
-		q.addRequest("https://example.com/x");
+		q.addRequest("https://google.com/x");
 		const [req] = q.fetchBatch(1);
 		q.markDone(req.id);
 		expect(q.stats().done).toBe(1);
@@ -90,7 +106,7 @@ describe("RequestQueue", () => {
 	});
 
 	test("markFailed re-queues until maxRetries then dead-letter", () => {
-		q.addRequest("https://example.com/flaky");
+		q.addRequest("https://google.com/flaky");
 		const [r1] = q.fetchBatch(1);
 		q.markFailed(r1.id, "timeout"); // retries: 0 → re-queued as PENDING
 
@@ -108,7 +124,7 @@ describe("RequestQueue", () => {
 
 	test("recoverStaleLocks re-queues timed-out locked requests", async () => {
 		const shortQ = RequestQueue.open(":memory:", { maxRetries: 1, lockTimeoutMs: 10 });
-		shortQ.addRequest("https://example.com/stale");
+		shortQ.addRequest("https://google.com/stale");
 		shortQ.fetchBatch(1); // locks it
 		await Bun.sleep(20); // let lock expire
 		const recovered = shortQ.recoverStaleLocks();
@@ -118,21 +134,21 @@ describe("RequestQueue", () => {
 	});
 
 	test("forefront requests are dequeued first", () => {
-		q.addRequest("https://example.com/normal");
-		q.addRequest("https://example.com/priority", { forefront: true });
+		q.addRequest("https://google.com/normal");
+		q.addRequest("https://google.com/priority", { forefront: true });
 		const [first] = q.fetchBatch(1);
-		expect(first.url).toBe("https://example.com/priority");
+		expect(first.url).toBe("https://google.com/priority");
 	});
 
 	test("has() checks existence without dequeuing", () => {
-		q.addRequest("https://example.com/check");
-		expect(q.has("https://example.com/check")).toBe(true);
-		expect(q.has("https://example.com/not-there")).toBe(false);
+		q.addRequest("https://google.com/check");
+		expect(q.has("https://google.com/check")).toBe(true);
+		expect(q.has("https://google.com/not-there")).toBe(false);
 	});
 
 	test("replayFailed resets dead-letter queue", () => {
 		// exhaust retries on 1 request
-		q.addRequest("https://example.com/bad");
+		q.addRequest("https://google.com/bad");
 		const [r1] = q.fetchBatch(1);
 		q.markFailed(r1.id, "e");
 		const [r2] = q.fetchBatch(1);
@@ -260,21 +276,21 @@ describe("sitemap parser", () => {
 	const SIMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://example.com/page1</loc>
+    <loc>https://google.com/page1</loc>
     <lastmod>2024-01-15</lastmod>
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
   </url>
   <url>
-    <loc>https://example.com/page2</loc>
+    <loc>https://google.com/page2</loc>
     <priority>0.5</priority>
   </url>
 </urlset>`;
 
-	const TEXT_SITEMAP = `https://example.com/a
-https://example.com/b
+	const TEXT_SITEMAP = `https://google.com/a
+https://google.com/b
 # comment line
-https://example.com/c`;
+https://google.com/c`;
 
 	// Mutable routes map — updated per-test without restarting the server
 	const routes: Record<string, string> = {};
@@ -323,7 +339,7 @@ https://example.com/c`;
 		for await (const u of parseSitemap(`http://localhost:${port}/sitemap.xml`)) {
 			urls.push(u.loc);
 		}
-		expect(urls).toEqual(["https://example.com/page1", "https://example.com/page2"]);
+		expect(urls).toEqual(["https://google.com/page1", "https://google.com/page2"]);
 	});
 
 	test("parseSitemap parses metadata (lastmod, priority, changefreq)", async () => {
@@ -337,9 +353,9 @@ https://example.com/c`;
 	test("parseSitemap handles .txt format", async () => {
 		const urls = await collectSitemapUrls(`http://localhost:${port}/sitemap.txt`);
 		expect(urls.map((u) => u.loc)).toEqual([
-			"https://example.com/a",
-			"https://example.com/b",
-			"https://example.com/c",
+			"https://google.com/a",
+			"https://google.com/b",
+			"https://google.com/c",
 		]);
 	});
 
@@ -378,7 +394,7 @@ Disallow: /private/
 Disallow: /admin/
 Allow: /admin/public/
 Crawl-delay: 2
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://google.com/sitemap.xml
 
 User-agent: Googlebot
 Disallow: /noindex/
@@ -389,57 +405,57 @@ Disallow: /
 `;
 
 	test("isAllowed returns true for unrestricted paths", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.isAllowed("https://example.com/public/page", "*")).toBe(true);
-		expect(robots.isAllowed("https://example.com/about", "*")).toBe(true);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		expect(robots.isAllowed("https://google.com/public/page", "*")).toBe(true);
+		expect(robots.isAllowed("https://google.com/about", "*")).toBe(true);
 	});
 
 	test("isAllowed returns false for disallowed paths", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.isAllowed("https://example.com/private/data", "*")).toBe(false);
-		expect(robots.isAllowed("https://example.com/admin/", "*")).toBe(false);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		expect(robots.isAllowed("https://google.com/private/data", "*")).toBe(false);
+		expect(robots.isAllowed("https://google.com/admin/", "*")).toBe(false);
 	});
 
 	test("Allow rule wins over Disallow when more specific (longer match)", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
 		// /admin/ is disallowed but /admin/public/ is allowed (more specific)
-		expect(robots.isAllowed("https://example.com/admin/public/index.html", "*")).toBe(true);
+		expect(robots.isAllowed("https://google.com/admin/public/index.html", "*")).toBe(true);
 	});
 
 	test("BadBot is blocked from everything", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.isAllowed("https://example.com/", "BadBot")).toBe(false);
-		expect(robots.isAllowed("https://example.com/public", "BadBot")).toBe(false);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		expect(robots.isAllowed("https://google.com/", "BadBot")).toBe(false);
+		expect(robots.isAllowed("https://google.com/public", "BadBot")).toBe(false);
 	});
 
 	test("Googlebot has its own rules", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.isAllowed("https://example.com/noindex/page", "Googlebot")).toBe(false);
-		expect(robots.isAllowed("https://example.com/noindex/allowed/", "Googlebot")).toBe(true);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		expect(robots.isAllowed("https://google.com/noindex/page", "Googlebot")).toBe(false);
+		expect(robots.isAllowed("https://google.com/noindex/allowed/", "Googlebot")).toBe(true);
 	});
 
 	test("crawlDelay returns correct values", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
 		expect(robots.crawlDelay("*")).toBe(2);
 	});
 
 	test("sitemaps directive is extracted", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.sitemaps).toContain("https://example.com/sitemap.xml");
+		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		expect(robots.sitemaps).toContain("https://google.com/sitemap.xml");
 	});
 
 	test("wildcard patterns (* and $) work correctly", () => {
 		const content = `User-agent: *\nDisallow: /cache/*.html\nDisallow: /page$`;
-		const robots = RobotsFile.parse("https://example.com/robots.txt", content);
-		expect(robots.isAllowed("https://example.com/cache/index.html", "*")).toBe(false);
-		expect(robots.isAllowed("https://example.com/cache/index.json", "*")).toBe(true);
-		expect(robots.isAllowed("https://example.com/page", "*")).toBe(false);
-		expect(robots.isAllowed("https://example.com/page/sub", "*")).toBe(true);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", content);
+		expect(robots.isAllowed("https://google.com/cache/index.html", "*")).toBe(false);
+		expect(robots.isAllowed("https://google.com/cache/index.json", "*")).toBe(true);
+		expect(robots.isAllowed("https://google.com/page", "*")).toBe(false);
+		expect(robots.isAllowed("https://google.com/page/sub", "*")).toBe(true);
 	});
 
 	test("empty robots.txt allows everything", () => {
-		const robots = RobotsFile.parse("https://example.com/robots.txt", "");
-		expect(robots.isAllowed("https://example.com/anything", "*")).toBe(true);
+		const robots = RobotsFile.parse("https://google.com/robots.txt", "");
+		expect(robots.isAllowed("https://google.com/anything", "*")).toBe(true);
 	});
 
 	test("404 from fetch returns permissive instance", async () => {

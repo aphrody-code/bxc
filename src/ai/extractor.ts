@@ -1,29 +1,32 @@
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import type { Page } from "../api/browser.ts";
 
+import { htmlToMarkdown } from "../rust/bridge.ts";
+
 /**
- * Minifies HTML to reduce LLM token count.
- * Strips out script, style, svg, and irrelevant attributes.
+ * Minifies HTML to reduce LLM token count using the native Rust bridge.
+ * Converts to Markdown to strip out all non-content noise.
  */
-export function minifyHtmlForLLM(html: string): string {
-	let minified = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-	minified = minified.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
-	minified = minified.replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, "");
-	minified = minified.replace(/<!--[\s\S]*?-->/g, "");
-
-	// Keep only class and id attributes, strip others (like style, data-*)
-	// This is a naive regex approach suitable for well-formed HTML
-	minified = minified.replace(/<([a-z0-9-]+)\s+([^>]+)>/gi, (_match, tag, attrsStr) => {
-		const classMatch = attrsStr.match(/class="([^"]+)"/i);
-		const idMatch = attrsStr.match(/id="([^"]+)"/i);
-
-		let newAttrs = "";
-		if (idMatch) newAttrs += ` ${idMatch[0]}`;
-		if (classMatch) newAttrs += ` ${classMatch[0]}`;
-
-		return `<${tag}${newAttrs}>`;
-	});
-
-	// Remove empty lines and excessive whitespace
+export async function minifyHtmlForLLM(html: string): Promise<string> {
+	// Use the native high-performance Rust bridge to convert to Markdown (strips noise)
+	let minified = htmlToMarkdown(html) || html;
+	
+	// Basic minification
 	minified = minified.replace(/\s+/g, " ");
 	return minified.trim();
 }
@@ -40,8 +43,8 @@ export async function callAnthropicForSelectors(
 		throw new Error("ANTHROPIC_API_KEY environment variable is not set.");
 	}
 
-	const systemPrompt = `You are an expert web scraper. Given an HTML snippet, generate robust CSS selectors to extract the information requested by the user.
-Return ONLY a valid JSON object where keys are descriptive names for the requested data fields, and values are the corresponding CSS selectors. Do not include markdown formatting like \`\`\`json. Do not explain anything.`;
+	const systemPrompt = `You are an expert web scraper specialized in the Google ecosystem. Given an HTML snippet from a Google property, generate robust CSS selectors to extract the information requested.
+Return ONLY a valid JSON object where keys are descriptive names for the requested data fields, and values are the corresponding CSS selectors. Do not include markdown formatting. Do not explain anything.`;
 
 	const userPrompt = `Instruction: ${instruction}\n\nHTML:\n${minifiedHtml.slice(0, 100000)}`;
 
@@ -71,8 +74,7 @@ Return ONLY a valid JSON object where keys are descriptive names for the request
 	const jsonText = data.content[0].text.trim();
 	try {
 		return JSON.parse(jsonText);
-	} catch (_e) {
-		// Attempt to extract JSON if it was wrapped in markdown despite instructions
+	} catch {
 		const match = jsonText.match(/\{[\s\S]*\}/);
 		if (match) {
 			return JSON.parse(match[0]);
@@ -91,14 +93,13 @@ export async function extractDataWithSelectors(
 	const result: Record<string, string | string[]> = {};
 
 	for (const [key, selector] of Object.entries(selectors)) {
-		// We use `any` here because we only need `textContent()` from the returned handle
-		const elements = await page.$$<{ textContent(): Promise<string> }>(selector);
+		const elements = await page.$$<any>(selector);
 		if (elements.length === 0) {
 			result[key] = "";
 		} else if (elements.length === 1) {
-			result[key] = await elements[0].textContent();
+			result[key] = (await elements[0].textContent()) ?? "";
 		} else {
-			result[key] = await Promise.all(elements.map((el) => el.textContent()));
+			result[key] = await Promise.all(elements.map(async (el) => (await el.textContent()) ?? ""));
 		}
 	}
 
@@ -106,15 +107,48 @@ export async function extractDataWithSelectors(
 }
 
 /**
+ * Resolves a natural language query to a CSS selector using Anthropic's Claude API.
+ * Falls back to a basic heuristic if no API key is provided, fully bypassing the old Python mock.
+ */
+export async function resolveSemantic(query: string, html: string): Promise<{ status: string; selector: string; message?: string }> {
+	const apiKey = Bun.env.ANTHROPIC_API_KEY;
+	if (apiKey) {
+		try {
+			const minified = await minifyHtmlForLLM(html);
+			const selectors = await callAnthropicForSelectors(minified, query);
+			// We expect Anthropic to return {"target": "css_selector"}
+			const selector = Object.values(selectors)[0] || "*";
+			return { status: "success", selector };
+		} catch (err) {
+			return { status: "error", selector: "", message: String(err) };
+		}
+	}
+
+	// Mock logic fallback (same as the old python script)
+	const q = query.toLowerCase();
+	let selector = "*";
+	if (q.includes("a") || q.includes("link")) {
+		selector = "a";
+	} else if (q.includes("button")) {
+		selector = "button";
+	} else if (q.includes("input") || q.includes("search")) {
+		selector = "input";
+	}
+
+	return { status: "success", selector };
+}
+
+/**
  * Performs AI-driven data extraction on the given page based on a natural language instruction.
  * Returns both the extracted data and the LLM-generated CSS selectors.
+ * Example instruction: "Extract all search result titles from google.com"
  */
 export async function aiExtractDOM(
 	page: Page,
 	instruction: string,
 ): Promise<{ data: Record<string, string | string[]>; selectors: Record<string, string> }> {
 	const html = await page.content();
-	const minified = minifyHtmlForLLM(html);
+	const minified = await minifyHtmlForLLM(html);
 	const selectors = await callAnthropicForSelectors(minified, instruction);
 	const data = await extractDataWithSelectors(page, selectors);
 

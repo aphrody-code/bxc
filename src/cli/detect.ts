@@ -1,4 +1,20 @@
 #!/usr/bin/env bun
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 
 /**
  * `bunlight detect <url>` — multi-signal technology detection.
@@ -27,7 +43,7 @@ interface DetectCliOptions {
 }
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight detect — multi-signal technology fingerprinting
 
 Usage:
@@ -63,7 +79,7 @@ Sources of evidence:
 Examples:
   bunlight detect https://design.google
   bunlight detect https://nextjs.org --json
-  bunlight detect https://example.com --wapp-only
+  bunlight detect https://google.com --wapp-only
 
 Exit codes: 0 OK, 2 misuse, 65 data error
 `,
@@ -87,13 +103,13 @@ function parseArgs(argv: readonly string[]): DetectCliOptions | null {
 			default:
 				if (!opts.url && /^https?:\/\//.test(a)) opts.url = a;
 				else if (a.startsWith("-")) {
-					process.stderr.write(`bunlight detect: unknown option ${a}\n`);
+					Bun.stderr.write(`bunlight detect: unknown option ${a}\n`);
 					return null;
 				}
 		}
 	}
 	if (!opts.url) {
-		process.stderr.write("bunlight detect: URL argument required\n");
+		Bun.stderr.write("bunlight detect: URL argument required\n");
 		return null;
 	}
 	return opts;
@@ -157,15 +173,15 @@ export async function main(argv: readonly string[]): Promise<void> {
 	try {
 		if (opts.wappOnly) {
 			const result = await detectFrameworks(opts.url);
-			process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+			Bun.stdout.write(JSON.stringify(result, null, 2) + "\n");
 			return;
 		}
 
 		const result = await deepDetect(opts.url);
 		const rendered = opts.emitJson ? JSON.stringify(result, null, 2) : renderMarkdown(result);
-		process.stdout.write(rendered + "\n");
+		Bun.stdout.write(rendered + "\n");
 	} catch (err) {
-		process.stderr.write(`bunlight detect: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bunlight detect: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	}
 }

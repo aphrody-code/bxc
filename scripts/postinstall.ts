@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Bunlight postinstall — auto-download Lightpanda browser binary for the current platform.
  *
  * Behavior :
@@ -25,20 +41,21 @@ type LightpandaPlatform =
 	| "x86_64-linux"
 	| "aarch64-linux"
 	| "x86_64-macos"
-	| "aarch64-macos";
+	| "aarch64-macos"
+	| "x86_64-windows";
 
 type DetectedPlatform = {
 	id: LightpandaPlatform;
-	dirName: "linux-x64" | "linux-arm64" | "darwin-x64" | "darwin-arm64";
+	dirName: "linux-x64" | "linux-arm64" | "darwin-x64" | "darwin-arm64" | "windows-x64";
 	assetName: string;
 };
 
-const TAG = process.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
-const VENDOR_DIR_ENV = process.env.BUNLIGHT_VENDOR_DIR;
+const TAG = Bun.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
+const VENDOR_DIR_ENV = Bun.env.BUNLIGHT_VENDOR_DIR;
 
 /**
  * Detect the current platform mapping.
- * Returns null if the platform is unsupported (Windows, freebsd, etc.).
+ * Returns null if the platform is unsupported.
  */
 export function detectPlatform(
 	platform: NodeJS.Platform = process.platform,
@@ -78,6 +95,16 @@ export function detectPlatform(
 		}
 		return null;
 	}
+	if (platform === "win32") {
+		if (arch === "x64") {
+			return {
+				id: "x86_64-windows",
+				dirName: "windows-x64",
+				assetName: "lightpanda-x86_64-windows.exe",
+			};
+		}
+		return null;
+	}
 	return null;
 }
 
@@ -86,7 +113,7 @@ export function detectPlatform(
  * Returns a reason string if it should skip, or null if it should proceed.
  */
 export function shouldSkip(
-	env: Record<string, string | undefined> = process.env as Record<
+	env: Record<string, string | undefined> = Bun.env as Record<
 		string,
 		string | undefined
 	>,
@@ -111,7 +138,8 @@ export function resolveTargetPath(
 	const baseDir = vendorOverride
 		? vendorOverride
 		: `${rootDir}/../vendor/lightpanda-bin`;
-	return `${baseDir}/${platform.dirName}/lightpanda`;
+	const ext = platform.id.includes("windows") ? ".exe" : "";
+	return `${baseDir}/${platform.dirName}/lightpanda${ext}`;
 }
 
 function fmtMB(bytes: number): string {
@@ -134,7 +162,7 @@ async function fetchReleaseAsset(
 	platform: DetectedPlatform,
 	tag: string,
 ): Promise<{ url: string; size: number } | null> {
-	const overrideUrl = process.env.LIGHTPANDA_DOWNLOAD_URL;
+	const overrideUrl = Bun.env.LIGHTPANDA_DOWNLOAD_URL;
 	if (overrideUrl) {
 		return { url: overrideUrl, size: 0 };
 	}
@@ -304,90 +332,12 @@ export async function runPostinstall(
  * cannot prompt the user interactively. If prompt suppression is not set and
  * "max" is requested, the install is skipped with a warning.
  */
-export async function runProfileInstalls(): Promise<void> {
-	const profilesEnv = process.env.BUNLIGHT_INSTALL_PROFILES;
-	if (!profilesEnv) return;
-
-	const tokens = profilesEnv
-		.toLowerCase()
-		.split(",")
-		.map((s) => s.trim());
-	const wantStealth =
-		tokens.includes("stealth") ||
-		tokens.includes("all") ||
-		tokens.includes("chromium");
-	const wantMax =
-		tokens.includes("max") ||
-		tokens.includes("all") ||
-		tokens.includes("camoufox");
-
-	if (!wantStealth && !wantMax) return;
-
-	// Lazy-import install helpers to avoid loading them in the common path.
-	let installChromium: typeof import("../src/cli/install.ts").installChromium;
-	let installCamoufox: typeof import("../src/cli/install.ts").installCamoufox;
-	try {
-		const installMod = await import("../src/cli/install.ts");
-		installChromium = installMod.installChromium;
-		installCamoufox = installMod.installCamoufox;
-	} catch (err) {
-		warn(
-			`[profile-install] could not load install module : ${err instanceof Error ? err.message : String(err)}`,
-		);
-		return;
-	}
-
-	if (wantStealth) {
-		log(
-			"[profile-install] BUNLIGHT_INSTALL_PROFILES includes stealth — installing Chrome for Testing...",
-		);
-		try {
-			const result = await installChromium(false);
-			if (result.status === "failed") {
-				warn(
-					"[profile-install] Chrome for Testing install failed (non-fatal).",
-				);
-			}
-		} catch (err) {
-			warn(
-				`[profile-install] Chrome for Testing install error : ${err instanceof Error ? err.message : String(err)}`,
-			);
-		}
-	}
-
-	if (wantMax) {
-		if (process.env.BUNLIGHT_NO_PROMPT !== "1") {
-			warn(
-				"[profile-install] Camoufox install requested via BUNLIGHT_INSTALL_PROFILES=max but" +
-					" BUNLIGHT_NO_PROMPT is not set. Skipping to avoid hanging a non-interactive install." +
-					" Set BUNLIGHT_NO_PROMPT=1 to auto-confirm.",
-			);
-			return;
-		}
-		log(
-			"[profile-install] BUNLIGHT_INSTALL_PROFILES includes max — installing Camoufox...",
-		);
-		try {
-			const result = await installCamoufox(false);
-			if (result.status === "failed") {
-				warn("[profile-install] Camoufox install failed (non-fatal).");
-			}
-		} catch (err) {
-			warn(
-				`[profile-install] Camoufox install error : ${err instanceof Error ? err.message : String(err)}`,
-			);
-		}
-	}
-}
-
 if (import.meta.main) {
 	// Hard guard : a postinstall must NEVER break `bun install` / `bun update`,
 	// even on a module-load throw or an unexpected rejection. Any error here is
 	// logged and swallowed — exit code is unconditionally 0.
 	try {
 		await runPostinstall();
-		// Fire-and-forget : failures are logged, never affect the exit code.
-		await runProfileInstalls();
 	} catch (err) {
 		warn(
 			`postinstall aborted (non-fatal) : ${err instanceof Error ? err.message : String(err)}`,

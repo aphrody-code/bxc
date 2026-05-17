@@ -21,13 +21,13 @@ export const SKIP_REASON: string | null = null;
 
 export async function run(url: string): Promise<RunResult> {
 	const ramBefore = rssNow();
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds() / 1e6;
 
 	try {
 		await using page = await Browser.newPage({ profile: "static" });
 		await page.goto(url, { timeoutMs: 15_000 });
 		const content = await page.content();
-		const latencyMs = Math.round(performance.now() - t0);
+		const latencyMs = Math.round(Bun.nanoseconds() / 1e6 - t0);
 		const ramAfter = rssNow();
 
 		return {
@@ -44,7 +44,7 @@ export async function run(url: string): Promise<RunResult> {
 			runner: RUNNER_ID,
 			url,
 			success: false,
-			latencyMs: Math.round(performance.now() - t0),
+			latencyMs: Math.round(Bun.nanoseconds() / 1e6 - t0),
 			ramMb: rssNow(),
 			contentLength: 0,
 			statusCode: 0,

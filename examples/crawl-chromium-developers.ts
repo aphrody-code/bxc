@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * crawl-chromium-developers.ts
  *
  * Architecture: Pattern B — ImpersonatedClient (curl-impersonate chrome146) +
@@ -129,15 +145,9 @@ function clamp(s: string, max: number): string {
 	return s.slice(0, max - 3) + "...";
 }
 
-function escapeHtml(s: string): string {
-	return s
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;");
-}
 
 function normalizeInternalUrl(href: string): string | null {
+
 	try {
 		if (href.startsWith("//")) href = "https:" + href;
 		if (href.startsWith("/")) href = ORIGIN + href;
@@ -252,7 +262,7 @@ async function crawl(): Promise<Map<string, ExtractedPage>> {
 			await Bun.write(`${RAW_DIR}/${slug}.json`, JSON.stringify(meta, null, 2));
 
 			// Extract immediately so we have the page data for link discovery
-			const extracted = extractPage(html, url, slug);
+			const extracted = await extractPage(html, url, slug);
 			extractedPages.set(slug, extracted);
 
 			crawledCount++;
@@ -262,9 +272,9 @@ async function crawl(): Promise<Map<string, ExtractedPage>> {
 
 			// Discover sub-pages (1 level only from the seed domain /developers path)
 			if ((discovered < MAX_URLS && url === SEED) || isDevPage(url)) {
-				const doc = parseHtml(html);
+				const doc = await parseHtml(html);
 				try {
-					const anchors = doc.find("a[href]");
+					const anchors = await doc.find("a[href]");
 					for (let i = 0; i < anchors.count && discovered < MAX_URLS; i++) {
 						const el = anchors.at(i);
 						if (!el) continue;
@@ -337,7 +347,7 @@ async function crawl(): Promise<Map<string, ExtractedPage>> {
 // Stage 2: Extract structured data from HTML via zigquery
 // ---------------------------------------------------------------------------
 
-function extractPage(html: string, url: string, slug: string): ExtractedPage {
+async function extractPage(html: string, url: string, slug: string): Promise<ExtractedPage> {
 	let title = "";
 	let intro = "";
 	const sections: Section[] = [];
@@ -347,7 +357,7 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 
 	let doc;
 	try {
-		doc = parseHtml(html);
+		doc = await parseHtml(html);
 	} catch {
 		// If zigquery unavailable, return minimal extraction
 		return {
@@ -365,14 +375,14 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 
 	try {
 		// Title: prefer <h1>, fall back to <title>
-		const h1Sel = doc.find("h1");
+		const h1Sel = await doc.find("h1");
 		if (h1Sel.count > 0) {
 			title = h1Sel.at(0)?.textContent().trim() ?? "";
 		}
 		h1Sel.destroy();
 
 		if (!title) {
-			const titleSel = doc.find("title");
+			const titleSel = await doc.find("title");
 			if (titleSel.count > 0) {
 				title = titleSel.at(0)?.textContent().trim() ?? "";
 			}
@@ -380,14 +390,14 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 		}
 
 		// Intro: first <p> in main content area
-		const pSel = doc.find(
+		const pSel = await doc.find(
 			"article p, main p, .content p, .entry-content p, div.page p",
 		);
 		if (pSel.count > 0) {
 			intro = pSel.at(0)?.textContent().trim() ?? "";
 		} else {
 			// Fallback: any first <p>
-			const allP = doc.find("p");
+			const allP = await doc.find("p");
 			if (allP.count > 0) {
 				intro = allP.at(0)?.textContent().trim() ?? "";
 			}
@@ -396,7 +406,7 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 		pSel.destroy();
 
 		// H2 sections
-		const h2Sel = doc.find("h2");
+		const h2Sel = await doc.find("h2");
 		for (let i = 0; i < h2Sel.count; i++) {
 			const el = h2Sel.at(i);
 			const heading = el?.textContent().trim() ?? "";
@@ -406,7 +416,7 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 		h2Sel.destroy();
 
 		// H3 sections
-		const h3Sel = doc.find("h3");
+		const h3Sel = await doc.find("h3");
 		for (let i = 0; i < h3Sel.count; i++) {
 			const el = h3Sel.at(i);
 			const heading = el?.textContent().trim() ?? "";
@@ -416,7 +426,7 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 		h3Sel.destroy();
 
 		// Code blocks
-		const codeSel = doc.find("pre, code");
+		const codeSel = await doc.find("pre, code");
 		for (let i = 0; i < Math.min(codeSel.count, 10); i++) {
 			const el = codeSel.at(i);
 			const text = el?.textContent().trim() ?? "";
@@ -426,7 +436,7 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 		codeSel.destroy();
 
 		// External links
-		const aSel = doc.find("a[href]");
+		const aSel = await doc.find("a[href]");
 		for (let i = 0; i < aSel.count; i++) {
 			const el = aSel.at(i);
 			const href = el?.getAttribute("href") ?? "";
@@ -446,7 +456,7 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 		aSel.destroy();
 
 		// Last-updated: look for <time> or common "Last updated" text
-		const timeSel = doc.find("time");
+		const timeSel = await doc.find("time");
 		if (timeSel.count > 0) {
 			const el = timeSel.at(0);
 			lastUpdated =
@@ -476,6 +486,12 @@ function extractPage(html: string, url: string, slug: string): ExtractedPage {
 // Stage 3: AI rewrite (Gemini or heuristic)
 // ---------------------------------------------------------------------------
 
+interface GeminiClient {
+	generate(prompt: string, options?: any): Promise<{ text: string }>;
+	resetChat(): void;
+	stop(): Promise<void>;
+}
+
 async function tryGeminiBootstrap(): Promise<GeminiClient | null> {
 	try {
 		const cookieExists = await Bun.file(GEMINI_COOKIES).exists();
@@ -483,7 +499,7 @@ async function tryGeminiBootstrap(): Promise<GeminiClient | null> {
 			console.log("[gemini] cookie file not found, falling back to heuristic");
 			return null;
 		}
-		const client = await null /* gemini removed from main */;
+		const client = null /* gemini removed from main */;
 		// gemini removed
 		// Lightweight probe
 		const probe = { text: "" } /* gemini removed */;
@@ -728,9 +744,9 @@ function renderIndexHtml(pages: RewrittenPage[]): string {
 	const cards = pages
 		.map(
 			(p) => `
-    <div class="page-card" data-title="${escapeHtml(p.title.toLowerCase())}">
-      <h2><a href="pages/${p.slug}.html">${escapeHtml(p.title)}</a></h2>
-      <p>${escapeHtml(clamp(p.tldr, 140))}</p>
+    <div class="page-card" data-title="${Bun.escapeHTML(p.title.toLowerCase())}">
+      <h2><a href="pages/${p.slug}.html">${Bun.escapeHTML(p.title)}</a></h2>
+      <p>${Bun.escapeHTML(clamp(p.tldr, 140))}</p>
       <div class="meta">${p.wordCount} words${p.geminiUsed ? ' <span class="badge">AI</span>' : ""}</div>
     </div>`,
 		)
@@ -773,23 +789,23 @@ ${cards}
 
 function renderPageHtml(page: RewrittenPage): string {
 	const sectionItems = page.sections
-		.map((s) => `<li>${escapeHtml(s.heading)}</li>`)
+		.map((s) => `<li>${Bun.escapeHTML(s.heading)}</li>`)
 		.join("\n");
 
 	const codeBlocksHtml = page.codeBlocks
-		.map((c) => `<pre><code>${escapeHtml(c)}</code></pre>`)
+		.map((c) => `<pre><code>${Bun.escapeHTML(c)}</code></pre>`)
 		.join("\n");
 
 	const externalLinksHtml = page.externalLinks
 		.slice(0, 10)
 		.map(
 			(l) =>
-				`<li><a href="${escapeHtml(l)}" rel="noopener noreferrer" target="_blank">${escapeHtml(l)}</a></li>`,
+				`<li><a href="${Bun.escapeHTML(l)}" rel="noopener noreferrer" target="_blank">${Bun.escapeHTML(l)}</a></li>`,
 		)
 		.join("\n");
 
 	const bulletsHtml = page.bullets
-		.map((b) => `<li>${escapeHtml(b.replace(/^[-*]\s*/, ""))}</li>`)
+		.map((b) => `<li>${Bun.escapeHTML(b.replace(/^[-*]\s*/, ""))}</li>`)
 		.join("\n");
 
 	return `<!DOCTYPE html>
@@ -797,8 +813,8 @@ function renderPageHtml(page: RewrittenPage): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(page.title)} — Chromium Developers AI Reference</title>
-<meta name="description" content="${escapeHtml(clamp(page.tldr, 160))}">
+<title>${Bun.escapeHTML(page.title)} — Chromium Developers AI Reference</title>
+<meta name="description" content="${Bun.escapeHTML(clamp(page.tldr, 160))}">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -807,20 +823,20 @@ function renderPageHtml(page: RewrittenPage): string {
   <button class="theme-toggle" onclick="document.documentElement.style.colorScheme=document.documentElement.style.colorScheme==='light'?'dark':'light'">Toggle theme</button>
 </header>
 <main class="container">
-  <nav class="breadcrumb"><a href="../index.html">Home</a> / ${escapeHtml(page.title)}</nav>
+  <nav class="breadcrumb"><a href="../index.html">Home</a> / ${Bun.escapeHTML(page.title)}</nav>
 
-  <h1>${escapeHtml(page.title)}</h1>
+  <h1>${Bun.escapeHTML(page.title)}</h1>
 
   <div class="tldr-box">
     <div class="label">TL;DR${page.geminiUsed ? " (AI)" : " (heuristic)"}</div>
-    <p>${escapeHtml(page.tldr)}</p>
+    <p>${Bun.escapeHTML(page.tldr)}</p>
   </div>
 
   ${bulletsHtml ? `<ul class="bullets">${bulletsHtml}</ul>` : ""}
 
-  ${page.quote ? `<blockquote>${escapeHtml(page.quote)}</blockquote>` : ""}
+  ${page.quote ? `<blockquote>${Bun.escapeHTML(page.quote)}</blockquote>` : ""}
 
-  ${page.intro ? `<h2>Introduction</h2><p>${escapeHtml(page.intro)}</p>` : ""}
+  ${page.intro ? `<h2>Introduction</h2><p>${Bun.escapeHTML(page.intro)}</p>` : ""}
 
   ${sectionItems ? `<h2>Sections</h2><ul class="section-list">${sectionItems}</ul>` : ""}
 
@@ -828,9 +844,9 @@ function renderPageHtml(page: RewrittenPage): string {
 
   ${externalLinksHtml ? `<h2>External References</h2><ul>${externalLinksHtml}</ul>` : ""}
 
-  ${page.lastUpdated ? `<p style="font-size:0.8rem;color:var(--secondary)">Last updated: ${escapeHtml(page.lastUpdated)}</p>` : ""}
+  ${page.lastUpdated ? `<p style="font-size:0.8rem;color:var(--secondary)">Last updated: ${Bun.escapeHTML(page.lastUpdated)}</p>` : ""}
 
-  <a class="source-link" href="${escapeHtml(page.url)}" rel="noopener noreferrer" target="_blank">View original on chromium.org</a>
+  <a class="source-link" href="${Bun.escapeHTML(page.url)}" rel="noopener noreferrer" target="_blank">View original on chromium.org</a>
 </main>
 <footer>Generated by Bunlight &bull; Source: chromium.org (CC-BY 2.5) &bull; Re-styled and summarised by AI</footer>
 </body>
@@ -842,7 +858,7 @@ function renderPageHtml(page: RewrittenPage): string {
 // ---------------------------------------------------------------------------
 
 async function main() {
-	const t0 = performance.now();
+	const t0 = Bun.nanoseconds();
 
 	// Stage 1 — Crawl
 	console.log("\n=== Stage 1: Crawl ===");
@@ -864,7 +880,7 @@ async function main() {
 				const htmlPath = `${RAW_DIR}/${meta.slug}.html`;
 				if (await Bun.file(htmlPath).exists()) {
 					const html = await Bun.file(htmlPath).text();
-					extractedPages.set(meta.slug, extractPage(html, meta.url, meta.slug));
+					extractedPages.set(meta.slug, await extractPage(html, meta.url, meta.slug));
 				}
 			}
 		} catch {
@@ -946,7 +962,7 @@ async function main() {
 		}
 	}
 
-	const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+	const elapsed = ((Bun.nanoseconds() - t0) / 1e9).toFixed(1);
 
 	// top 5 pages
 	const top5 = rewritten.slice(0, 5);

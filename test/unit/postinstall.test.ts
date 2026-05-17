@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for scripts/postinstall.ts
  *
  * Covers : platform detection, skip logic (CI/opt-out), target path resolution,
@@ -47,8 +63,12 @@ describe("detectPlatform", () => {
 		expect(p?.assetName).toBe("lightpanda-aarch64-macos");
 	});
 
-	test("returns null for unsupported platform (win32)", () => {
-		expect(detectPlatform("win32", "x64")).toBeNull();
+	test("returns windows-x64 mapping for win32 + x64", () => {
+		const p = detectPlatform("win32", "x64");
+		expect(p).not.toBeNull();
+		expect(p?.id).toBe("x86_64-windows");
+		expect(p?.dirName).toBe("windows-x64");
+		expect(p?.assetName).toBe("lightpanda-x86_64-windows.exe");
 	});
 
 	test("returns null for unsupported arch on linux (ia32)", () => {
@@ -114,30 +134,30 @@ describe("runPostinstall (skip paths only — offline safe)", () => {
 			"BUNLIGHT_VENDOR_DIR",
 			"LIGHTPANDA_DOWNLOAD_URL",
 		]) {
-			originalEnv[k] = process.env[k];
-			delete process.env[k];
+			originalEnv[k] = Bun.env[k];
+			delete Bun.env[k];
 		}
 	});
 
 	afterEach(() => {
 		for (const [k, v] of Object.entries(originalEnv)) {
 			if (v === undefined) {
-				delete process.env[k];
+				delete Bun.env[k];
 			} else {
-				process.env[k] = v;
+				Bun.env[k] = v;
 			}
 		}
 	});
 
 	test("returns status=skipped when BUNLIGHT_NO_AUTOINSTALL=1", async () => {
-		process.env.BUNLIGHT_NO_AUTOINSTALL = "1";
+		Bun.env.BUNLIGHT_NO_AUTOINSTALL = "1";
 		const result = await runPostinstall();
 		expect(result.status).toBe("skipped");
 		expect(result.reason).toContain("BUNLIGHT_NO_AUTOINSTALL");
 	});
 
 	test("returns status=skipped when CI=1 without LIGHTPANDA_AUTOINSTALL", async () => {
-		process.env.CI = "1";
+		Bun.env.CI = "1";
 		const result = await runPostinstall();
 		expect(result.status).toBe("skipped");
 		expect(result.reason).toContain("CI=1");

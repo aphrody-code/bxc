@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight recon <url>` — one-shot URL → docs.
  *
  * Probes a target URL and produces a Markdown reconnaissance report covering:
@@ -362,7 +378,7 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	// Surface browser failures in stderr for debugging without breaking the doc.
 	// Suppressed by --quiet so machine pipelines stay clean.
 	if (browserError && !opts.quiet) {
-		process.stderr.write(
+		Bun.stderr.write(
 			`bunlight recon: browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.\n`,
 		);
 	}
@@ -547,7 +563,7 @@ export function renderMarkdown(r: ReconResult): string {
 // ---------------------------------------------------------------------------
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight recon — one-shot URL → docs (schema ${RECON_SCHEMA})
 
 Usage:
@@ -593,8 +609,8 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 		screenshot: false,
 		emitJson: false,
 		timeoutMs: 30_000,
-		quiet: process.env.BUNLIGHT_QUIET === "1",
-		plain: process.env.NO_COLOR === "1",
+		quiet: Bun.env.BUNLIGHT_QUIET === "1",
+		plain: Bun.env.NO_COLOR === "1",
 	};
 
 	for (let i = 0; i < argv.length; i++) {
@@ -603,7 +619,7 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 			case "--profile": {
 				const v = argv[++i];
 				if (v !== "static" && v !== "fast" && v !== "http") {
-					process.stderr.write(`Invalid profile: ${v} (expected static|fast|http)\n`);
+					Bun.stderr.write(`Invalid profile: ${v} (expected static|fast|http)\n`);
 					return null;
 				}
 				opts.profile = v;
@@ -640,14 +656,14 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 				if (!opts.url && /^https?:\/\//.test(a)) {
 					opts.url = a;
 				} else if (a.startsWith("-")) {
-					process.stderr.write(`Unknown option: ${a}\n`);
+					Bun.stderr.write(`Unknown option: ${a}\n`);
 					return null;
 				}
 		}
 	}
 
 	if (!opts.url) {
-		process.stderr.write(`Missing URL argument\n`);
+		Bun.stderr.write(`Missing URL argument\n`);
 		printUsage();
 		return null;
 	}
@@ -672,7 +688,7 @@ const EXIT = {
 
 function logProgress(opts: ReconCliOptions, msg: string): void {
 	if (!opts.quiet) {
-		process.stderr.write(`bunlight recon: ${msg}\n`);
+		Bun.stderr.write(`bunlight recon: ${msg}\n`);
 	}
 }
 
@@ -691,7 +707,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		result = await recon(opts);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		process.stderr.write(`bunlight recon: fetch/extraction failed — ${msg}\n`);
+		Bun.stderr.write(`bunlight recon: fetch/extraction failed — ${msg}\n`);
 		await Browser.close().catch(() => {});
 		process.exit(EXIT.DATA_ERR);
 	}
@@ -709,7 +725,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 				: renderMarkdown(result);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		process.stderr.write(`bunlight recon: rendering failed — ${msg}\n`);
+		Bun.stderr.write(`bunlight recon: rendering failed — ${msg}\n`);
 		await Browser.close().catch(() => {});
 		process.exit(EXIT.SOFTWARE);
 	}
@@ -718,7 +734,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		await Bun.write(opts.outputPath, rendered);
 		logProgress(opts, `wrote ${rendered.length} bytes to ${opts.outputPath}`);
 	} else {
-		process.stdout.write(rendered + "\n");
+		Bun.stdout.write(rendered + "\n");
 	}
 
 	await Browser.close().catch(() => {});

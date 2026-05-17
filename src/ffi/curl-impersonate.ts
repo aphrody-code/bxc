@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // @ts-nocheck
 // FFI ABI-level casts (number <-> Pointer, ArrayBufferLike <-> ArrayBuffer)
 // are correct at runtime on x86_64 SysV ABI but TS cannot model them.
@@ -45,7 +61,7 @@ import {
 	ptr,
 	toArrayBuffer,
 } from "bun:ffi";
-import { join } from "path";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -172,9 +188,6 @@ const CURLOPT = {
 	ACCEPT_ENCODING: 102,
 } as const;
 
-const CURL_HTTP_VERSION_NONE = 0;
-const CURLINFO_RESPONSE_CODE = 0x200002;
-const CURLINFO_EFFECTIVE_URL = 0x100001;
 
 /** CURLcode success value. */
 const CURLE_OK = 0;
@@ -274,7 +287,7 @@ function resolveLibPath(): string {
 		];
 	}
 	// Allow override via env (highest priority).
-	const envOverride = process.env.LIBCURL_IMPERSONATE_PATH;
+	const envOverride = Bun.env.LIBCURL_IMPERSONATE_PATH;
 	if (envOverride) candidates.unshift(envOverride);
 
 	// Return the first candidate that exists on disk. `Bun.file().size` is a
@@ -371,9 +384,9 @@ function tryDecompress(input: Uint8Array, encoding: string): Uint8Array | null {
 			case "br":
 			case "brotli": {
 				// Bun does not expose `Bun.brotliDecompressSync` (as of 1.3).
-				// `node:zlib.brotliDecompressSync` is available via the Node-compat
+				// `zlib.brotliDecompressSync` is available via the Node-compat
 				// layer and is genuinely synchronous — no async polyfill needed.
-				const zlib = require("node:zlib") as typeof import("node:zlib");
+				const zlib = require("node:zlib") as typeof import("zlib");
 				return new Uint8Array(zlib.brotliDecompressSync(input));
 			}
 			case "zstd":
@@ -558,7 +571,7 @@ export class CurlError extends Error {
  * @example
  * ```ts
  * const client = new ImpersonatedClient({ profile: "chrome131" });
- * const res = await client.fetch("https://example.com");
+ * const res = await client.fetch("https://google.com");
  * console.log(res.status, await res.text());
  * client.close();
  * ```
@@ -906,7 +919,7 @@ export function getDefaultClient(): ImpersonatedClient {
  * @example
  * ```ts
  * import { impersonateFetch } from "bunlight/ffi/curl-impersonate";
- * const res = await impersonateFetch("https://example.com");
+ * const res = await impersonateFetch("https://google.com");
  * ```
  */
 export async function impersonateFetch(

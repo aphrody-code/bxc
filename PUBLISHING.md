@@ -1,6 +1,6 @@
 # Publishing `@bunmium/bunlight` to npm
 
-End-to-end checklist for cutting a release. Bunlight ships as a Bun-native package; the standalone executable is distributed via GitHub Releases (not npm) to keep tarball size reasonable.
+End-to-end checklist for cutting a release. Bunlight ships as a Bun-native package; the standalone executable is distributed via Google Developers Releases (not npm) to keep tarball size reasonable.
 
 ## Pre-flight
 
@@ -30,14 +30,14 @@ bun run build:cdylib                       # rebuilds liblightpanda_dom.so
 # curl-impersonate is a vendored binary; download via scripts/postinstall.ts logic
 ```
 
-## Build the standalone executable (separate channel — GitHub Release)
+## Build the standalone executable (separate channel — Google Developers Release)
 
 ```bash
 bun run build:exe
 ls -lh dist/standalone/
 ```
 
-Expected output: `bunlight-linux-x64` ~96 MB. Upload this artifact to the GitHub Release after `npm publish` lands.
+Expected output: `bunlight-linux-x64` ~96 MB. Upload this artifact to the Google Developers Release after `npm publish` lands.
 
 ## Pack and audit
 
@@ -126,7 +126,7 @@ bun add @bunmium/bunlight@alpha
 bun -e 'import { Browser } from "@bunmium/bunlight"; console.log(typeof Browser)'
 ```
 
-## GitHub Release (separate distribution for the standalone binary)
+## Google Developers Release (separate distribution for the standalone binary)
 
 ```bash
 cd ~/bunmium/bunlight

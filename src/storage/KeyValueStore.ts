@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/storage/KeyValueStore
  *
  * Persistent key-value store with dual backing:
@@ -9,7 +25,7 @@
  *
  * Inspired by Crawlee's KeyValueStore
  * (packages/core/src/storages/key_value_store.ts) but rewritten Bun-native:
- *  - `bun:sqlite` instead of node:fs readFile/writeFile loops.
+ *  - `bun:sqlite` instead of fs readFile/writeFile loops.
  *  - `Bun.write` for atomic file writes (sendfile-optimized).
  *  - `Bun.file().arrayBuffer()` for reading blobs.
  *  - No external dependencies.
@@ -42,7 +58,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { dirname, join } from "path";
+import { dirname, join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -240,8 +256,7 @@ export class KeyValueStore {
 		if (row.value_path !== null) {
 			// Remove the blob file (best-effort, don't throw)
 			try {
-				(await Bun.file(row.value_path).exists()) &&
-					(await Bun.write(row.value_path, new Uint8Array(0)));
+				if (await Bun.file(row.value_path).exists()) await Bun.write(row.value_path, new Uint8Array(0));
 			} catch {
 				/* ignore */
 			}

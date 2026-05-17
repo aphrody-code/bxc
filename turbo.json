@@ -1,22 +1,29 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "vendor/**/zig-out/**"]
+      "inputs": ["src/**/*", "rust-bridge/src/**/*", "rust-bridge/Cargo.*", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**", "vendor/**/zig-out/**", "rust-bridge/target/release/libbunlight_rust_bridge.*", "rust-bridge/target/release/bunlight-engine"],
+      "cache": true
+    },
+    "build:rust": {
+      "inputs": ["rust-bridge/src/**/*", "rust-bridge/Cargo.*"],
+      "outputs": ["rust-bridge/target/release/libbunlight_rust_bridge.*", "rust-bridge/target/release/bunlight-engine"]
     },
     "test": {
       "dependsOn": ["build"],
+      "inputs": ["src/**/*", "test/**/*", "package.json"],
       "outputs": []
     },
     "lint": {
+      "inputs": ["src/**/*", "test/**/*", "examples/**/*", "scripts/**/*"],
       "outputs": []
     },
     "typecheck": {
-      "outputs": []
-    },
-    "clean": {
-      "cache": false
+      "inputs": ["src/**/*", "test/**/*", "examples/**/*", "tsconfig.json", "package.json"],
+      "outputs": [".tsbuildinfo"]
     }
   }
 }

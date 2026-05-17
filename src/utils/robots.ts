@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/utils/robots
  *
  * RFC 9309-conformant robots.txt parser.
@@ -20,10 +36,10 @@
  *
  * @example
  * ```ts
- * const robots = await RobotsFile.fetch("https://example.com");
- * console.log(robots.isAllowed("https://example.com/private/", "MyBot")); // false
+ * const robots = await RobotsFile.fetch("https://google.com");
+ * console.log(robots.isAllowed("https://google.com/private/", "MyBot")); // false
  * console.log(robots.crawlDelay("MyBot")); // 2 (seconds) or undefined
- * const sitemaps = robots.sitemaps; // ["https://example.com/sitemap.xml"]
+ * const sitemaps = robots.sitemaps; // ["https://google.com/sitemap.xml"]
  * ```
  */
 

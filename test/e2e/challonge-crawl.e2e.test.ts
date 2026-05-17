@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * E2E Challonge crawl suite — validates Bunlight against real Challonge patterns.
  *
  * This suite exercises the 9 URL patterns that rpb-challonge (@rose-griffon/challonge
@@ -173,7 +189,7 @@ async function probeWithProfile(
 				readyTimeoutMs: 10_000,
 				binaryPath: lightpandaBin ?? undefined,
 				stderrLogger: (s) => {
-					if (process.env.BUNLIGHT_E2E_VERBOSE) process.stderr.write(`[lp] ${s}`);
+					if (Bun.env.BUNLIGHT_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
 				},
 			},
 		})) as Page;
@@ -313,8 +329,7 @@ async function writeChallongeReport(): Promise<void> {
 	// Per-pattern x per-profile matrix
 	lines.push("## Pattern x Profile matrix");
 	lines.push("");
-	const patternNames = CHALLONGE_PATTERNS.map((p) => p.name);
-	const profileHeader = PROFILES.join(" | ");
+		const profileHeader = PROFILES.join(" | ");
 	lines.push(`| Pattern | Slug/User | ${profileHeader} |`);
 	lines.push(`|---|---|${"---|".repeat(PROFILES.length)}`);
 

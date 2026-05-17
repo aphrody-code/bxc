@@ -14,9 +14,9 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { StdioServerTransport } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
-import { mkdtemp, writeFile } from "fs/promises";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // FIFO Mutex (from chrome-devtools-mcp pattern)
@@ -129,13 +129,13 @@ server.registerTool(
 		try {
 		const bl = await loadBunlight();
 		requireBunlight(bl);
-		const start = performance.now();
+		const start = Bun.nanoseconds() / 1e6;
 		const page = await bl.Browser.newPage({ profile });
 		try {
 			const resp = await page.goto(url, { timeoutMs });
 			const title = await page.title();
 			const content = await page.content();
-			const elapsed = Math.round(performance.now() - start);
+			const elapsed = Math.round(Bun.nanoseconds() / 1e6 - start);
 
 			let snippet = content.slice(0, 500);
 			if (selector) {
@@ -334,13 +334,13 @@ server.registerTool(
 				const i = cursor++;
 				if (i >= urls.length) return;
 				const u = urls[i];
-				const start = performance.now();
+				const start = Bun.nanoseconds() / 1e6;
 				let page: any = null;
 				try {
 					page = await bl.Browser.newPage({ profile });
 					await page.goto(u, { timeoutMs: 30_000 });
 					const title = await page.title();
-					results[i] = { url: u, title, latencyMs: Math.round(performance.now() - start) };
+					results[i] = { url: u, title, latencyMs: Math.round(Bun.nanoseconds() / 1e6 - start) };
 				} catch (e) {
 					results[i] = { url: u, error: (e as Error).message };
 				} finally {
@@ -530,21 +530,21 @@ server.registerTool(
 			const page = await bl.Browser.newPage({ profile });
 			try {
 				await page.goto(url, { timeoutMs });
-				const start = performance.now();
+				const start = Bun.nanoseconds() / 1e6;
 				let found = false;
 				let matchInfo = "";
-				while (performance.now() - start < timeoutMs) {
+				while (Bun.nanoseconds() / 1e6 - start < timeoutMs) {
 					const content = await page.content();
 					if (text && content.includes(text)) {
 						found = true;
-						matchInfo = `Text "${text}" found after ${Math.round(performance.now() - start)}ms.`;
+						matchInfo = `Text "${text}" found after ${Math.round(Bun.nanoseconds() / 1e6 - start)}ms.`;
 						break;
 					}
 					if (selector) {
 						const handles = await page.$$(selector);
 						if (handles.length > 0) {
 							found = true;
-							matchInfo = `Selector "${selector}" matched ${handles.length} element(s) after ${Math.round(performance.now() - start)}ms.`;
+							matchInfo = `Selector "${selector}" matched ${handles.length} element(s) after ${Math.round(Bun.nanoseconds() / 1e6 - start)}ms.`;
 							break;
 						}
 					}

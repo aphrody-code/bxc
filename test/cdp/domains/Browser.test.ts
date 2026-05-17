@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Browser domain handler tests — bun:test
  *
  * Tests cover Phase 1 additions:
@@ -125,7 +141,7 @@ describe("Browser domain — Phase 1 additions", () => {
 
 	test("Browser.grantPermissions returns empty object", async () => {
 		const result = await mux.call("Browser.grantPermissions", {
-			origin: "https://example.com",
+			origin: "https://google.com",
 			permissions: ["geolocation"],
 		});
 		expect(result).toEqual({});
@@ -133,24 +149,24 @@ describe("Browser domain — Phase 1 additions", () => {
 
 	test("Browser.grantPermissions stores permissions in jar", async () => {
 		await mux.call("Browser.grantPermissions", {
-			origin: "https://example.com",
+			origin: "https://google.com",
 			permissions: ["geolocation", "notifications"],
 		});
-		const perms = getGrantedPermissions("https://example.com");
+		const perms = getGrantedPermissions("https://google.com");
 		expect(perms).toContain("geolocation");
 		expect(perms).toContain("notifications");
 	});
 
 	test("Browser.grantPermissions merges duplicate permissions", async () => {
 		await mux.call("Browser.grantPermissions", {
-			origin: "https://example.com",
+			origin: "https://google.com",
 			permissions: ["geolocation"],
 		});
 		await mux.call("Browser.grantPermissions", {
-			origin: "https://example.com",
+			origin: "https://google.com",
 			permissions: ["geolocation", "camera"],
 		});
-		const perms = getGrantedPermissions("https://example.com");
+		const perms = getGrantedPermissions("https://google.com");
 		const geoCount = perms.filter((p) => p === "geolocation").length;
 		expect(geoCount).toBe(1);
 		expect(perms).toContain("camera");
@@ -218,7 +234,7 @@ describe("Browser domain — Phase 1 additions", () => {
 
 		emitDownloadWillBegin(mockCtx as Parameters<typeof emitDownloadWillBegin>[0], {
 			guid: "test-guid-001",
-			url: "https://example.com/file.zip",
+			url: "https://google.com/file.zip",
 			suggestedFilename: "file.zip",
 			frameId: "frame-1",
 		});

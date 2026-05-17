@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Unit tests for HarRecorder
  *
  * Tests cover:
@@ -16,8 +32,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { tmpdir } from "os";
-import { join } from "path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Page } from "../../src/api/browser.js";
 import { HarRecorder } from "../../src/recorder/HarRecorder.ts";
 import type { HarFile } from "../../src/recorder/types.ts";
@@ -215,7 +231,7 @@ describe("CDP event capturing", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		injectCdpEvent(transport, sessionId, makeRequestEvent("r1", "https://example.com/"));
+		injectCdpEvent(transport, sessionId, makeRequestEvent("r1", "https://google.com/"));
 
 		// Allow async processing
 		await new Promise<void>((r) => setTimeout(r, 10));
@@ -233,7 +249,7 @@ describe("CDP event capturing", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		const url = "https://example.com/api/data";
+		const url = "https://google.com/api/data";
 		injectCdpEvent(
 			transport,
 			sessionId,
@@ -265,7 +281,7 @@ describe("CDP event capturing", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		const url = "https://unreachable.example.com/";
+		const url = "https://unreachable.google.com/";
 		injectCdpEvent(transport, sessionId, makeRequestEvent("r3", url));
 		injectCdpEvent(transport, sessionId, makeFailedEvent("r3"));
 
@@ -288,7 +304,7 @@ describe("HarEntry shape", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		const url = "https://example.com/search?q=test&page=1";
+		const url = "https://google.com/search?q=test&page=1";
 		injectCdpEvent(
 			transport,
 			sessionId,
@@ -317,7 +333,7 @@ describe("HarEntry shape", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		const url = "https://example.com/";
+		const url = "https://google.com/";
 		injectCdpEvent(transport, sessionId, makeRequestEvent("r5", url));
 		injectCdpEvent(
 			transport,
@@ -345,7 +361,7 @@ describe("HarEntry shape", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		const url = "https://example.com/style.css";
+		const url = "https://google.com/style.css";
 		injectCdpEvent(transport, sessionId, makeRequestEvent("r6", url));
 		injectCdpEvent(transport, sessionId, makeResponseEvent("r6", url, 200, {}, "text/css"));
 
@@ -375,8 +391,8 @@ describe("HarRecorder.save()", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		injectCdpEvent(transport, sessionId, makeRequestEvent("r7", "https://example.com/"));
-		injectCdpEvent(transport, sessionId, makeResponseEvent("r7", "https://example.com/"));
+		injectCdpEvent(transport, sessionId, makeRequestEvent("r7", "https://google.com/"));
+		injectCdpEvent(transport, sessionId, makeResponseEvent("r7", "https://google.com/"));
 
 		await new Promise<void>((r) => setTimeout(r, 20));
 
@@ -430,8 +446,8 @@ describe("Timing calculations", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		injectCdpEvent(transport, sessionId, makeRequestEvent("r8", "https://example.com/"));
-		injectCdpEvent(transport, sessionId, makeResponseEvent("r8", "https://example.com/"));
+		injectCdpEvent(transport, sessionId, makeRequestEvent("r8", "https://google.com/"));
+		injectCdpEvent(transport, sessionId, makeResponseEvent("r8", "https://google.com/"));
 
 		await new Promise<void>((r) => setTimeout(r, 20));
 

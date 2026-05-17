@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * test/perf/coldstart.test.ts — Cold start performance tests for `bunlight serve`.
  *
  * Targets:
@@ -17,7 +33,7 @@
  */
 
 import { beforeAll, describe, expect, test } from "bun:test";
-import { join } from "path";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -36,7 +52,7 @@ const RUN_TIMEOUT_MS = 12_000;
 // Performance targets (ms, p50).  CI VMs are slow — apply 3x headroom.
 const TARGET_STATIC_MS = 50;
 const TARGET_FAST_MS = 80;
-const CI_HEADROOM = process.env.CI ? 3 : 1;
+const CI_HEADROOM = Bun.env.CI ? 3 : 1;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -135,9 +151,9 @@ function computeP50(samples: number[]): number {
 let lightpandaAvailable = false;
 
 beforeAll(async () => {
-	const home = process.env.HOME ?? "";
+	const home = Bun.env.HOME ?? "";
 	const candidates = [
-		process.env.BUNLIGHT_LIGHTPANDA_PATH,
+		Bun.env.BUNLIGHT_LIGHTPANDA_PATH,
 		`${home}/.cache/lightpanda-node/lightpanda`,
 		`${home}/.lightpanda/lightpanda`,
 		`${home}/.local/bin/lightpanda`,

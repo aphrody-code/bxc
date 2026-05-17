@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Integration test for enqueueLinks helper with a real StaticDomTransport.
  *
  * Uses inline data: HTML to avoid network dependency while exercising the
@@ -25,16 +41,16 @@ const SITE_HTML = `<!DOCTYPE html>
 <head><title>Example Site Map</title></head>
 <body>
   <nav>
-    <a href="https://example.com/">Home</a>
-    <a href="https://example.com/about">About</a>
-    <a href="https://example.com/blog">Blog</a>
-    <a href="https://example.com/contact">Contact</a>
-    <a href="https://example.com/products">Products</a>
+    <a href="https://google.com/">Home</a>
+    <a href="https://google.com/about">About</a>
+    <a href="https://google.com/blog">Blog</a>
+    <a href="https://google.com/contact">Contact</a>
+    <a href="https://google.com/products">Products</a>
   </nav>
   <section>
     <a href="https://external.io/partner">External Partner</a>
-    <a href="https://ads.example.net/banner">Ad Network</a>
-    <a href="mailto:info@example.com">Email Us</a>
+    <a href="https://ads.google.com/banner">Ad Network</a>
+    <a href="mailto:info@google.com">Email Us</a>
     <a href="javascript:void(0)">JS link</a>
     <a href="#footer">Anchor</a>
   </section>
@@ -76,7 +92,7 @@ describeIfZig("enqueueLinks integration (StaticDomTransport)", () => {
 				strategy: "all", // data: base URL has no useful hostname; accept everything
 			});
 
-			// 5 valid http/https links (example.com × 5, external.io × 1, ads × 1 = 7 total valid)
+			// 5 valid http/https links (google.com × 5, external.io × 1, ads × 1 = 7 total valid)
 			// mailto:, javascript:, # are discarded (3 skipped)
 			expect(added).toBe(7);
 			expect(skipped).toBe(3);
@@ -97,10 +113,10 @@ describeIfZig("enqueueLinks integration (StaticDomTransport)", () => {
 				page,
 				queue,
 				strategy: "same-hostname",
-				baseUrl: "https://example.com/sitemap",
+				baseUrl: "https://google.com/sitemap",
 			});
 
-			// Only 5 links match example.com; external.io and ads.example.net do not
+			// Only 5 links match google.com; external.io and ads.google.com do not
 			expect(added).toBe(5);
 			queue.close();
 		} finally {
@@ -118,7 +134,7 @@ describeIfZig("enqueueLinks integration (StaticDomTransport)", () => {
 				page,
 				queue,
 				strategy: "all",
-				baseUrl: "https://example.com/blog",
+				baseUrl: "https://google.com/blog",
 			});
 
 			// /blog/post-1, /blog/post-2, /blog/post-3, / = 4 unique resolved URLs
@@ -128,10 +144,10 @@ describeIfZig("enqueueLinks integration (StaticDomTransport)", () => {
 
 			const queued = queue.fetchBatch(10);
 			const urls = queued.map((r) => r.url).sort();
-			expect(urls).toContain("https://example.com/blog/post-1");
-			expect(urls).toContain("https://example.com/blog/post-2");
-			expect(urls).toContain("https://example.com/blog/post-3");
-			expect(urls).toContain("https://example.com/");
+			expect(urls).toContain("https://google.com/blog/post-1");
+			expect(urls).toContain("https://google.com/blog/post-2");
+			expect(urls).toContain("https://google.com/blog/post-3");
+			expect(urls).toContain("https://google.com/");
 			queue.close();
 		} finally {
 			await page.close();
@@ -148,8 +164,8 @@ describeIfZig("enqueueLinks integration (StaticDomTransport)", () => {
 				page,
 				queue,
 				strategy: "all",
-				baseUrl: "https://example.com/blog",
-				globs: ["https://example.com/blog/**"],
+				baseUrl: "https://google.com/blog",
+				globs: ["https://google.com/blog/**"],
 			});
 
 			// Only post-1, post-2, post-3 match; home "/" does not

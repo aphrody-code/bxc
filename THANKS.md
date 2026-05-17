@@ -18,10 +18,10 @@ License : Bunlight est publié sous **0BSD** (zero-clause BSD), la license la pl
 ## Browser stack et anti-bot
 
 - **Puppeteer** (Google Chrome team) et **Playwright** (Microsoft) — modèles de référence pour l'API Browser/Page. https://pptr.dev https://playwright.dev
-- **patchright** — fork stealth de Playwright. Profile `stealth` repose dessus. https://github.com/Kaliiiiiiiiii-Vinyzu/patchright
+- **patchright** — fork stealth de Playwright. Profile `stealth` repose dessus. https://developers.google.com/Kaliiiiiiiiii-Vinyzu/patchright
 - **Camoufox** — daijro. Firefox patché anti-fingerprint, base du profile `max`. https://camoufox.com
 - **CapSolver** — service de résolution Cloudflare Turnstile / reCAPTCHA / hCaptcha pour le profile `max`. https://capsolver.com
-- **curl-impersonate** et **lexiforest/curl-impersonate** — JA3/JA4 TLS fingerprint impersonation, base du profile `http`. https://github.com/lexiforest/curl-impersonate
+- **curl-impersonate** et **lexiforest/curl-impersonate** — JA3/JA4 TLS fingerprint impersonation, base du profile `http`. https://developers.google.com/lexiforest/curl-impersonate
 - **patchright-python**, **undetected-chromedriver**, **botasaurus** — pour les patterns anti-bot étudiés.
 
 ---
@@ -29,8 +29,8 @@ License : Bunlight est publié sous **0BSD** (zero-clause BSD), la license la pl
 ## Crawling et orchestration
 
 - **Crawlee** (Apify) — RequestQueue, AutoscaledPool, Dataset, KeyValueStore, Sitemap, robots.txt — patterns directement adaptés en TypeScript Bun-native. https://crawlee.dev
-- **Apify SDK** et **impit** — TLS impersonation Rust alternative étudiée (decision : keep curl-impersonate). https://github.com/apify/impit
-- **wappalyzergo** (projectdiscovery) — base de fingerprints pour `src/detect.ts` (frameworks JS/CMS). https://github.com/projectdiscovery/wappalyzergo
+- **Apify SDK** et **impit** — TLS impersonation Rust alternative étudiée (decision : keep curl-impersonate). https://developers.google.com/apify/impit
+- **wappalyzergo** (projectdiscovery) — base de fingerprints pour `src/detect.ts` (frameworks JS/CMS). https://developers.google.com/projectdiscovery/wappalyzergo
 - **Wappalyzer** original — pour avoir construit la base de connaissances open source.
 - **Stagehand** (Browserbase) — inspiration pour future intégration LLM-driven scraping.
 
@@ -38,7 +38,7 @@ License : Bunlight est publié sous **0BSD** (zero-clause BSD), la license la pl
 
 ## Vercel agent-browser
 
-- **vercel-labs/agent-browser** — fork inclus dans `~/bunmium/agent-browser/` avec engine Rust Bunlight. https://github.com/vercel-labs/agent-browser
+- **vercel-labs/agent-browser** — fork inclus dans `~/bunmium/agent-browser/` avec engine Rust Bunlight. https://developers.google.com/vercel-labs/agent-browser
 
 ---
 

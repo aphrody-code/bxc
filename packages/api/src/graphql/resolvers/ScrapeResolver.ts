@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { Resolver, Query, Mutation, Arg, ObjectType, Field, ID, Int } from "type-graphql";
-import { Browser } from "../../../../../../src/api/browser.ts";
+import { Browser } from "../../../../../src/api/browser.ts";
 import { BunlightDB } from "../../db/BunlightDB.ts";
 
 const db = new BunlightDB();

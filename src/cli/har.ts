@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight har <action>` — HAR (HTTP Archive) recorder/replayer.
  *
  * Actions:
@@ -12,7 +28,7 @@ import { HarRecorder } from "../recorder/HarRecorder.ts";
 import { HarReplayer } from "../recorder/HarReplayer.ts";
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight har — HAR recorder/replayer
 
 Usage:
@@ -20,7 +36,7 @@ Usage:
   bunlight har replay <file.har>        inspect a HAR file (JSON summary on stdout)
 
 Examples:
-  bunlight har record https://example.com /tmp/example.har
+  bunlight har record https://google.com /tmp/example.har
   bunlight har replay /tmp/example.har
 
 Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
@@ -38,7 +54,7 @@ async function recordHar(url: string, out: string): Promise<void> {
 		recorder.start();
 		await page.goto(url, { timeoutMs: 25_000 });
 		await recorder.save(out);
-		process.stderr.write(`bunlight har: recorded to ${out}\n`);
+		Bun.stderr.write(`bunlight har: recorded to ${out}\n`);
 	} finally {
 		try {
 			await page.close();
@@ -53,8 +69,8 @@ async function replayHar(file: string): Promise<void> {
 	const inspect = (replayer as unknown as { _inspectStats?: () => unknown })._inspectStats;
 	const stats =
 		typeof inspect === "function" ? inspect.call(replayer) : { source: file, status: "loaded" };
-	process.stdout.write(
-		JSON.stringify({ source: file, ...((stats as object) ?? {}) }, null, 2) + "\n",
+	Bun.stdout.write(
+		JSON.stringify({ source: file, ...(stats as object) }, null, 2) + "\n",
 	);
 }
 
@@ -71,7 +87,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 				const url = argv[1];
 				const out = argv[2];
 				if (!url || !out) {
-					process.stderr.write("bunlight har record <url> <out.har>\n");
+					Bun.stderr.write("bunlight har record <url> <out.har>\n");
 					process.exit(2);
 				}
 				await recordHar(url, out);
@@ -80,19 +96,19 @@ export async function main(argv: readonly string[]): Promise<void> {
 			case "replay": {
 				const file = argv[1];
 				if (!file) {
-					process.stderr.write("bunlight har replay <file.har>\n");
+					Bun.stderr.write("bunlight har replay <file.har>\n");
 					process.exit(2);
 				}
 				await replayHar(file);
 				break;
 			}
 			default:
-				process.stderr.write(`bunlight har: unknown action '${action}'\n`);
+				Bun.stderr.write(`bunlight har: unknown action '${action}'\n`);
 				printUsage();
 				process.exit(2);
 		}
 	} catch (err) {
-		process.stderr.write(`bunlight har: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bunlight har: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	}
 }

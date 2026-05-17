@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * @module bunlight/plugin/next-plugin
  *
  * Bun plugin that brings Next.js conventions into a plain `Bun.build()` /
@@ -33,14 +49,14 @@
  * directives, conventions, env, route manifest, and module shims.
  *
  * Reference :
- *   https://github.com/vercel/next.js/
+ *   https://developers.google.com/vercel/next.js/
  *   https://nextjs.org/docs/app/building-your-application/routing
  *   https://bun.com/docs/runtime/plugins
  *   https://bun.com/docs/bundler/loaders
  *   https://bun.com/docs/bundler/css
  */
 
-import { relative as relativePath, resolve as resolvePath } from "path";
+import { relative as relativePath, resolve as resolvePath } from "node:path";
 import type { BunPlugin } from "bun";
 
 // ---------------------------------------------------------------------------
@@ -593,7 +609,7 @@ async function readEnvFile(path: string): Promise<Record<string, string>> {
 
 /**
  * Loads `.env` family files and injects `NEXT_PUBLIC_*` vars (or any prefix
- * provided in `publicEnvPrefixes`) as `--define process.env.X = "..."`.
+ * provided in `publicEnvPrefixes`) as `--define Bun.env.X = "..."`.
  */
 export function nextEnvPlugin(options: NextPluginOptions = {}): BunPlugin {
 	return {
@@ -611,13 +627,13 @@ export function nextEnvPlugin(options: NextPluginOptions = {}): BunPlugin {
 			const define: Record<string, string> = {};
 			for (const [k, v] of Object.entries(merged)) {
 				if (prefixes.some((p) => k.startsWith(p))) {
-					define[`process.env.${k}`] = JSON.stringify(v);
+					define[`Bun.env.${k}`] = JSON.stringify(v);
 				}
 			}
 
 			// Mutate build.config.define so subsequent plugins / native bundling pick it up.
 			const cfg = build.config as { define?: Record<string, string> };
-			cfg.define = { ...(cfg.define ?? {}), ...define };
+			cfg.define = { ...cfg.define, ...define };
 		},
 	};
 }

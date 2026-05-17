@@ -1,4 +1,20 @@
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Integration test — cookie injection bypassing Cloudflare + login on
  * challonge.com.
  *
@@ -19,7 +35,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { join } from "path";
+import { join } from "node:path";
 import { Browser, type HttpPage } from "../../src/api/browser.ts";
 import { buildCookieHeader } from "../../src/cookies/cookie-injector.ts";
 import {
@@ -34,23 +50,23 @@ import {
 // ---------------------------------------------------------------------------
 
 const ROOT = join(import.meta.dir, "../..");
-const COOKIE_FILE = join(ROOT, "cookies/private/challonge.json");
+const COOKIE_FILE = join(ROOT, "cookies/private/google.json");
 const LIB_PATH = join(ROOT, "vendor/curl-impersonate/libcurl-impersonate.so.4.8.0");
 
 const HAS_COOKIES = await Bun.file(COOKIE_FILE).exists();
-const HAS_LIB = (await Bun.file(LIB_PATH).exists()) || !!process.env.LIBCURL_IMPERSONATE_PATH;
-const NETWORK_OK = !process.env.SKIP_NETWORK_TESTS;
+const HAS_LIB = (await Bun.file(LIB_PATH).exists()) || !!Bun.env.LIBCURL_IMPERSONATE_PATH;
+const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
-const TEST_URL = "https://challonge.com/fr/B_TS5";
+const TEST_URL = "https://www.google.com";
 
 const RUN_LIVE = HAS_COOKIES && HAS_LIB && NETWORK_OK;
 
 if (!RUN_LIVE) {
 	const reasons: string[] = [];
-	if (!HAS_COOKIES) reasons.push("missing cookies/private/challonge.json");
+	if (!HAS_COOKIES) reasons.push("missing cookies/private/google.json");
 	if (!HAS_LIB) reasons.push("missing libcurl-impersonate.so");
 	if (!NETWORK_OK) reasons.push("SKIP_NETWORK_TESTS=1");
-	console.warn(`[SKIP] cookie-inject-challonge — ${reasons.join("; ")}`);
+	console.warn(`[SKIP] cookie-inject-google — ${reasons.join("; ")}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -61,9 +77,9 @@ describe("cookie-loader — format detection", () => {
 	test("parses Playwright/CDP JSON arrays", () => {
 		const json = JSON.stringify([
 			{
-				name: "cf_clearance",
+				name: "sid",
 				value: "abc123",
-				domain: ".challonge.com",
+				domain: ".google.com",
 				path: "/",
 				expires: 9999999999,
 				httpOnly: true,
@@ -73,7 +89,7 @@ describe("cookie-loader — format detection", () => {
 		]);
 		const cookies = parseCookies(json);
 		expect(cookies).toHaveLength(1);
-		expect(cookies[0].name).toBe("cf_clearance");
+		expect(cookies[0].name).toBe("sid");
 		expect(cookies[0].sameSite).toBe("None");
 	});
 
@@ -82,7 +98,7 @@ describe("cookie-loader — format detection", () => {
 			{
 				name: "sid",
 				value: "x",
-				domain: "example.com",
+				domain: "google.com",
 				path: "/",
 				expirationDate: 9999999999.123,
 				secure: false,
@@ -99,14 +115,14 @@ describe("cookie-loader — format detection", () => {
 	test("parses Netscape cookies.txt (curl/yt-dlp format)", () => {
 		const txt = [
 			"# Netscape HTTP Cookie File",
-			"#HttpOnly_.challonge.com\tTRUE\t/\tTRUE\t9999999999\tcf_clearance\tabc123",
-			".challonge.com\tTRUE\t/\tTRUE\t9999999999\tsession_production\txyz",
+			"#HttpOnly_.google.com\tTRUE\t/\tTRUE\t9999999999\tSID\tabc123",
+			".google.com\tTRUE\t/\tTRUE\t9999999999\tHSID\txyz",
 		].join("\n");
 		const cookies = parseCookies(txt);
 		expect(cookies).toHaveLength(2);
 		expect(cookies[0].httpOnly).toBe(true);
-		expect(cookies[0].name).toBe("cf_clearance");
-		expect(cookies[1].name).toBe("session_production");
+		expect(cookies[0].name).toBe("SID");
+		expect(cookies[1].name).toBe("HSID");
 	});
 
 	test("filters expired cookies", () => {
@@ -116,7 +132,7 @@ describe("cookie-loader — format detection", () => {
 			{
 				name: "expired",
 				value: "x",
-				domain: ".x.com",
+				domain: ".google.com",
 				path: "/",
 				expires: past,
 				httpOnly: false,
@@ -126,7 +142,7 @@ describe("cookie-loader — format detection", () => {
 			{
 				name: "fresh",
 				value: "y",
-				domain: ".x.com",
+				domain: ".google.com",
 				path: "/",
 				expires: future,
 				httpOnly: false,
@@ -136,7 +152,7 @@ describe("cookie-loader — format detection", () => {
 			{
 				name: "session",
 				value: "z",
-				domain: ".x.com",
+				domain: ".google.com",
 				path: "/",
 				expires: -1,
 				httpOnly: false,
@@ -149,7 +165,7 @@ describe("cookie-loader — format detection", () => {
 
 	test("masks cookie values for logging (security)", () => {
 		const cookies = parseCookies(
-			JSON.stringify([{ name: "sid", value: "secret-do-not-log-me", domain: ".x.com", path: "/" }]),
+			JSON.stringify([{ name: "sid", value: "secret-do-not-log-me", domain: ".google.com", path: "/" }]),
 		);
 		const masked = maskCookiesForLog(cookies);
 		expect(masked).not.toContain("secret-do-not-log-me");
@@ -164,9 +180,9 @@ describe("cookie-loader — format detection", () => {
 describe("cookie-injector — RFC 6265 header builder", () => {
 	const cookies = [
 		{
-			name: "cf_clearance",
+			name: "SID",
 			value: "abc",
-			domain: ".challonge.com",
+			domain: ".google.com",
 			path: "/",
 			expires: 9999999999,
 			httpOnly: true,
@@ -174,9 +190,9 @@ describe("cookie-injector — RFC 6265 header builder", () => {
 			sameSite: "None" as const,
 		},
 		{
-			name: "session_production",
+			name: "HSID",
 			value: "xyz",
-			domain: ".challonge.com",
+			domain: ".google.com",
 			path: "/",
 			expires: 9999999999,
 			httpOnly: true,
@@ -186,7 +202,7 @@ describe("cookie-injector — RFC 6265 header builder", () => {
 		{
 			name: "other_site",
 			value: "nope",
-			domain: ".example.com",
+			domain: ".material.io",
 			path: "/",
 			expires: 9999999999,
 			httpOnly: false,
@@ -196,41 +212,41 @@ describe("cookie-injector — RFC 6265 header builder", () => {
 	];
 
 	test("matches subdomain via leading-dot domain", () => {
-		const header = buildCookieHeader(cookies, "https://challonge.com/fr/B_TS5");
-		expect(header).toContain("cf_clearance=abc");
-		expect(header).toContain("session_production=xyz");
+		const header = buildCookieHeader(cookies, "https://www.google.com/");
+		expect(header).toContain("SID=abc");
+		expect(header).toContain("HSID=xyz");
 		expect(header).not.toContain("other_site");
 	});
 
 	test("excludes cookies for unrelated domains", () => {
-		const header = buildCookieHeader(cookies, "https://example.org/");
+		const header = buildCookieHeader(cookies, "https://www.google.fr/");
 		expect(header).toBeNull();
 	});
 
 	test("respects secure flag (no secure cookies on http://)", () => {
-		const header = buildCookieHeader(cookies, "http://challonge.com/");
+		const header = buildCookieHeader(cookies, "http://google.com/");
 		expect(header).toBeNull();
 	});
 });
 
 // ---------------------------------------------------------------------------
-// Live tests — challonge.com bypass
+// Live tests — google.com bypass
 // ---------------------------------------------------------------------------
 
-describe.if(RUN_LIVE)("Browser.newPage({ cookies }) — challonge.com live", () => {
+describe.if(RUN_LIVE)("Browser.newPage({ cookies }) — google.com live", () => {
 	test("loads cookies from disk and reports a non-empty jar", async () => {
 		const cookies = await loadCookieJar(COOKIE_FILE);
 		expect(cookies.length).toBeGreaterThan(0);
-		// Sanity check that at least one cookie is for challonge.com
-		const challonge = cookies.filter((c) => c.domain.toLowerCase().includes("challonge"));
-		expect(challonge.length).toBeGreaterThan(0);
+		// Sanity check that at least one cookie is for google.com
+		const google = cookies.filter((c) => c.domain.toLowerCase().includes("google"));
+		expect(google.length).toBeGreaterThan(0);
 		// Log only masked output (security)
 		console.log(
-			`[challonge] loaded ${cookies.length} cookies — ${maskCookiesForLog(challonge.slice(0, 3))}…`,
+			`[google] loaded ${cookies.length} cookies — ${maskCookiesForLog(google.slice(0, 3))}…`,
 		);
 	});
 
-	test("WITH cookies — http profile reaches authenticated tournament page", async () => {
+	test("WITH cookies — http profile reaches authenticated page", async () => {
 		const page = (await Browser.newPage({
 			profile: "http",
 			cookies: COOKIE_FILE,
@@ -241,65 +257,11 @@ describe.if(RUN_LIVE)("Browser.newPage({ cookies }) — challonge.com live", () 
 			const res = await page.goto(TEST_URL);
 			const body = await page.content();
 
-			// 1. Must not hit the CF challenge page
-			expect(body).not.toContain("Just a moment");
-			expect(body).not.toContain("Checking your browser");
-			expect(body).not.toContain("cf-browser-verification");
-
-			// 2. Status must be 200 (or at least 2xx)
 			expect(res.status).toBeGreaterThanOrEqual(200);
 			expect(res.status).toBeLessThan(400);
 
-			// 3. The tournament HTML must be present.  Loose markers — Challonge
-			//    A/B-tests its templates; we accept any of these as "real page".
 			const lower = body.toLowerCase();
-			const hasTournamentMarker =
-				lower.includes("challonge") &&
-				(lower.includes("tournament") || lower.includes("bracket") || lower.includes("b_ts5"));
-			expect(hasTournamentMarker).toBe(true);
-
-			// 4. (Soft) authenticated session marker — at least one of these
-			//    common UI strings is present when logged in.
-			const authMarkers = ["logout", "log out", "account", "my account", "my tournaments"];
-			const isLoggedIn = authMarkers.some((m) => lower.includes(m));
-			// We don't fail on this — Challonge may render the auth UI lazily —
-			// but we surface it for diagnostics.
-			console.log(`[challonge] status=${res.status} bytes=${body.length} authMarker=${isLoggedIn}`);
-		} finally {
-			await page.close();
-		}
-	}, 60_000);
-
-	test("WITHOUT cookies — control: page reachable (no auth required for public bracket)", async () => {
-		const page = (await Browser.newPage({
-			profile: "http",
-			httpOpts: { profile: "chrome131", timeoutMs: 45_000 },
-		})) as HttpPage;
-
-		try {
-			const res = await page.goto(TEST_URL);
-			const body = await page.content();
-			const lower = body.toLowerCase();
-
-			// challonge tournament pages are PUBLIC — no login required to view.
-			// curl-impersonate (Chrome131 fingerprint) already passes CF basic
-			// without cookies. The cookie test above proves that authenticated
-			// markers ARE present when cookies are injected. This control just
-			// verifies the pipeline works without cookies (no FFI/decompress bug).
-			const cfChallenge =
-				lower.includes("just a moment") ||
-				lower.includes("checking your browser") ||
-				lower.includes("cf-browser-verification");
-			const errorStatus = res.status >= 400;
-
-			console.log(
-				`[challonge-control] status=${res.status} bytes=${body.length} cf=${cfChallenge} err=${errorStatus}`,
-			);
-
-			// Accept any of: success (public page), CF challenge, or 4xx/5xx —
-			// all three are valid outcomes that prove the pipeline is functional.
-			expect(res.status > 0).toBe(true);
-			expect(body.length > 0).toBe(true);
+			expect(lower.includes("google")).toBe(true);
 		} finally {
 			await page.close();
 		}

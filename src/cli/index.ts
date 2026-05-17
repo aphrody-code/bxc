@@ -1,5 +1,21 @@
 #!/usr/bin/env bun
 /**
+ * Copyright 2026 aphrody-code
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * `bunlight` — CLI router.
  *
  * Dispatches subcommands to the appropriate module via dynamic import so
@@ -15,7 +31,7 @@
  *   --help, -h      print usage
  */
 
-import { join } from "path";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Version resolution
@@ -34,7 +50,7 @@ let _pkgVersion = typeof __BUNLIGHT_VERSION__ !== "undefined" ? __BUNLIGHT_VERSI
 // ---------------------------------------------------------------------------
 
 function printUsage(): void {
-	process.stdout.write(
+	Bun.stdout.write(
 		`bunlight v${_pkgVersion} — Bun-native browser engine
 
 Usage:
@@ -42,13 +58,17 @@ Usage:
 
 Subcommands:
   serve     Start a CDP server for browser automation
-            bunlight serve --cdp-port <N> [--profile static|fast|http]
+            bunlight serve --cdp-port <N> [--profile static|fast|http|stealth|max]
 
-  install   Download Lightpanda for the current platform
+  install   Download engine binaries (Lightpanda + native Chromium)
             bunlight install [--dry-run]
 
+  chrome    Native Chromium management
+            bunlight chrome fetch
+            bunlight chrome launch [--path path/to/chrome]
+
   recon     One-shot URL → recon doc (Markdown by default)
-            bunlight recon <url> [--profile static|fast|http] [--screenshot]
+            bunlight recon <url> [--profile static|fast|http|stealth|max] [--screenshot]
                                  [--output path.md] [--snapshot-dir dir/] [--json]
   docs      Alias of recon
 
@@ -66,7 +86,7 @@ Subcommands:
             bunlight har replay <file.har>
 
   mirror    Download a full site (HTML+CSS+JS+assets) with rewritten links
-            bunlight mirror <url> <out-dir> [--profile http|static|fast]
+            bunlight mirror <url> <out-dir> [--profile http|static|fast|stealth]
                                             [--cookies jar.json] [--verbose]
 
   challonge Extract typed snapshot from a Challonge tournament page
@@ -77,14 +97,13 @@ Flags:
   --help, -h      print this help
 
 Examples:
-  bunlight serve --cdp-port 9222 --profile fast
+  bunlight serve --cdp-port 9222 --profile stealth
   bunlight install
-  bunlight detect https://nextjs.org
+  bunlight detect https://www.google.com
 
-bunlight is Lightpanda-only. Forbidden engines : Chrome / Chromium /
-Firefox / Edge / Safari and any derivative (patchright, Camoufox).
-For server-grade anti-detection use launchGhostBrowser
-(src/profiles/ghost/) — Lightpanda + CDP stealth injects.
+bunlight is a high-performance browser engine optimized for VPS
+and Google-grade stealth. It combines In-Process FFI (Zig/V8)
+with a native Rust-driven Chromium core.
 
 `,
 	);
@@ -124,6 +143,12 @@ async function main() {
 
 		case "install": {
 			const mod = await import("./install.ts");
+			await mod.main(process.argv.slice(3));
+			break;
+		}
+
+		case "chrome": {
+			const mod = await import("./chrome.ts");
 			await mod.main(process.argv.slice(3));
 			break;
 		}
@@ -179,7 +204,7 @@ async function main() {
 
 		case "--version":
 		case "-V": {
-			process.stdout.write(`bunlight ${_pkgVersion}\n`);
+			Bun.stdout.write(`bunlight ${_pkgVersion}\n`);
 			break;
 		}
 
@@ -188,7 +213,7 @@ async function main() {
 		default: {
 			printUsage();
 			if (subcommand !== undefined && subcommand !== "--help" && subcommand !== "-h") {
-				process.stderr.write(`Unknown subcommand: ${subcommand}\n`);
+				Bun.stderr.write(`Unknown subcommand: ${subcommand}\n`);
 				process.exit(1);
 			}
 			break;
@@ -200,3 +225,4 @@ main().catch((err) => {
 	console.error(`[bunlight] ${err instanceof Error ? err.stack : String(err)}`);
 	process.exit(1);
 });
+
