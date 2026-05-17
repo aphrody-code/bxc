@@ -17,7 +17,7 @@
 /**
  * Profile wiring tests — Phase 1.5
  *
- * Verifies that `bunlight serve --profile <X>` boots, exposes `/json/version`
+ * Verifies that `bxc serve --profile <X>` boots, exposes `/json/version`
  * with a valid `webSocketDebuggerUrl`, and responds to `Browser.getVersion`
  * over the CDP WebSocket.
  *
@@ -41,8 +41,8 @@ import { join } from "node:path";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const BUNLIGHT_DIR = join(import.meta.dir, "..");
-const SERVE_SCRIPT = join(BUNLIGHT_DIR, "src/cli/serve.ts");
+const BXC_DIR = join(import.meta.dir, "..");
+const SERVE_SCRIPT = join(BXC_DIR, "src/cli/serve.ts");
 
 /** Timeout for each profile boot test (http takes longer). */
 const BOOT_TIMEOUT_MS = 60_000;
@@ -59,7 +59,7 @@ function logSkip(reason: string): void {
  * or similar, and returns the port number.
  *
  * Lightpanda fast mode logs to stderr; static/http modes log to stderr
- * via `console.error("[bunlight] ...")`.
+ * via `console.error("[bxc] ...")`.
  */
 async function readPortFromOutput(
 	proc: ReturnType<typeof Bun.spawn>,
@@ -111,7 +111,7 @@ async function readPortFromOutput(
 		return -1;
 	}
 
-	// Race stdout and stderr — bunlight always writes to stderr via console.error.
+	// Race stdout and stderr — bxc always writes to stderr via console.error.
 	const [stderrPort] = await Promise.race([
 		// Try stderr first (most reliable)
 		scanStream(proc.stderr as ReadableStream<Uint8Array> | null, "stderr").then(
@@ -199,7 +199,7 @@ async function runProfileBootTest(profile: string): Promise<void> {
 			"info",
 		],
 		{
-			cwd: BUNLIGHT_DIR,
+			cwd: BXC_DIR,
 			stdout: "pipe",
 			stderr: "pipe",
 		},
@@ -269,7 +269,7 @@ test(
 	async () => {
 		// http profile requires curl-impersonate FFI library.
 		// Accept any of the possible filenames produced by the build.
-		const curlVendorDir = join(BUNLIGHT_DIR, "vendor/curl-impersonate");
+		const curlVendorDir = join(BXC_DIR, "vendor/curl-impersonate");
 		const curlCandidates = [
 			`${curlVendorDir}/libcurl-impersonate-chrome.so.4.8.0`,
 			`${curlVendorDir}/libcurl-impersonate.so.4.8.0`,

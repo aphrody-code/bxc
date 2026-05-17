@@ -67,8 +67,8 @@ type InputMethodName = typeof INPUT_METHODS extends Set<infer T> ? T : never;
 // Profile type
 // ---------------------------------------------------------------------------
 
-/** Known Bunlight profile identifiers. */
-export type BunlightProfile = "static" | "fast" | "stealth" | "max" | "http";
+/** Known Bxc profile identifiers. */
+export type BxcProfile = "static" | "fast" | "stealth" | "max" | "http";
 
 // ---------------------------------------------------------------------------
 // Error factories
@@ -120,7 +120,7 @@ function buildHttpError(method: string): CDPError {
  * await expect(httpHandler("Input.dispatchKeyEvent", {}, mockCtx, undefined))
  *   .rejects.toThrow("no JS in http");
  */
-export function createInputHandler(profile: BunlightProfile): DomainHandler {
+export function createInputHandler(profile: BxcProfile): DomainHandler {
 	return async (method, _params, _ctx, _sessionId) => {
 		if (!INPUT_METHODS.has(method as InputMethodName)) {
 			return null;
@@ -144,7 +144,7 @@ export function createInputHandler(profile: BunlightProfile): DomainHandler {
 				return null;
 
 			default: {
-				// Exhaustive check: TypeScript will error if BunlightProfile grows
+				// Exhaustive check: TypeScript will error if BxcProfile grows
 				// without a corresponding case here.
 				const _exhaustive: never = profile;
 				void _exhaustive;

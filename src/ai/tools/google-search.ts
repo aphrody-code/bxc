@@ -20,7 +20,7 @@ import { googleWebSearch } from "../../google/search.ts";
  * Native integration of the 'google_web_search' tool extracted from gemini-cli.
  * In gemini-cli, this delegates to the cloud Gemini API 'googleSearch' feature.
  * Here, we recode it natively to execute directly within our local Chromium engine
- * (Zero-Spawn Bunlight engine), ensuring full local execution without cloud dependency.
+ * (Zero-Spawn Bxc engine), ensuring full local execution without cloud dependency.
  */
 export const googleWebSearchTool = {
 	name: "google_web_search",

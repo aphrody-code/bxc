@@ -16,7 +16,7 @@
  */
 
 /**
- * build-windows.ts — Cross-platform Bunlight Windows build (Linux/macOS host).
+ * build-windows.ts — Cross-platform Bxc Windows build (Linux/macOS host).
  *
  * Mirrors scripts/build-windows.ps1 but runs from any Bun host using only
  * Bun-native APIs + Zig cross-compile. No WSL, no MSYS2, no Wine required.
@@ -26,7 +26,7 @@
  *   2. Build Lightpanda (zig build -Dtarget=x86_64-windows-gnu) from
  *      lightpanda-io/browser source. Zig's hermetic linker handles the
  *      Windows ABI without MSVC/MSYS2.
- *   3. Cross-compile bunlight.exe via `bun build --compile
+ *   3. Cross-compile bxc.exe via `bun build --compile
  *      --target=bun-windows-x64`.
  *   4. Fetch curl-impersonate Windows DLL from lexiforest/curl-impersonate
  *      releases.
@@ -40,15 +40,15 @@
  *   bun scripts/build-windows.ts --lightpanda-ref nightly  # specific Lightpanda ref
  *
  * Environment overrides :
- *   BUNLIGHT_CURL_VERSION   curl-impersonate release tag (default v1.5.6)
- *   BUNLIGHT_ZIG_TARGET     override Zig triple (default x86_64-windows-gnu)
- *   BUNLIGHT_LIGHTPANDA_URL skip Lightpanda build, fetch this URL instead
+ *   BXC_CURL_VERSION   curl-impersonate release tag (default v1.5.6)
+ *   BXC_ZIG_TARGET     override Zig triple (default x86_64-windows-gnu)
+ *   BXC_LIGHTPANDA_URL skip Lightpanda build, fetch this URL instead
  *
  * Outputs in dist/standalone/windows/ :
- *   bunlight.exe
+ *   bxc.exe
  *   lightpanda.exe
  *   libcurl-impersonate.dll
- *   bunlight-windows-x64.zip            (or aarch64-baseline variants)
+ *   bxc-windows-x64.zip            (or aarch64-baseline variants)
  */
 
 import { $ } from "bun";
@@ -69,7 +69,7 @@ function parseArgs(argv: readonly string[]): Args {
 		skipLightpanda: false,
 		skipCurl: false,
 		lightpandaRef: "main",
-		curlVersion: Bun.env.BUNLIGHT_CURL_VERSION ?? "v1.5.6",
+		curlVersion: Bun.env.BXC_CURL_VERSION ?? "v1.5.6",
 	};
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
@@ -103,7 +103,7 @@ function parseArgs(argv: readonly string[]): Args {
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`build-windows.ts — cross-compile Bunlight + Lightpanda for Windows from Linux/macOS
+		`build-windows.ts — cross-compile Bxc + Lightpanda for Windows from Linux/macOS
 
 Usage:
   bun scripts/build-windows.ts [--arch x64|arm64] [--baseline] [--skip-lightpanda]
@@ -128,10 +128,10 @@ async function assertCmd(cmd: string, hint: string): Promise<string> {
 async function buildLightpanda(args: Args, distDir: string): Promise<boolean> {
 	const ref = args.lightpandaRef;
 	const target =
-		Bun.env.BUNLIGHT_ZIG_TARGET ??
+		Bun.env.BXC_ZIG_TARGET ??
 		(args.arch === "arm64" ? "aarch64-windows-gnu" : "x86_64-windows-gnu");
 
-	const overrideUrl = Bun.env.BUNLIGHT_LIGHTPANDA_URL;
+	const overrideUrl = Bun.env.BXC_LIGHTPANDA_URL;
 	if (overrideUrl) {
 		console.log(`[lightpanda] using override URL ${overrideUrl}`);
 		const out = `${distDir}/lightpanda.exe`;
@@ -168,7 +168,7 @@ async function buildLightpanda(args: Args, distDir: string): Promise<boolean> {
 		const dl = await $`curl -#SfLo ${out} ${releaseUrl}`.nothrow();
 		if (dl.exitCode !== 0) {
 			console.warn(
-				`[lightpanda] no prebuilt for ${target} — bunlight will run without Lightpanda support.`,
+				`[lightpanda] no prebuilt for ${target} — bxc will run without Lightpanda support.`,
 			);
 			return false;
 		}
@@ -186,30 +186,30 @@ async function buildLightpanda(args: Args, distDir: string): Promise<boolean> {
 	return false;
 }
 
-async function buildBunlightExe(args: Args, distDir: string): Promise<void> {
+async function buildBxcExe(args: Args, distDir: string): Promise<void> {
 	const arch = args.arch === "arm64" ? "aarch64" : "x64";
 	const target = args.baseline
 		? `bun-windows-${arch}-baseline`
 		: `bun-windows-${arch}-baseline`; // Force baseline for maximum compatibility
 	const repoRoot = `${import.meta.dir}/..`;
-	const out = `${distDir}/bunlight.exe`;
+	const out = `${distDir}/bxc.exe`;
 
 	const pkg = JSON.parse(await Bun.file(`${repoRoot}/package.json`).text()) as {
 		version: string;
 	};
 	const buildTime = new Date().toISOString();
 
-	console.log(`[bunlight] bun build --compile --target=${target} (with bytecode)`);
+	console.log(`[bxc] bun build --compile --target=${target} (with bytecode)`);
 	// --bytecode moves JS parsing to build-time (30-50% faster startup)
 	await $`bun build src/cli/index.ts --compile --target=${target} \
 		--minify --bytecode --sourcemap=linked \
 		--external electron --external playwright-core/lib/zipBundle \
-		--define __BUNLIGHT_VERSION__="\"${pkg.version}\"" \
-		--define __BUNLIGHT_BUILD_TIME__="\"${buildTime}\"" \
+		--define __BXC_VERSION__="\"${pkg.version}\"" \
+		--define __BXC_BUILD_TIME__="\"${buildTime}\"" \
 		--outfile ${out}`.cwd(repoRoot);
 
 	const size = ((await Bun.file(out).stat()).size / 1024 / 1024).toFixed(2);
-	console.log(`[bunlight] OK ${out} (${size} MB)`);
+	console.log(`[bxc] OK ${out} (${size} MB)`);
 }
 
 async function buildRustBridge(args: Args, distDir: string): Promise<void> {
@@ -227,8 +227,8 @@ async function buildRustBridge(args: Args, distDir: string): Promise<void> {
 		process.exit(1);
 	}
 
-	const binName = "bunlight-engine.exe";
-	const libName = "bunlight_rust_bridge.dll";
+	const binName = "bxc-engine.exe";
+	const libName = "bxc_rust_bridge.dll";
 	
 	await Bun.write(`${distDir}/${binName}`, Bun.file(`${repoRoot}/rust-bridge/target/${target}/release/${binName}`));
 	await Bun.write(`${distDir}/${libName}`, Bun.file(`${repoRoot}/rust-bridge/target/${target}/release/${libName}`));
@@ -247,7 +247,7 @@ async function fetchCurlImpersonate(
 	const dl = await $`curl -#SfLo ${tmpZip} ${url}`.nothrow();
 	if (dl.exitCode !== 0) {
 		console.warn(
-			`[curl-impersonate] download failed — bunlight will lack http profile on Windows.`,
+			`[curl-impersonate] download failed — bxc will lack http profile on Windows.`,
 		);
 		return false;
 	}
@@ -277,16 +277,16 @@ async function fetchCurlImpersonate(
 async function bundleZip(args: Args, distDir: string): Promise<void> {
 	const arch = args.arch === "arm64" ? "aarch64" : "x64";
 	const zipName = args.baseline
-		? `bunlight-windows-${arch}-baseline.zip`
-		: `bunlight-windows-${arch}.zip`;
+		? `bxc-windows-${arch}-baseline.zip`
+		: `bxc-windows-${arch}.zip`;
 	const zipPath = `${distDir}/${zipName}`;
 
 	const candidates = [
-		"bunlight.exe",
+		"bxc.exe",
 		"lightpanda.exe",
-		"bunlight-engine.exe",
+		"bxc-engine.exe",
 		"libcurl-impersonate.dll",
-		"bunlight_rust_bridge.dll",
+		"bxc_rust_bridge.dll",
 	];
 	const present: string[] = [];
 	for (const f of candidates) {
@@ -322,7 +322,7 @@ async function main(): Promise<void> {
 	console.log(`\n[2-5/6] Building components in parallel...`);
 	const tasks = [];
 	if (!args.skipLightpanda) tasks.push(buildLightpanda(args, distDir));
-	tasks.push(buildBunlightExe(args, distDir));
+	tasks.push(buildBxcExe(args, distDir));
 	tasks.push(buildRustBridge(args, distDir));
 	if (!args.skipCurl) tasks.push(fetchCurlImpersonate(args, distDir));
 

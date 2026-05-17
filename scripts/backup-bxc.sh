@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# backup-bunlight.sh — full local backup of the bunlight monorepo before
+# backup-bxc.sh — full local backup of the bxc monorepo before
 # any destructive operation (rebrand, force-push, repo rename).
 #
-# Produces 3 artifacts under "${HOME}/bunlight-backup-<UTC>/" :
+# Produces 3 artifacts under "${HOME}/bxc-backup-<UTC>/" :
 #   1. bunlight-<UTC>.tar.zst   — entire worktree, excluding node_modules
 #                                  and rust-bridge/target (huge, regenerable).
 #   2. bunlight-<UTC>.gitbundle — full git history (re-clonable offline).
@@ -44,7 +44,7 @@ usage() {
   cat <<EOF
 Usage: ${0##*/} [-d DIR] [-n] [-h]
 
-Create a full local backup of the bunlight monorepo (tarball + git bundle +
+Create a full local backup of the bxc monorepo (tarball + git bundle +
 checksums) outside the repo, so it survives a "rm -rf" or a botched rebrand.
 
 Options:
@@ -91,7 +91,7 @@ main() {
 
   local timestamp
   timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
-  local backup_dir="${dest_root}/bunlight-backup-${timestamp}"
+  local backup_dir="${dest_root}/bxc-backup-${timestamp}"
   local tar_path="${backup_dir}/${REPO_NAME}-${timestamp}.tar.zst"
   local bundle_path="${backup_dir}/${REPO_NAME}-${timestamp}.gitbundle"
   local sums_path="${backup_dir}/SHA256SUMS"
@@ -100,7 +100,7 @@ main() {
   local git_status_summary
   git_status_summary="$(git -C "${REPO_ROOT}" status --porcelain | wc -l) modified files"
 
-  printf '== bunlight backup plan ==\n'
+  printf '== bxc backup plan ==\n'
   printf '  repo root      : %s\n' "${REPO_ROOT}"
   printf '  git HEAD       : %s\n' "${git_head}"
   printf '  git status     : %s\n' "${git_status_summary}"

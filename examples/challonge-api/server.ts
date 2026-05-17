@@ -21,11 +21,11 @@
  *
  * Local HTTP API mimicking the official Challonge REST surface
  * (https://challonge.apidog.io/getting-started-1726706m0) but powered by
- * bunlight's `http` profile (curl-impersonate Chrome 131 + cookie injection).
+ * bxc's `http` profile (curl-impersonate Chrome 131 + cookie injection).
  *
  * Why : the official Challonge API requires per-account API keys and rate
  * limits aggressively. Many self-hosted scenarios already have a logged-in
- * browser session — exporting its cookies and replaying them via bunlight
+ * browser session — exporting its cookies and replaying them via bxc
  * gives the exact same data without going through the REST API.
  *
  * Endpoints (URL-compatible with the official API where possible) :
@@ -76,7 +76,7 @@ const OFFICIAL_API_BASE = "https://api.challonge.com/v1";
  */
 const UA =
 	Bun.env.CHALLONGE_API_UA ??
-	"challonge-api-bridge/0.1 (+https://developers.google.com/aphrody-code/bunlight)";
+	"challonge-api-bridge/0.1 (+https://developers.google.com/aphrody-code/bxc)";
 
 /**
  * Retry policy on transient upstream failures (429 / 502 / 503 / 504).
@@ -139,7 +139,7 @@ async function cookieJarPresent(): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Bunlight fetch — http profile + cookie jar + curl-impersonate Chrome 131
+// Bxc fetch — http profile + cookie jar + curl-impersonate Chrome 131
 // ---------------------------------------------------------------------------
 
 async function fetchChallongeRaw(url: string): Promise<{ body: string; status: number }> {
@@ -377,7 +377,7 @@ function corsHeaders(): Record<string, string> {
 		"access-control-allow-origin": "*",
 		"access-control-allow-methods": "GET, OPTIONS",
 		"access-control-allow-headers": "content-type, authorization",
-		"x-bunlight-source": "examples/challonge-api",
+		"x-bxc-source": "examples/challonge-api",
 	};
 }
 
@@ -389,10 +389,10 @@ function openApiSpec(): unknown {
 	return {
 		openapi: "3.1.0",
 		info: {
-			title: "Challonge API (bunlight bridge)",
+			title: "Challonge API (bxc bridge)",
 			version: "0.1.0",
 			description:
-				"Local HTTP bridge to Challonge powered by bunlight's `http` profile (curl-impersonate Chrome 131) + a private cookie jar. URL-compatible with the official API where the routes overlap.",
+				"Local HTTP bridge to Challonge powered by bxc's `http` profile (curl-impersonate Chrome 131) + a private cookie jar. URL-compatible with the official API where the routes overlap.",
 			license: { name: "0BSD" },
 		},
 		servers: [{ url: `http://${HOST}:${PORT}` }],
@@ -480,7 +480,7 @@ function openApiSpec(): unknown {
 			},
 			"/v1/tournaments/{slug}/recon": {
 				get: {
-					summary: "bunlight recon (HTTP + CDN + frameworks + assets) for the tournament page",
+					summary: "bxc recon (HTTP + CDN + frameworks + assets) for the tournament page",
 					parameters: [{ name: "slug", in: "path", required: true, schema: { type: "string" } }],
 					responses: { "200": { description: "Recon result" } },
 				},
@@ -777,10 +777,10 @@ const server = Bun.serve({
 		},
 		"/": (_req: Request) =>
 			new Response(
-				`<!doctype html><meta charset="utf-8"><title>challonge-api (bunlight)</title>
+				`<!doctype html><meta charset="utf-8"><title>challonge-api (bxc)</title>
 <body style="font:14px/1.5 system-ui;max-width:720px;margin:2em auto;padding:0 1em">
-<h1>challonge-api (bunlight)</h1>
-<p>Local Challonge bridge powered by bunlight HTTP profile.</p>
+<h1>challonge-api (bxc)</h1>
+<p>Local Challonge bridge powered by bxc HTTP profile.</p>
 <ul>
 <li><a href="/healthz">/healthz</a></li>
 <li><a href="/openapi.json">/openapi.json</a></li>

@@ -3,7 +3,7 @@ use std::os::raw::c_char;
 use obscura_dom::{DomTree, NodeId};
 
 #[no_mangle]
-pub extern "C" fn bunlight_parse_html(html_ptr: *const c_char) -> *mut DomTree {
+pub extern "C" fn bxc_parse_html(html_ptr: *const c_char) -> *mut DomTree {
     if html_ptr.is_null() {
         return std::ptr::null_mut();
     }
@@ -19,7 +19,7 @@ pub extern "C" fn bunlight_parse_html(html_ptr: *const c_char) -> *mut DomTree {
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_tree_destroy(tree_ptr: *mut DomTree) {
+pub extern "C" fn bxc_tree_destroy(tree_ptr: *mut DomTree) {
     if tree_ptr.is_null() {
         return;
     }
@@ -29,7 +29,7 @@ pub extern "C" fn bunlight_tree_destroy(tree_ptr: *mut DomTree) {
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_query_selector(tree_ptr: *mut DomTree, selector_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_query_selector(tree_ptr: *mut DomTree, selector_ptr: *const c_char) -> *mut c_char {
     if tree_ptr.is_null() || selector_ptr.is_null() {
         return std::ptr::null_mut();
     }
@@ -51,7 +51,7 @@ pub extern "C" fn bunlight_query_selector(tree_ptr: *mut DomTree, selector_ptr: 
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_query_selector_all(tree_ptr: *mut DomTree, selector_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_query_selector_all(tree_ptr: *mut DomTree, selector_ptr: *const c_char) -> *mut c_char {
     if tree_ptr.is_null() || selector_ptr.is_null() {
         return std::ptr::null_mut();
     }
@@ -74,7 +74,7 @@ pub extern "C" fn bunlight_query_selector_all(tree_ptr: *mut DomTree, selector_p
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_free_string(s: *mut c_char) {
+pub extern "C" fn bxc_free_string(s: *mut c_char) {
     if s.is_null() {
         return;
     }
@@ -84,7 +84,7 @@ pub extern "C" fn bunlight_free_string(s: *mut c_char) {
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_extract_title(html_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_extract_title(html_ptr: *const c_char) -> *mut c_char {
     if html_ptr.is_null() {
         return std::ptr::null_mut();
     }
@@ -115,7 +115,7 @@ pub extern "C" fn bunlight_extract_title(html_ptr: *const c_char) -> *mut c_char
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_strip_tags(html_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_strip_tags(html_ptr: *const c_char) -> *mut c_char {
     if html_ptr.is_null() {
         return std::ptr::null_mut();
     }
@@ -144,7 +144,7 @@ pub extern "C" fn bunlight_strip_tags(html_ptr: *const c_char) -> *mut c_char {
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_html_to_markdown(html_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_html_to_markdown(html_ptr: *const c_char) -> *mut c_char {
     if html_ptr.is_null() {
         return std::ptr::null_mut();
     }

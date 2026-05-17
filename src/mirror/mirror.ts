@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/mirror
+ * @module bxc/mirror
  *
  * Site mirror — downloads the full HTML/CSS/JS/asset graph of a single
  * page, rewrites URLs to local relative paths, and produces a
@@ -23,7 +23,7 @@
  *
  * Pipeline :
  *
- *   1. Fetch the seed URL via the user-selected bunlight profile
+ *   1. Fetch the seed URL via the user-selected bxc profile
  *      (default: `http` + curl-impersonate Chrome 131 + cookie jar).
  *      This bypasses Cloudflare Managed Challenge when cookies are
  *      provided, and produces a TLS / JA4 fingerprint that matches a
@@ -45,7 +45,7 @@
  *   5. Emit `manifest.json` listing every asset (URL, local path, bytes,
  *      sha256, content-type, http-status, source-of-discovery).
  *
- * The mirror works on any site bunlight can reach :
+ * The mirror works on any site bxc can reach :
  *   - Static HTML / classic websites : trivial.
  *   - Cloudflare-gated sites : pass `cookies` (cf_clearance + session).
  *   - SPAs : pre-render via `profile: "fast"` (Lightpanda) — the mirror
@@ -69,9 +69,9 @@ export type MirrorProfile = "static" | "fast" | "http";
 export interface MirrorOptions {
 	/** Output directory — created if missing. */
 	outDir: string;
-	/** Bunlight profile used to fetch the seed page (default: `"http"`). */
+	/** Bxc profile used to fetch the seed page (default: `"http"`). */
 	profile?: MirrorProfile;
-	/** Cookie jar path passed to bunlight (Playwright/CDP/Netscape JSON). */
+	/** Cookie jar path passed to bxc (Playwright/CDP/Netscape JSON). */
 	cookies?: string;
 	/** Concurrent asset downloads (default: 6). */
 	concurrency?: number;
@@ -86,7 +86,7 @@ export interface MirrorOptions {
 	 * endpoints, ads). Receives the absolute URL and the discovery source.
 	 */
 	filter?: (url: string, sourceTag: string) => boolean;
-	/** User-Agent override (default: bunlight-mirror/0.1 + contact URL). */
+	/** User-Agent override (default: bxc-mirror/0.1 + contact URL). */
 	userAgent?: string;
 	/** Verbose logger (default: silent). */
 	log?: (msg: string) => void;
@@ -537,7 +537,7 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 		}
 	}
 
-	// Step 1 — fetch the seed via the chosen bunlight profile.
+	// Step 1 — fetch the seed via the chosen bxc profile.
 	let seedHtml = "";
 	let seedFinalUrl = seed;
 	let seedStatus = 0;

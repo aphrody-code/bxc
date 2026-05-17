@@ -17,7 +17,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "fp=$(jq -r '.tool_input.file_path // empty'); case \"$fp\" in /home/ubuntu/bunlight/*.ts|/home/ubuntu/bunlight/*.tsx) (cd /home/ubuntu/bunlight && bunx --bun oxlint --fix \"$fp\" >/dev/null 2>&1) || true ;; esac"
+						"command": "fp=$(jq -r '.tool_input.file_path // empty'); case \"$fp\" in /home/ubuntu/bxc/*.ts|/home/ubuntu/bxc/*.tsx) (cd /home/ubuntu/bxc && bunx --bun oxlint --fix \"$fp\" >/dev/null 2>&1) || true ;; esac"
 					}
 				]
 			}

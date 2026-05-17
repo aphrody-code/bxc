@@ -107,7 +107,7 @@ describe("Dashboard — HTML route", () => {
 		expect(res.headers.get("Content-Type")).toContain("text/html");
 		const html = await res.text();
 		expect(html).toContain("<!DOCTYPE html>");
-		expect(html).toContain("Bunlight Stats Dashboard");
+		expect(html).toContain("Bxc Stats Dashboard");
 		expect(html).toContain("/api/stats");
 	});
 });

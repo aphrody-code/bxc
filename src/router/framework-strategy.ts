@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/router/framework-strategy
+ * @module bxc/router/framework-strategy
  *
- * Maps the output of {@link detectFrameworks} onto a Bunlight scraping
+ * Maps the output of {@link detectFrameworks} onto a Bxc scraping
  * strategy (which profile to use, how long to wait for hydration, what kinds
  * of resources to block, plus optional extra hints).
  *
@@ -26,9 +26,9 @@
  *
  * @example
  * ```ts
- * import { detectFrameworks } from "bunlight/detect";
- * import { suggestStrategy } from "bunlight/router/framework-strategy";
- * import { Browser } from "bunlight/browser";
+ * import { detectFrameworks } from "bxc/detect";
+ * import { suggestStrategy } from "bxc/router/framework-strategy";
+ * import { Browser } from "bxc/browser";
  *
  * const tech = await detectFrameworks("https://shop.google.com");
  * const plan = suggestStrategy(tech);
@@ -68,7 +68,7 @@ export type ResourceKind =
 
 /** Strategy returned by {@link suggestStrategy}. */
 export interface Strategy {
-	/** Recommended Bunlight profile to use. */
+	/** Recommended Bxc profile to use. */
 	profile: Profile;
 	/** How long / what to wait for after `goto()`. */
 	waitFor: WaitFor;

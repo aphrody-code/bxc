@@ -229,7 +229,7 @@ export async function discoverPages(
 	origin: string,
 	opts: DiscoverOptions = {},
 ): Promise<DiscoverResult> {
-	const userAgent = opts.userAgent ?? "Bunlight-E2E/1.0 (+https://developers.google.com/bunmium/bunlight)";
+	const userAgent = opts.userAgent ?? "Bxc-E2E/1.0 (+https://developers.google.com/bunmium/bxc)";
 	const requestTimeoutMs = opts.requestTimeoutMs ?? 10_000;
 	const cacheFile = cachePathFor(origin, opts.cacheFile);
 

@@ -31,9 +31,9 @@
  */
 
 /**
- * @module bunlight/serverless/handler
+ * @module bxc/serverless/handler
  * 
- * Serverless-friendly Bunlight handler using Bun.FileSystemRouter.
+ * Serverless-friendly Bxc handler using Bun.FileSystemRouter.
  */
 
 import { join } from "node:path";

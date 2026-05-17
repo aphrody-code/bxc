@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/storage/Dataset
+ * @module bxc/storage/Dataset
  *
  * Append-only JSONL dataset backed by `Bun.file().writer()`.
  *

@@ -1,5 +1,5 @@
 // Pre-clean HTML to minimize prompt tokens before LLM extraction.
-// Prefers bunlight's native Rust htmlToMarkdown bridge (~3-5× smaller than raw HTML).
+// Prefers bxc's native Rust htmlToMarkdown bridge (~3-5× smaller than raw HTML).
 // Falls back to a regex-only path when the rust-bridge cdylib is not loadable.
 
 import { minifyHtmlForLLM } from "../../../src/ai/extractor.ts";
@@ -52,7 +52,7 @@ export function clampToTokens(
 }
 
 /**
- * Preferred path: bunlight's `minifyHtmlForLLM` (Rust → Markdown). Falls back to
+ * Preferred path: bxc's `minifyHtmlForLLM` (Rust → Markdown). Falls back to
  * the regex `htmlToText` if the cdylib cannot load (e.g. cross-platform tests).
  */
 export async function preclean(

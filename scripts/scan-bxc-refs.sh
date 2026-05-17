@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# scan-bunlight-refs.sh — first-pass scanner for "bunlight" references across
-# the monorepo. Produces a JSON report consumed by scan-bunlight-refs.ts
+# scan-bxc-refs.sh — first-pass scanner for "bxc" references across
+# the monorepo. Produces a JSON report consumed by scan-bxc-refs.ts
 # (Bun-native second pass) before the bxc rebrand.
 #
 # Best practices applied:
-#   - shellcheck clean (`shellcheck -x scripts/scan-bunlight-refs.sh`)
+#   - shellcheck clean (`shellcheck -x scripts/scan-bxc-refs.sh`)
 #   - `set -euo pipefail` + `IFS=$'\n\t'` (https://mywiki.wooledge.org/BashFAQ/105)
 #   - readonly globals, local in functions, quoted variables, printf > echo
 #   - mapfile for arrays, [[ ]] for tests, $(...) over backticks
@@ -24,13 +24,13 @@ readonly OUTPUT_FILE_DEFAULT="${REPO_ROOT}/reports/scan-v1-bash.json"
 # Patterns to detect. Order matters for the JSON report only (first ⇒ top
 # of the by_pattern object).
 readonly PATTERNS=(
-  "bunlight"
-  "Bunlight"
-  "BUNLIGHT_"
-  "bunlight_"
-  "@aphrody-code/bunlight"
-  "libbunlight"
-  ".bunlight/"
+  "bxc"
+  "Bxc"
+  "BXC_"
+  "bxc_"
+  "@aphrody-code/bxc"
+  "libbxc"
+  ".bxc/"
 )
 
 # Directories never scanned (vendored / generated / heavy).
@@ -41,7 +41,7 @@ readonly EXCLUDE_DIRS=(
   "dist"
   "rust-bridge/target"
   ".turbo"
-  ".bunlight"
+  ".bxc"
 )
 
 # File globs always skipped (lockfiles, build info, big binaries that
@@ -66,16 +66,16 @@ readonly EXCLUDE_GLOBS=(
   "*.webp"
   "*.ico"
   "*.pdf"
-  "bunlight-mcp"
-  "bunlight-engine"
-  "bunlight-linux-x64"
+  "bxc-mcp"
+  "bxc-engine"
+  "bxc-linux-x64"
 )
 
 usage() {
   cat <<EOF
 Usage: ${0##*/} [-o output.json] [-h]
 
-Scan the bunlight monorepo for references to "bunlight" (kebab/Pascal/
+Scan the bxc monorepo for references to "bxc" (kebab/Pascal/
 SCREAMING/snake/npm-scope/FFI/path) and emit a JSON inventory.
 
 Options:

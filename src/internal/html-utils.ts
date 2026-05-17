@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/internal/html-utils
+ * @module bxc/internal/html-utils
  *
  * Tiny regex-based HTML helpers shared between transport-layer parsers
  * (`StaticDomTransport`, `HttpProfileTransport`) that previously each owned a

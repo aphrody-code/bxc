@@ -1,4 +1,4 @@
-# bunlight — Bun runtime + bundler + test config.
+# bxc — Bun runtime + bundler + test config.
 # Reference: https://bun.com/docs/runtime/bunfig
 
 [install]

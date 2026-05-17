@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/utils/network-auditor
+ * @module bxc/utils/network-auditor
  * 
  * Real-time network auditing: DNS records, IPs, and CDN identification.
  */

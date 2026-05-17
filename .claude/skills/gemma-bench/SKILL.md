@@ -21,12 +21,12 @@ Si down : ne pas relancer aveuglément. Probe `journalctl --user -u gemma -n 50`
 
 1. **Capture l'état actuel** :
    - Flags llama.cpp : `systemctl --user cat gemma | grep -E 'ExecStart|-t|--ctx-size|--n-gpu-layers'`
-   - Quantization du modèle utilisé : lire `~/bunlight/vendor/gemma/models/` ou la config service
+   - Quantization du modèle utilisé : lire `~/bxc/vendor/gemma/models/` ou la config service
    - CPU load avant : `uptime`
 
 2. **Lance le bench** :
    ```bash
-   cd /home/ubuntu/bunlight/packages/llm-extract && bun run bench
+   cd /home/ubuntu/bxc/packages/llm-extract && bun run bench
    ```
    Bench officiel = 10 samples, sortie p50/p95 + tokens.
 

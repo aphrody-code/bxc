@@ -2,14 +2,14 @@
  * Scenario: parallel-100
  *
  * Concurrency stress test: fetches 100 URLs in parallel using different
- * concurrency strategies for bunlight-static vs fetch-native.
+ * concurrency strategies for bxc-static vs fetch-native.
  *
  * Puppeteer/playwright are excluded from this scenario because:
  *   - Puppeteer opens 100 tabs → OOM on typical dev machines (~25 GB RAM needed)
- *   - bunlight-fast opens 100 Lightpanda processes → similarly heavy
+ *   - bxc-fast opens 100 Lightpanda processes → similarly heavy
  *
  * Tested concurrency strategies:
- *   - bunlight-static concurrent: all 100 StaticDomTransport requests at once
+ *   - bxc-static concurrent: all 100 StaticDomTransport requests at once
  *   - fetch-native batched-25:    25 concurrent fetches at a time
  *   - fetch-native batched-50:    50 concurrent fetches at a time
  *   - fetch-native concurrent-100: all 100 at once (baseline)
@@ -22,7 +22,7 @@
 import type { RunResult, ScenarioResult } from "../types.ts";
 import { summarise, rssNow } from "../types.ts";
 import { startMockServer, stopMockServer } from "../mock-server.ts";
-import * as bunlightStatic from "../runners/bunlight-static.ts";
+import * as bxcStatic from "../runners/bxc-static.ts";
 import * as fetchNative from "../runners/fetch-native.ts";
 
 export const SCENARIO_ID = "parallel-100";
@@ -92,30 +92,30 @@ export async function run(): Promise<ScenarioResult[]> {
 
 	const results: ScenarioResult[] = [];
 
-	// --- bunlight-static: sequential (concurrency=1) ---
+	// --- bxc-static: sequential (concurrency=1) ---
 	// KNOWN LIMITATION: StaticDomTransport is a shared singleton. Multiple concurrent
 	// pages on the same transport share CDP IDs — concurrent use causes response
 	// routing collisions and hangs. The transport is designed for sequential use or
 	// for one-page-at-a-time flows. We run it sequentially to measure throughput.
 	//
 	// Future fix: each Page should create an isolated transport instance, not share one.
-	// Track as: https://github.com/bunmium/bunlight/issues/XX (concurrency-safe transport)
+	// Track as: https://github.com/bunmium/bxc/issues/XX (concurrency-safe transport)
 	console.log(
-		`[${SCENARIO_ID}] bunlight-static: sequential (shared transport is not concurrency-safe)...`,
+		`[${SCENARIO_ID}] bxc-static: sequential (shared transport is not concurrency-safe)...`,
 	);
-	await bunlightStatic.warmup();
+	await bxcStatic.warmup();
 	// Only run 20 URLs sequentially to avoid making the test too slow
 	const blResult = await runParallelScenario(
-		"bunlight-static",
-		bunlightStatic.run,
+		"bxc-static",
+		bxcStatic.run,
 		urls.slice(0, 20),
 		1,
 	);
 	results.push({ ...blResult, scenario: `${SCENARIO_ID} (sequential-20)` });
 	console.log(
-		`[${SCENARIO_ID}] bunlight-static sequential-20: total=${blResult.totalMs}ms p50=${blResult.p50Ms}ms p95=${blResult.p95Ms}ms peak_ram=${blResult.peakRamMb}MB`,
+		`[${SCENARIO_ID}] bxc-static sequential-20: total=${blResult.totalMs}ms p50=${blResult.p50Ms}ms p95=${blResult.p95Ms}ms peak_ram=${blResult.peakRamMb}MB`,
 	);
-	await bunlightStatic.cleanup();
+	await bxcStatic.cleanup();
 
 	// Give GC a moment
 	await new Promise((r) => setTimeout(r, 300));

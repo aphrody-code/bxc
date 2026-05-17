@@ -43,5 +43,5 @@ const server = Bun.serve({
 });
 
 console.log(
-	`[bunlight-serverless] listening on http://${server.hostname}:${server.port}`,
+	`[bxc-serverless] listening on http://${server.hostname}:${server.port}`,
 );

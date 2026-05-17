@@ -1,9 +1,9 @@
-# challonge-api — bunlight bridge to Challonge
+# challonge-api — bxc bridge to Challonge
 
 Local HTTP server that exposes Challonge tournament data as a JSON API
 URL-compatible with the official Challonge REST surface
 (https://challonge.apidog.io/getting-started-1726706m0). The data is
-scraped via bunlight's `http` profile (curl-impersonate Chrome 131) using
+scraped via bxc's `http` profile (curl-impersonate Chrome 131) using
 your own logged-in browser cookies — no API key needed.
 
 ## Why this exists
@@ -11,10 +11,10 @@ your own logged-in browser cookies — no API key needed.
 The official Challonge API requires per-account API keys, rate-limits
 aggressively, and exposes a different shape from what the Challonge web
 UI displays. If you already have a logged-in browser session, exporting
-its cookies and replaying them via bunlight gives you the exact same
+its cookies and replaying them via bxc gives you the exact same
 data the web UI sees, including private tournaments, with no key.
 
-Bunlight's `http` profile uses curl-impersonate to forge a Chrome 131
+Bxc's `http` profile uses curl-impersonate to forge a Chrome 131
 TLS / JA4 fingerprint, so Cloudflare's Managed Challenge does not
 interfere with the cookie-authenticated requests.
 
@@ -60,7 +60,7 @@ https://challonge.com/fr/communities/{org}/tournaments?page=1&search=&zip=&proxi
 - First URL → **current and upcoming** tournaments for the community.
 - Second URL → **past** tournaments (archive). The `past=1` query
   parameter is the only difference.
-- HTML response (no JSON variant). Bunlight parses with HTMLRewriter
+- HTML response (no JSON variant). Bxc parses with HTMLRewriter
   the `<a class="tournament">` cards : title, slug, date, type,
   participant count.
 - Pagination via `page=N`. Iterate until an empty list.
@@ -149,7 +149,7 @@ changes UI strings — the underlying JSON payloads are identical.
 #    Application > Cookies > select-all > copy
 #    Save the tab-separated dump to a file, e.g. /tmp/cookies.tsv
 
-# 2. Convert to the JSON jar bunlight expects
+# 2. Convert to the JSON jar bxc expects
 bun run examples/challonge-api/import-cookies.ts \
   /tmp/cookies.tsv \
   examples/challonge-api/cookies/private/challonge.json
@@ -226,7 +226,7 @@ the reverse-engineered routes. Re-export from your browser and re-run
 | GET | `/v1/tournaments/:slug/stations.json` | `{slug}/stations.json` | session-cookies |
 | GET | `/v1/tournaments/:slug/module` | raw `{slug}/module` HTML | session-cookies |
 | GET | `/v1/tournaments/:slug/module.json` | parsed bracket | session-cookies |
-| GET | `/v1/tournaments/:slug/recon` | bunlight `recon` | both |
+| GET | `/v1/tournaments/:slug/recon` | bxc `recon` | both |
 | GET | `/v1/communities/:org/tournaments?past=0\|1&page=N` | `communities/{org}/tournaments?past=…&page=…` | session-cookies |
 | GET | `/v1/users/:username.json` | `users/{username}.json` | session-cookies |
 | GET | `/v1/users/:username/tournaments` | `fr/users/{username}/tournaments` | session-cookies |
@@ -265,7 +265,7 @@ const { data, error } = await client.GET("/v1/tournaments/{slug}.json", {
 - `expires` fields in the cookie jar are honored by the loader — refresh
   `cf_clearance` regularly (Cloudflare rotates it every few hours)
 
-## Why bunlight `http` profile, not `fast` or `ghost`
+## Why bxc `http` profile, not `fast` or `ghost`
 
 Challonge's `.json` reverse endpoints serve raw JSON without JS
 execution. The `http` profile is the right pick :
@@ -281,7 +281,7 @@ For pages that DO need rendering (e.g. `/module` SVG bracket extraction
 when the SVG is JS-driven) fall back to `profile: "fast"` or the
 Lightpanda-backed `ghost` helper — both are also Lightpanda-only per
 workspace policy (Chrome / Chromium / Firefox / Edge / Safari and
-derivatives are forbidden in bunlight).
+derivatives are forbidden in bxc).
 
 ## Alignment with `~/vps/docs/scraping.md`
 
@@ -299,9 +299,9 @@ patterns called out in §10 of that doc :
 |---|---|
 | `AbortSignal.timeout(15000)` on every fetch | `FETCH_TIMEOUT_MS = 15_000` (server.ts) |
 | Retry x3 with exponential backoff on 429/502/503/504 | `fetchWithRetry()` (server.ts) |
-| User-Agent `<service>/<version> (+<contact-url>)` | `UA = "challonge-api-bridge/0.1 (+https://developers.google.com/aphrody-code/bunlight)"` |
+| User-Agent `<service>/<version> (+<contact-url>)` | `UA = "challonge-api-bridge/0.1 (+https://developers.google.com/aphrody-code/bxc)"` |
 | Cookies under gitignored `storage/cookies/` | `cookies/private/challonge.json` (gitignored via `.gitignore`) |
-| Cloudflare-protected static HTML → `curl-impersonate` + `Bun.HTMLRewriter` | bunlight `http` profile (FFI) + HTMLRewriter in `dump-tournament.ts` |
+| Cloudflare-protected static HTML → `curl-impersonate` + `Bun.HTMLRewriter` | bxc `http` profile (FFI) + HTMLRewriter in `dump-tournament.ts` |
 | API key route preferred when available (avoid scraping) | `CHALLONGE_API_KEY` env triggers official mode |
 
 Pitfalls flagged by `scraping.md` §11 also apply :
@@ -312,7 +312,7 @@ Pitfalls flagged by `scraping.md` §11 also apply :
   via `bun:ffi`) — deploy on a VPS or container, not on Vercel.
 - **Cloudflare durci → `Runtime.enable` leak** : addressed by using
   `curl-impersonate` (no browser → no leak) instead of patchright / Camoufox
-  (forbidden in bunlight per workspace policy).
+  (forbidden in bxc per workspace policy).
 - **`cf_clearance` rotates every few hours** : refresh the cookie jar
   regularly. `GET /v1/_diagnose/:slug` reports stale cookies clearly.
 

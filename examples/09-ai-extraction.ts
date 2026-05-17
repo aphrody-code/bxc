@@ -35,7 +35,7 @@ async function main() {
 		process.exit(1);
 	}
 
-	console.log("🚀 Starting Bunlight AI Extractor...");
+	console.log("🚀 Starting Bxc AI Extractor...");
 
 	// Open a new page in static mode (fastest, no binary required)
 	const page = await Browser.newPage({ profile: "static" }) as import("../src/api/browser.ts").Page;

@@ -35,7 +35,7 @@ fn start_obscura_worker() {
                     match task {
                         ObscuraTask::Init { proxy } => {
                             let context = Arc::new(BrowserContext::with_options(
-                                "bunlight-default".to_string(),
+                                "bxc-default".to_string(),
                                 proxy,
                                 true,
                             ));
@@ -77,7 +77,7 @@ fn start_obscura_worker() {
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_obscura_init(proxy_ptr: *const c_char) -> bool {
+pub extern "C" fn bxc_obscura_init(proxy_ptr: *const c_char) -> bool {
     start_obscura_worker();
     
     let proxy = if proxy_ptr.is_null() {
@@ -97,7 +97,7 @@ pub extern "C" fn bunlight_obscura_init(proxy_ptr: *const c_char) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_obscura_navigate(url_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_obscura_navigate(url_ptr: *const c_char) -> *mut c_char {
     start_obscura_worker();
 
     if url_ptr.is_null() {
@@ -124,7 +124,7 @@ pub extern "C" fn bunlight_obscura_navigate(url_ptr: *const c_char) -> *mut c_ch
 }
 
 #[no_mangle]
-pub extern "C" fn bunlight_obscura_query(selector_ptr: *const c_char) -> *mut c_char {
+pub extern "C" fn bxc_obscura_query(selector_ptr: *const c_char) -> *mut c_char {
     start_obscura_worker();
 
     if selector_ptr.is_null() {

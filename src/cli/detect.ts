@@ -17,7 +17,7 @@
 
 
 /**
- * `bunlight detect <url>` — multi-signal technology detection.
+ * `bxc detect <url>` — multi-signal technology detection.
  *
  * Combines:
  *   - HTTP response headers (Server, X-Powered-By, CF-Ray, X-Vercel-*, ...)
@@ -44,10 +44,10 @@ interface DetectCliOptions {
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight detect — multi-signal technology fingerprinting
+		`bxc detect — multi-signal technology fingerprinting
 
 Usage:
-  bunlight detect <url> [options]
+  bxc detect <url> [options]
 
 Options:
   --json          emit structured JSON (default: human-readable Markdown)
@@ -77,9 +77,9 @@ Sources of evidence:
   - wappalyzer — wappalyzergo binary
 
 Examples:
-  bunlight detect https://design.google
-  bunlight detect https://nextjs.org --json
-  bunlight detect https://google.com --wapp-only
+  bxc detect https://design.google
+  bxc detect https://nextjs.org --json
+  bxc detect https://google.com --wapp-only
 
 Exit codes: 0 OK, 2 misuse, 65 data error
 `,
@@ -103,13 +103,13 @@ function parseArgs(argv: readonly string[]): DetectCliOptions | null {
 			default:
 				if (!opts.url && /^https?:\/\//.test(a)) opts.url = a;
 				else if (a.startsWith("-")) {
-					Bun.stderr.write(`bunlight detect: unknown option ${a}\n`);
+					Bun.stderr.write(`bxc detect: unknown option ${a}\n`);
 					return null;
 				}
 		}
 	}
 	if (!opts.url) {
-		Bun.stderr.write("bunlight detect: URL argument required\n");
+		Bun.stderr.write("bxc detect: URL argument required\n");
 		return null;
 	}
 	return opts;
@@ -181,7 +181,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		const rendered = opts.emitJson ? JSON.stringify(result, null, 2) : renderMarkdown(result);
 		Bun.stdout.write(rendered + "\n");
 	} catch (err) {
-		Bun.stderr.write(`bunlight detect: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bxc detect: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	}
 }

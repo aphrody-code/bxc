@@ -15,11 +15,11 @@
  */
 
 /**
- * @module bunlight/transport/typed-rpc
+ * @module bxc/transport/typed-rpc
  *
  * Compile-time-typed RPC wire protocol, vendored from
  * `blackboardsh/electrobun@main` (`package/src/shared/rpc.ts`, MIT, 541 LoC).
- * Used internally for typed message passing between bunlight processes
+ * Used internally for typed message passing between bxc processes
  * (CDP server / subprocess plugins / ghost profile control plane).
  *
  * Source : https://developers.google.com/blackboardsh/electrobun

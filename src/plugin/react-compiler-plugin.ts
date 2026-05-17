@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/plugin/react-compiler-plugin
+ * @module bxc/plugin/react-compiler-plugin
  *
  * Bun plugin that runs the official React Compiler (formerly "React Forget")
  * over `.ts`/`.tsx`/`.js`/`.jsx` files at build time. The compiler
@@ -34,7 +34,7 @@
  *
  * @example
  * ```ts
- * import { reactCompilerPlugin } from "@aphrody-code/bunlight/plugin";
+ * import { reactCompilerPlugin } from "@aphrody-code/bxc/plugin";
  * await Bun.build({
  *   entrypoints: ["./app.tsx"],
  *   plugins: [reactCompilerPlugin({ target: "19" })],

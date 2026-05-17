@@ -17,9 +17,9 @@
 
 
 /**
- * `bunlight api` — turn any website into a JSON API.
+ * `bxc api` — turn any website into a JSON API.
  *
- * Spawns a `Bun.serve` instance that exposes bunlight's recon / detect /
+ * Spawns a `Bun.serve` instance that exposes bxc's recon / detect /
  * scrape / next-data / snapshot / screenshot capabilities as HTTP routes.
  * Each request fetches the target URL, runs the extraction, and returns
  * structured JSON.
@@ -51,7 +51,7 @@
  * Output contract :
  *   - All responses are JSON unless `format=html` (snapshot only)
  *   - 200 on success, 4xx on misuse, 5xx on extraction error
- *   - `X-Bunlight-Version` header on every response
+ *   - `X-Bxc-Version` header on every response
  *   - Optional `Authorization: Bearer <TOKEN>` enforcement via `--auth`
  *   - Permissive CORS by default (configurable via `--cors-origin`)
  *   - In-memory LRU cache (max 256 entries, 60 s TTL) — disable with `--no-cache`
@@ -226,7 +226,7 @@ function openApiSpec(opts: ApiServerOptions): unknown {
 	return {
 		openapi: "3.1.0",
 		info: {
-			title: "bunlight API",
+			title: "bxc API",
 			version: "0.1.0-alpha.0",
 			description:
 				"Turns any website into a JSON API : recon, framework detection, CSS extraction, Next.js data, snapshots.",
@@ -306,7 +306,7 @@ function openApiSpec(opts: ApiServerOptions): unknown {
 						"cssSelectors",
 					],
 					properties: {
-						$schema: { type: "string", const: "bunlight-recon-v1" },
+						$schema: { type: "string", const: "bxc-recon-v1" },
 						url: { type: "string", format: "uri" },
 						finalUrl: { type: "string", format: "uri" },
 						httpStatus: { type: "integer" },
@@ -743,11 +743,11 @@ async function handleSnapshot(
 
 function landingHtml(opts: ApiServerOptions): string {
 	return `<!doctype html>
-<html><head><meta charset="utf-8"><title>bunlight API</title>
+<html><head><meta charset="utf-8"><title>bxc API</title>
 <style>body{font:14px/1.5 system-ui,sans-serif;max-width:720px;margin:2em auto;padding:0 1em}
 code{background:#f5f5f5;padding:2px 4px;border-radius:3px}h1{margin-top:0}</style>
 </head><body>
-<h1>bunlight API</h1>
+<h1>bxc API</h1>
 <p>Turn any website into a JSON API. <a href="/openapi.json">OpenAPI spec</a> &middot; <a href="/healthz">Health</a></p>
 <h2>Endpoints</h2>
 <ul>
@@ -769,9 +769,9 @@ export async function startApiServer(options: Partial<ApiServerOptions> = {}): P
 	const opts: ApiServerOptions = { ...DEFAULTS, ...options };
 	const cache = new LruCache(opts.cacheMax);
 	const VERSION =
-		typeof (globalThis as unknown as { __BUNLIGHT_VERSION__?: string }).__BUNLIGHT_VERSION__ ===
+		typeof (globalThis as unknown as { __BXC_VERSION__?: string }).__BXC_VERSION__ ===
 		"string"
-			? (globalThis as unknown as { __BUNLIGHT_VERSION__: string }).__BUNLIGHT_VERSION__
+			? (globalThis as unknown as { __BXC_VERSION__: string }).__BXC_VERSION__
 			: "0.1.0-alpha.0";
 
 	const server = Bun.serve({
@@ -781,7 +781,7 @@ export async function startApiServer(options: Partial<ApiServerOptions> = {}): P
 			const u = new URL(req.url);
 			const baseHeaders: Record<string, string> = {
 				...corsHeaders(opts.corsOrigin),
-				"x-bunlight-version": VERSION,
+				"x-bxc-version": VERSION,
 			};
 
 			// Preflight
@@ -905,7 +905,7 @@ export async function startApiServer(options: Partial<ApiServerOptions> = {}): P
 	});
 
 	Bun.stderr.write(
-		`bunlight api: listening on http://${opts.hostname}:${server.port}  (cache: ${opts.cacheEnabled ? "on" : "off"}, auth: ${opts.authToken ? "required" : "open"})\n`,
+		`bxc api: listening on http://${opts.hostname}:${server.port}  (cache: ${opts.cacheEnabled ? "on" : "off"}, auth: ${opts.authToken ? "required" : "open"})\n`,
 	);
 
 	return {
@@ -920,10 +920,10 @@ export async function startApiServer(options: Partial<ApiServerOptions> = {}): P
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight api — turn any website into a JSON API
+		`bxc api — turn any website into a JSON API
 
 Usage:
-  bunlight api [options]
+  bxc api [options]
 
 Options:
   --port <N>           listen port (default 8787)
@@ -947,7 +947,7 @@ Endpoints:
   GET  /api/snapshot?url=…&format=html|text
 
 Example:
-  bunlight api --port 8080 &
+  bxc api --port 8080 &
   curl 'http://localhost:8080/api/detect?url=https://nextjs.org' | jq .
 `,
 	);
@@ -985,7 +985,7 @@ function parseArgs(argv: readonly string[]): Partial<ApiServerOptions> | null {
 				printUsage();
 				return null;
 			default:
-				Bun.stderr.write(`bunlight api: unknown option ${a}\n`);
+				Bun.stderr.write(`bxc api: unknown option ${a}\n`);
 				return null;
 		}
 	}

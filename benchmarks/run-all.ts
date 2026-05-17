@@ -1,5 +1,5 @@
 /**
- * Bunlight Benchmark Orchestrator
+ * Bxc Benchmark Orchestrator
  *
  * Runs all benchmark scenarios sequentially, collects results, and writes:
  *   - benchmarks/results/<date>.json  (raw structured data)
@@ -13,7 +13,7 @@
  *   bun benchmarks/run-all.ts --scenario parallel-100
  *
  * Environment variables:
- *   BUNLIGHT_LIGHTPANDA_BIN   Path to lightpanda binary (if not on PATH)
+ *   BXC_LIGHTPANDA_BIN   Path to lightpanda binary (if not on PATH)
  *   PUPPETEER_EXECUTABLE_PATH Path to chromium/chrome binary
  *   BENCH_SCENARIOS           Comma-separated list of scenarios to run
  */
@@ -102,7 +102,7 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 
 	const sections: string[] = [];
 
-	sections.push(`# Bunlight Benchmark Results — ${date}`);
+	sections.push(`# Bxc Benchmark Results — ${date}`);
 	sections.push("");
 	sections.push("## Environment");
 	sections.push("");
@@ -112,7 +112,7 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 	sections.push(`| Bun version | ${env.bunVersion} |`);
 	sections.push(`| CPU cores | ${env.cpuCores} |`);
 	sections.push(`| Total RAM | ${env.totalRamMb} MB |`);
-	sections.push(`| Bunlight version | ${report.version} |`);
+	sections.push(`| Bxc version | ${report.version} |`);
 	sections.push("");
 
 	// Group by scenario
@@ -137,16 +137,16 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 		// Add honest interpretation
 		if (scenarioId === "static-simple") {
 			sections.push("**Interpretation**: All runners operate on pre-fetched static HTML.");
-			sections.push("bunlight-static uses an in-process DOM transport (no spawn, no WebSocket).");
+			sections.push("bxc-static uses an in-process DOM transport (no spawn, no WebSocket).");
 			sections.push(
 				"fetch-native is the raw HTTP baseline. cheerio and jsdom add parsing overhead.",
 			);
 			sections.push("For pure static HTML, the fastest option is the one closest to raw fetch.");
 		} else if (scenarioId === "spa-react") {
 			sections.push("**Interpretation**: SPAs require JS execution to render content.");
-			sections.push("bunlight-static and fetch-native return the HTML skeleton only (~500 bytes).");
+			sections.push("bxc-static and fetch-native return the HTML skeleton only (~500 bytes).");
 			sections.push(
-				"bunlight-fast (Lightpanda) executes the page JS and returns the rendered content.",
+				"bxc-fast (Lightpanda) executes the page JS and returns the rendered content.",
 			);
 			sections.push(
 				"The latency difference reflects Lightpanda process spawn + JS execution overhead.",
@@ -160,11 +160,11 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 				"Real Cloudflare bypass requires profile 'stealth' (patchright) or 'max' (Camoufox).",
 			);
 			sections.push(
-				"bunlight-fast uses Lightpanda UA='Lightpanda/1.0' which is detected by real Cloudflare.",
+				"bxc-fast uses Lightpanda UA='Lightpanda/1.0' which is detected by real Cloudflare.",
 			);
 		} else if (scenarioId === "parallel-100") {
 			sections.push("**Interpretation**: 100 requests in parallel against localhost mock server.");
-			sections.push("bunlight-static uses the shared in-process transport (no per-request spawn).");
+			sections.push("bxc-static uses the shared in-process transport (no per-request spawn).");
 			sections.push("fetch-native tests raw Bun.fetch concurrency at different batch sizes.");
 			sections.push(
 				"Both should be fast against localhost — bottleneck is CPU + memory, not network.",
@@ -186,7 +186,7 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 	sections.push("- p50/p95 computed across all runs for a given runner/scenario pair");
 	sections.push("- Puppeteer/playwright runners are skipped if Chromium is not installed");
 	sections.push(
-		"- bunlight-fast runner is skipped if lightpanda binary is not in PATH or BUNLIGHT_LIGHTPANDA_BIN",
+		"- bxc-fast runner is skipped if lightpanda binary is not in PATH or BXC_LIGHTPANDA_BIN",
 	);
 	sections.push("");
 	sections.push("## Reproducing");
@@ -200,7 +200,7 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 	sections.push("");
 	sections.push("# With Lightpanda (fast profile)");
 	sections.push(
-		"BUNLIGHT_LIGHTPANDA_BIN=/path/to/lightpanda bun benchmarks/run-all.ts --scenario spa-react",
+		"BXC_LIGHTPANDA_BIN=/path/to/lightpanda bun benchmarks/run-all.ts --scenario spa-react",
 	);
 	sections.push("```");
 	sections.push("");
@@ -214,7 +214,7 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 	);
 	sections.push("  (measuring requires real Cloudflare-protected URLs, risking rate limits)");
 	sections.push(
-		"- bunlight-fast (Lightpanda) cold start includes process spawn; warm-path is ~50-100 ms",
+		"- bxc-fast (Lightpanda) cold start includes process spawn; warm-path is ~50-100 ms",
 	);
 	sections.push("- Chromium runners were not measured due to missing binary in test environment");
 	sections.push("  (add PUPPETEER_EXECUTABLE_PATH to include them)");
@@ -229,7 +229,7 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-	console.log("=== Bunlight Benchmark Suite ===");
+	console.log("=== Bxc Benchmark Suite ===");
 	console.log(`Date: ${new Date().toISOString()}`);
 	console.log(`Bun: ${Bun.version}`);
 	console.log(`Scenarios: ${SCENARIOS_TO_RUN.join(", ")}`);

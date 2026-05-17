@@ -3,8 +3,8 @@ import { z } from "zod";
 import { LlmClient } from "../src/client.ts";
 import { extractStructured } from "../src/extract.ts";
 
-const HTML = `<!doctype html><html><head><title>Bunlight benchmarks</title></head>
-<body><h1>Bunlight v0.1.0</h1>
+const HTML = `<!doctype html><html><head><title>Bxc benchmarks</title></head>
+<body><h1>Bxc v0.1.0</h1>
 <p>Author: aphrody-code</p>
 <p>Runtime: Bun 1.3.14</p>
 <a href="https://example.com/docs">Docs</a></body></html>`;

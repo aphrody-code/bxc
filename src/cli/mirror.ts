@@ -16,12 +16,12 @@
  */
 
 /**
- * `bunlight mirror <url> <out-dir>` — download a complete site (HTML/CSS/JS/
+ * `bxc mirror <url> <out-dir>` — download a complete site (HTML/CSS/JS/
  * fonts/images) into a relocatable directory with rewritten relative links.
  *
  * Pipeline (see src/mirror/mirror.ts) :
  *
- *   1. Fetch seed via the chosen bunlight profile (default `http` =
+ *   1. Fetch seed via the chosen bxc profile (default `http` =
  *      curl-impersonate Chrome 131 + cookies, passes Cloudflare when
  *      cookie jar is provided).
  *   2. Walk HTML with `Bun.HTMLRewriter` to enumerate every asset URL.
@@ -54,10 +54,10 @@ interface CliOptions {
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight mirror — download a complete site to a local directory
+		`bxc mirror — download a complete site to a local directory
 
 Usage:
-  bunlight mirror <url> <out-dir> [options]
+  bxc mirror <url> <out-dir> [options]
 
 Options:
   --profile <name>      http (default) | static | fast
@@ -66,17 +66,17 @@ Options:
   --timeout <ms>        per-request timeout (default: 15000)
   --same-origin-only    skip cross-origin assets (default: include)
   --max-asset-bytes <N> per-asset cap, bytes (default: 50000000)
-  --user-agent <str>    override User-Agent (default: bunlight-mirror/0.1)
+  --user-agent <str>    override User-Agent (default: bxc-mirror/0.1)
   --verbose             log every step to stderr
   --help, -h            this help
 
 Examples:
-  bunlight mirror https://google.com ./mirror-hn
-  bunlight mirror https://challonge.com/fr/B_TS5 ./mirror-bts5 \\
+  bxc mirror https://google.com ./mirror-hn
+  bxc mirror https://challonge.com/fr/B_TS5 ./mirror-bts5 \\
       --cookies cookies/private/challonge.json --verbose
 
 Notes:
-  - The seed page is opened via the chosen bunlight profile so that TLS /
+  - The seed page is opened via the chosen bxc profile so that TLS /
     cookie / fingerprint behaviour matches the live browser, including
     Cloudflare-gated sites when cookies are valid.
   - Asset downloads use plain fetch (assets are usually public). For
@@ -144,7 +144,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		}
 	}
 	if (positional.length < 2) {
-		Bun.stderr.write("bunlight mirror: requires <url> and <out-dir>\n");
+		Bun.stderr.write("bxc mirror: requires <url> and <out-dir>\n");
 		return null;
 	}
 	opts.url = positional[0];
@@ -196,7 +196,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 			) + "\n",
 		);
 	} catch (err) {
-		Bun.stderr.write(`bunlight mirror: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bxc mirror: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	}
 }

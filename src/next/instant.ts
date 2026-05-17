@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/next/instant
+ * @module bxc/next/instant
  *
- * Port of `@next/playwright`'s `instant()` helper to bunlight.
+ * Port of `@next/playwright`'s `instant()` helper to bxc.
  *
  * `instant(page, fn, options?)` runs `fn` with the
  * `next-instant-navigation-testing` cookie set on the current host.
@@ -26,13 +26,13 @@
  * until the cookie is cleared.
  *
  * Differences vs `@next/playwright` :
- *   - Works against a bunlight `Page` (CDP-backed, lightpanda profile),
+ *   - Works against a bxc `Page` (CDP-backed, lightpanda profile),
  *     not a Playwright `Page`. Cookie ops use `addCookies` /
  *     `clearCookies` we expose on `src/api/browser.ts`.
  *   - The Playwright structural shim (`PlaywrightPage`) is preserved as
  *     an *additional* compatibility path: any object that exposes
  *     `url()`, `addCookies()`, `clearCookies()` works too.
- *   - Step labelling uses `bunlight/next/step` which auto-detects
+ *   - Step labelling uses `bxc/next/step` which auto-detects
  *     `@playwright/test` step API when present and falls back to
  *     direct execution under `bun:test`.
  *
@@ -44,7 +44,7 @@
 import { step } from "./step.ts";
 
 /**
- * Structural type accepted by `instant()`. Both bunlight's `Page` and
+ * Structural type accepted by `instant()`. Both bxc's `Page` and
  * Playwright's `Page` (via `page.context().addCookies`) satisfy this
  * shape after a tiny adapter — see `withPlaywrightPage()` below.
  */
@@ -146,7 +146,7 @@ loaded, the base URL is detected automatically. Otherwise:
  *
  * @example
  * ```ts
- * import { instant, withPlaywrightPage } from "@aphrody-code/bunlight/next";
+ * import { instant, withPlaywrightPage } from "@aphrody-code/bxc/next";
  * test("instant", async ({ page }) => {
  *   await page.goto("http://localhost:3000");
  *   await instant(withPlaywrightPage(page), async () => {

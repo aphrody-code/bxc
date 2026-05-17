@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/stats/dashboard
+ * @module bxc/stats/dashboard
  *
- * Live HTTP dashboard for Bunlight statistics.
+ * Live HTTP dashboard for Bxc statistics.
  * Exposes a minimal single-page HTML dashboard (auto-refresh every 1 s)
  * and a JSON API endpoint for CI consumption.
  *
@@ -62,7 +62,7 @@ function renderHtml(): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bunlight Stats Dashboard</title>
+<title>Bxc Stats Dashboard</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -121,7 +121,7 @@ function renderHtml(): string {
 </style>
 </head>
 <body>
-<h1>Bunlight Stats Dashboard</h1>
+<h1>Bxc Stats Dashboard</h1>
 <p class="subtitle">Live crawler statistics &mdash; auto-refresh every second</p>
 
 <div class="grid" id="cards">

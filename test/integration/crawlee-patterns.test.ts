@@ -17,7 +17,7 @@
 /**
  * @file test/integration/crawlee-patterns.test.ts
  *
- * Integration tests for Bunlight's Crawlee-inspired patterns.
+ * Integration tests for Bxc's Crawlee-inspired patterns.
  * Each `describe` block covers one feature from the audit.
  *
  * Run with:
@@ -43,7 +43,7 @@ import {
 // ---------------------------------------------------------------------------
 
 function makeTmpDir(prefix: string): string {
-	const dir = join(tmpdir(), `bunlight-test-${prefix}-${Date.now()}`);
+	const dir = join(tmpdir(), `bxc-test-${prefix}-${Date.now()}`);
 	Bun.spawnSync(["mkdir", "-p", dir], { stdin: "ignore" });
 	return dir;
 }
@@ -584,16 +584,16 @@ describe("KeyValueStore", () => {
 	});
 
 	test("set/get roundtrip for JSON value", async () => {
-		await kv.set("config", { maxPages: 100, ua: "Bunlight" });
+		await kv.set("config", { maxPages: 100, ua: "Bxc" });
 		const val = await kv.get<{ maxPages: number; ua: string }>("config");
 		expect(val?.maxPages).toBe(100);
-		expect(val?.ua).toBe("Bunlight");
+		expect(val?.ua).toBe("Bxc");
 	});
 
 	test("setText/getText roundtrip", async () => {
-		await kv.setText("greeting", "Hello, Bunlight!");
+		await kv.setText("greeting", "Hello, Bxc!");
 		const text = await kv.getText("greeting");
-		expect(text).toBe("Hello, Bunlight!");
+		expect(text).toBe("Hello, Bxc!");
 	});
 
 	test("setBytes/getBytes roundtrip for binary data", async () => {

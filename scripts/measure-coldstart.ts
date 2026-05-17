@@ -16,7 +16,7 @@
  */
 
 /**
- * measure-coldstart.ts — Cold start measurement for `bunlight serve`.
+ * measure-coldstart.ts — Cold start measurement for `bxc serve`.
  *
  * Spawns the server in a child process and measures the wall-clock time from
  * spawn() to the first successful HTTP 200 on /json/version.
@@ -28,7 +28,7 @@
  *   Prints a table with p50 / p95 / mean / min / max for each profile.
  *
  * Environment variables:
- *   BUNLIGHT_LIGHTPANDA_PATH   Override path to the lightpanda binary
+ *   BXC_LIGHTPANDA_PATH   Override path to the lightpanda binary
  *   COLDSTART_RUNS             Number of runs per profile (default 10)
  *   COLDSTART_TIMEOUT_MS       Max wait per run (default 15000)
  *   COLDSTART_PROFILES         Comma-separated profiles (default static,fast)
@@ -138,7 +138,7 @@ async function measure(profile: Profile): Promise<Sample> {
 			stdin: "ignore",
 			stdout: "ignore",
 			stderr: "ignore",
-			env: { ...Bun.env, BUNLIGHT_SKIP_WARMUP: "1" },
+			env: { ...Bun.env, BXC_SKIP_WARMUP: "1" },
 		},
 	);
 

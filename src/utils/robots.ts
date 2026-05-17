@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/utils/robots
+ * @module bxc/utils/robots
  *
  * RFC 9309-conformant robots.txt parser.
  *
@@ -48,7 +48,7 @@
 // ---------------------------------------------------------------------------
 
 export interface RobotsFileOptions {
-	/** User-agent to send when fetching robots.txt. Default: "Bunlight/1.0" */
+	/** User-agent to send when fetching robots.txt. Default: "Bxc/1.0" */
 	userAgent?: string;
 	/** Request timeout in ms. Default: 10_000 */
 	timeoutMs?: number;
@@ -208,7 +208,7 @@ export class RobotsFile {
 	static async fetch(url: string, opts: RobotsFileOptions = {}): Promise<RobotsFile> {
 		const origin = new URL(url);
 		const robotsUrl = `${origin.protocol}//${origin.host}/robots.txt`;
-		const ua = opts.userAgent ?? "Bunlight/1.0";
+		const ua = opts.userAgent ?? "Bxc/1.0";
 		const timeoutMs = opts.timeoutMs ?? 10_000;
 
 		try {

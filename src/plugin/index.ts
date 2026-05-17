@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/plugin
+ * @module bxc/plugin
  *
- * Bun plugin entry points for the bunlight ecosystem.
+ * Bun plugin entry points for the bxc ecosystem.
  *
  * Currently exposed:
  *   - `lightpandaPlugin`              factory returning a BunPlugin that

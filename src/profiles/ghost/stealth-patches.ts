@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/profiles/ghost/stealth-patches
+ * @module bxc/profiles/ghost/stealth-patches
  *
  * Stealth JS patches injected via CDP `Page.addScriptToEvaluateOnNewDocument`
  * BEFORE every navigation. Targets the standard set of anti-bot signals
@@ -82,7 +82,7 @@ export function buildStealthScript(opts: StealthPatchOptions): string {
 	const o = JSON.stringify(opts);
 	return `(()=>{
 "use strict";
-if (window.__bunlightGhost) return; window.__bunlightGhost = true;
+if (window.__bxcGhost) return; window.__bxcGhost = true;
 const o = ${o};
 
 // 1. navigator.webdriver = undefined

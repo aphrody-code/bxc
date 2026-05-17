@@ -69,7 +69,7 @@ export const TargetHandler: DomainHandler = async (method, params, ctx, sessionI
 						targetInfo: {
 							targetId: BROWSER_TARGET_ID,
 							type: "browser",
-							title: "Bunlight Browser",
+							title: "Bxc Browser",
 							url: "about:blank",
 							attached: true,
 							canAccessOpener: false,
@@ -154,7 +154,7 @@ export const TargetHandler: DomainHandler = async (method, params, ctx, sessionI
 					targetInfo: {
 						targetId: BROWSER_TARGET_ID,
 						type: "browser",
-						title: "Bunlight Browser",
+						title: "Bxc Browser",
 						url: "about:blank",
 						attached: true,
 						canAccessOpener: false,
@@ -194,7 +194,7 @@ export const TargetHandler: DomainHandler = async (method, params, ctx, sessionI
 			targetInfos.unshift({
 				targetId: BROWSER_TARGET_ID,
 				type: "page" as const,
-				title: "Bunlight Browser",
+				title: "Bxc Browser",
 				url: "about:blank",
 				attached: true,
 				canAccessOpener: false,

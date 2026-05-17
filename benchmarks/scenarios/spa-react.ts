@@ -9,8 +9,8 @@
  * the initial "Loading..." skeleton?
  *
  * Runners compared:
- *   - bunlight-static: returns raw HTML skeleton (no JS exec) → expected to fail on SPA content
- *   - bunlight-fast:   spawns Lightpanda (V8), executes JS → expected to render
+ *   - bxc-static: returns raw HTML skeleton (no JS exec) → expected to fail on SPA content
+ *   - bxc-fast:   spawns Lightpanda (V8), executes JS → expected to render
  *   - fetch-native:    raw HTML, no JS → skeleton only
  *
  * Puppeteer/playwright are excluded from the local mock test but their SPA
@@ -23,8 +23,8 @@
 import type { RunResult, ScenarioResult } from "../types.ts";
 import { summarise, rssNow } from "../types.ts";
 import { startMockServer, stopMockServer } from "../mock-server.ts";
-import * as bunlightStatic from "../runners/bunlight-static.ts";
-import * as bunlightFast from "../runners/bunlight-fast.ts";
+import * as bxcStatic from "../runners/bxc-static.ts";
+import * as bxcFast from "../runners/bxc-fast.ts";
 import * as fetchNative from "../runners/fetch-native.ts";
 
 export const SCENARIO_ID = "spa-react";
@@ -41,7 +41,7 @@ interface SpaRunResult extends RunResult {
 	jsRendered: boolean;
 }
 
-async function runSpa(runner: typeof bunlightStatic, url: string): Promise<SpaRunResult> {
+async function runSpa(runner: typeof bxcStatic, url: string): Promise<SpaRunResult> {
 	const base = await runner.run(url);
 	const jsRendered = base.success && base.contentLength > 0 && base.contentLength > 500;
 	// Note: for mock SPA, static runners return ~600 bytes (skeleton),
@@ -51,7 +51,7 @@ async function runSpa(runner: typeof bunlightStatic, url: string): Promise<SpaRu
 }
 
 async function runScenarioForRunner(
-	runner: typeof bunlightStatic,
+	runner: typeof bxcStatic,
 	mockPort: number,
 ): Promise<ScenarioResult> {
 	const allResults: RunResult[] = [];
@@ -90,7 +90,7 @@ export async function run(): Promise<ScenarioResult[]> {
 	const port = await startMockServer();
 	console.log(`[${SCENARIO_ID}] mock server on :${port}`);
 
-	const runners = [bunlightStatic, bunlightFast, fetchNative] as (typeof bunlightStatic)[];
+	const runners = [bxcStatic, bxcFast, fetchNative] as (typeof bxcStatic)[];
 	const results: ScenarioResult[] = [];
 
 	for (const runner of runners) {

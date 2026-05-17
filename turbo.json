@@ -5,12 +5,12 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["src/**/*", "rust-bridge/src/**/*", "rust-bridge/Cargo.*", "package.json", "tsconfig.json"],
-      "outputs": ["dist/**", "vendor/**/zig-out/**", "rust-bridge/target/release/libbunlight_rust_bridge.*", "rust-bridge/target/release/bunlight-engine"],
+      "outputs": ["dist/**", "vendor/**/zig-out/**", "rust-bridge/target/release/libbxc_rust_bridge.*", "rust-bridge/target/release/bxc-engine"],
       "cache": true
     },
     "build:rust": {
       "inputs": ["rust-bridge/src/**/*", "rust-bridge/Cargo.*"],
-      "outputs": ["rust-bridge/target/release/libbunlight_rust_bridge.*", "rust-bridge/target/release/bunlight-engine"]
+      "outputs": ["rust-bridge/target/release/libbxc_rust_bridge.*", "rust-bridge/target/release/bxc-engine"]
     },
     "test": {
       "dependsOn": ["build"],

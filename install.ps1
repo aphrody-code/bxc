@@ -1,23 +1,23 @@
 #!/usr/bin/env pwsh
-# Bunlight installer — Windows PowerShell.
+# Bxc installer — Windows PowerShell.
 # Inspired by https://bun.sh/install.ps1.
 #
 # Usage:
-#   irm bunlight.dev/install.ps1 | iex
-#   irm https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.ps1 | iex
+#   irm bxc.dev/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1 | iex
 #
 # Flags (via -arg):
 #   -Version <semver>     Specific version (default: latest)
 #   -ForceBaseline        Force the baseline build (pre-AVX2 CPUs)
-#   -NoPathUpdate         Skip adding the bunlight bin dir to %PATH%
+#   -NoPathUpdate         Skip adding the bxc bin dir to %PATH%
 #   -DownloadWithoutCurl  Use Invoke-RestMethod instead of curl.exe
 #
 # What it does:
 #   1. Detects Windows + AMD64/ARM64 architecture from the registry
-#   2. Downloads bunlight-windows-<arch>.zip from GitHub releases
-#   3. Extracts to %USERPROFILE%\.bunlight\bin\
-#   4. Updates the user PATH so `bunlight` is callable from any shell
-#   5. Verifies install via `bunlight --version`
+#   2. Downloads bxc-windows-<arch>.zip from GitHub releases
+#   3. Extracts to %USERPROFILE%\.bxc\bin\
+#   4. Updates the user PATH so `bxc` is callable from any shell
+#   5. Verifies install via `bxc --version`
 
 param(
   [String]$Version = "latest",
@@ -33,7 +33,7 @@ $ErrorActionPreference = "Stop"
 $Arch = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment').PROCESSOR_ARCHITECTURE
 if (-not ($Arch -eq "AMD64" -or $Arch -eq "ARM64")) {
   Write-Output "Install Failed:"
-  Write-Output "Bunlight for Windows is only available for x86 64-bit and ARM64 Windows.`n"
+  Write-Output "Bxc for Windows is only available for x86 64-bit and ARM64 Windows.`n"
   return 1
 }
 
@@ -43,7 +43,7 @@ $MinBuildName = "Windows 10 1809 / Windows Server 2019"
 
 $WinVer = [System.Environment]::OSVersion.Version
 if ($WinVer.Major -lt 10 -or ($WinVer.Major -eq 10 -and $WinVer.Build -lt $MinBuild)) {
-  Write-Warning "Bunlight requires at least ${MinBuildName} or newer.`nThe install will continue but may not work."
+  Write-Warning "Bxc requires at least ${MinBuildName} or newer.`nThe install will continue but may not work."
 }
 
 # ─── PATH helpers (copied pattern from Bun installer) ───────────────────
@@ -95,7 +95,7 @@ function Get-Env {
 
 # ─── Install ────────────────────────────────────────────────────────────
 
-function Install-Bunlight {
+function Install-Bxc {
   param(
     [string]$Version,
     [bool]$ForceBaseline = $false
@@ -119,23 +119,23 @@ function Install-Bunlight {
     }
   }
 
-  $BunlightRoot = if ($env:BUNLIGHT_INSTALL) { $env:BUNLIGHT_INSTALL } else { "${Home}\.bunlight" }
-  $BunlightBin = "${BunlightRoot}\bin"
-  $null = New-Item -ItemType Directory -Force -Path $BunlightBin
+  $BxcRoot = if ($env:BXC_INSTALL) { $env:BXC_INSTALL } else { "${Home}\.bxc" }
+  $BxcBin = "${BxcRoot}\bin"
+  $null = New-Item -ItemType Directory -Force -Path $BxcBin
 
-  $Target = "bunlight-windows-$BunArch"
+  $Target = "bxc-windows-$BunArch"
   if ($IsBaseline) {
-    $Target = "bunlight-windows-$BunArch-baseline"
+    $Target = "bxc-windows-$BunArch-baseline"
   }
 
-  $BaseURL = "https://github.com/aphrody-code/bunlight/releases"
+  $BaseURL = "https://github.com/aphrody-code/bxc/releases"
   $URL = if ($Version -eq "latest") {
     "$BaseURL/latest/download/$Target.zip"
   } else {
     "$BaseURL/download/$Version/$Target.zip"
   }
 
-  $ZipPath = "${BunlightBin}\$Target.zip"
+  $ZipPath = "${BxcBin}\$Target.zip"
   Remove-Item -Force $ZipPath -ErrorAction SilentlyContinue
 
   Write-Output "Downloading $URL ..."
@@ -161,12 +161,12 @@ function Install-Bunlight {
   try {
     $lastProgressPreference = $global:ProgressPreference
     $global:ProgressPreference = 'SilentlyContinue'
-    Expand-Archive "$ZipPath" "$BunlightBin" -Force
+    Expand-Archive "$ZipPath" "$BxcBin" -Force
     $global:ProgressPreference = $lastProgressPreference
 
-    if (Test-Path "${BunlightBin}\$Target\bunlight.exe") {
-      Move-Item "${BunlightBin}\$Target\bunlight.exe" "${BunlightBin}\bunlight.exe" -Force
-      Remove-Item -Recurse -Force "${BunlightBin}\$Target" -ErrorAction SilentlyContinue
+    if (Test-Path "${BxcBin}\$Target\bxc.exe") {
+      Move-Item "${BxcBin}\$Target\bxc.exe" "${BxcBin}\bxc.exe" -Force
+      Remove-Item -Recurse -Force "${BxcBin}\$Target" -ErrorAction SilentlyContinue
     }
   } catch {
     Write-Output "Install Failed — could not extract $ZipPath"
@@ -176,8 +176,8 @@ function Install-Bunlight {
     Remove-Item -Force $ZipPath -ErrorAction SilentlyContinue
   }
 
-  if (-not (Test-Path "${BunlightBin}\bunlight.exe")) {
-    Write-Output "Install Failed — bunlight.exe not found in $BunlightBin after extract"
+  if (-not (Test-Path "${BxcBin}\bxc.exe")) {
+    Write-Output "Install Failed — bxc.exe not found in $BxcBin after extract"
     return 1
   }
 
@@ -186,36 +186,36 @@ function Install-Bunlight {
   if (-not $NoPathUpdate) {
     $UserPath = Get-Env "PATH"
     $PathSeparator = ";"
-    $PathItems = $UserPath -split $PathSeparator | Where-Object { $_ -ne $BunlightBin }
-    if ($PathItems -notcontains $BunlightBin) {
-      $NewPath = (@($BunlightBin) + $PathItems) -join $PathSeparator
+    $PathItems = $UserPath -split $PathSeparator | Where-Object { $_ -ne $BxcBin }
+    if ($PathItems -notcontains $BxcBin) {
+      $NewPath = (@($BxcBin) + $PathItems) -join $PathSeparator
       Write-Env -Key "PATH" -Value $NewPath
       $env:PATH = $NewPath
-      Write-Output "Added $BunlightBin to user PATH."
+      Write-Output "Added $BxcBin to user PATH."
     } else {
-      Write-Output "$BunlightBin is already on user PATH."
+      Write-Output "$BxcBin is already on user PATH."
     }
   }
 
   # ─── Verify ────────────────────────────────────────────────────────
 
   Write-Output ""
-  Write-Output "Bunlight installed at ${BunlightBin}\bunlight.exe"
+  Write-Output "Bxc installed at ${BxcBin}\bxc.exe"
   Write-Output ""
 
   try {
-    & "${BunlightBin}\bunlight.exe" --version
+    & "${BxcBin}\bxc.exe" --version
   } catch {
-    Write-Warning "Could not run bunlight.exe — see error above. Open a new shell and try again."
+    Write-Warning "Could not run bxc.exe — see error above. Open a new shell and try again."
   }
 
   Write-Output ""
   Write-Output "Get started:"
-  Write-Output "  bunlight serve --cdp-port 9222"
-  Write-Output "  bunlight scrape https://example.com"
-  Write-Output "  bunlight --help"
+  Write-Output "  bxc serve --cdp-port 9222"
+  Write-Output "  bxc scrape https://example.com"
+  Write-Output "  bxc --help"
   Write-Output ""
-  Write-Output "Docs: https://github.com/aphrody-code/bunlight"
+  Write-Output "Docs: https://github.com/aphrody-code/bxc"
 }
 
-Install-Bunlight -Version $Version -ForceBaseline $ForceBaseline.IsPresent
+Install-Bxc -Version $Version -ForceBaseline $ForceBaseline.IsPresent

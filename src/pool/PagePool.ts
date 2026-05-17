@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/pool/PagePool
+ * @module bxc/pool/PagePool
  *
  * High-throughput page pool with bounded concurrency, page reuse (LRU
  * eviction), and back-pressured task scheduling.
@@ -26,7 +26,7 @@
  *
  * @example
  * ```ts
- * import { PagePool } from "bunlight/pool/PagePool";
+ * import { PagePool } from "bxc/pool/PagePool";
  *
  * const pool = new PagePool({ profile: "fast", concurrency: 50, maxPages: 25 });
  * const results = await pool.run(urls, async (page, url) => {
@@ -44,7 +44,7 @@ import { Browser, type Page, type PageOptions } from "../api/browser.js";
 // ---------------------------------------------------------------------------
 
 export interface PagePoolOptions {
-	/** Bunlight profile to use for newly-created pages.  Default: `"static"`. */
+	/** Bxc profile to use for newly-created pages.  Default: `"static"`. */
 	profile?: PageOptions["profile"];
 	/**
 	 * Maximum number of tasks running in parallel.  Acts as a semaphore so

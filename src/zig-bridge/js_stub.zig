@@ -1,4 +1,4 @@
-// Bunlight — js/stub.zig
+// Bxc — js/stub.zig
 //
 // Drop-in replacement for src/browser/js/js.zig when -Dno_v8=true.
 //

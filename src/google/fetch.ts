@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/fetch
+ * @module bxc/google/fetch
  *
  * Enhanced web fetch specialized for Google infrastructure and anti-scraping.
  * Refactored to use unified GoogleClient and ZigQuery extraction.

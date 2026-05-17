@@ -58,7 +58,7 @@ Exemples:
 
 Comportement attendu si robots.txt est unreachable (5xx) → considérer le site **interdit en totalité** par défaut, ou retomber sur la dernière copie cache si elle existe et qu'on la juge encore valable.
 
-Bunlight cache `robots.txt` par hôte avec TTL 1 h (sous le plafond de 24 h).
+Bxc cache `robots.txt` par hôte avec TTL 1 h (sous le plafond de 24 h).
 
 ## 6. Directive `Sitemap`
 
@@ -78,7 +78,7 @@ Les directives `Sitemap` peuvent apparaître n'importe où dans le fichier — p
 - `Disallow:` (vide) — autorise tout
 - `Disallow: /` — interdit tout
 
-## 8. Compliance checklist côté bunlight
+## 8. Compliance checklist côté bxc
 
 - [ ] Fetch `<origin>/robots.txt` avant de crawler quoi que ce soit
 - [ ] Parser groupes `User-agent` / `Disallow` / `Allow`
@@ -91,7 +91,7 @@ Les directives `Sitemap` peuvent apparaître n'importe où dans le fichier — p
 
 > Statut côté `scripts/url-to-docs.ts` au 2026-05-10: pas encore implémenté. Le script crawle uniquement le site qu'on possède ou dont on est autorisé à crawler la doc. Ajouter le check robots.txt avant de l'exposer comme outil générique.
 
-## 9. Exemple parsé par bunlight
+## 9. Exemple parsé par bxc
 
 ```
 User-agent: *
@@ -105,7 +105,7 @@ Disallow: /
 Sitemap: https://example.com/sitemap.xml
 ```
 
-Pour bunlight (User-agent custom, fall-through `*`):
+Pour bxc (User-agent custom, fall-through `*`):
 - `/foo` → autorisé (aucun pattern ne matche)
 - `/private/secret` → interdit (Disallow `/private/` matche, 9 octets)
 - `/private/public-leak/page` → autorisé (Allow `/private/public-leak/` est plus spécifique, 21 octets)

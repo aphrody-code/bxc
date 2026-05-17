@@ -1,6 +1,6 @@
-# Contributing to Bunlight
+# Contributing to Bxc
 
-Thank you for your interest in contributing to Bunlight. This document explains how to set up the development environment, follow code style conventions, run tests, and submit changes.
+Thank you for your interest in contributing to Bxc. This document explains how to set up the development environment, follow code style conventions, run tests, and submit changes.
 
 ---
 
@@ -34,8 +34,8 @@ Optional, needed for stealth/max profiles:
 ## Development environment setup
 
 ```bash
-git clone https://developers.google.com/bunmium/bunlight.git
-cd bunlight
+git clone https://developers.google.com/bunmium/bxc.git
+cd bxc
 
 # Install dependencies and run postinstall (downloads vendor binaries)
 bun install

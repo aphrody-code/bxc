@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/dns
+ * @module bxc/google/dns
  *
  * DNS and IP ASN checks to identify Google-owned infrastructure.
  */

@@ -1,4 +1,4 @@
-# bunlight test against material-ai documentary URLs
+# bxc test against material-ai documentary URLs
 
 Date: 2026-05-10
 Total probes: 39

@@ -25,7 +25,7 @@ User-Agent: ApifyCrawler/1.5 (+https://apify.com/abuse)
 - Ne pas se déguiser en `Mozilla/5.0 (...) Chrome/...` sauf si on automatise un browser réel ou si le site bloque tout ce qui n'est pas browser. Le déguisement complique les abuse reports.
 - Une seule ligne, pas de saut de ligne, pas de quote.
 
-Bunlight envoie:
+Bxc envoie:
 ```
 User-Agent: bunmium-url-to-docs/0.2 (+https://github.com/bunmium)
 ```
@@ -69,7 +69,7 @@ Plus robuste que les dates — le serveur fournit un opaque ETag, on le renvoie:
 < 304 Not Modified
 ```
 
-Bunlight stocke `ETag` et `Last-Modified` dans `bun:sqlite` à côté du `content_hash` pour les recrawls incrémentaux.
+Bxc stocke `ETag` et `Last-Modified` dans `bun:sqlite` à côté du `content_hash` pour les recrawls incrémentaux.
 
 ## 4. Rate limiting — Retry-After
 
@@ -80,7 +80,7 @@ Retry-After: 120                  # secondes
 Retry-After: Wed, 21 May 2026 07:28:00 GMT   # date absolue
 ```
 
-Le crawler **doit** attendre au moins ce délai avant le prochain fetch. Bunlight implémente ça dans `src/throttling/RateLimiter.ts`.
+Le crawler **doit** attendre au moins ce délai avant le prochain fetch. Bxc implémente ça dans `src/throttling/RateLimiter.ts`.
 
 ## 5. Headers de protection anti-bot courants
 
@@ -88,7 +88,7 @@ Le crawler **doit** attendre au moins ce délai avant le prochain fetch. Bunligh
 
 | Header | Signification |
 |---|---|
-| `Set-Cookie: cf_clearance=...` | Cloudflare a délivré un challenge token (bunlight: profile `stealth`) |
+| `Set-Cookie: cf_clearance=...` | Cloudflare a délivré un challenge token (bxc: profile `stealth`) |
 | `Server: cloudflare` | Cloudflare devant le site |
 | `CF-Ray: ...` | request ID Cloudflare |
 | `X-Robots-Tag: noindex, nofollow` | équivalent meta robots, mais en HTTP. Respecter au sens crawl-friendly. |
@@ -99,12 +99,12 @@ Le crawler **doit** attendre au moins ce délai avant le prochain fetch. Bunligh
 ## 6. Méthodes HTTP côté crawler
 
 - **GET** — par défaut.
-- **HEAD** — utile pour vérifier qu'une URL existe et son content-type sans rapatrier le body. Bunlight pourrait l'utiliser avant un GET coûteux. `fetch(url, { method: "HEAD" })`.
+- **HEAD** — utile pour vérifier qu'une URL existe et son content-type sans rapatrier le body. Bxc pourrait l'utiliser avant un GET coûteux. `fetch(url, { method: "HEAD" })`.
 - Jamais POST/PUT/DELETE depuis un crawler de docs.
 
 ## 7. Cookies — généralement off
 
-Un crawler de docs publiques ne devrait pas envoyer de cookies. Bunlight ne le fait que si on passe explicitement un cookie jar (cas des sites paywallés ou auth interne, profile `stealth`).
+Un crawler de docs publiques ne devrait pas envoyer de cookies. Bxc ne le fait que si on passe explicitement un cookie jar (cas des sites paywallés ou auth interne, profile `stealth`).
 
 ## 8. Limits côté serveur
 
@@ -112,7 +112,7 @@ Conventions communes:
 
 - **Concurrence par hôte**: 4–8 requêtes parallèles par défaut, descendre à 2 sur des hôtes lents
 - **Délai entre requêtes**: 100–500 ms par hôte est poli ; respecter `Retry-After`
-- **Timeout**: 15–30 s par requête. Bunlight: `AbortSignal.timeout(15000)`
+- **Timeout**: 15–30 s par requête. Bxc: `AbortSignal.timeout(15000)`
 - **Redirects**: max 10 (default `fetch`)
 - **Body size cap**: stop à 10 MB pour des pages HTML, sinon on ramasse du PDF/binaire mal taggé
 

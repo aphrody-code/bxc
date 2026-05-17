@@ -17,7 +17,7 @@
 
 /**
  * import-cookies.ts — convert a Chrome DevTools "Cookies" tab-separated dump
- * into the Playwright/CDP JSON format expected by `bunlight`'s cookie-loader.
+ * into the Playwright/CDP JSON format expected by `bxc`'s cookie-loader.
  *
  * The DevTools dump (Application > Cookies > select-all > copy) emits one
  * cookie per line with tab-separated columns :
@@ -35,7 +35,7 @@
  *   pbpaste | bun run examples/challonge-api/import-cookies.ts \
  *     - ./examples/challonge-api/cookies/private/challonge.json
  *
- * Output schema (compatible with `bunlight/src/cookies/cookie-loader.ts`) :
+ * Output schema (compatible with `bxc/src/cookies/cookie-loader.ts`) :
  *
  *   [
  *     { "name": "cf_clearance", "value": "...", "domain": ".challonge.com",

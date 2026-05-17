@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/cli/chrome
+ * @module bxc/cli/chrome
  *
- * `bunlight chrome` — management of the native Chromium core.
+ * `bxc chrome` — management of the native Chromium core.
  */
 
 import { join } from "node:path";
@@ -31,7 +31,7 @@ function log(msg: string) {
 
 function resolveBinPath(): string | null {
 	const ext = process.platform === "win32" ? ".exe" : "";
-	const binName = `bunlight-engine${ext}`;
+	const binName = `bxc-engine${ext}`;
 
 	const paths = [
 		join(ROOT, "rust-bridge", "target", "release", binName),
@@ -51,7 +51,7 @@ function resolveBinPath(): string | null {
 }
 
 /**
- * CLI Entry point for `bunlight chrome ...`
+ * CLI Entry point for `bxc chrome ...`
  */
 export async function main(args: string[]): Promise<void> {
 	const subcommand = args[0];
@@ -62,7 +62,7 @@ export async function main(args: string[]): Promise<void> {
 			log("[chrome] fetching native Chromium...");
 			const spawnArgs = bin 
 				? [bin, "fetch"]
-				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bunlight-engine", "--", "fetch"];
+				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "fetch"];
 
 			const proc = Bun.spawn(spawnArgs, { stdout: "inherit", stderr: "inherit" });
 			const exitCode = await proc.exited;
@@ -74,7 +74,7 @@ export async function main(args: string[]): Promise<void> {
 
 		case "launch": {
 			const pathIdx = args.indexOf("--path");
-			let chromePath = pathIdx !== -1 ? args[pathIdx + 1] : Bun.env["BUNLIGHT_CHROME_BIN"];
+			let chromePath = pathIdx !== -1 ? args[pathIdx + 1] : Bun.env["BXC_CHROME_BIN"];
 
 			if (!chromePath) {
 				// Fallback to legacy env var if set
@@ -85,7 +85,7 @@ export async function main(args: string[]): Promise<void> {
 				// Try auto-resolve path via the binary
 				const pathArgs = bin
 					? [bin, "chrome-path"]
-					: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bunlight-engine", "--", "chrome-path"];
+					: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "chrome-path"];
 
 				const pathProc = Bun.spawnSync(pathArgs, { env: Bun.env });
 				chromePath = pathProc.stdout.toString().trim().split("\n").pop()?.trim();
@@ -99,7 +99,7 @@ export async function main(args: string[]): Promise<void> {
 			log(`[chrome] launching native Chromium from ${chromePath}...`);
 			const launchArgs = bin
 				? [bin, "launch", chromePath]
-				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bunlight-engine", "--", "launch", chromePath];
+				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "launch", chromePath];
 
 			const proc = Bun.spawn(launchArgs, { stdout: "inherit", stderr: "inherit" });
 
@@ -112,7 +112,7 @@ export async function main(args: string[]): Promise<void> {
 		}
 
 		default:
-			log("Usage: bunlight chrome <fetch|launch>");
+			log("Usage: bxc chrome <fetch|launch>");
 			process.exit(1);
 	}
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bunlight — thin wrapper around src/cli/serve.ts.
+# bxc — thin wrapper around src/cli/serve.ts.
 #
 # Resolves the script relative to this file so the wrapper works whether it is
 # called via an absolute path, a $PATH entry, or a symlink.
@@ -14,12 +14,12 @@ while [ -h "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-BUNLIGHT_ROOT="$(cd -P "$SCRIPT_DIR/.." && pwd)"
+BXC_ROOT="$(cd -P "$SCRIPT_DIR/.." && pwd)"
 
 BUN_BIN="${BUN_BIN:-bun}"
 if ! command -v "$BUN_BIN" >/dev/null 2>&1; then
-  echo "bunlight: \`bun\` not found on PATH. Install from https://bun.sh" >&2
+  echo "bxc: \`bun\` not found on PATH. Install from https://bun.sh" >&2
   exit 127
 fi
 
-exec "$BUN_BIN" run "$BUNLIGHT_ROOT/src/cli/index.ts" "$@"
+exec "$BUN_BIN" run "$BXC_ROOT/src/cli/index.ts" "$@"

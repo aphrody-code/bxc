@@ -18,7 +18,7 @@
  * E2E full-crawl suite — gemini.google.com
  *
  * Walks every URL discovered for the origin and exercises each of the five
- * Bunlight profiles (static, fast, http, stealth, max) against it. The
+ * Bxc profiles (static, fast, http, stealth, max) against it. The
  * `fast` profile (Lightpanda) is the primary acceptance target with a
  * required >= 95% pass rate.
  *
@@ -26,7 +26,7 @@
  *   - Pages are discovered via `discoverPages()` (sitemap.xml > BFS fallback,
  *     robots-aware, sample-down to 30).
  *   - The static, fast and http profiles are exercised through the public
- *     Bunlight API (`Browser.newPage`) — same path used by `bunlight serve`.
+ *     Bxc API (`Browser.newPage`) — same path used by `bxc serve`.
  *     We cycle one Page per URL to mimic how a crawl-pool would.
  *   - The stealth and max profiles need Chromium / Camoufox binaries; if those
  *     are not installed every test in the profile is logged as SKIP with the
@@ -155,7 +155,7 @@ async function runOne(profile: ProfileName, url: string): Promise<SiteResult> {
 				readyTimeoutMs: 10_000,
 				binaryPath: lightpandaBin ?? undefined,
 				stderrLogger: (s) => {
-					if (Bun.env.BUNLIGHT_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
+					if (Bun.env.BXC_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
 				},
 			},
 		})) as Page;

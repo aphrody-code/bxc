@@ -71,7 +71,7 @@ describe("Stealth Challenge System", () => {
 			userAgent:
 				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 		});
-		await page.goto("https://www.google.com/search?q=bunlight+stealth+test");
+		await page.goto("https://www.google.com/search?q=bxc+stealth+test");
 
 		// Wait for actual Chromium navigation since our raw API doesn't auto-wait for lifecycle yet
 		await Bun.sleep(2000);

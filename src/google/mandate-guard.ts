@@ -15,10 +15,10 @@
  */
 
 /**
- * @module bunlight/google/mandate-guard
+ * @module bxc/google/mandate-guard
  * 
  * Programmatic enforcement of the "Strict Google-only Testing" mandate.
- * Prevents Bunlight from making requests to non-Google domains.
+ * Prevents Bxc from making requests to non-Google domains.
  */
 
 import { isGoogleDomain, isGoogleInfrastructure } from "./dns.ts";

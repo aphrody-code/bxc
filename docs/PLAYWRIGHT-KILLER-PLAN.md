@@ -1,12 +1,12 @@
-# Plan Stratégique : Bunlight > Playwright (Le "Playwright Killer Plan")
+# Plan Stratégique : Bxc > Playwright (Le "Playwright Killer Plan")
 
-**Objectif** : Surpasser Playwright à 100% en comblant ses lacunes actuelles (DX, Observabilité) et en maximisant l'architecture unique de Bunlight (Vitesse Zig, Stealth natif, Autoscaling).
+**Objectif** : Surpasser Playwright à 100% en comblant ses lacunes actuelles (DX, Observabilité) et en maximisant l'architecture unique de Bxc (Vitesse Zig, Stealth natif, Autoscaling).
 
 ---
 
 ## 🔍 Analyse de l'existant (Gap Analysis)
 
-### Bunlight (État actuel)
+### Bxc (État actuel)
 - **Points forts** : Transports polymorphes (`static`, `fast`, `http`), intégration native de `curl-impersonate` (JA4), système de pool autoscalé.
 - **Faiblesses** : API `Page` implémente des méthodes atomiques (`click`, `type`) sans vérification d'actionnabilité (visibility, stability). Pas de support pour les `Frames` (iframes). Pas de `BrowserContext` (tout est au niveau du singleton Browser). `HttpPage` et `Page` ont des interfaces divergentes.
 
@@ -23,7 +23,7 @@ Fusionner le comportement de `Page` et `HttpPage` sous une interface unique. Si 
 
 ### 1.2. Système de "Locators" et Actionnabilité (Sprint Prioritaire)
 - **Locator** : Créer `src/api/Locator.ts`. Un locator ne stocke pas un élément, mais une *requête* (`selector`).
-- **Auto-Waiting** : Avant chaque action (`click`, `fill`), Bunlight doit vérifier via CDP :
+- **Auto-Waiting** : Avant chaque action (`click`, `fill`), Bxc doit vérifier via CDP :
   1. `Attached` : Présent dans le DOM.
   2. `Visible` : Non `display: none` et `boundingBox` > 0.
   3. `Stable` : Les coordonnées ne changent pas pendant deux frames.
@@ -38,7 +38,7 @@ Fusionner le comportement de `Page` et `HttpPage` sous une interface unique. Si 
 
 ## Phase 2 : Observabilité et Outils Développeur
 
-### 2.1. Bunlight Trace Viewer (Zstd-native)
+### 2.1. Bxc Trace Viewer (Zstd-native)
 Utiliser les capacités de compression native de Bun pour générer des fichiers `.trace` minuscules. Créer un visualiseur léger injecté dans le dashboard de stats existant.
 
 ### 2.2. Codegen "Live"
@@ -49,7 +49,7 @@ Améliorer le mode recorder pour qu'il génère du code TypeScript idiomatique u
 ## Phase 3 : L'Avantage Déloyal (Dépasser Playwright)
 
 ### 3.1. Stealth & TLS Fingerprinting Natif
-Contrairement à Playwright qui nécessite `playwright-stealth` (souvent obsolète), Bunlight intègre le camouflage au niveau du transport (`curl-impersonate` + `Camoufox`).
+Contrairement à Playwright qui nécessite `playwright-stealth` (souvent obsolète), Bxc intègre le camouflage au niveau du transport (`curl-impersonate` + `Camoufox`).
 
 ### 3.2. Polymorphisme de Profil à Chaud
 Permettre de changer de profil sans perdre l'état de la page :
