@@ -133,7 +133,7 @@ main() {
   tar "${tar_args[@]}" \
     -C "$(dirname -- "${REPO_ROOT}")" \
     -cf - "${REPO_NAME}" \
-  | zstd -T0 -19 --long -q -o "${tar_path}.tmp"
+  | zstd -T0 -3 --long -q -o "${tar_path}.tmp"
   mv -- "${tar_path}.tmp" "${tar_path}"
   local tar_size
   tar_size="$(stat -c '%s' "${tar_path}")"
@@ -163,7 +163,8 @@ main() {
   printf '\n[verify] decompress + diff smoke test…\n'
   local verify_dir
   verify_dir="$(mktemp -d)"
-  trap 'rm -rf -- "${verify_dir}"' EXIT
+  # shellcheck disable=SC2064 # we want $verify_dir captured at trap-install time
+  trap "rm -rf -- '${verify_dir}'" EXIT
   zstd -d -q "${tar_path}" -c | tar -xf - -C "${verify_dir}"
   if [[ ! -d "${verify_dir}/${REPO_NAME}" ]]; then
     die "verification failed: archive did not contain ${REPO_NAME}/"
