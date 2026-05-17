@@ -1,0 +1,639 @@
+{
+  "status": "in_progress",
+  "last_run": "2026-05-17T01:56:55Z",
+  "n2b_version": "0.5.0",
+  "auto_migratable_pct": 0.7680722891566265,
+  "manual_residue": [
+    {
+      "rule_id": "api/fileURLToPath",
+      "file": "common/eslint-config/eslint.config.mjs",
+      "line": 14,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.fileURLToPath() est équivalent (ou utiliser import.meta.dir/path)"
+    },
+    {
+      "rule_id": "api/fileURLToPath",
+      "file": "common/vitest-config/vitest.config.js",
+      "line": 7,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.fileURLToPath() est équivalent (ou utiliser import.meta.dir/path)"
+    },
+    {
+      "rule_id": "api/process-stdout-write",
+      "file": "examples/client/src/elicitationUrlExample.ts",
+      "line": 807,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.stdout.write() est l'équivalent natif Bun de process.stdout.write"
+    },
+    {
+      "rule_id": "api/process-stdout-write",
+      "file": "examples/client/src/simpleStreamableHttp.ts",
+      "line": 528,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.stdout.write() est l'équivalent natif Bun de process.stdout.write"
+    },
+    {
+      "rule_id": "api/process-stdout-write",
+      "file": "examples/client/src/simpleStreamableHttp.ts",
+      "line": 547,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.stdout.write() est l'équivalent natif Bun de process.stdout.write"
+    },
+    {
+      "rule_id": "api/process-stdout-write",
+      "file": "examples/client/src/simpleStreamableHttp.ts",
+      "line": 991,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.stdout.write() est l'équivalent natif Bun de process.stdout.write"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "examples/shared/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'better-sqlite3' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "examples/shared/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'tsx' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "examples/shared/src/auth.ts",
+      "line": 15,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'better-sqlite3' par bun:sqlite — préférer bun:sqlite (API similaire)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "examples/shared/test/demoInMemoryOAuthProvider.test.ts",
+      "line": 10,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "pkg/package-manager",
+      "file": "package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "packageManager='pnpm@10.26.1' — remplacer par 'bun@<version>' ou supprimer"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'tsx' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "packages/client/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'tsx' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/src/client/sse.ts",
+      "line": 3,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'eventsource' par Bun.EventSource — Bun.EventSource est un client SSE natif"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/src/client/stdio.ts",
+      "line": 8,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'cross-spawn' par Bun.spawn — Bun.spawn est cross-platform par défaut"
+    },
+    {
+      "rule_id": "api/child-process-spawn",
+      "file": "packages/client/src/client/stdio.ts",
+      "line": 121,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.spawn offre une API plus ergonomique (streams Web, ipc, preload)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/auth.test.ts",
+      "line": 3,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/authExtensions.test.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/barrelClean.test.ts",
+      "line": 6,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "api/fileURLToPath",
+      "file": "packages/client/test/client/barrelClean.test.ts",
+      "line": 8,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.fileURLToPath() est équivalent (ou utiliser import.meta.dir/path)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/crossAppAccess.test.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/crossSpawn.test.ts",
+      "line": 4,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'cross-spawn' par Bun.spawn — Bun.spawn est cross-platform par défaut"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/crossSpawn.test.ts",
+      "line": 5,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/middleware.test.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/sse.test.ts",
+      "line": 8,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "api/buffer-from-base64",
+      "file": "packages/client/test/client/sse.test.ts",
+      "line": 23,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "utiliser atob() / btoa() ou Uint8Array pour du Web-standard"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/streamableHttp.test.ts",
+      "line": 3,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/client/test/client/tokenProvider.test.ts",
+      "line": 7,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "packages/core/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'tsx' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "api/buffer-concat",
+      "file": "packages/core/src/shared/stdio.ts",
+      "line": 11,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "utiliser Uint8Array et concaténation Web-standard plutôt que Buffer.concat"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/experimental/inMemory.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/shared/customMethods.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/shared/protocol.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "api/set-immediate",
+      "file": "packages/core/test/shared/protocol.test.ts",
+      "line": 737,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "setImmediate n'est pas Web-standard — utiliser queueMicrotask() ou setTimeout(fn, 0)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/shared/protocolTransportHandling.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/shared/toolNameValidation.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/shared/wrapHandler.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/types/guards.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/types/specTypeSchema.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/util/standardSchema.zodFallback.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/util/zodCompat.test.ts",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/core/test/validators/validators.test.ts",
+      "line": 10,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "api/path-join-dirname",
+      "file": "packages/core/test/validators/validators.test.ts",
+      "line": 619,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dans un ESM Bun, path.join(import.meta.dir, ...) évite __dirname"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/middleware/express/test/auth/resourceServer.test.ts",
+      "line": 6,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/middleware/express/test/express.test.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/middleware/hono/test/hono.test.ts",
+      "line": 3,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "packages/middleware/node/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'tsx' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/middleware/node/test/streamableHttp.test.ts",
+      "line": 19,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "pkg/redundant-dep",
+      "file": "packages/server/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "dépendance 'tsx' redondante avec Bun (voir Bun.file / Bun.env / fetch global / bun:sqlite / bun test)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/server/test/server/barrelClean.test.ts",
+      "line": 6,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "api/fileURLToPath",
+      "file": "packages/server/test/server/barrelClean.test.ts",
+      "line": 8,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.fileURLToPath() est équivalent (ou utiliser import.meta.dir/path)"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/server/test/server/completable.test.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "packages/server/test/server/mcp.compat.test.ts",
+      "line": 3,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "lock/rival",
+      "file": "pnpm-lock.yaml",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "lockfile concurrent 'pnpm-lock.yaml' présent — exécuter 'bun install' puis supprimer ce fichier"
+    },
+    {
+      "rule_id": "workspace/pnpm-yaml",
+      "file": "pnpm-workspace.yaml",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "pnpm-workspace.yaml présent (4 patterns) — Bun lit \"workspaces\" dans le package.json racine. Migrer et supprimer ce fichier."
+    },
+    {
+      "rule_id": "workspace/only-built-deps",
+      "file": "pnpm-workspace.yaml",
+      "line": 1,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "onlyBuiltDependencies (2) → transférer vers \"trustedDependencies\" dans le package.json racine"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "scripts/fetch-spec-types.ts",
+      "line": 4,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'prettier' par @biomejs/biome — Biome remplace Prettier (formatter intégré au linter)"
+    },
+    {
+      "rule_id": "api/fileURLToPath",
+      "file": "scripts/fetch-spec-types.ts",
+      "line": 6,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.fileURLToPath() est équivalent (ou utiliser import.meta.dir/path)"
+    },
+    {
+      "rule_id": "api/fileURLToPath",
+      "file": "scripts/sync-snippets.ts",
+      "line": 53,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.fileURLToPath() est équivalent (ou utiliser import.meta.dir/path)"
+    },
+    {
+      "rule_id": "pkg/package-manager",
+      "file": "test/conformance/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "packageManager='pnpm@10.24.0' — remplacer par 'bun@<version>' ou supprimer"
+    },
+    {
+      "rule_id": "pkg/engines-pm",
+      "file": "test/conformance/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "engines.{npm,pnpm,yarn} est superflu avec Bun — utiliser 'engines.bun'"
+    },
+    {
+      "rule_id": "pkg/package-manager",
+      "file": "test/helpers/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "packageManager='pnpm@10.24.0' — remplacer par 'bun@<version>' ou supprimer"
+    },
+    {
+      "rule_id": "pkg/engines-pm",
+      "file": "test/helpers/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "engines.{npm,pnpm,yarn} est superflu avec Bun — utiliser 'engines.bun'"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/helpers/src/helpers/http.ts",
+      "line": 5,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/helpers/src/helpers/oauth.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "pkg/package-manager",
+      "file": "test/integration/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "packageManager='pnpm@10.24.0' — remplacer par 'bun@<version>' ou supprimer"
+    },
+    {
+      "rule_id": "pkg/engines-pm",
+      "file": "test/integration/package.json",
+      "line": 1,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "engines.{npm,pnpm,yarn} est superflu avec Bun — utiliser 'engines.bun'"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/integration/test/experimental/tasks/task.test.ts",
+      "line": 3,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/integration/test/experimental/tasks/taskListing.test.ts",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/integration/test/issues/test_1342OauthErrorHttp200.test.ts",
+      "line": 11,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/integration/test/server/cloudflareWorkers.test.ts",
+      "line": 15,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "api/child-process-spawn",
+      "file": "test/integration/test/server/cloudflareWorkers.test.ts",
+      "line": 88,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "Bun.spawn offre une API plus ergonomique (streams Web, ipc, preload)"
+    },
+    {
+      "rule_id": "api/execSync",
+      "file": "test/integration/test/server/cloudflareWorkers.test.ts",
+      "line": 33,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "utiliser le shell Bun ($`cmd`) ou Bun.spawnSync() à la place de execSync"
+    },
+    {
+      "rule_id": "api/execSync",
+      "file": "test/integration/test/server/cloudflareWorkers.test.ts",
+      "line": 85,
+      "reason": "pas de réécriture mécanique disponible",
+      "suggestion": "utiliser le shell Bun ($`cmd`) ou Bun.spawnSync() à la place de execSync"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/integration/test/server/mcp.test.ts",
+      "line": 12,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "test/integration/test/standardSchema.test.ts",
+      "line": 13,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'vitest' par bun:test — bun:test offre les mêmes fonctionnalités que vitest"
+    },
+    {
+      "rule_id": "imports/bun-native",
+      "file": "typedoc.config.mjs",
+      "line": 2,
+      "reason": "réécriture non appliquée (mode != aggressive)",
+      "suggestion": "remplacer 'fast-glob' par bun (Glob) — import { Glob } from 'bun' est natif (pas bun:glob)"
+    }
+  ],
+  "migrated_files": [
+    ".github/workflows/conformance.yml",
+    ".github/workflows/deploy-docs.yml",
+    ".github/workflows/main.yml",
+    ".github/workflows/publish.yml",
+    ".github/workflows/release.yml",
+    ".github/workflows/update-spec-types.yml",
+    "common/eslint-config/eslint.config.mjs",
+    "examples/client-quickstart/src/index.ts",
+    "examples/client/package.json",
+    "examples/client/src/dualModeAuth.ts",
+    "examples/client/src/elicitationUrlExample.ts",
+    "examples/client/src/multipleClientsParallel.ts",
+    "examples/client/src/parallelToolCallsClient.ts",
+    "examples/client/src/simpleClientCredentials.ts",
+    "examples/client/src/simpleOAuthClient.ts",
+    "examples/client/src/simpleTokenProvider.ts",
+    "examples/client/src/streamableHttpWithSseFallbackClient.ts",
+    "examples/server/package.json",
+    "examples/server/src/arktypeExample.ts",
+    "examples/server/src/jsonResponseStreamableHttp.ts",
+    "examples/server/src/mcpServerOutputSchema.ts",
+    "examples/server/src/simpleStatelessStreamableHttp.ts",
+    "examples/server/src/simpleStreamableHttp.ts",
+    "examples/server/src/ssePollingExample.ts",
+    "examples/server/src/valibotExample.ts",
+    "examples/shared/package.json",
+    "examples/shared/src/auth.ts",
+    "examples/shared/test/demoInMemoryOAuthProvider.test.ts",
+    "package.json",
+    "packages/client/package.json",
+    "packages/client/test/client/auth.test.ts",
+    "packages/client/test/client/authExtensions.test.ts",
+    "packages/client/test/client/barrelClean.test.ts",
+    "packages/client/test/client/crossAppAccess.test.ts",
+    "packages/client/test/client/crossSpawn.test.ts",
+    "packages/client/test/client/middleware.test.ts",
+    "packages/client/test/client/sse.test.ts",
+    "packages/client/test/client/streamableHttp.test.ts",
+    "packages/client/test/client/tokenProvider.test.ts",
+    "packages/core/package.json",
+    "packages/core/src/shared/taskManager.ts",
+    "packages/core/test/experimental/inMemory.test.ts",
+    "packages/core/test/shared/customMethods.test.ts",
+    "packages/core/test/shared/protocol.test.ts",
+    "packages/core/test/shared/protocolTransportHandling.test.ts",
+    "packages/core/test/shared/toolNameValidation.test.ts",
+    "packages/core/test/shared/wrapHandler.test.ts",
+    "packages/core/test/spec.types.test.ts",
+    "packages/core/test/types/guards.test.ts",
+    "packages/core/test/types/specTypeSchema.test.ts",
+    "packages/core/test/util/standardSchema.zodFallback.test.ts",
+    "packages/core/test/util/zodCompat.test.ts",
+    "packages/core/test/validators/validators.test.ts",
+    "packages/middleware/express/package.json",
+    "packages/middleware/express/test/auth/resourceServer.test.ts",
+    "packages/middleware/express/test/express.test.ts",
+    "packages/middleware/fastify/package.json",
+    "packages/middleware/hono/package.json",
+    "packages/middleware/hono/test/hono.test.ts",
+    "packages/middleware/node/package.json",
+    "packages/middleware/node/test/streamableHttp.test.ts",
+    "packages/server/package.json",
+    "packages/server/src/server/mcp.ts",
+    "packages/server/test/server/barrelClean.test.ts",
+    "packages/server/test/server/completable.test.ts",
+    "packages/server/test/server/mcp.compat.test.ts",
+    "scripts/fetch-spec-types.ts",
+    "scripts/generate-multidoc.sh",
+    "scripts/sync-snippets.ts",
+    "test/conformance/package.json",
+    "test/conformance/scripts/run-server-conformance.sh",
+    "test/conformance/src/authTestServer.ts",
+    "test/conformance/src/everythingClient.ts",
+    "test/conformance/src/everythingServer.ts",
+    "test/helpers/package.json",
+    "test/helpers/src/helpers/http.ts",
+    "test/helpers/src/helpers/oauth.ts",
+    "test/helpers/src/helpers/tasks.ts",
+    "test/integration/package.json",
+    "test/integration/test/client/client.test.ts",
+    "test/integration/test/experimental/tasks/task.test.ts",
+    "test/integration/test/experimental/tasks/taskListing.test.ts",
+    "test/integration/test/issues/test_1342OauthErrorHttp200.test.ts",
+    "test/integration/test/processCleanup.test.ts",
+    "test/integration/test/server.test.ts",
+    "test/integration/test/server/cloudflareWorkers.test.ts",
+    "test/integration/test/server/mcp.test.ts",
+    "test/integration/test/standardSchema.test.ts",
+    "test/integration/test/taskLifecycle.test.ts",
+    "test/integration/test/taskResumability.test.ts"
+  ]
+}

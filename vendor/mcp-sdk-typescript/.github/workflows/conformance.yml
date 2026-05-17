@@ -1,0 +1,49 @@
+name: Conformance Tests
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    group: conformance-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    client-conformance:
+        runs-on: ubuntu-latest
+        continue-on-error: true
+        steps:
+            - uses: actions/checkout@v6
+            - name: Install pnpm
+              uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+              with:
+                  run_install: false
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+                  cache-dependency-path: pnpm-lock.yaml
+            - run: bun install
+            - run: bun run build:all
+            - run: bun run test:conformance:client:all
+
+    server-conformance:
+        runs-on: ubuntu-latest
+        continue-on-error: true
+        steps:
+            - uses: actions/checkout@v6
+            - name: Install pnpm
+              uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+              with:
+                  run_install: false
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+                  cache-dependency-path: pnpm-lock.yaml
+            - run: bun install
+            - run: bun run build:all
+            - run: bun run test:conformance:server

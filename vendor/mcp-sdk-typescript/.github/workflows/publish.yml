@@ -1,0 +1,42 @@
+name: Publish Any Commit
+
+permissions:
+    contents: read
+
+on:
+    pull_request:
+    push:
+        branches:
+            - '**'
+        tags:
+            - '!**'
+
+jobs:
+    pkg-publish:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+              with:
+                  run_install: false
+
+            - name: Setup Node.js
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+                  cache-dependency-path: pnpm-lock.yaml
+                  registry-url: 'https://registry.npmjs.org'
+
+            - name: Install dependencies
+              run: bun install
+
+            - name: Build packages
+              run: bun run build:all
+
+            - name: Publish preview packages
+              run:
+                  bunx pkg-pr-new publish --packageManager=npm --pnpm './packages/server' './packages/client'
+                  './packages/middleware/express' './packages/middleware/fastify' './packages/middleware/hono' './packages/middleware/node'

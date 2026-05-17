@@ -1,0 +1,80 @@
+name: Release
+
+on:
+    push:
+        branches:
+            - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+    version:
+        name: Version
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+        outputs:
+            hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+              with:
+                  run_install: false
+
+            - name: Setup Node.js
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+                  cache-dependency-path: pnpm-lock.yaml
+
+            - name: Install dependencies
+              run: bun install
+
+            - name: Create or update Version Packages PR
+              id: changesets
+              uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+
+    publish:
+        name: Publish
+        needs: version
+        if: needs.version.outputs.hasChangesets == 'false'
+        runs-on: ubuntu-latest
+        environment: release
+        permissions:
+            contents: write
+            id-token: write
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+              with:
+                  run_install: false
+
+            - name: Setup Node.js
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+                  cache-dependency-path: pnpm-lock.yaml
+
+            - name: Install dependencies
+              run: bun install
+
+            # pnpm@10 delegates `pnpm publish` to the npm CLI; OIDC trusted publishing
+            # requires npm >=11.5.1, which Node 24's bundled npm only satisfies from
+            # ~24.6 onward. Install a recent-enough npm so we don't depend on which Node patch resolves.
+            - name: Ensure npm CLI supports OIDC trusted publishing
+              run: bun install npm@11.5.1
+
+            - name: Publish to npm
+              uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1
+              with:
+                  publish: bun run ci:publish
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+                  NPM_CONFIG_PROVENANCE: 'true'
