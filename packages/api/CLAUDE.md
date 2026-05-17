@@ -1,34 +1,30 @@
-# CLAUDE.md
+# CLAUDE.md — packages/api
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Contexte identique à `@GEMINI.md`. Tout ce qui suit s'ajoute / précise pour Claude.
 
-Package `api` (privé, workspace de `@aphrody-code/bunlight`) — serveur HTTP qui expose la lib Bunlight (browser automation) via **Elysia** (REST + Swagger) et **Type-GraphQL** (GraphQL Yoga), persistance **Drizzle ORM / libsql** SQLite.
+## Rappel critique
 
-Le `CLAUDE.md` parent (`packages/bunlight/CLAUDE.md`) couvre la mission Bunlight, les 5 profiles et les règles code (Bun-native, pas d'emoji). Ne pas dupliquer ici.
+- **Entry point réel** : `src/index.ts` (Elysia `.listen(PORT ?? 3000)`).
+  `index.ts` à la racine du package est un stub `bun init` — NE PAS lancer.
+- **`reflect-metadata`** importé en tête (`src/index.ts`, `ScrapeResolver.ts`) :
+  obligatoire avant tout décorateur Type-GraphQL.
+- **`ScrapeResolver` instancie `new BunlightDB()` au chargement du module** →
+  SQLite créé dès l'import, pas au premier appel.
+- **`generate:types`** nécessite le serveur up sur `:3000` (fetch `/swagger/json`).
+- **`tsconfig.json`** : `strict: false` ici (exception). Typer proprement quand même.
 
-## Commandes
+## Commands
 
-| Commande | Usage |
-|---|---|
-| `bun run api:dev` | Depuis la racine `packages/bunlight` — `bun --watch packages/api/src/index.ts`. |
-| `bun run dev` / `start` | Depuis `packages/api/` — watch / prod. |
-| `bun run typecheck` | `tsc --noEmit` (le script `build` fait la même chose, pas de bundle). |
-| `bun run db:push` | `drizzle-kit push` — sync direct du schéma vers `data/bunlight.sqlite`. |
-| `bun run generate:types` | `openapi-typescript` depuis `http://localhost:3000/swagger/json` → `src/types.ts`. **Le serveur doit tourner d'abord.** |
+```bash
+bun run dev          # bun --watch src/index.ts
+bun run start        # prod
+bun run build        # tsc --noEmit
+bun run typecheck    # idem
+bun run db:push      # drizzle-kit push -> data/bunlight.sqlite
+bun run generate:types  # openapi-typescript depuis :3000/swagger/json (serveur up)
+```
 
-## Architecture
+## Couplage volontaire
 
-- **Entrée réelle = `src/index.ts`** (Elysia `.listen(PORT ?? 3000)`). Le fichier `index.ts` à la racine du package est un stub `bun init` (`Hello via Bun!`) — ne pas l'utiliser, ne pas le lancer.
-- Routes : `GET /` (info), `GET /health`, `POST /api/v1/scrape` (`{ url, profile? }`), `/swagger` (doc), `/graphql` (Yoga).
-- `src/graphql/resolvers/ScrapeResolver.ts` — resolver Type-GraphQL (`recentScrapes`, `health`, `scrape`). Le schéma est construit à chaud via `buildSchema({ resolvers: [...] })` dans `src/index.ts`.
-- `src/db/BunlightDB.ts` — wrapper Drizzle/libsql. Crée le dossier `data/` au besoin, ouvre `file:<path>`. Path résolu via arg → `BUNLIGHT_DB_PATH` → `data/bunlight.sqlite`.
-- `src/db/schema.ts` — tables `scrapes` et `cookieJars` (drizzle sqlite-core).
-- La lib Browser est importée en **chemin relatif profond** vers le src racine de bunlight (`../../../src/api/browser.ts` depuis `src/index.ts`). `tsconfig.json` `include` ajoute `../../src` pour le type-check. Ce couplage est volontaire — le package api n'a pas de dépendance npm sur bunlight.
-
-## Pièges
-
-- **`index.ts` racine = stub `bun init`** : entrée réelle dans `src/index.ts`. `README.md` est aussi le README générique `bun init` — stale.
-- **`reflect-metadata`** : importé en tête de `src/index.ts` et `ScrapeResolver.ts`. Obligatoire avant tout décorateur Type-GraphQL (`experimentalDecorators` + `emitDecoratorMetadata` dans `tsconfig.json`).
-- **`ScrapeResolver` instancie `new BunlightDB()` au chargement du module** → le fichier SQLite est créé dès l'import du resolver, pas au premier appel.
-- **`generate:types`** nécessite le serveur up sur `:3000` — sinon `openapi-typescript` échoue à fetch `/swagger/json`.
-- `tsconfig.json` : `strict: false` ici (contrairement au reste de bunlight qui est strict). Ne pas s'appuyer sur ça pour du nouveau code — typer proprement.
+Browser lib importée en relatif profond : `../../../src/api/browser.ts`
+(pas de dépendance npm sur bunlight). `tsconfig.json` `include` ajoute `../../src`.
