@@ -191,7 +191,8 @@ function inputRole(type: string): string {
  */
 function deriveRole(node: ParsedNodeLike): string {
 	const explicitRole = node.attributes["role"];
-	if (explicitRole && explicitRole.trim()) return explicitRole.trim().split(/\s+/)[0];
+	if (explicitRole && explicitRole.trim())
+		return explicitRole.trim().split(/\s+/)[0] ?? "";
 
 	const tag = node.tagName.toLowerCase();
 
@@ -207,7 +208,7 @@ function deriveRole(node: ParsedNodeLike): string {
  */
 function headingLevel(tagName: string): number {
 	const m = /^h([1-6])$/.exec(tagName.toLowerCase());
-	return m ? parseInt(m[1], 10) : 0;
+	return m ? parseInt(m[1] ?? "0", 10) : 0;
 }
 
 /**
@@ -222,10 +223,14 @@ function isIgnored(node: ParsedNodeLike): boolean {
 
 	// Non-semantic / metadata tags that carry no AX meaning.
 	const tag = node.tagName.toLowerCase();
-	if (["script", "style", "meta", "link", "noscript", "template"].includes(tag)) return true;
+	if (["script", "style", "meta", "link", "noscript", "template"].includes(tag))
+		return true;
 
 	// hidden input elements: the element itself is ignored.
-	if (tag === "input" && (node.attributes["type"] ?? "text").toLowerCase() === "hidden") {
+	if (
+		tag === "input" &&
+		(node.attributes["type"] ?? "text").toLowerCase() === "hidden"
+	) {
 		// Only ignore the input node if there is no aria-label override.
 		if (!node.attributes["aria-label"]) return true;
 	}
@@ -294,7 +299,8 @@ function computeName(node: ParsedNodeLike, allNodes: ParsedNodeLike[]): string {
 	const nodeId = node.attributes["id"];
 	if (nodeId) {
 		const label = allNodes.find(
-			(n) => n.tagName.toLowerCase() === "label" && n.attributes["for"] === nodeId,
+			(n) =>
+				n.tagName.toLowerCase() === "label" && n.attributes["for"] === nodeId,
 		);
 		if (label) {
 			const t = normText(label.textContent);
@@ -353,30 +359,49 @@ function buildAXNode(
 	// level for headings.
 	const level = headingLevel(node.tagName);
 	if (level > 0) {
-		properties.push({ name: "level", value: { type: "integer", value: level } });
+		properties.push({
+			name: "level",
+			value: { type: "integer", value: level },
+		});
 	}
 
 	// checked state for checkboxes / radios.
 	if (role === "checkbox" || role === "radio") {
 		const ariaChecked = node.attributes["aria-checked"];
 		if (ariaChecked === "mixed") {
-			properties.push({ name: "checked", value: { type: "tristate", value: "mixed" } });
+			properties.push({
+				name: "checked",
+				value: { type: "tristate", value: "mixed" },
+			});
 		} else {
 			const checked = "checked" in node.attributes || ariaChecked === "true";
-			properties.push({ name: "checked", value: { type: "boolean", value: checked } });
+			properties.push({
+				name: "checked",
+				value: { type: "boolean", value: checked },
+			});
 		}
 	}
 
 	// disabled state.
-	const disabled = "disabled" in node.attributes || node.attributes["aria-disabled"] === "true";
+	const disabled =
+		"disabled" in node.attributes ||
+		node.attributes["aria-disabled"] === "true";
 	if (disabled) {
-		properties.push({ name: "disabled", value: { type: "boolean", value: true } });
+		properties.push({
+			name: "disabled",
+			value: { type: "boolean", value: true },
+		});
 	}
 
 	// required state.
-	const required = "required" in node.attributes || node.attributes["aria-required"] === "true";
+	const required =
+		"required" in node.attributes ||
+		node.attributes["aria-required"] === "true";
 	if (required) {
-		properties.push({ name: "required", value: { type: "boolean", value: true } });
+		properties.push({
+			name: "required",
+			value: { type: "boolean", value: true },
+		});
 	}
 
 	// expanded state for disclosure widgets.
@@ -390,19 +415,28 @@ function buildAXNode(
 
 	// focused (aria-activedescendant indirectly, but we mark aria-focused).
 	if (node.attributes["autofocus"] !== undefined) {
-		properties.push({ name: "focused", value: { type: "boolean", value: true } });
+		properties.push({
+			name: "focused",
+			value: { type: "boolean", value: true },
+		});
 	}
 
 	// hidden (aria-hidden attribute).
 	if (node.attributes["aria-hidden"] === "true") {
-		properties.push({ name: "hidden", value: { type: "boolean", value: true } });
+		properties.push({
+			name: "hidden",
+			value: { type: "boolean", value: true },
+		});
 	}
 
 	// selected (for option, tab, etc.).
 	if (node.attributes["aria-selected"] !== undefined) {
 		properties.push({
 			name: "selected",
-			value: { type: "boolean", value: node.attributes["aria-selected"] === "true" },
+			value: {
+				type: "boolean",
+				value: node.attributes["aria-selected"] === "true",
+			},
 		});
 	}
 
@@ -432,7 +466,9 @@ function buildAXNode(
 			reasons.push({ type: "string", value: "presentationalRole" });
 		}
 		const tag = node.tagName.toLowerCase();
-		if (["script", "style", "meta", "link", "noscript", "template"].includes(tag)) {
+		if (
+			["script", "style", "meta", "link", "noscript", "template"].includes(tag)
+		) {
 			reasons.push({ type: "string", value: "notRendered" });
 		}
 		if (reasons.length) axNode.ignoredReasons = reasons;
@@ -466,34 +502,60 @@ async function buildAXTree(
 	// Since allNodes are in document order, we can match them back to the tags.
 	const parentMap = new Map<number, number>(); // childId -> parentId
 	const stack: Array<{ nodeId: number; tagName: string }> = [];
-	
+
 	// We use a simplified tag scanner to match nodes in allNodes.
 	const TAG_RE = /<(\/?[a-zA-Z][a-zA-Z0-9-]*)/g;
 	let nodeIdx = 0;
 	let match: RegExpExecArray | null;
 
 	while ((match = TAG_RE.exec(doc.rawHtml)) !== null) {
-		const fullTag = match[1];
+		const fullTag = match[1] ?? "";
 		if (fullTag.startsWith("/")) {
 			// Closing tag - pop from stack if it matches.
 			const tagName = fullTag.slice(1).toLowerCase();
 			// Pop until we find the matching opening tag (handling unclosed tags gracefully).
-			while (stack.length > 0 && stack[stack.length - 1].tagName !== tagName) {
+			while (
+				stack.length > 0 &&
+				(stack[stack.length - 1]?.tagName ?? "") !== tagName
+			) {
 				stack.pop();
 			}
 			stack.pop();
 		} else {
 			// Opening tag.
 			const tagName = fullTag.toLowerCase();
-			const isSelfClosing = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].includes(tagName);
-			
+			const isSelfClosing = [
+				"area",
+				"base",
+				"br",
+				"col",
+				"embed",
+				"hr",
+				"img",
+				"input",
+				"link",
+				"meta",
+				"param",
+				"source",
+				"track",
+				"wbr",
+			].includes(tagName);
+
 			// Match this tag to the next node in allNodes.
 			// (querySelectorAll might skip some tags like <head> depending on implementation,
 			// but zigquery is usually consistent).
-			if (nodeIdx < allNodes.length && allNodes[nodeIdx].tagName.toLowerCase() === tagName) {
-				const currentNode = allNodes[nodeIdx];
+			const candidateNode = allNodes[nodeIdx];
+			if (
+				nodeIdx < allNodes.length &&
+				candidateNode !== undefined &&
+				candidateNode.tagName.toLowerCase() === tagName
+			) {
+				const currentNode = candidateNode;
 				if (stack.length > 0) {
-					parentMap.set(currentNode.nodeId, stack[stack.length - 1].nodeId);
+					parentMap.set(
+						currentNode.nodeId,
+						stack[stack.length - 1]?.nodeId ?? -1,
+					);
 				}
 				if (!isSelfClosing) {
 					stack.push({ nodeId: currentNode.nodeId, tagName });
@@ -510,19 +572,19 @@ async function buildAXTree(
 	let targetNodeIds: Set<number> | null = null;
 	if (scopeNodeId !== undefined) {
 		targetNodeIds = new Set<number>();
-		
+
 		// Find the scope node (handle ID stability).
 		let rootId = scopeNodeId;
-		if (!allNodes.some(n => n.nodeId === scopeNodeId)) {
+		if (!allNodes.some((n) => n.nodeId === scopeNodeId)) {
 			const scopeNode = doc.getNodeById(scopeNodeId);
 			if (scopeNode) {
-				const match = allNodes.find(n => n.outerHTML === scopeNode.outerHTML);
+				const match = allNodes.find((n) => n.outerHTML === scopeNode.outerHTML);
 				if (match) rootId = match.nodeId;
 			}
 		}
 
 		targetNodeIds.add(rootId);
-		
+
 		// Multi-pass to find all descendants.
 		let added = true;
 		while (added) {
@@ -537,11 +599,11 @@ async function buildAXTree(
 	}
 
 	// 3. Filter and build.
-	const filteredNodes = targetNodeIds 
-		? allNodes.filter(n => targetNodeIds!.has(n.nodeId))
+	const filteredNodes = targetNodeIds
+		? allNodes.filter((n) => targetNodeIds!.has(n.nodeId))
 		: allNodes;
-	
-	const filteredIds = new Set(filteredNodes.map(n => n.nodeId));
+
+	const filteredIds = new Set(filteredNodes.map((n) => n.nodeId));
 	const childrenMap = new Map<number, number[]>();
 	for (const [childId, parentId] of parentMap) {
 		if (filteredIds.has(childId) && filteredIds.has(parentId)) {
@@ -558,8 +620,13 @@ async function buildAXTree(
 	for (const node of filteredNodes) {
 		const axId = axIdMap.get(node.nodeId)!;
 		const parentId = parentMap.get(node.nodeId);
-		const parentAxId = (parentId !== undefined && filteredIds.has(parentId)) ? axIdMap.get(parentId) : undefined;
-		const childAxIds = (childrenMap.get(node.nodeId) ?? []).map(id => axIdMap.get(id)!).filter(Boolean);
+		const parentAxId =
+			parentId !== undefined && filteredIds.has(parentId)
+				? axIdMap.get(parentId)
+				: undefined;
+		const childAxIds = (childrenMap.get(node.nodeId) ?? [])
+			.map((id) => axIdMap.get(id)!)
+			.filter(Boolean);
 
 		axNodes.push(buildAXNode(node, axId, parentAxId, childAxIds, allNodes));
 	}
@@ -641,7 +708,12 @@ export function invalidateAXCache(sessionId: string): void {
 // Domain handler
 // ---------------------------------------------------------------------------
 
-export const AccessibilityHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const AccessibilityHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		// -------------------------------------------------------------------
 		// Accessibility.enable — no-op in static profile

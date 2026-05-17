@@ -23,7 +23,7 @@ Spawning heavy Chromium processes for simple scraping is a legacy pattern. Bunli
 - **🗺️ Google Ecosystem Atlas**: Native awareness of 5600+ Google domains with automated Smart Routing for Wiz, Angular, and Lit.
 - **🛡️ Invisible Stealth**: In-process CDP injection beats advanced WAFs (Cloudflare, reCAPTCHA Enterprise) by eliminating TCP-level fingerprinting.
 - **⚙️ MSVC 2026 Ready**: Native Windows binaries targeting x86-64-v3 (AVX2) with Static CRT linking.
-- **🤖 Native Gemini MCP Extension**: Ships with an embedded `@modelcontextprotocol/sdk` server. Surpasses Chrome DevTools MCP with Zero-Spawn native snapshotting, JS evaluation, massive subagent delegation (24/5656 concurrency), and native `bun:sqlite` memory.
+- **🤖 Native Gemini MCP Extension**: Ships with an embedded, **vendored and Bun-native** MCP SDK. Surpasses Chrome DevTools MCP with Zero-Spawn native snapshotting, JS evaluation, massive subagent delegation (24/5656 concurrency), and native `bun:sqlite` memory. No Node.js dependencies.
 
 ---
 
@@ -134,7 +134,7 @@ Measured on this hardware (Haswell 12c CPU-only):
 - Subsequent pages (Zig DOM hit) : <1 ms
 - **~300+ pages/min** sustained on a single (site, schema) pair
 
-Pulled from `vendor/gemma/sources/upstream` (DeepMind Gemma JAX lib) + `vendor/gemma/sources/llama.cpp` (built natively, AVX2 + OpenBLAS + flash-attention). See `vendor/gemma/CLAUDE.md` for hardware-tuned config.
+Pulled from `vendor/gemma/sources/upstream` (DeepMind Gemma JAX lib) + `vendor/gemma/sources/llama.cpp` (built natively, AVX2 + OpenBLAS + flash-attention). See `vendor/gemma/GEMINI.md` for hardware-tuned config.
 
 ---
 

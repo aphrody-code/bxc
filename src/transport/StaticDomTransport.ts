@@ -209,8 +209,8 @@ interface InternalDOMNode extends DOMNode {}
  */
 async function parseHTML(html: string): Promise<ParsedDocument> {
 	const doc = new ParsedDocument(html);
-    await doc.initialize();
-    return doc;
+	await doc.initialize();
+	return doc;
 }
 
 // ---------------------------------------------------------------------------
@@ -305,9 +305,9 @@ class ParsedDocument implements ParsedDocumentLike {
 			textContent: stripTags(html),
 			attributes: {},
 		});
-    }
+	}
 
-    async initialize() {
+	async initialize() {
 		if (isZigQueryAvailable()) {
 			try {
 				const doc = await zigParseHtml(this.rawHtml);
@@ -464,12 +464,12 @@ class ParsedDocument implements ParsedDocumentLike {
 			/<([a-zA-Z][a-zA-Z0-9-]*)(\s[^>]*)?>[\s\S]*?(?=<[a-zA-Z]|$)/g;
 		let m: RegExpExecArray | null;
 		while ((m = TAG_RE.exec(this.rawHtml)) !== null) {
-			const tagName = m[1].toLowerCase();
+			const tagName = (m[1] ?? "").toLowerCase();
 			const attrStr = m[2] ?? "";
 			const attrs = parseAttributes(attrStr);
 			const afterTag = this.rawHtml.slice(m.index + m[0].indexOf(">") + 1);
 			const textMatch = /^([^<]*)/.exec(afterTag);
-			const textContent = textMatch ? textMatch[1].trim() : "";
+			const textContent = textMatch ? (textMatch[1] ?? "").trim() : "";
 			const outerHTML = m[0].trimEnd();
 			const id = this.#allocId();
 			const node: ParsedNode = {
@@ -487,15 +487,16 @@ class ParsedDocument implements ParsedDocumentLike {
 
 	#matchesRegex(node: ParsedNode, selector: string): boolean {
 		const parts = selector.trim().split(/\s+/);
-		const simple = parts[parts.length - 1];
+		const simple = parts[parts.length - 1] ?? "";
 		const tagMatch = /^([a-zA-Z][a-zA-Z0-9-]*)/.exec(simple);
 		const idMatch = /#([a-zA-Z_-][^\s.#[:]*)/.exec(simple);
 		const classMatches = [...simple.matchAll(/\.([a-zA-Z_-][^\s.#[:\s]*)/g)];
-		if (tagMatch && node.tagName !== tagMatch[1].toLowerCase()) return false;
+		if (tagMatch && node.tagName !== (tagMatch[1] ?? "").toLowerCase())
+			return false;
 		if (idMatch && node.attributes["id"] !== idMatch[1]) return false;
 		for (const [, cls] of classMatches) {
 			const nodeClasses = (node.attributes["class"] ?? "").split(/\s+/);
-			if (!nodeClasses.includes(cls)) return false;
+			if (cls !== undefined && !nodeClasses.includes(cls)) return false;
 		}
 		return true;
 	}
@@ -957,9 +958,10 @@ class StaticDomHandler {
 			res.headers.forEach((value, key) => {
 				responseHeaders[key.toLowerCase()] = value;
 			});
-			const mimeType = (responseHeaders["content-type"] ?? "text/html")
-				.split(";")[0]
-				.trim();
+			const mimeType = (
+				(responseHeaders["content-type"] ?? "text/html").split(";")[0] ??
+				"text/html"
+			).trim();
 
 			// Update registry with response data
 			const req = this.#networkCtx.requestRegistry.get(requestId);

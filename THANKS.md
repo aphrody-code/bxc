@@ -65,17 +65,17 @@ License : Bunlight est publié sous **0BSD** (zero-clause BSD), la license la pl
 
 ---
 
-## Outillage Claude Code
+## Outillage Gemini CLI
 
-- **Anthropic** — Claude (Sonnet/Opus/Haiku), Claude Code CLI, Claude Agent SDK. https://anthropic.com
-- **Plugins Claude Code** utilisés dans ce projet : `superpowers`, `plugin-dev`, `mcp-server-dev`, `skill-creator`, `claude-code-setup`, `bun-agent`.
+- **Google** — Gemini CLI, Gemini Agent SDK.
+- **Extensions Gemini CLI** utilisées dans ce projet : `bunlight-native-mcp`.
 - **MCP** (Model Context Protocol) — pour le serveur `bunlight-mcp`.
 
 ---
 
 ## Agents qui ont travaillé sur Bunlight
 
-Les vagues d'agents Claude Code (cf. `~/bunmium/state.md` §4) ont écrit l'écrasante majorité du code et de la doc. Sans ordre particulier, merci à :
+Les vagues d'agents Gemini CLI (cf. `~/bunmium/state.md` §4) ont écrit l'écrasante majorité du code et de la doc. Sans ordre particulier, merci à :
 
 **Vague 1** — `lightpanda-fullmode-builder`, `bunlight-fork-architect`, `curl-impersonate-binder`, `stealth-stack-integrator`, `bench-and-showcase-builder`.
 

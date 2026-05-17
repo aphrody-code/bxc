@@ -21,6 +21,10 @@ jobs:
         run: bun run lint
       - name: Typecheck (TSC)
         run: bun run typecheck
+      - name: Lint Extension
+        run: cd packages/bunlight-extension && bun run lint
+      - name: Build Extension (smoke compile)
+        run: cd packages/bunlight-extension && bun run build
 
   test-linux:
     name: Test (Linux x64)
@@ -34,10 +38,12 @@ jobs:
           workspaces: rust-bridge
       - name: Build Rust Bridge
         run: cd rust-bridge && cargo build --release
-      - name: Run Tests
+      - name: Run Tests (Core)
         run: bun test
         env:
           BUNLIGHT_RUST_BRIDGE_LIB: ${{ github.workspace }}/rust-bridge/target/release/libbunlight_rust_bridge.so
+      - name: Run Tests (Extension)
+        run: cd packages/bunlight-extension && bun test
 
   test-windows:
     name: Test (Windows x64 MSVC)
@@ -57,7 +63,9 @@ jobs:
           cargo build --release --target x86_64-pc-windows-msvc
         env:
           RUSTFLAGS: "-C target-feature=+crt-static -C target-cpu=x86-64-v3"
-      - name: Run Tests
+      - name: Run Tests (Core)
         run: bun test
         env:
           BUNLIGHT_RUST_BRIDGE_LIB: ${{ github.workspace }}\rust-bridge\target\x86_64-pc-windows-msvc\release\bunlight_rust_bridge.dll
+      - name: Run Tests (Extension)
+        run: cd packages/bunlight-extension && bun test

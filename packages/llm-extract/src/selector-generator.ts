@@ -92,7 +92,7 @@ export async function generateSelectors(
 	return out;
 }
 
-const SELECTOR_HINT_RE = /^[#.\[]|^[a-zA-Z][a-zA-Z0-9-]*(?:[\s>+~.#:\[]|$)/;
+const SELECTOR_HINT_RE = /^[#.[]|^[a-zA-Z][a-zA-Z0-9-]*(?:[\s>+~.#:[]|$)/;
 function looksLikeSelector(s: string): boolean {
 	const trimmed = s.trim();
 	if (trimmed === "") return false;

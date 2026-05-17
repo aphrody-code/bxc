@@ -51,7 +51,7 @@ Expected:
 - Packed size under 15 MB.
 - Unpacked size under 30 MB.
 - Tarball includes `src/`, two runtime `.so` files, `bin/bunlight`, `README.md`, `LICENSE`, `scripts/postinstall.ts`.
-- Tarball does NOT include `cookies/`, `forks/`, `test/`, `benchmarks/`, `vendor/camoufox/`, `vendor/wappalyzergo/`, `dist/`, `.claude/`, or any `*.test.ts`.
+- Tarball does NOT include `cookies/`, `forks/`, `test/`, `benchmarks/`, `vendor/camoufox/`, `vendor/wappalyzergo/`, `dist/`, `.gemini/`, or any `*.test.ts`.
 
 Inspect the contents:
 

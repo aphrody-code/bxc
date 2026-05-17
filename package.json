@@ -5,14 +5,27 @@
 	"packageManager": "bun@1.3.14",
 	"type": "module",
 	"workspaces": [
-		"extensions/*",
-		"packages/*"
+		"packages/*",
+		"vendor/mcp-sdk-typescript",
+		"vendor/mcp-sdk-typescript/packages/*",
+		"vendor/mcp-sdk-typescript/packages/middleware/*",
+		"vendor/mcp-sdk-typescript/common/*",
+		"vendor/mcp-sdk-typescript/test/*",
+		"vendor/mcp-sdk-typescript/examples/*"
 	],
 	"main": "./src/api/browser.ts",
 	"types": "./src/api/browser.ts",
 	"bin": {
 		"bunlight": "./bin/bunlight"
 	},
+	"files": [
+		"src/",
+		"bin/",
+		"types/",
+		"patches/",
+		"LICENSE",
+		"README.md"
+	],
 	"exports": {
 		".": "./src/api/browser.ts",
 		"./browser": "./src/api/browser.ts",
@@ -33,7 +46,7 @@
 		"test:rust": "bun test test/rust-bridge.test.ts",
 		"lint": "oxlint src test examples scripts",
 		"lint:fix": "oxlint --fix src test examples scripts",
-		"format": "bunx biome format --write .",
+		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
 		"clean": "bun scripts/cleanup.ts",
 		"bench": "bun benchmarks/run-all.ts"
@@ -42,15 +55,25 @@
 		"bun": ">=1.3.14"
 	},
 	"peerDependencies": {
-		"bun": ">=1.3.0"
+		"bun": "^1.3.14"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "latest",
-		"@types/bun": "latest",
-		"oxlint": "latest",
-		"typescript": "latest"
+		"@babel/core": "^7.29.0",
+		"@biomejs/biome": "^2.4.15",
+		"@playwright/test": "^1.60.0",
+		"@types/babel__core": "^7.20.5",
+		"@types/bun": "^1.3.14",
+		"@types/jsdom": "^28.0.3",
+		"babel-plugin-react-compiler": "^1.0.0",
+		"cheerio": "^1.2.0",
+		"jsdom": "^29.1.1",
+		"oxlint": "^1.65.0",
+		"patchright": "^1.59.4",
+		"playwright": "^1.60.0",
+		"puppeteer-core": "^25.0.2",
+		"typescript": "^6.0.3"
 	},
 	"dependencies": {
-		"zod": "^3.23.0"
+		"zod": "^4.4.3"
 	}
 }

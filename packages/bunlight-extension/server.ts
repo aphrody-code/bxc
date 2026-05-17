@@ -45,7 +45,7 @@ server.registerTool(
 			action: z.enum(["get", "set"]),
 			key: z.string(),
 			value: z.string().optional(),
-		}).shape,
+		}),
 	},
 	async (args) => {
 		if (args.action === "set" && args.value) {
@@ -91,7 +91,7 @@ server.registerTool(
 		inputSchema: z.object({
 			targetUrl: z.string(),
 			prompt: z.string().default("Describe what is in this image or webpage."),
-		}).shape,
+		}),
 	},
 	async (args) => {
 		// Mocked for architectural demonstration.
@@ -120,7 +120,7 @@ server.registerTool(
 		inputSchema: z.object({
 			urls: z.array(z.string()),
 			concurrency: z.number().default(24),
-		}).shape,
+		}),
 	},
 	async (args) => {
 		// Native offloading to Bunlight's pool
@@ -144,7 +144,7 @@ server.registerTool(
 	{
 		description:
 			"Scans the extension directories to auto-detect pre-built skills and tools.",
-		inputSchema: z.object({}).shape,
+		inputSchema: z.object({}),
 	},
 	async () => {
 		try {
@@ -191,7 +191,7 @@ server.registerTool(
 				.default(false)
 				.describe("Include full a11y tree information."),
 			targetUrl: z.string().describe("The URL of the target page to snapshot."),
-		}).shape,
+		}),
 	},
 	async (args) => {
 		return {
@@ -220,7 +220,7 @@ server.registerTool(
 				.string()
 				.optional()
 				.describe("The URL context to evaluate against."),
-		}).shape,
+		}),
 	},
 	async (args) => {
 		return {
@@ -246,7 +246,7 @@ server.registerTool(
 		inputSchema: z.object({
 			type: z.enum(["console", "network", "all"]).default("all"),
 			limit: z.number().default(100),
-		}).shape,
+		}),
 	},
 	async (args) => {
 		return {

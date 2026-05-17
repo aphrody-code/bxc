@@ -58,6 +58,17 @@ const page = await browser.newPage();                  await page.goto("https://
 
 ---
 
+## 🛠️ Vendored MCP SDK (Native Optimization)
+
+Since the official `@modelcontextprotocol/sdk` relies on Node-specific patterns (eventsource, cross-spawn) and pnpm-specific features (catalogs) that cause instability in Bun, we have **forked and migrated** the SDK into the monorepo.
+
+- **Location**: `vendor/mcp-sdk-typescript`
+- **Migration**: Applied `n2b --migrate` to strip Node dependencies and use Bun natives.
+- **Integration**: Linked as a root workspace member to enable zero-copy dependency resolution.
+- **Benefit**: Zero-Spawn MCP server with sub-millisecond CDP dispatch and native `bun:sqlite` memory consolidation.
+
+---
+
 ## 📂 Structure du repo
 
 ```
@@ -130,7 +141,7 @@ bunlight/
 │
 ├── examples/
 │   ├── 01-hello-browser.ts         # le hello world du bunlight
-│   ├── 02-ai-agent.ts              # agent AI qui scrape + résume avec Claude
+│   ├── 02-ai-agent.ts              # agent AI qui scrape + résume avec Gemini
 │   ├── 03-bun-serve-with-browser.ts # HTTP server qui rend des pages in-process
 │   └── 04-standalone-binary.ts     # bun build --compile → 1 seul exe
 │
@@ -238,6 +249,7 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 - [x] Audit Bun (builtin module pattern, vendor static lib, classes.ts pipeline)
 - [x] Audit V8 vs JSC coexistence (verdict : process séparé)
 - [x] Bootstrap `bunlight/` dir avec arbo cible
+- [x] Fork & Migrate MCP SDK to Bun-native (`vendor/mcp-sdk-typescript`)
 - [ ] Submodule `vendor/lightpanda/` (clone shallow de `lightpanda-io/browser`)
 - [ ] Pin du commit Bun dans `vendor/bun.commit`
 

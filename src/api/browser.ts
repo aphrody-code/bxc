@@ -231,7 +231,12 @@ export interface PDFOptions {
 	format?: string;
 	width?: string | number;
 	height?: string | number;
-	margin?: { top?: string | number; right?: string | number; bottom?: string | number; left?: string | number };
+	margin?: {
+		top?: string | number;
+		right?: string | number;
+		bottom?: string | number;
+		left?: string | number;
+	};
 	preferCSSPageSize?: boolean;
 	omitBackground?: boolean;
 	timeout?: number;
@@ -444,7 +449,9 @@ export class Page implements AnyPage {
 		// In static mode the transport resolves to the final URL
 		return {
 			url,
-			status: result.status ?? (url.startsWith("data:") || url === "about:blank" ? 0 : 200),
+			status:
+				result.status ??
+				(url.startsWith("data:") || url === "about:blank" ? 0 : 200),
 			statusText: result.status === 200 ? "OK" : "Error",
 			ok: result.status ? result.status >= 200 && result.status < 300 : true,
 		};
@@ -644,7 +651,9 @@ export class Page implements AnyPage {
 
 	async pdf(_options?: PDFOptions): Promise<Uint8Array> {
 		this.#assertOpen();
-		throw new Error("Page.pdf() is not fully implemented in static profile. Use fast profile for PDF.");
+		throw new Error(
+			"Page.pdf() is not fully implemented in static profile. Use fast profile for PDF.",
+		);
 	}
 
 	/**
@@ -735,7 +744,9 @@ export class Page implements AnyPage {
 			this.#routes.length = 0;
 		} else {
 			for (let i = this.#routes.length - 1; i >= 0; i--) {
-				if (this.#routes[i].pattern === pattern) this.#routes.splice(i, 1);
+				const route = this.#routes[i];
+				if (route !== undefined && route.pattern === pattern)
+					this.#routes.splice(i, 1);
 			}
 		}
 		if (this.#routes.length === 0 && this.#interceptionEnabled) {
@@ -786,8 +797,8 @@ export class Page implements AnyPage {
 		})) as {
 			model: { content: number[] };
 		};
-		const x = (model.content[0] + model.content[2]) / 2;
-		const y = (model.content[1] + model.content[5]) / 2;
+		const x = ((model.content[0] ?? 0) + (model.content[2] ?? 0)) / 2;
+		const y = ((model.content[1] ?? 0) + (model.content[5] ?? 0)) / 2;
 
 		await this._send("Input.dispatchMouseEvent", {
 			type: "mousePressed",
@@ -1014,7 +1025,7 @@ export class Page implements AnyPage {
 				};
 				const attrs = node.attributes ?? [];
 				for (let i = 0; i < attrs.length - 1; i += 2) {
-					if (attrs[i] === name) return attrs[i + 1];
+					if (attrs[i] === name) return attrs[i + 1] ?? null;
 				}
 				return null;
 			},
@@ -1040,7 +1051,7 @@ function matchesPattern(url: string, pattern: string | RegExp): boolean {
 function globToRegExp(glob: string): RegExp {
 	let out = "^";
 	for (let i = 0; i < glob.length; i++) {
-		const c = glob[i];
+		const c = glob[i] ?? "";
 		if (c === "*") {
 			if (glob[i + 1] === "*") {
 				out += ".*";
@@ -1190,7 +1201,7 @@ export class HttpPage implements AnyPage {
 	async title(): Promise<string> {
 		this.#assertOpen();
 		const match = /<title[^>]*>([^<]*)<\/title>/i.exec(this.#lastBody);
-		return match ? match[1].trim() : "";
+		return match ? (match[1] ?? "").trim() : "";
 	}
 
 	/** Returns the current URL (after redirects). */
@@ -1199,7 +1210,7 @@ export class HttpPage implements AnyPage {
 	}
 
 	async setContent(_html: string, _opts?: GotoOptions): Promise<void> {
-		throw new Error('HttpPage does not support setContent()');
+		throw new Error("HttpPage does not support setContent()");
 	}
 
 	async addCookies(_cookies: any[]): Promise<void> {}
@@ -1240,19 +1251,24 @@ export class HttpPage implements AnyPage {
 	}
 
 	async screenshot(_options?: ScreenshotOptions): Promise<Uint8Array> {
-		throw new Error('HttpPage does not support screenshot() — use profile "fast"');
+		throw new Error(
+			'HttpPage does not support screenshot() — use profile "fast"',
+		);
 	}
 
 	async pdf(_options?: PDFOptions): Promise<Uint8Array> {
 		throw new Error('HttpPage does not support pdf() — use profile "fast"');
 	}
 
-	async aiExtract(_instruction: string): Promise<{ data: Record<string, string | string[]>; selectors: Record<string, string> }> {
-		throw new Error('HttpPage does not support aiExtract()');
+	async aiExtract(_instruction: string): Promise<{
+		data: Record<string, string | string[]>;
+		selectors: Record<string, string>;
+	}> {
+		throw new Error("HttpPage does not support aiExtract()");
 	}
 
 	async aiAct(_instruction: string): Promise<void> {
-		throw new Error('HttpPage does not support aiAct()');
+		throw new Error("HttpPage does not support aiAct()");
 	}
 
 	/**
@@ -1435,7 +1451,7 @@ class BrowserSingleton {
 				} finally {
 					const transport = this.#fastTransports.get(page) as any;
 					this.#fastTransports.delete(page);
-					if (transport && typeof transport.closeProcess === 'function') {
+					if (transport && typeof transport.closeProcess === "function") {
 						await transport.closeProcess().catch(() => undefined);
 					}
 				}

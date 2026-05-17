@@ -16,13 +16,13 @@
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
 		"test": "bun test",
-		"lint": "bunx oxlint src test benchmarks",
+		"lint": "oxlint src test benchmarks",
 		"bench": "bun benchmarks/extract.bench.ts"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "^1.3.14"
 	},
 	"peerDependencies": {
-		"zod": "^4"
+		"zod": "^4.4.3"
 	}
 }

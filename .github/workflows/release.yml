@@ -22,12 +22,15 @@ jobs:
           - os: ubuntu-latest
             target: linux-x64
             artifact_name: bunlight-linux-x64
+            bun_target: bun-linux-x64
           - os: windows-latest
             target: windows-x64
             artifact_name: bunlight-windows-x64
+            bun_target: bun-windows-x64
           - os: macos-latest
             target: macos-arm64
             artifact_name: bunlight-macos-arm64
+            bun_target: bun-darwin-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -54,13 +57,15 @@ jobs:
       - name: Compile Standalone (Bun Bytecode)
         run: |
           mkdir -p dist/release
-          bun build --compile --minify --bytecode --outfile dist/release/bunlight src/serverless/standalone.ts
+          bun build --compile --target=${{ matrix.bun_target }} --minify --bytecode --outfile dist/release/bunlight src/serverless/standalone.ts
+          cd packages/bunlight-extension && bun build ./server.ts --compile --target=${{ matrix.bun_target }} --outfile ../../dist/release/bunlight-mcp
         if: matrix.os != 'windows-latest'
 
       - name: Compile Standalone (Windows Bytecode)
         run: |
           mkdir dist\release
-          bun build --compile --minify --bytecode --outfile dist\release\bunlight.exe src\serverless\standalone.ts
+          bun build --compile --target=${{ matrix.bun_target }} --minify --bytecode --outfile dist\release\bunlight.exe src\serverless\standalone.ts
+          cd packages\bunlight-extension && bun build .\server.ts --compile --target=${{ matrix.bun_target }} --outfile ..\..\dist\release\bunlight-mcp.exe
         if: matrix.os == 'windows-latest'
 
       - name: Package Artifacts
@@ -101,7 +106,8 @@ jobs:
       
       - name: Generate Checksums
         run: |
-          sha256sum */*.zip */*.tar.gz > SHA256SUMS.txt
+          find . -type f \( -name '*.zip' -o -name '*.tar.gz' \) -print0 \
+            | xargs -0 sha256sum > SHA256SUMS.txt
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

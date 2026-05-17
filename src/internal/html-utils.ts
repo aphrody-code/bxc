@@ -27,7 +27,10 @@
  * is preferred (`src/ffi/zigquery.ts`).
  */
 
-import { extractTitle as nativeExtractTitle, stripTags as nativeStripTags } from "../rust/bridge.ts";
+import {
+	extractTitle as nativeExtractTitle,
+	stripTags as nativeStripTags,
+} from "../rust/bridge.ts";
 
 const ATTR_RE = /([a-zA-Z_:][^\s=]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
 
@@ -39,7 +42,7 @@ export function extractTitle(html: string): string {
 		// Fallback to basic regex if FFI fails for some reason
 		const TITLE_RE = /<title[^>]*>([\s\S]*?)<\/title>/i;
 		const m = TITLE_RE.exec(html);
-		return m ? m[1].trim() : "";
+		return m ? (m[1] ?? "").trim() : "";
 	}
 }
 
@@ -64,7 +67,7 @@ export function parseAttributes(openingTag: string): Record<string, string> {
 	ATTR_RE.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = ATTR_RE.exec(openingTag)) !== null) {
-		out[m[1]] = m[2] ?? m[3] ?? m[4] ?? "";
+		if (m[1] !== undefined) out[m[1]] = m[2] ?? m[3] ?? m[4] ?? "";
 	}
 	return out;
 }

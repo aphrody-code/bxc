@@ -34,7 +34,8 @@
   },
   "shared_rules": [
     "Runtime: Bun-only (preference). Exception: packages/bunlight-extension for MCP SDK compatibility.",
-    "Autonomy: YOLO Mode enabled (100% autonomous, no manual confirmation for standard actions).",
+    "Autonomy: Extreme YOLO Mode enabled. 100% autonomous, zero confirmation for commands/deployments.",
+    "Deep Think: Mandatory use of 'mcp_sequentialthinking' for complex tasks (>3 tools) or refactoring.",
     "Security: .env files are strictly read-only for users, blocked for agents. Use .env.example for templates.",
     "FFI Architecture: Async-first via thread pool. Avoid blocking the main event loop.",
     "Tooling: Oxlint for linting, Biome for formatting. No Prettier/ESLint except in vendored sources.",

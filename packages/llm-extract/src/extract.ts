@@ -69,7 +69,6 @@ async function extractViaSelectorCache<Schema extends z.ZodTypeAny>(
 	opts: ExtractOptions<Schema>,
 ): Promise<z.infer<Schema>> {
 	const cache = opts.cache ?? sharedSelectorCache();
-	const queue = opts.queue ?? globalLlmQueue;
 	const key = cacheKey(opts.url ?? "", fields);
 
 	let selectors = cache.get(key);

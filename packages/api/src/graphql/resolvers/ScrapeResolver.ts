@@ -26,15 +26,29 @@ export class Scrape {
     createdAt!: string;
 }
 
+interface ScrapeRow {
+    id: number;
+    url: string;
+    profile: string;
+    status: number | null;
+    content: string | null;
+    metadata: string | null;
+    timestamp: string | null;
+}
+
 @Resolver(Scrape)
 export class ScrapeResolver {
     @Query(() => [Scrape])
     async recentScrapes(@Arg("limit", () => Int, { defaultValue: 10 }) limit: number): Promise<Scrape[]> {
-        const results = await db.getRecentScrapes(limit);
-        return results.map(r => ({
-            ...r,
-            createdAt: r.createdAt || new Date().toISOString()
-        })) as any;
+        const results = db.getRecentScrapes(limit) as ScrapeRow[];
+        return results.map((r) => ({
+            id: r.id,
+            url: r.url,
+            profile: r.profile,
+            status: r.status ?? undefined,
+            content: r.content ?? undefined,
+            createdAt: r.timestamp ?? new Date().toISOString(),
+        }));
     }
 
     @Query(() => String)
@@ -53,13 +67,18 @@ export class ScrapeResolver {
             const res = await page.goto(url);
             const content = await page.content();
             const title = await page.title();
-            
-            const [saved] = await db.saveScrape(url, resolvedProfile, res.status, content, { title });
-            
+
+            const changes = db.saveScrape(url, resolvedProfile, res.status, content, { title });
+            const id = Number(changes.lastInsertRowid);
+
             return {
-                ...saved,
-                createdAt: saved.createdAt || new Date().toISOString()
-            } as any;
+                id,
+                url,
+                profile: resolvedProfile,
+                status: res.status,
+                content,
+                createdAt: new Date().toISOString(),
+            };
         } finally {
             await page.close();
         }
