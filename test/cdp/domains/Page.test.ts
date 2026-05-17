@@ -90,6 +90,7 @@ function makePageState(overrides: Partial<PageState> = {}): PageState {
 		scripts: new Map(),
 		scriptCounter: 0,
 		screencastActive: false,
+		utilityWorldName: "utility_world",
 		...overrides,
 	};
 }

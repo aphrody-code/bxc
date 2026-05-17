@@ -30,10 +30,12 @@ import type { DomainHandler } from "../types.js";
  * numeric part.  Returns 0 when parsing fails or the unit is not recognized.
  */
 function parseCssDimension(value: string): number {
-	const m = /^(-?\d+(?:\.\d+)?)(px|em|rem|vw|vh|%|pt|cm|mm)?$/.exec(value.trim());
+	const m = /^(-?\d+(?:\.\d+)?)(px|em|rem|vw|vh|%|pt|cm|mm)?$/.exec(
+		value.trim(),
+	);
 	if (!m) return 0;
 	// Only px values are directly useful without layout; others default 0.
-	if (!m[2] || m[2] === "px") return parseFloat(m[1]);
+	if (!m[2] || m[2] === "px") return parseFloat(m[1] ?? "0");
 	return 0;
 }
 
@@ -56,23 +58,29 @@ function extractBoxFromNode(attrs: Record<string, string>): {
 	const style = attrs["style"] ?? "";
 	if (style) {
 		const wm = /(?:^|;)\s*width\s*:\s*([^;]+)/i.exec(style);
-		if (wm) width = parseCssDimension(wm[1]);
+		if (wm) width = parseCssDimension(wm[1] ?? "");
 		const hm = /(?:^|;)\s*height\s*:\s*([^;]+)/i.exec(style);
-		if (hm) height = parseCssDimension(hm[1]);
+		if (hm) height = parseCssDimension(hm[1] ?? "");
 		const lm = /(?:^|;)\s*(?:left|margin-left)\s*:\s*([^;]+)/i.exec(style);
-		if (lm) x = parseCssDimension(lm[1]);
+		if (lm) x = parseCssDimension(lm[1] ?? "");
 		const tm = /(?:^|;)\s*(?:top|margin-top)\s*:\s*([^;]+)/i.exec(style);
-		if (tm) y = parseCssDimension(tm[1]);
+		if (tm) y = parseCssDimension(tm[1] ?? "");
 	}
 
 	// Fallback: HTML attributes.
 	if (width === 0 && attrs["width"]) width = parseCssDimension(attrs["width"]);
-	if (height === 0 && attrs["height"]) height = parseCssDimension(attrs["height"]);
+	if (height === 0 && attrs["height"])
+		height = parseCssDimension(attrs["height"]);
 
 	return { x, y, width, height };
 }
 
-export const DOMHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const DOMHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		case "DOM.getDocument": {
 			const page = ctx.pageBySession(sessionId);
@@ -212,8 +220,12 @@ export const DOMHandler: DomainHandler = async (method, params, ctx, sessionId) 
 				object: {
 					type: "object",
 					subtype: "node",
-					className: node.tagName === "#document" ? "HTMLDocument" : "HTMLElement",
-					description: node.tagName === "#document" ? "#document" : node.tagName.toLowerCase(),
+					className:
+						node.tagName === "#document" ? "HTMLDocument" : "HTMLElement",
+					description:
+						node.tagName === "#document"
+							? "#document"
+							: node.tagName.toLowerCase(),
 					objectId,
 				},
 			};
@@ -224,7 +236,10 @@ export const DOMHandler: DomainHandler = async (method, params, ctx, sessionId) 
 		// -----------------------------------------------------------------------
 		case "DOM.setFileInputFiles": {
 			// Static mode has no JS execution — file input manipulation is not possible.
-			throw new CDPError("DOM.setFileInputFiles: no JS execution in static profile", -32000);
+			throw new CDPError(
+				"DOM.setFileInputFiles: no JS execution in static profile",
+				-32000,
+			);
 		}
 
 		default:

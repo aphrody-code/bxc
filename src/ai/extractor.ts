@@ -25,7 +25,7 @@ import { htmlToMarkdown } from "../rust/bridge.ts";
 export async function minifyHtmlForLLM(html: string): Promise<string> {
 	// Use the native high-performance Rust bridge to convert to Markdown (strips noise)
 	let minified = htmlToMarkdown(html) || html;
-	
+
 	// Basic minification
 	minified = minified.replace(/\s+/g, " ");
 	return minified.trim();
@@ -71,7 +71,7 @@ Return ONLY a valid JSON object where keys are descriptive names for the request
 	}
 
 	const data = (await response.json()) as { content: { text: string }[] };
-	const jsonText = data.content[0].text.trim();
+	const jsonText = (data.content[0]?.text ?? "").trim();
 	try {
 		return JSON.parse(jsonText);
 	} catch {
@@ -99,7 +99,9 @@ export async function extractDataWithSelectors(
 		} else if (elements.length === 1) {
 			result[key] = (await elements[0].textContent()) ?? "";
 		} else {
-			result[key] = await Promise.all(elements.map(async (el) => (await el.textContent()) ?? ""));
+			result[key] = await Promise.all(
+				elements.map(async (el) => (await el.textContent()) ?? ""),
+			);
 		}
 	}
 
@@ -110,7 +112,10 @@ export async function extractDataWithSelectors(
  * Resolves a natural language query to a CSS selector using Anthropic's Claude API.
  * Falls back to a basic heuristic if no API key is provided, fully bypassing the old Python mock.
  */
-export async function resolveSemantic(query: string, html: string): Promise<{ status: string; selector: string; message?: string }> {
+export async function resolveSemantic(
+	query: string,
+	html: string,
+): Promise<{ status: string; selector: string; message?: string }> {
 	const apiKey = Bun.env.ANTHROPIC_API_KEY;
 	if (apiKey) {
 		try {
@@ -146,7 +151,10 @@ export async function resolveSemantic(query: string, html: string): Promise<{ st
 export async function aiExtractDOM(
 	page: Page,
 	instruction: string,
-): Promise<{ data: Record<string, string | string[]>; selectors: Record<string, string> }> {
+): Promise<{
+	data: Record<string, string | string[]>;
+	selectors: Record<string, string>;
+}> {
 	const html = await page.content();
 	const minified = await minifyHtmlForLLM(html);
 	const selectors = await callAnthropicForSelectors(minified, instruction);

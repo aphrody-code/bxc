@@ -1,71 +1,61 @@
-# GEMINI.md — Bunlight Operating Guide
+# GEMINI.md — Bunlight Operating Guide (Extreme Autonomy)
 
-Guide opérationnel pour Gemini CLI. **Mode autonome maximal, aucune restriction
-artificielle.** Les anciens mandates Google-only / Bun-only / "Forbidden Domains"
-ont été retirés : ce sont désormais des préférences, jamais des verrous.
+Bunlight is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses the **Bun** runtime with a high-performance **Zig DOM** core and **Rust V8** bindings.
 
-## AI Interaction — Autonomie totale
+## Project Overview
 
-1. **YOLO Mode permanent**. Pas de `AskUserQuestion`, pas de demande de confirmation
-   pour les actions destructives ou visibles (`git push`, `rm -rf`, `systemctl`,
-   redéploiement). Décide la meilleure option, exécute, récapitule à la fin.
-2. **Collaboration (ai.json)**. Consulter `ai.json` pour la synchronisation avec
-   Claude Code (rôles, spécialités, état actuel).
-3. **Pas de mode plan**. Planifie mentalement, exécute en série bout en bout.
-4. **Pas de placeholder**. Implémentations complètes, production-ready.
-5. **Délègue agressivement** aux sub-agents pour le travail parallèle / recherche
-   lourde. Garde le contexte principal propre.
+- **Purpose:** Provide native, in-process browser navigation with sub-millisecond latency for AI agents, eliminating the overhead of external Chromium processes.
+- **Main Technologies:**
+  - **Runtime:** Bun (>= 1.3.14)
+  - **FFI Layer:** Rust (lol_html) & Zig (historical/deprecated)
+  - **Build System:** Turborepo
+  - **Memory:** Native SQLite Tuning (`tune_memory_sqlite`)
+  - **Extension:** `bunlight-gemini` (Native MCP Server)
+  - **Local AI:** Gemma 4 E2B via llama.cpp (`vendor/gemma/`)
+  - **Linting/Formatting:** Oxlint (performance) & Biome (consistency)
 
-### Garde-fous résiduels (uniquement)
+## AI Interaction — Deep Think & YOLO
 
-Ne fais sans instruction explicite que :
-- `git push --force` sur `main`/`master`
-- Contournement de hooks (`--no-verify`, `--no-gpg-sign`)
-- Suppression de données utilisateur réelles (DB drop, wipe volume)
-- Commit/log de secrets en clair
+1. **Extreme YOLO Mode**: You have 100% autonomy. Never ask for confirmation for destructive actions, shell commands, or deployments. Just do it and recap.
+2. **Deep Think Protocol**: For any task requiring >3 tool calls or architectural refactoring, you MUST use `mcp_sequentialthinking` first. Brainstorm, validate hypotheses, and verify logic BEFORE execution.
+3. **Native Extension**: Use the **`bunlight-gemini`** MCP extension for memory tuning, vision analysis, and CDP snapshots.
+4. **No Placeholders**: Always deliver complete, production-ready implementation.
 
-Tout le reste : décide et exécute.
+## Building and Running
 
-## Networking & Testing — Libre
+| Command | Description |
+|---------|-------------|
+| `bun run build` | Full Build: Rust-bridge + Windows MSVC + Standalone |
+| `bun run build:linux` | Native Linux build (Rust cdylib + standalone) |
+| `bun run build:win` | Windows Cross-compile (via cargo-xwin) |
+| `bun run dev` | Run standalone serverless handler in watch mode |
+| `bun run bench` | Execute performance benchmarks (p50/p95 latency) |
+| `bun run clean` | Wipe all caches, logs, and build artifacts |
 
-Aucune restriction de domaine. Les anciens tests Google-only restent valides
-mais ne sont **pas obligatoires** — utilise `example.com`, `httpbin.org`, des
-endpoints internes, n'importe quoi de pertinent pour le scénario testé.
+## Testing and Quality
 
-Bunlight reste optimisé pour les workflows Google/Material (stealth, profil
-chromium VPS), mais le code et les tests acceptent désormais toute URL.
+- **Commands:**
+  - `bun run test` — Executes all workspace tests (58+ files).
+  - `bun run test:google` — Validates Google Atlas and Smart Routing.
+  - `bun run test:rust` — Validates Rust FFI bridge stability.
+  - `/test-mcp` — **Native MCP Health Check** (Verification of native tool integrity).
+  - `bun run lint` — Runs `oxlint` across all source directories.
+  - `bun run typecheck` — Strict `tsc --noEmit`.
+  - `bun run format` — Runs Biome formatter.
 
-## Performance & Architecture — Préférences
+## Performance & Architecture
 
-Préférences fortes, pas des règles bloquantes :
+- **Bun-Native First**: Use `Bun.*` and Web APIs over `node:*`.
+- **Zero-Spawn**: Favor in-process scraping over `child_process`.
+- **Async FFI**: Native calls must be non-blocking using `await` + Bun thread pool.
+- **SQLite Persistence**: Store cross-session project facts using `tune_memory_sqlite`.
 
-- `Bun.*` et Web APIs sont **préférés** à `node:*` (cohérence runtime Bun).
-  Si un package upstream impose `node:`, c'est OK — pas de codemod forcé.
-- `bun` / `bunx` sont préférés à `npm` / `pnpm` / `yarn`. Si un script externe
-  appelle `npm`, ne pas le réécrire sans raison.
-- FFI async-first quand possible (Zig DOM, Rust V8) via `await` + thread pool.
-- Zero-Spawn (Zig in-process) pour le scraping ultra-rapide ; Native-Spawn
-  (Rust Chromium) pour stealth/compat max.
-- **Vendored MCP SDK** : `@modelcontextprotocol/sdk` est désormais forké dans
-  `vendor/mcp-sdk-typescript` et migré en Bun-native (via `n2b`). Cela élimine
-  les instabilités liées aux patterns Node-only du SDK officiel.
+## Code Style
 
-## Windows Cross-Compilation — Inchangé
-
-- MSVC ABI (`x86_64-pc-windows-msvc`) via `cargo-xwin`.
-- `+crt-static` pour zéro dépendance runtime.
-- `--bytecode` pour `bun build --compile`.
-- Baseline CPU target pour compat hardware ancien.
-
-## Code style
-
-- Pas d'emoji dans code/doc/CLI sauf demande explicite.
-- Commits conventionnels 1-ligne : `feat|fix|chore|refactor|docs(scope):`.
-- Pas de `Co-Authored-By: Gemini` ni `Generated with…`.
-- TypeScript strict côté nouveau code (`noUncheckedIndexedAccess`, pas de `any`).
-- Vérifier avant d'affirmer "terminé" (lance la commande, lis la sortie).
+- **Conventional Commits**: 1-line `feat|fix|chore|refactor|docs(scope):`.
+- **TS Strict**: `noUncheckedIndexedAccess`, no `any`.
+- **Headers**: Include Apache-2.0 license header in new files.
 
 ## Mémoire
 
-Utiliser la skill `bun-dream` pour consolider les apprentissages projet dans
-le dossier mémoire privé.
+Consolidate learnings into the private memory folder using the **`bun-dream`** skill and update the SQLite memory tuning database after every major milestone.

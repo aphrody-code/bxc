@@ -36,7 +36,7 @@ describe("Stealth Challenge System", () => {
 	test("Tier 1: Static mode fails on challenge (no JS)", async () => {
 		const page = await Browser.newPage({ profile: "static" });
 		const resp = await page.goto(MOCK_URL);
-		
+
 		// The mock returns 403 for bot detection (no Mozilla UA)
 		expect(resp.status).toBe(403);
 		const content = await page.content();
@@ -46,31 +46,33 @@ describe("Stealth Challenge System", () => {
 
 	test.skip("Tier 2: Ghost mode solves challenge (with JS/Stealth)", async () => {
 		// Ghost mode uses Rust-driven Chromium which handles the mock script
-		const page = await Browser.newPage({ 
+		const page = await Browser.newPage({
 			profile: "stealth",
-			userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+			userAgent:
+				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 			// Force high-stealth headers
-			httpOpts: { profile: "chrome131" } 
+			httpOpts: { profile: "chrome131" },
 		});
-		
+
 		await page.goto(MOCK_URL);
-		
+
 		// The mock reload logic should trigger and set cf_clearance
 		// We wait for the JSON response
-		await Bun.sleep(1000); 
-		
+		await Bun.sleep(1000);
+
 		const content = await page.content();
 		expect(content).toContain("Cloudflare Mock Passed");
 		await page.close();
 	});
 
 	test.skip("Mandate Check: Real-world stealth on Google", async () => {
-		const page = await Browser.newPage({ 
+		const page = await Browser.newPage({
 			profile: "stealth",
-			userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+			userAgent:
+				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 		});
-		const resp = await page.goto("https://www.google.com/search?q=bunlight+stealth+test");
-		
+		await page.goto("https://www.google.com/search?q=bunlight+stealth+test");
+
 		// Wait for actual Chromium navigation since our raw API doesn't auto-wait for lifecycle yet
 		await Bun.sleep(2000);
 
