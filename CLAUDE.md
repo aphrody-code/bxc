@@ -78,6 +78,13 @@ git fetch --tags origin && git checkout v0.X.0
 cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.X.0" && git push
 ```
 
+## Skills Claude Code à consulter
+
+- **`rust-mcp-server-generator`** — pour étendre `packages/bxc-extension` (MCP stdio `bxc-gemini`, ajout de tools, structure rmcp SDK).
+- **`rust-async-patterns`** — pour `rust-bridge/` (lol_html, V8 bindings, FFI ↔ Bun).
+- **`rust-best-practices`** + **`rust-testing`** — pour tout nouveau code Rust.
+- **`m15-anti-pattern`** — review avant commit.
+
 ## Pièges
 
 - **Vendor immuables** : `vendor/gemma/`, `vendor/gemma/sources/llama.cpp/`,
