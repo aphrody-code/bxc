@@ -185,7 +185,7 @@ function parseSetCookieHeader(setCookieHeader: string): HarCookie {
 	const cookie: HarCookie = { name, value };
 
 	for (let i = 1; i < parts.length; i++) {
-		const part = parts[i].trim();
+		const part = (parts[i] ?? "").trim();
 		const eqIdx = part.indexOf("=");
 		const key = (eqIdx >= 0 ? part.slice(0, eqIdx) : part).trim().toLowerCase();
 		const val = eqIdx >= 0 ? part.slice(eqIdx + 1).trim() : "";
@@ -220,7 +220,10 @@ function extractRequestCookies(headers: Record<string, string>): HarCookie[] {
  * Converts CDP timing data into HAR timings. All values in milliseconds.
  * CDP timing values are relative to `requestTime` in seconds; we convert to ms.
  */
-function buildTimings(cdpTiming: CdpNetworkResponse["timing"], totalMs: number): HarTimings {
+function buildTimings(
+	cdpTiming: CdpNetworkResponse["timing"],
+	totalMs: number,
+): HarTimings {
 	if (!cdpTiming) {
 		// No timing info available — distribute total time across send+wait+receive
 		const third = Math.round(totalMs / 3);
@@ -259,7 +262,10 @@ function buildTimings(cdpTiming: CdpNetworkResponse["timing"], totalMs: number):
 
 	const wait =
 		cdpTiming.sendEnd >= 0 && cdpTiming.receiveHeadersEnd >= 0
-			? Math.max(0, toMs((cdpTiming.receiveHeadersEnd - cdpTiming.sendEnd) * 1000))
+			? Math.max(
+					0,
+					toMs((cdpTiming.receiveHeadersEnd - cdpTiming.sendEnd) * 1000),
+				)
 			: Math.max(0, Math.round(totalMs * 0.8));
 
 	const receive = Math.max(0, totalMs - send - wait);
@@ -410,11 +416,14 @@ export class HarRecorder {
 
 		// Filter to events on this page's session
 		const rawMsg = msg as { sessionId?: string };
-		if (rawMsg.sessionId !== undefined && rawMsg.sessionId !== sessionId) return;
+		if (rawMsg.sessionId !== undefined && rawMsg.sessionId !== sessionId)
+			return;
 
 		switch (msg.method) {
 			case "Network.requestWillBeSent":
-				this.#onRequestWillBeSent(msg.params as unknown as CdpRequestWillBeSent);
+				this.#onRequestWillBeSent(
+					msg.params as unknown as CdpRequestWillBeSent,
+				);
 				break;
 			case "Network.responseReceived":
 				this.#onResponseReceived(msg.params as unknown as CdpResponseReceived);
@@ -488,7 +497,8 @@ export class HarRecorder {
 			cookies: extractResponseCookies(response.headers),
 			headers: headersToHar(response.headers),
 			content,
-			redirectURL: response.headers["location"] ?? response.headers["Location"] ?? "",
+			redirectURL:
+				response.headers["location"] ?? response.headers["Location"] ?? "",
 			headersSize: -1,
 			bodySize: response.encodedDataLength ?? -1,
 		};
@@ -506,11 +516,14 @@ export class HarRecorder {
 		if (!state) return;
 
 		const encodedDataLength =
-			"encodedDataLength" in event && typeof event.encodedDataLength === "number"
+			"encodedDataLength" in event &&
+			typeof event.encodedDataLength === "number"
 				? event.encodedDataLength
 				: -1;
 
-		const totalMs = event.timestamp ? Math.max(0, event.timestamp * 1000 - state.startMs) : 0;
+		const totalMs = event.timestamp
+			? Math.max(0, event.timestamp * 1000 - state.startMs)
+			: 0;
 
 		const harResponse: HarResponse = {
 			status: 200,
@@ -518,7 +531,10 @@ export class HarRecorder {
 			httpVersion: "HTTP/1.1",
 			cookies: [],
 			headers: [],
-			content: { size: encodedDataLength, mimeType: "application/octet-stream" },
+			content: {
+				size: encodedDataLength,
+				mimeType: "application/octet-stream",
+			},
 			redirectURL: "",
 			headersSize: -1,
 			bodySize: encodedDataLength,
@@ -532,7 +548,9 @@ export class HarRecorder {
 		const state = this.#inFlight.get(event.requestId);
 		if (!state) return;
 
-		const totalMs = event.timestamp ? Math.max(0, event.timestamp * 1000 - state.startMs) : 0;
+		const totalMs = event.timestamp
+			? Math.max(0, event.timestamp * 1000 - state.startMs)
+			: 0;
 
 		const harResponse: HarResponse = {
 			status: 0,

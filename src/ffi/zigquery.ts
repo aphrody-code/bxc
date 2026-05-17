@@ -47,7 +47,7 @@ export class ZigElement {
 	}
 	tagName(): string {
 		const match = /^<([a-zA-Z0-9-]+)/.exec(this.#outerHTML);
-		return match ? match[1].toLowerCase() : "";
+		return match ? (match[1] ?? "").toLowerCase() : "";
 	}
 	getAttribute(name: string): string {
 		const attrs = parseAttributes(openingTagOf(this.#outerHTML));
@@ -75,7 +75,7 @@ export class ZigElement {
 export class ZigSelection {
 	#elements: ZigElement[];
 	constructor(elements: string[]) {
-		this.#elements = elements.map(html => new ZigElement(html));
+		this.#elements = elements.map((html) => new ZigElement(html));
 	}
 	get count(): number {
 		return this.#elements.length;
@@ -90,7 +90,7 @@ export class ZigSelection {
 		return this.#elements.map(fn);
 	}
 	filter(fn: (el: ZigElement, i: number) => boolean): ZigSelection {
-		const filtered = this.#elements.filter(fn).map(el => el.outerHTML());
+		const filtered = this.#elements.filter(fn).map((el) => el.outerHTML());
 		return new ZigSelection(filtered);
 	}
 	find(fn: (el: ZigElement, i: number) => boolean): ZigElement | undefined {
@@ -105,12 +105,12 @@ export class ZigSelection {
 export class ZigDoc {
 	#handle: rustBridge.DomTreePtr;
 	readonly html: string;
-	
+
 	constructor(handle: rustBridge.DomTreePtr, html: string) {
 		this.#handle = handle;
 		this.html = html;
 	}
-	
+
 	async find(selector: string): Promise<ZigSelection> {
 		if (!this.#handle) return new ZigSelection([]);
 		const results = rustBridge.querySelectorAll(this.#handle, selector);
@@ -125,7 +125,7 @@ export class ZigDoc {
 	async querySelectorAll(selector: string): Promise<ZigSelection> {
 		return this.find(selector);
 	}
-	
+
 	destroy(): void {
 		if (this.#handle) {
 			rustBridge.destroyTree(this.#handle);

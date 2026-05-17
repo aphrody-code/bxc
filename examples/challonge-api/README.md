@@ -240,7 +240,7 @@ cookies on the web origin.
 
 ```bash
 # Generate typed paths from the OpenAPI spec
-bunx openapi-typescript http://localhost:8090/openapi.json -o api.d.ts
+openapi-typescript http://localhost:8090/openapi.json -o api.d.ts
 ```
 
 ```ts

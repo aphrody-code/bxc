@@ -9,6 +9,9 @@
       "trust": true
     }
   },
+  "commands": [
+    "commands/*.toml"
+  ],
   "settings": [
     {
       "name": "SQLite Memory Path",

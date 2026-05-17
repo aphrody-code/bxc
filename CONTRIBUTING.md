@@ -26,8 +26,8 @@ Thank you for your interest in contributing to Bunlight. This document explains 
 
 Optional, needed for stealth/max profiles:
 
-- Chromium (via `bunx patchright install chromium`)
-- Firefox (via `bunx patchright install firefox`)
+- Chromium (via `patchright install chromium`)
+- Firefox (via `patchright install firefox`)
 
 ---
 

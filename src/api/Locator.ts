@@ -45,16 +45,18 @@ export class Locator {
 		this.#page._traceRecorder?.recordAction({
 			type: "click",
 			target: this.#selector,
-			durationMs: Date.now() - startMs
+			durationMs: Date.now() - startMs,
 		});
 		this.#page._traceRecorder?.captureSnapshot().catch(() => {});
 
 		// Get element coordinates for a real click
-		const { model } = (await this.#page._send("DOM.getBoxModel", { nodeId })) as {
+		const { model } = (await this.#page._send("DOM.getBoxModel", {
+			nodeId,
+		})) as {
 			model: { content: number[] };
 		};
-		const x = (model.content[0] + model.content[2]) / 2;
-		const y = (model.content[1] + model.content[5]) / 2;
+		const x = ((model.content[0] ?? 0) + (model.content[2] ?? 0)) / 2;
+		const y = ((model.content[1] ?? 0) + (model.content[5] ?? 0)) / 2;
 
 		await this.#page._send("Input.dispatchMouseEvent", {
 			type: "mousePressed",
@@ -83,13 +85,13 @@ export class Locator {
 			type: "fill",
 			target: this.#selector,
 			value,
-			durationMs: Date.now() - startMs
+			durationMs: Date.now() - startMs,
 		});
 		this.#page._traceRecorder?.captureSnapshot().catch(() => {});
 
 		// Focus element first (best effort via click or DOM.focus)
 		await this.#page._send("DOM.focus", { nodeId }).catch(() => undefined);
-		
+
 		// Clear existing value if possible (trivial via JS for now)
 		await this.#page.evaluate((nodeId: number) => {
 			// This is a stub, real implementation would use CDP to clear or key events
@@ -129,8 +131,14 @@ export class Locator {
 		// by the engine, or a custom wrapper).
 		// For now, we'll use a virtual selector strategy.
 		if (options.hasText) {
-			const text = typeof options.hasText === "string" ? options.hasText : options.hasText.source;
-			return new Locator(this.#page, `${this.#selector} >> internal:has-text=${JSON.stringify(text)}`);
+			const text =
+				typeof options.hasText === "string"
+					? options.hasText
+					: options.hasText.source;
+			return new Locator(
+				this.#page,
+				`${this.#selector} >> internal:has-text=${JSON.stringify(text)}`,
+			);
 		}
 		return this;
 	}
@@ -145,8 +153,12 @@ export class Locator {
 			const html = await this.#page.content();
 			const { resolveSemantic } = await import("../ai/extractor.ts");
 			const output = await resolveSemantic(query, html);
-			if (output.status === "success" && output.selector) resolvedSelector = output.selector;
-			else throw new Error(`Failed to resolve semantic selector: ${output.message}`);
+			if (output.status === "success" && output.selector)
+				resolvedSelector = output.selector;
+			else
+				throw new Error(
+					`Failed to resolve semantic selector: ${output.message}`,
+				);
 		}
 
 		const doc = (await this.#page._send("DOM.getDocument", { depth: 0 })) as {
@@ -168,8 +180,12 @@ export class Locator {
 			let matches = true;
 			for (const filter of internalFilters) {
 				if (filter.startsWith("internal:has-text=")) {
-					const textToFind = JSON.parse(filter.slice("internal:has-text=".length));
-					const { outerHTML } = (await this.#page._send("DOM.getOuterHTML", { nodeId: id })) as { outerHTML: string };
+					const textToFind = JSON.parse(
+						filter.slice("internal:has-text=".length),
+					);
+					const { outerHTML } = (await this.#page._send("DOM.getOuterHTML", {
+						nodeId: id,
+					})) as { outerHTML: string };
 					const textContent = outerHTML.replace(/<[^>]+>/g, "").trim();
 					if (!textContent.includes(textToFind)) {
 						matches = false;
@@ -195,7 +211,7 @@ export class Locator {
 		let stableCount = 0;
 
 		let resolvedSelector = this.#selector;
-		
+
 		// Phase 4: Semantic Selectors
 		if (this.#selector.startsWith("@semantic:")) {
 			const query = this.#selector.slice(10).trim();
@@ -207,7 +223,9 @@ export class Locator {
 			if (output.status === "success" && output.selector) {
 				resolvedSelector = output.selector;
 			} else {
-				throw new Error(`Failed to resolve semantic selector: ${output.message}`);
+				throw new Error(
+					`Failed to resolve semantic selector: ${output.message}`,
+				);
 			}
 		}
 		const parts = resolvedSelector.split(" >> ");
@@ -216,10 +234,12 @@ export class Locator {
 
 		while (Date.now() < deadline) {
 			try {
-				const doc = (await this.#page._send("DOM.getDocument", { depth: 0 })) as {
+				const doc = (await this.#page._send("DOM.getDocument", {
+					depth: 0,
+				})) as {
 					root: { nodeId: number };
 				};
-				
+
 				let nodeIds: number[] = [];
 				if (internalFilters.length === 0) {
 					const { nodeId } = (await this.#page._send("DOM.querySelector", {
@@ -246,8 +266,13 @@ export class Locator {
 					let matches = true;
 					for (const filter of internalFilters) {
 						if (filter.startsWith("internal:has-text=")) {
-							const textToFind = JSON.parse(filter.slice("internal:has-text=".length));
-							const { outerHTML } = (await this.#page._send("DOM.getOuterHTML", { nodeId: id })) as { outerHTML: string };
+							const textToFind = JSON.parse(
+								filter.slice("internal:has-text=".length),
+							);
+							const { outerHTML } = (await this.#page._send(
+								"DOM.getOuterHTML",
+								{ nodeId: id },
+							)) as { outerHTML: string };
 							const textContent = outerHTML.replace(/<[^>]+>/g, "").trim();
 							if (!textContent.includes(textToFind)) {
 								matches = false;
@@ -271,13 +296,18 @@ export class Locator {
 				// Check Visibility & Stability
 				let model: { content: number[] } | null = null;
 				try {
-					const res = (await this.#page._send("DOM.getBoxModel", { nodeId })) as {
+					const res = (await this.#page._send("DOM.getBoxModel", {
+						nodeId,
+					})) as {
 						model: { content: number[] };
 					};
 					model = res.model;
 				} catch (err: any) {
 					const msg = (err.message || "").toLowerCase();
-					if (msg.includes("not implemented") || msg.includes("not available")) {
+					if (
+						msg.includes("not implemented") ||
+						msg.includes("not available")
+					) {
 						// Fallback for static mode: if it's in the DOM, we consider it visible/stable
 						// with a mock position.
 						model = { content: [0, 0, 100, 0, 100, 100, 0, 100] };
@@ -291,10 +321,14 @@ export class Locator {
 					continue;
 				}
 
-				const x = (model.content[0] + model.content[2]) / 2;
-				const y = (model.content[1] + model.content[5]) / 2;
+				const x = ((model.content[0] ?? 0) + (model.content[2] ?? 0)) / 2;
+				const y = ((model.content[1] ?? 0) + (model.content[5] ?? 0)) / 2;
 
-				if (lastPos && Math.abs(lastPos.x - x) < 1 && Math.abs(lastPos.y - y) < 1) {
+				if (
+					lastPos &&
+					Math.abs(lastPos.x - x) < 1 &&
+					Math.abs(lastPos.y - y) < 1
+				) {
 					stableCount++;
 				} else {
 					stableCount = 0;
@@ -304,12 +338,16 @@ export class Locator {
 				// If stable for 2 checks and has dimensions, we are good
 				if (stableCount >= 2) {
 					// Check Enabled (attributes)
-					const { node } = (await this.#page._send("DOM.describeNode", { nodeId })) as {
+					const { node } = (await this.#page._send("DOM.describeNode", {
+						nodeId,
+					})) as {
 						node: { attributes?: string[] };
 					};
 					const attrs = node.attributes ?? [];
-					const isDisabled = attrs.some((a, i) => i % 2 === 0 && a.toLowerCase() === "disabled");
-					
+					const isDisabled = attrs.some(
+						(a, i) => i % 2 === 0 && a.toLowerCase() === "disabled",
+					);
+
 					if (!isDisabled) {
 						return nodeId;
 					}
@@ -320,6 +358,8 @@ export class Locator {
 			await Bun.sleep(100);
 		}
 
-		throw new Error(`Timeout ${timeout}ms exceeded while waiting for locator("${this.#selector}") to be actionable for ${action}`);
+		throw new Error(
+			`Timeout ${timeout}ms exceeded while waiting for locator("${this.#selector}") to be actionable for ${action}`,
+		);
 	}
 }
