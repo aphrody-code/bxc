@@ -18,7 +18,7 @@
  * Example — Google Infobox Extractor (profile: static)
  *
  * Fetches 10 Google pages for technology topics and extracts their infobox
- * data (label/value pairs) using Bunlight's static profile (zigquery cdylib
+ * data (label/value pairs) using Bxc's static profile (zigquery cdylib
  * in-process DOM, no browser binary needed).
  *
  * Profile choice: "static"

@@ -15,7 +15,7 @@
  */
 
 /**
- * Bunlight — zigbridge smoke test
+ * Bxc — zigbridge smoke test
  *
  * Tests the C ABI exported by liblightpanda_dom.{so,dylib} (backed by
  * zigquery).  Build the library before running:

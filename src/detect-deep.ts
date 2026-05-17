@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/detect-deep
+ * @module bxc/detect-deep
  *
  * Multi-signal detection of frontend, backend, CDN, DNS, hosting, and
  * analytics technologies behind a URL.

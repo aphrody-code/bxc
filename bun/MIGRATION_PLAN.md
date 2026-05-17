@@ -1,6 +1,6 @@
 # MIGRATION_PLAN.md — Node.js → Bun Native
 
-Project: Bunlight
+Project: Bxc
 Status: 🟢 Phase 1 (APIs) Completed | 🟢 Phase 2 (Execution) Completed | 🟡 Phase 3 (Advanced) In Progress
 
 ## Matrix: Migrate vs Keep

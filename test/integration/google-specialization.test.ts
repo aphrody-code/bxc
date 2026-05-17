@@ -36,7 +36,7 @@ import { suggestStrategy } from "../../src/router/framework-strategy.ts";
 
 async function locateLightpanda(): Promise<string | null> {
 	const root = new URL("../../", import.meta.url).pathname;
-	const envBin = Bun.env.BUNLIGHT_LIGHTPANDA_BIN;
+	const envBin = Bun.env.BXC_LIGHTPANDA_BIN;
 	if (envBin && (await Bun.file(envBin).exists())) return envBin;
 
 	const candidates = [
@@ -196,9 +196,9 @@ describe("Google Specialization — Live Site Tests", () => {
 	);
 
 	itIfOnline(
-		"googleWebSearch — can find results for 'bunlight'",
+		"googleWebSearch — can find results for 'bxc'",
 		async () => {
-			const results = await googleWebSearch("bunlight", {
+			const results = await googleWebSearch("bxc", {
 				num: 5,
 				binaryPath: LIGHTPANDA_BIN ?? undefined,
 			});

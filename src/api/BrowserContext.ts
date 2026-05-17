@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/api/browser-context
+ * @module bxc/api/browser-context
  */
 
 import type { PageOptions } from "./browser.ts";

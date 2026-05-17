@@ -16,9 +16,9 @@
  */
 
 /**
- * build-standalone.ts — Production-grade standalone Bunlight executables.
+ * build-standalone.ts — Production-grade standalone Bxc executables.
  *
- * Output : dist/standalone/bunlight-{linux-x64,linux-arm64,darwin-x64,darwin-arm64}
+ * Output : dist/standalone/bxc-{linux-x64,linux-arm64,darwin-x64,darwin-arm64}
  *
  * Bun production flags applied (https://bun.com/docs/bundler/executables) :
  *   --minify              syntax/whitespace/identifiers, smaller binaries
@@ -33,10 +33,10 @@
  *
  * Usage :
  *   bun scripts/build-standalone.ts                            all 4 targets
- *   BUNLIGHT_TARGETS=linux-x64 bun scripts/build-standalone.ts subset
- *   BUNLIGHT_HOST_ONLY=1 bun scripts/build-standalone.ts       host arch only
- *   BUNLIGHT_BASELINE=1 bun scripts/build-standalone.ts        pre-2013 CPU compat
- *   BUNLIGHT_NO_BYTECODE=1 bun scripts/build-standalone.ts     skip bytecode (debug builds)
+ *   BXC_TARGETS=linux-x64 bun scripts/build-standalone.ts subset
+ *   BXC_HOST_ONLY=1 bun scripts/build-standalone.ts       host arch only
+ *   BXC_BASELINE=1 bun scripts/build-standalone.ts        pre-2013 CPU compat
+ *   BXC_NO_BYTECODE=1 bun scripts/build-standalone.ts     skip bytecode (debug builds)
  *
  * Notes :
  *   - The cdylib zigquery (liblightpanda_dom.so) and curl-impersonate
@@ -53,12 +53,12 @@ import { $ } from "bun";
 
 interface BuildTarget {
 	readonly target: string; // bun --target=<...>
-	readonly suffix: string; // dist/standalone/bunlight-<suffix>
+	readonly suffix: string; // dist/standalone/bxc-<suffix>
 }
 
 // Baseline (pre-2013 Nehalem CPUs without AVX2) variant only applies to x64.
 // macOS arm64 + linux arm64 do not have a baseline distinction.
-const BASELINE = Bun.env.BUNLIGHT_BASELINE === "1";
+const BASELINE = Bun.env.BXC_BASELINE === "1";
 const ALL_TARGETS: readonly BuildTarget[] = [
 	{
 		target: BASELINE ? "bun-linux-x64-baseline" : "bun-linux-x64",
@@ -77,7 +77,7 @@ const ALL_TARGETS: readonly BuildTarget[] = [
 
 /** Windows targets must emit a `.exe` outfile. */
 function outfileFor(outDir: string, suffix: string): string {
-	const base = `${outDir}/bunlight-${suffix}`;
+	const base = `${outDir}/bxc-${suffix}`;
 	return suffix.startsWith("windows-") ? `${base}.exe` : base;
 }
 
@@ -98,7 +98,7 @@ interface BuildResult {
 }
 
 function pickTargets(): readonly BuildTarget[] {
-	const env = Bun.env.BUNLIGHT_TARGETS?.trim();
+	const env = Bun.env.BXC_TARGETS?.trim();
 	if (env && env.length > 0) {
 		const wanted = new Set(
 			env
@@ -116,7 +116,7 @@ function pickTargets(): readonly BuildTarget[] {
 		}
 		return ALL_TARGETS.filter((t) => wanted.has(t.suffix));
 	}
-	if (Bun.env.BUNLIGHT_HOST_ONLY === "1") {
+	if (Bun.env.BXC_HOST_ONLY === "1") {
 		const arch = process.arch;
 		const platform = process.platform;
 		const wantedSuffix =
@@ -264,18 +264,18 @@ async function main(): Promise<void> {
 	// identifier is undefined) keeps using `typeof __X__ !== "undefined"`
 	// branches that read from package.json.
 	const defines: Record<string, string> = {
-		__BUNLIGHT_VERSION__: version,
-		__BUNLIGHT_BUILD_TIME__: buildTime,
+		__BXC_VERSION__: version,
+		__BXC_BUILD_TIME__: buildTime,
 		BUILD_VERSION: version,
 		BUILD_TIME: buildTime,
 		"Bun.env.NODE_ENV": "production",
 	};
-	const enableBytecode = Bun.env.BUNLIGHT_NO_BYTECODE !== "1";
+	const enableBytecode = Bun.env.BXC_NO_BYTECODE !== "1";
 
 	const targets = pickTargets();
 	if (targets.length === 0) {
 		console.error(
-			"[build-standalone] No targets selected (empty BUNLIGHT_TARGETS ?)",
+			"[build-standalone] No targets selected (empty BXC_TARGETS ?)",
 		);
 		process.exit(1);
 	}

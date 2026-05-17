@@ -1,4 +1,4 @@
-# Bunlight .npmignore — excludes everything not in package.json "files".
+# Bxc .npmignore — excludes everything not in package.json "files".
 # The "files" allowlist already controls what is included, but .npmignore acts
 # as a defense-in-depth against accidental inclusion of secrets/large dirs.
 

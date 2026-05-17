@@ -196,8 +196,8 @@ interface CDPEvent {
 // HttpProfileTransport
 // ---------------------------------------------------------------------------
 
-const HTTP_PROFILE_VERSION = "Bunlight/0.1.0 (http; curl-impersonate)";
-const HTTP_PROFILE_PRODUCT = "Bunlight/0.1.0 HttpProfile";
+const HTTP_PROFILE_VERSION = "Bxc/0.1.0 (http; curl-impersonate)";
+const HTTP_PROFILE_PRODUCT = "Bxc/0.1.0 HttpProfile";
 
 const NOT_SUPPORTED_MSG =
 	"not supported in http profile (HTTP-only, no JS engine, no input layer)";
@@ -354,7 +354,7 @@ export class HttpProfileTransport implements ConnectionTransport {
 				return {
 					protocolVersion: "1.3",
 					product: HTTP_PROFILE_PRODUCT,
-					revision: "bunlight-http",
+					revision: "bxc-http",
 					userAgent: HTTP_PROFILE_VERSION,
 					jsVersion: "0.0.0",
 				};

@@ -54,7 +54,7 @@ Optional details go here
 
 > Si elle est présente, les URLs qu'elle contient peuvent être skippées si un contexte plus court est nécessaire. À utiliser pour les informations secondaires qui peuvent souvent être ignorées.
 
-Bunlight y range automatiquement: changelog, releases, blog, news, archives, legal, privacy, terms, license.
+Bxc y range automatiquement: changelog, releases, blog, news, archives, legal, privacy, terms, license.
 
 ## 5. Linking aux versions `.md`
 
@@ -70,7 +70,7 @@ Exemple: `https://example.com/docs/install` → `https://example.com/docs/instal
 | `llms-ctx.txt` | Index + contenu, **sans** la section `## Optional` |
 | `llms-ctx-full.txt` | Index + contenu, **avec** la section `## Optional` |
 
-Bunlight produit `llms.txt` (index) et `llms-full.txt` (concat de tous les markdowns), équivalent ctx-full.
+Bxc produit `llms.txt` (index) et `llms-full.txt` (concat de tous les markdowns), équivalent ctx-full.
 
 ## 7. Compliance checklist côté `scripts/url-to-docs.ts`
 
@@ -83,7 +83,7 @@ Bunlight produit `llms.txt` (index) et `llms-full.txt` (concat de tous les markd
 - [x] Émission d'un miroir markdown sous `pages/<slug>.md`, miroir text sous `plaintext/<slug>.txt`
 - [ ] Génération automatique des versions `.md` aux URLs originales (côté serveur — hors scope du crawler)
 
-## 8. Exemple produit par bunlight
+## 8. Exemple produit par bxc
 
 ```markdown
 # agent-browser

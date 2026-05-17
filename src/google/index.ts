@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google
+ * @module bxc/google
  *
  * Specialized module for Google domains and Material Design sites.
  */

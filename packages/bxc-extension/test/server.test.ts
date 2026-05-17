@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 
-describe("Bunlight Extension Environment", () => {
+describe("Bxc Extension Environment", () => {
     it("should have Zod available", async () => {
         const { z } = await import("zod");
         const schema = z.string();
@@ -11,9 +11,9 @@ describe("Bunlight Extension Environment", () => {
         const { Database } = require("bun:sqlite");
         const db = new Database(":memory:");
         db.run("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
-        db.run("INSERT INTO test (name) VALUES ('bunlight')");
+        db.run("INSERT INTO test (name) VALUES ('bxc')");
         const row = db.query("SELECT * FROM test").get() as { name: string };
-        expect(row.name).toBe("bunlight");
+        expect(row.name).toBe("bxc");
         db.close();
     });
 });

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/recorder/HarReplayer
+ * @module bxc/recorder/HarReplayer
  *
  * Replays a HAR archive as a local HTTP server. Any fetch() to the server
  * that matches a recorded URL + method returns the original status, headers,

@@ -124,9 +124,9 @@ export const BrowserHandler: DomainHandler = async (method, params, ctx, _sessio
 		case "Browser.getVersion":
 			return {
 				protocolVersion: "1.3",
-				product: "Bunlight/0.1.0 StaticDom",
-				revision: "bunlight-static",
-				userAgent: "Bunlight/0.1.0 (StaticDomTransport)",
+				product: "Bxc/0.1.0 StaticDom",
+				revision: "bxc-static",
+				userAgent: "Bxc/0.1.0 (StaticDomTransport)",
 				jsVersion: "0.0.0",
 			};
 

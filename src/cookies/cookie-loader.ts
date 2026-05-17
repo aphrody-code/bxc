@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/cookies/cookie-loader
+ * @module bxc/cookies/cookie-loader
  *
  * Multi-format cookie loader. Reads exported cookies from disk and produces a
  * normalised array of {@link Cookie} objects suitable for injection into a CDP
@@ -42,7 +42,7 @@
  *
  * @example
  * ```ts
- * import { loadCookieJar } from "bunlight/cookies/cookie-loader";
+ * import { loadCookieJar } from "bxc/cookies/cookie-loader";
  *
  * const cookies = await loadCookieJar("./cookies/private/challonge.json");
  * console.log(`Loaded ${cookies.length} cookies`);

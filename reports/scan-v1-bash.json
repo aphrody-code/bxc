@@ -2,10 +2,10 @@
   "scan_metadata": {
     "tool": "bash",
     "version": "1.0",
-    "timestamp": "2026-05-17T03:32:41Z",
+    "timestamp": "2026-05-17T03:57:54Z",
     "repo_root": "/home/ubuntu/bunlight",
-    "git_head": "d80524a27ee86d0479a70b60d0f466463be2ea81",
-    "git_dirty": false,
+    "git_head": "6f2d5b7ea084a611f6ffb006858c47d90dfa8f1a",
+    "git_dirty": true,
     "exclude_dirs": [
       ".git",
       "node_modules",
@@ -13,2325 +13,2336 @@
       "dist",
       "rust-bridge/target",
       ".turbo",
-      ".bunlight"
+      ".bxc"
     ]
   },
   "summary": {
-    "total_files_with_matches": 253,
-    "total_occurrences": 1964,
+    "total_files_with_matches": 252,
+    "total_occurrences": 3374,
     "patterns_scanned": 7
   },
   "by_pattern": {
-    "bunlight": {
-      "file_count": 213,
-      "occurrence_count": 1220
+    "bxc": {
+      "file_count": 212,
+      "occurrence_count": 2115
     },
-    "Bunlight": {
-      "file_count": 133,
-      "occurrence_count": 339
+    "Bxc": {
+      "file_count": 132,
+      "occurrence_count": 623
     },
-    "BUNLIGHT_": {
-      "file_count": 40,
-      "occurrence_count": 138
+    "BXC_": {
+      "file_count": 39,
+      "occurrence_count": 257
     },
-    "bunlight_": {
-      "file_count": 14,
-      "occurrence_count": 60
+    "bxc_": {
+      "file_count": 16,
+      "occurrence_count": 123
     },
-    "@aphrody-code/bunlight": {
-      "file_count": 14,
-      "occurrence_count": 21
+    "@aphrody-code/bxc": {
+      "file_count": 17,
+      "occurrence_count": 47
     },
-    "libbunlight": {
-      "file_count": 7,
-      "occurrence_count": 9
+    "libbxc": {
+      "file_count": 10,
+      "occurrence_count": 24
     },
-    ".bunlight/": {
-      "file_count": 108,
-      "occurrence_count": 177
+    ".bxc/": {
+      "file_count": 109,
+      "occurrence_count": 185
     }
   },
   "top_files": [
     {
-      "path": "benchmarks/results/2026-05-10.json",
-      "matches": 146,
+      "path": "reports/scan-v2-bun.json",
+      "matches": 1742,
       "patterns": [
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
-      "path": "benchmarks/results/2026-05-16.json",
-      "matches": 146,
+      "path": ".claude/skills/bxc/SKILL.md",
+      "matches": 61,
       "patterns": [
-        "bunlight"
-      ]
-    },
-    {
-      "path": "install.ps1",
-      "matches": 52,
-      "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/agent-browser-engine.bench.ts",
-      "matches": 49,
-      "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "src/rust/bridge.ts",
-      "matches": 46,
-      "patterns": [
-        "BUNLIGHT_",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
-      ]
-    },
-    {
-      "path": "docs/BUILD-WINDOWS.md",
-      "matches": 41,
-      "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "CHANGELOG.md",
-      "matches": 35,
-      "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
-      ]
-    },
-    {
-      "path": "MEGA-PLAN.md",
-      "matches": 32,
-      "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-10-engine-comparison.md",
-      "matches": 31,
-      "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "PUBLISHING.md",
-      "matches": 30,
-      "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "scripts/build-windows.ts",
-      "matches": 29,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
-      ]
-    },
-    {
-      "path": "src/cli/index.ts",
-      "matches": 28,
-      "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "src/cli/serve.ts",
-      "matches": 24,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-10.md",
-      "matches": 23,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-16.md",
-      "matches": 23,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "README.md",
-      "matches": 23,
-      "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "src/api/browser.ts",
-      "matches": 22,
-      "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "src/cli/install.ts",
-      "matches": 22,
-      "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "scripts/scan-bunlight-refs.sh",
-      "matches": 21,
-      "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
-      ]
-    },
-    {
-      "path": "test/e2e/helpers.ts",
-      "matches": 20,
-      "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "packages/bunlight-extension/server.ts",
-      "matches": 19,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
-      ]
-    },
-    {
-      "path": "src/cli/recon.ts",
-      "matches": 19,
-      "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "src/cli/api.ts",
-      "matches": 17,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "rust-bridge/src/lib.rs",
-      "matches": 16,
-      "patterns": [
-        "bunlight",
-        "bunlight_"
-      ]
-    },
-    {
-      "path": "SKILLS.md",
-      "matches": 16,
-      "patterns": [
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
-      ]
-    }
-  ],
-  "files": [
-    {
-      "path": "benchmarks/results/2026-05-10.json",
-      "matches": 146,
-      "patterns": [
-        "bunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-16.json",
-      "matches": 146,
-      "patterns": [
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "install.ps1",
       "matches": 52,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "benchmarks/agent-browser-engine.bench.ts",
-      "matches": 49,
+      "matches": 47,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/rust/bridge.ts",
       "matches": 46,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
+        "BXC_",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "docs/BUILD-WINDOWS.md",
       "matches": 41,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "CHANGELOG.md",
-      "matches": 35,
-      "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "MEGA-PLAN.md",
       "matches": 32,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-10-engine-comparison.md",
-      "matches": 31,
-      "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "PUBLISHING.md",
       "matches": 30,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "scripts/build-windows.ts",
-      "matches": 29,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/index.ts",
       "matches": 28,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/build-windows.ts",
+      "matches": 27,
+      "patterns": [
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_"
       ]
     },
     {
       "path": "src/cli/serve.ts",
       "matches": 24,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-10.md",
-      "matches": 23,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "benchmarks/results/2026-05-16.md",
-      "matches": 23,
-      "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "README.md",
       "matches": 23,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/scan-bxc-refs.sh",
+      "matches": 22,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "src/api/browser.ts",
       "matches": 22,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/install.ts",
       "matches": 22,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "scripts/scan-bunlight-refs.sh",
-      "matches": 21,
-      "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
+        ".bxc/",
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/helpers.ts",
       "matches": 20,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/server.ts",
+      "path": "packages/bxc-extension/server.ts",
       "matches": 19,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_"
       ]
     },
     {
       "path": "src/cli/recon.ts",
       "matches": 19,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/api.ts",
       "matches": 17,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "rust-bridge/src/lib.rs",
       "matches": 16,
       "patterns": [
-        "bunlight",
-        "bunlight_"
+        "bxc",
+        "bxc_"
       ]
     },
     {
       "path": "SKILLS.md",
       "matches": 16,
       "patterns": [
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
+        "Bxc",
+        "bxc",
+        "bxc_"
       ]
     },
     {
       "path": "docs/CHROME-DEVTOOLS-MCP-ANALYSIS.md",
       "matches": 15,
       "patterns": [
-        "Bunlight",
-        "bunlight",
-        "bunlight_"
+        "Bxc",
+        "bxc",
+        "bxc_"
       ]
     },
     {
       "path": "packages/api/GEMINI.md",
       "matches": 15,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "scripts/build-standalone.ts",
       "matches": 15,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "scripts/build-windows.ps1",
       "matches": 15,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "reports/scan-v2-bun.json",
+      "matches": 1742,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
+      ]
+    },
+    {
+      "path": ".claude/skills/bxc/SKILL.md",
+      "matches": 61,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
+      ]
+    },
+    {
+      "path": "install.ps1",
+      "matches": 52,
+      "patterns": [
+        ".bxc/",
+        "BXC_",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "benchmarks/agent-browser-engine.bench.ts",
+      "matches": 47,
+      "patterns": [
+        ".bxc/",
+        "BXC_",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "src/rust/bridge.ts",
+      "matches": 46,
+      "patterns": [
+        "BXC_",
+        "bxc",
+        "bxc_",
+        "libbxc"
+      ]
+    },
+    {
+      "path": "docs/BUILD-WINDOWS.md",
+      "matches": 41,
+      "patterns": [
+        ".bxc/",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "MEGA-PLAN.md",
+      "matches": 32,
+      "patterns": [
+        ".bxc/",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
+      ]
+    },
+    {
+      "path": "PUBLISHING.md",
+      "matches": 30,
+      "patterns": [
+        ".bxc/",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "src/cli/index.ts",
+      "matches": 28,
+      "patterns": [
+        "BXC_",
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/build-windows.ts",
+      "matches": 27,
+      "patterns": [
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_"
+      ]
+    },
+    {
+      "path": "src/cli/serve.ts",
+      "matches": 24,
+      "patterns": [
+        "BXC_",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "README.md",
+      "matches": 23,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/scan-bxc-refs.sh",
+      "matches": 22,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
+      ]
+    },
+    {
+      "path": "src/api/browser.ts",
+      "matches": 22,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "src/cli/install.ts",
+      "matches": 22,
+      "patterns": [
+        ".bxc/",
+        "BXC_",
+        "bxc"
+      ]
+    },
+    {
+      "path": "test/e2e/helpers.ts",
+      "matches": 20,
+      "patterns": [
+        ".bxc/",
+        "BXC_",
+        "bxc"
+      ]
+    },
+    {
+      "path": "packages/bxc-extension/server.ts",
+      "matches": 19,
+      "patterns": [
+        "BXC_",
+        "Bxc",
+        "bxc",
+        "bxc_"
+      ]
+    },
+    {
+      "path": "src/cli/recon.ts",
+      "matches": 19,
+      "patterns": [
+        "BXC_",
+        "bxc"
+      ]
+    },
+    {
+      "path": "src/cli/api.ts",
+      "matches": 17,
+      "patterns": [
+        "BXC_",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "rust-bridge/src/lib.rs",
+      "matches": 16,
+      "patterns": [
+        "bxc",
+        "bxc_"
+      ]
+    },
+    {
+      "path": "SKILLS.md",
+      "matches": 16,
+      "patterns": [
+        "Bxc",
+        "bxc",
+        "bxc_"
+      ]
+    },
+    {
+      "path": "docs/CHROME-DEVTOOLS-MCP-ANALYSIS.md",
+      "matches": 15,
+      "patterns": [
+        "Bxc",
+        "bxc",
+        "bxc_"
+      ]
+    },
+    {
+      "path": "packages/api/GEMINI.md",
+      "matches": 15,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "BXC_",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/build-standalone.ts",
+      "matches": 15,
+      "patterns": [
+        "BXC_",
+        "Bxc",
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/build-windows.ps1",
+      "matches": 15,
+      "patterns": [
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/detect.ts",
       "matches": 15,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "benchmarks/run-all.ts",
       "matches": 14,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "benchmarks/scenarios/parallel-100.ts",
       "matches": 14,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": ".github/workflows/release.yml",
       "matches": 14,
       "patterns": [
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
+        "bxc",
+        "bxc_",
+        "libbxc"
+      ]
+    },
+    {
+      "path": "scripts/apply-bxc-rebrand.ts",
+      "matches": 14,
+      "patterns": [
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "test/cli/install.test.ts",
       "matches": 14,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "scripts/postinstall.ts",
       "matches": 13,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "THANKS.md",
       "matches": 13,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "benchmarks/scenarios/cloudflare-basic.ts",
       "matches": 12,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "docs/LIGHTPANDA-WINDOWS.md",
       "matches": 12,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "examples/challonge-api/README.md",
       "matches": 12,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/next/index.ts",
       "matches": 12,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/plugin/lightpanda-plugin.ts",
       "matches": 12,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/unit/postinstall.test.ts",
       "matches": 12,
       "patterns": [
-        "BUNLIGHT_"
+        "BXC_"
       ]
     },
     {
       "path": "benchmarks/scenarios/spa-react.ts",
       "matches": 11,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "docs/SERVERLESS.md",
       "matches": 11,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "examples/challonge-api/server.ts",
       "matches": 11,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": ".github/workflows/ci.yml",
       "matches": 11,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
+        "BXC_",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "install.sh",
       "matches": 11,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/challonge.ts",
       "matches": 11,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/cli/har.ts",
       "matches": 11,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/recorder/TraceRecorder.ts",
       "matches": 11,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/chrome.ts",
       "matches": 10,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/mirror.ts",
       "matches": 10,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/next/instant.ts",
       "matches": 10,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/router/framework-strategy.ts",
       "matches": 10,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "AGENTS-ARCHITECTURE.json",
       "matches": 9,
       "patterns": [
-        "Bunlight",
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
+        "Bxc",
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": "docs/CHROMIUM-RUST.md",
       "matches": 9,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
-      "path": "scripts/deploy/bunlight.service",
+      "path": "scripts/deploy/bxc.service",
       "matches": 9,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/detect.ts",
       "matches": 9,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "examples/crawl-chromium-developers.ts",
       "matches": 8,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight"
+        "BXC_",
+        "Bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/CLAUDE.md",
+      "path": "packages/bxc-extension/CLAUDE.md",
       "matches": 8,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "scripts/atlas-from-cache.ts",
       "matches": 8,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/helpers/enqueueLinks.ts",
       "matches": 8,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/mirror/mirror.ts",
       "matches": 8,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/challonge-crawl.e2e.test.ts",
       "matches": 8,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight"
+        "BXC_",
+        "Bxc"
       ]
     },
     {
       "path": "test/perf/rss.test.ts",
       "matches": 8,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "turbo.json",
       "matches": 8,
       "patterns": [
-        "bunlight",
-        "bunlight_",
-        "libbunlight"
+        "bxc",
+        "bxc_",
+        "libbxc"
       ]
     },
     {
       "path": ".gitignore",
       "matches": 7,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "patches/legacy-lightpanda-static-attempt/001-cdylib-target.patch",
       "matches": 7,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "rust-bridge/src/obscura_engine.rs",
       "matches": 7,
       "patterns": [
-        "bunlight",
-        "bunlight_"
+        "bxc",
+        "bxc_"
       ]
     },
     {
       "path": "specs/http-crawl-headers.md",
       "matches": 7,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cli/scrape.ts",
       "matches": 7,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/ffi/curl-impersonate.ts",
       "matches": 7,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/react/index.ts",
       "matches": 7,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/recorder/HarRecorder.ts",
       "matches": 7,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/zig-bridge/build.zig",
       "matches": 7,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/profile-wiring.test.ts",
       "matches": 7,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
-      "path": "benchmarks/runners/bunlight-fast.ts",
+      "path": "benchmarks/runners/bxc-fast.ts",
       "matches": 6,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "benchmarks/scenarios/static-simple.ts",
       "matches": 6,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": ".claude/skills/scraper-recipe/SKILL.md",
       "matches": 6,
       "patterns": [
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "docs/PLAYWRIGHT-KILLER-PLAN.md",
       "matches": 6,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/DEVELOPMENT.md",
+      "path": "packages/bxc-extension/DEVELOPMENT.md",
       "matches": 6,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/skills/rust-native-scanner/target/debug/deps/rust_native_scanner-61fa3d1e9b83ce73.d",
+      "path": "packages/bxc-extension/skills/rust-native-scanner/target/debug/deps/rust_native_scanner-61fa3d1e9b83ce73.d",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/skills/rust-native-scanner/target/debug/deps/rust_native_scanner-ef1674011ed295d8.d",
+      "path": "packages/bxc-extension/skills/rust-native-scanner/target/debug/deps/rust_native_scanner-ef1674011ed295d8.d",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/skills/rust-native-scanner/target/debug/rust-native-scanner.d",
+      "path": "packages/bxc-extension/skills/rust-native-scanner/target/debug/rust-native-scanner.d",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/skills/rust-native-scanner/target/release/deps/rust_native_scanner-92b92a1615c5bc24.d",
+      "path": "packages/bxc-extension/skills/rust-native-scanner/target/release/deps/rust_native_scanner-92b92a1615c5bc24.d",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/skills/rust-native-scanner/target/release/rust-native-scanner.d",
+      "path": "packages/bxc-extension/skills/rust-native-scanner/target/release/rust-native-scanner.d",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/GEMINI.md",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "scripts/build-lightpanda-static.ts",
       "matches": 6,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/cli/cookies.ts",
       "matches": 6,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/google/cache.ts",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/profiles/ghost/index.ts",
       "matches": 6,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/transport/WebSocketTransport.ts",
       "matches": 6,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "test/integration/crawlee-patterns.test.ts",
       "matches": 6,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "ai.json",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": ".claude/settings.json",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "package.json",
       "matches": 5,
       "patterns": [
-        "@aphrody-code/bunlight",
-        "Bunlight",
-        "bunlight"
+        "@aphrody-code/bxc",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "scripts/cron-scheduler.ts",
       "matches": 5,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "specs/url-normalization.md",
       "matches": 5,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "specs/yaml-frontmatter.md",
       "matches": 5,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/plugin/next-plugin.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/plugin/react-compiler-plugin.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/plugin/tailwind-plugin.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "@aphrody-code/bunlight",
-        "bunlight"
+        ".bxc/",
+        "@aphrody-code/bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/pool/PagePool.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/react/parser.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/stats/dashboard.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/utils/sitemap.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/integration/detect.test.ts",
       "matches": 5,
       "patterns": [
-        ".bunlight/",
-        "BUNLIGHT_",
-        "bunlight"
+        ".bxc/",
+        "BXC_",
+        "bxc"
       ]
     },
     {
-      "path": "bin/bunlight",
+      "path": "bin/bxc",
       "matches": 4,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
-      "path": ".claude/agents/bunlight-scrape-debugger.md",
+      "path": ".claude/agents/bxc-scrape-debugger.md",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": ".claude/skills/gemma-bench/SKILL.md",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "CONTRIBUTING.md",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "docs/GOOGLE-ATLAS.md",
       "matches": 4,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "examples/05-puppeteer-zero-spawn.ts",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "examples/README.md",
       "matches": 4,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "examples/showcase/README.md",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "GEMINI.md",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "packages/api/src/graphql/resolvers/ScrapeResolver.ts",
       "matches": 4,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "specs/markdown-gfm.md",
       "matches": 4,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "specs/opengraph-meta.md",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "specs/README.md",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "specs/robots-txt.md",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cdp/domains/Input.ts",
       "matches": 4,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/cookies/cookie-injector.ts",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cookies/cookie-loader.ts",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
-      ]
-    },
-    {
-      "path": "src/profiles/ghost/stealth-patches.ts",
-      "matches": 4,
-      "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/profiles/index.ts",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/scrapers/challonge.ts",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/utils/robots.ts",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/cdp/domains/Emulation.test.ts",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/rosegriffon-full-crawl.e2e.test.ts",
       "matches": 4,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/integration/har-roundtrip.test.ts",
       "matches": 4,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/perf/coldstart.test.ts",
       "matches": 4,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "update.sh",
       "matches": 4,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
-      "path": "benchmarks/runners/bunlight-static.ts",
+      "path": "benchmarks/runners/bxc-static.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "examples/challonge-api/import-cookies.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": ".gemini/settings.json",
       "matches": 3,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "packages/api/CLAUDE.md",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "packages/api/src/index.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/gemini-extension.json",
+      "path": "packages/bxc-extension/gemini-extension.json",
       "matches": 3,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/package.json",
+      "path": "packages/bxc-extension/package.json",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/skills/rust-native-scanner/SKILL.md",
+      "path": "packages/bxc-extension/skills/rust-native-scanner/SKILL.md",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/test/server.test.ts",
+      "path": "packages/bxc-extension/test/server.test.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "rust-bridge/Cargo.toml",
       "matches": 3,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "scripts/measure-coldstart.ts",
       "matches": 3,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "specs/llms-txt.md",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "specs/sitemap-xml.md",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/api/Locator.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/api/types.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cdp/domains/Browser.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/cdp/domains/Target.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/db/BunlightDB.ts",
       "matches": 3,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight",
-        "bunlight"
+        "BXC_",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/google/mandate-guard.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/google/style.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/plugin/index.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/queue/RequestQueue.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/serverless/handler.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/throttling/RateLimiter.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/transport/HttpProfileTransport.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/transport/typed-rpc.ts",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/zig-bridge/exports.zig",
       "matches": 3,
       "patterns": [
-        ".bunlight/",
-        "Bunlight",
-        "bunlight"
+        ".bxc/",
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/integration/google-specialization.test.ts",
       "matches": 3,
       "patterns": [
-        "BUNLIGHT_",
-        "bunlight"
+        "BXC_",
+        "bxc"
       ]
     },
     {
       "path": "test/unit/har-recorder.test.ts",
       "matches": 3,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "examples/ecommerce-price-monitor.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "packages/api/src/db/BunlightDB.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "packages/llm-extract/src/extract.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/src/preclean.ts",
       "matches": 2,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/test/extract.test.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "rust-bridge/Cargo.lock",
       "matches": 2,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "scripts/build-serverless.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "src/ai/context.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/api/BrowserContext.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/api/Frame.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/captcha/capsolver.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/detect-deep.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/ffi/zigquery.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/atlas.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/client.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/detector.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/dns.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/fetch.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/index.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/mass-scanner.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/rate-limit.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/search.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/serp-parser.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/strategy.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/google/verticals.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/internal/cdp-call.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/internal/html-utils.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/internal/stream-drain.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/mirror/index.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/next/step.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/plugin/modularize-imports-plugin.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/pool/AutoscaledPool.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/pool/ProxyPool.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/pool/SessionPool.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/profiles/fingerprint.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
+      ]
+    },
+    {
+      "path": "src/profiles/ghost/stealth-patches.ts",
+      "matches": 2,
+      "patterns": [
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/profiles/humanize.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/react/hydration.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/recorder/HarReplayer.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/recorder/types.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/stats/Statistics.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/storage/Dataset.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/storage/KeyValueStore.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "src/utils/network-auditor.ts",
       "matches": 2,
       "patterns": [
-        ".bunlight/",
-        "bunlight"
+        ".bxc/",
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/azalee-full-crawl.e2e.test.ts",
       "matches": 2,
       "patterns": [
-        "BUNLIGHT_",
-        "Bunlight"
+        "BXC_",
+        "Bxc"
       ]
     },
     {
       "path": "test/e2e/discover-pages.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-10-challonge.md",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-12-challonge.md",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-13-challonge.md",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-14-challonge.md",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-16-challonge.md",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/integration/ai-extractor.test.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight",
-        "bunlight"
+        "Bxc",
+        "bxc"
       ]
     },
     {
       "path": "test/scrapers/challonge.test.ts",
       "matches": 2,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/transport.test.ts",
       "matches": 2,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "benchmarks/targets/urls-100.json",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "bunfig.toml",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "bun/MIGRATION_PLAN.md",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": ".claude/agents/rust-ffi-reviewer.md",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "examples/09-ai-extraction.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "examples/reddit-json-crawler.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "examples/wikipedia-infobox-extractor.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
-      "path": ".gemini/policies/bunlight.toml",
+      "path": ".gemini/policies/bxc.toml",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": ".npmignore",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "packages/api/drizzle.config.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/commands/sync-gemini.toml",
+      "path": "packages/bxc-extension/commands/sync-gemini.toml",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
-      "path": "packages/bunlight-extension/tsconfig.json",
+      "path": "packages/bxc-extension/tsconfig.json",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/src/index.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/src/selector-cache.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/src/selector-extract.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "packages/llm-extract/src/selector-generator.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
+      ]
+    },
+    {
+      "path": "rust-bridge/crates/obscura-net/src/pgl_domains.txt",
+      "matches": 1,
+      "patterns": [
+        "bxc"
+      ]
+    },
+    {
+      "path": "scripts/scan-bxc-refs.ts",
+      "matches": 1,
+      "patterns": [
+        "bxc"
       ]
     },
     {
       "path": "src/ai/skills.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/ai/tools/google-search.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/cdp/domains/Emulation.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/cdp/domains/Tracing.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/profiles/auto-escalation.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/serverless/standalone.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "src/transport/StaticDomTransport.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "src/zig-bridge/js_stub.zig",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/cdp/domains/Browser.test.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/cdp/domains/Network.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-10-material-ai-deep.md",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/e2e/results/2026-05-10-material-ai.md",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/integration/curl-impersonate.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/integration/dashboard.test.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/integration/google-atlas.test.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/integration/showcase-hn.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/integration/tracing.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/mocks/cloudflare-simulator.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     },
     {
       "path": "test/next/instant.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/react/parser.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/stealth-challenge.test.ts",
       "matches": 1,
       "patterns": [
-        "bunlight"
+        "bxc"
       ]
     },
     {
       "path": "test/zigbridge-smoke.test.ts",
       "matches": 1,
       "patterns": [
-        "Bunlight"
+        "Bxc"
       ]
     }
   ]

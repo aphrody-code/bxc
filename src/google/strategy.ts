@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/strategy
+ * @module bxc/google/strategy
  *
  * Scraping strategies specialized for Google domains.
  */

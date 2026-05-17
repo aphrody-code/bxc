@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/react/parser
+ * @module bxc/react/parser
  *
  * Parsers for React / Next.js / Nuxt / Remix / Astro / SvelteKit hydration
  * payloads. Operates on raw HTML (any profile) or on a `Page` instance.
@@ -35,7 +35,7 @@
  *
  * The implementations are pure-function (no DOM dependency) — they work
  * on any HTML string, including the result of `Page.content()` from any
- * bunlight profile.
+ * bxc profile.
  */
 
 // ---------------------------------------------------------------------------
@@ -282,7 +282,7 @@ export function detectHydration(html: string): HydrationSignal {
 }
 
 // ---------------------------------------------------------------------------
-// Bunlight Page convenience
+// Bxc Page convenience
 // ---------------------------------------------------------------------------
 
 interface PageLike {
@@ -291,7 +291,7 @@ interface PageLike {
 }
 
 /**
- * Reads the rendered HTML from a bunlight `Page` and returns the merged
+ * Reads the rendered HTML from a bxc `Page` and returns the merged
  * hydration payload : `__NEXT_DATA__`, App Router flight chunks, generic
  * window state. Use after `page.goto(url)`.
  */

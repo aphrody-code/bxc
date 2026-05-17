@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/react/hydration
+ * @module bxc/react/hydration
  *
  * Wait helpers for SPA hydration. Built around `Page.evaluate` so they
  * work on any profile that exposes JS execution (`fast`, `stealth`, `max`).

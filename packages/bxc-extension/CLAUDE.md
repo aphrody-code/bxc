@@ -1,7 +1,7 @@
-# CLAUDE.md — packages/bunlight-extension
+# CLAUDE.md — packages/bxc-extension
 
-Extension MCP native pour Gemini CLI (`bunlight-gemini`). Stdio MCP server qui
-expose 7 tools branchés sur le moteur Bunlight (engine Chromium Zero-Spawn).
+Extension MCP native pour Gemini CLI (`bxc-gemini`). Stdio MCP server qui
+expose 7 tools branchés sur le moteur Bxc (engine Chromium Zero-Spawn).
 
 Doc plus détaillée : `@DEVELOPMENT.md` (philosophie + setup). Ce fichier ne
 duplique pas — il liste ce que Claude doit savoir pour intervenir vite.
@@ -9,11 +9,11 @@ duplique pas — il liste ce que Claude doit savoir pour intervenir vite.
 ## Layout
 
 ```
-packages/bunlight-extension/
+packages/bxc-extension/
 ├── server.ts                    # MCP server (7 tools registerTool, 228 lignes)
 ├── gemini-extension.json        # manifest Gemini (mcpServers + settings)
-├── bunlight-mcp                 # binaire compilé via bun build --compile
-├── bunlight-memory.sqlite       # base mémoire (bun:sqlite), NOT tracked-friendly
+├── bxc-mcp                 # binaire compilé via bun build --compile
+├── bxc-memory.sqlite       # base mémoire (bun:sqlite), NOT tracked-friendly
 ├── skills/
 │   └── rust-native-scanner/     # skill native Rust (Cargo + scripts/build-rust-skill.ts)
 └── test/server.test.ts          # tests bun:test
@@ -38,7 +38,7 @@ bun install                      # deps (workspace pour @modelcontextprotocol/sd
 bun run typecheck                # tsc --noEmit
 bun run lint                     # oxlint .
 bun test                         # tests stdio MCP
-bun run build                    # bun build --compile -> binaire ./bunlight-mcp (Linux x64)
+bun run build                    # bun build --compile -> binaire ./bxc-mcp (Linux x64)
 ```
 
 Build skill Rust :
@@ -74,7 +74,7 @@ uniquement les dossiers (sans ça, scan retourne fichiers + dossiers ou rien).
 
 ## Pièges
 
-- **`bunlight-memory.sqlite` créé au cwd** : la DB se matérialise dès le lancement
+- **`bxc-memory.sqlite` créé au cwd** : la DB se matérialise dès le lancement
   de `server.ts`. Si tu lances depuis la racine du repo, elle apparaît à la racine
   (laisser non-staged via `.gitignore`).
 - **`@modelcontextprotocol/sdk` en `workspace:*`** : la version vient de

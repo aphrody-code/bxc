@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Bunlight — native Windows build orchestrator (no WSL, no MSYS2).
+# Bxc — native Windows build orchestrator (no WSL, no MSYS2).
 #
 # Inspired by https://bun.com/docs/project/building-windows.
 # Runs on a real Windows host. For cross-compilation from Linux/macOS,
@@ -9,11 +9,11 @@
 #   1. Verify prerequisites (Bun, Zig, MSVC build tools, git)
 #   2. Build the Lightpanda browser engine natively (Zig cross-compile,
 #      x86_64-windows-gnu target, no MSYS2 needed).
-#   3. Build the bunlight standalone executable (bun build --compile
+#   3. Build the bxc standalone executable (bun build --compile
 #      --target=bun-windows-x64).
 #   4. Optionally fetch curl-impersonate Windows DLL (lexiforest releases).
-#   5. Bundle bunlight.exe + lightpanda.exe + curl-impersonate.dll into
-#      a single zip ready for `bunlight-windows-x64.zip` GitHub release.
+#   5. Bundle bxc.exe + lightpanda.exe + curl-impersonate.dll into
+#      a single zip ready for `bxc-windows-x64.zip` GitHub release.
 #
 # Usage:
 #   .\scripts\build-windows.ps1                  # full build
@@ -22,10 +22,10 @@
 #   .\scripts\build-windows.ps1 -Arch arm64      # ARM64 build (experimental)
 #
 # Outputs:
-#   dist\windows\bunlight.exe
+#   dist\windows\bxc.exe
 #   dist\windows\lightpanda.exe
 #   dist\windows\libcurl-impersonate.dll
-#   dist\windows\bunlight-windows-x64.zip
+#   dist\windows\bxc-windows-x64.zip
 #
 # Note on Lightpanda:
 #   Upstream lightpanda-io/browser is an Alpha-stage Zig project with V8
@@ -116,7 +116,7 @@ if (-not $SkipLightpanda) {
       }
 
       if (-not (Test-Path $FallbackOut)) {
-        Write-Warning "Lightpanda not available for $ZigTarget — bunlight will run without Lightpanda support on this build."
+        Write-Warning "Lightpanda not available for $ZigTarget — bxc will run without Lightpanda support on this build."
       }
     } else {
       $BuiltExe = Join-Path $LightpandaSrc "zig-out\bin\lightpanda.exe"
@@ -135,10 +135,10 @@ if (-not $SkipLightpanda) {
   Write-Output "[2/5] Skipped Lightpanda build (-SkipLightpanda)"
 }
 
-# ─── Step 3: Bunlight standalone (bun build --compile) ────────────────
+# ─── Step 3: Bxc standalone (bun build --compile) ────────────────
 
 Write-Output ""
-Write-Output "[3/5] Building bunlight standalone executable (target=$BunTarget)..."
+Write-Output "[3/5] Building bxc standalone executable (target=$BunTarget)..."
 
 Push-Location $RepoRoot
 try {
@@ -148,7 +148,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "bun install failed" }
   }
 
-  $OutExe = Join-Path $DistDir "bunlight.exe"
+  $OutExe = Join-Path $DistDir "bxc.exe"
   $BuildArgs = @(
     "build", "src/cli/index.ts",
     "--compile", "--target=$BunTarget",
@@ -166,7 +166,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "bun build --compile failed" }
 
   $size = [math]::Round((Get-Item $OutExe).Length / 1MB, 2)
-  Write-Output "  OK bunlight.exe ($size MB) -> $DistDir"
+  Write-Output "  OK bxc.exe ($size MB) -> $DistDir"
 } finally {
   Pop-Location
 }
@@ -189,7 +189,7 @@ if (-not $SkipCurl) {
       Invoke-RestMethod -Uri $CurlURL -OutFile $TmpZip
     } catch {
       Write-Warning "Could not download curl-impersonate Windows DLL ($CurlURL)."
-      Write-Warning "The bunlight.exe will lack TLS-fingerprint http profile on Windows."
+      Write-Warning "The bxc.exe will lack TLS-fingerprint http profile on Windows."
       $SkipCurl = $true
     }
   }
@@ -220,13 +220,13 @@ if (-not $SkipCurl) {
 Write-Output ""
 Write-Output "[5/5] Bundling release zip..."
 
-$ZipName = if ($Baseline) { "bunlight-windows-${BunArch}-baseline.zip" } else { "bunlight-windows-${BunArch}.zip" }
+$ZipName = if ($Baseline) { "bxc-windows-${BunArch}-baseline.zip" } else { "bxc-windows-${BunArch}.zip" }
 $ZipPath = Join-Path $DistDir $ZipName
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }
 
 $ToBundle = @()
-foreach ($file in @("bunlight.exe", "lightpanda.exe", "libcurl-impersonate.dll")) {
+foreach ($file in @("bxc.exe", "lightpanda.exe", "libcurl-impersonate.dll")) {
   $p = Join-Path $DistDir $file
   if (Test-Path $p) { $ToBundle += $p }
 }

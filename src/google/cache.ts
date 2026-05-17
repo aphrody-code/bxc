@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/cache
+ * @module bxc/google/cache
  *
  * Reinforced SQLite-backed cache for Google SERP / fetch results.
  * 
@@ -34,7 +34,7 @@ import { mkdirSync } from "node:fs";
 export interface CacheOptions {
 	/** 
 	 * Path to sqlite file. 
-	 * Defaults to `~/.bunlight/cache.sqlite` or `:memory:`.
+	 * Defaults to `~/.bxc/cache.sqlite` or `:memory:`.
 	 */
 	path?: string;
 	/** Default TTL in ms. Defaults to 24h. */
@@ -65,7 +65,7 @@ export class GoogleCache {
 		let dbPath = opts.path;
 		
 		if (!dbPath && process.env.HOME) {
-			const dir = join(process.env.HOME, ".bunlight");
+			const dir = join(process.env.HOME, ".bxc");
 			try {
 				mkdirSync(dir, { recursive: true });
 				dbPath = join(dir, "cache.sqlite");
@@ -200,7 +200,7 @@ export class GoogleCache {
 let _shared: GoogleCache | null = null;
 
 /**
- * Global reinforced cache instance for the Bunlight process.
+ * Global reinforced cache instance for the Bxc process.
  */
 export function sharedCache(): GoogleCache {
 	if (!_shared) _shared = new GoogleCache();

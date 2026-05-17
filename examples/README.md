@@ -1,6 +1,6 @@
-# Bunlight Examples
+# Bxc Examples
 
-Ready-to-run examples showcasing Bunlight's profile escalation pipeline and
+Ready-to-run examples showcasing Bxc's profile escalation pipeline and
 scraping patterns.
 
 ---
@@ -79,9 +79,9 @@ Expected output:
 
 ### ecommerce-price-monitor.ts
 
-Synopsis: Demonstrates the full Bunlight profile auto-detection pipeline on 5
+Synopsis: Demonstrates the full Bxc profile auto-detection pipeline on 5
 simulated e-commerce product pages (data: URIs with inline HTML). For each URL:
-1. suggestStrategy() maps simulated wappalyzergo output to a Bunlight profile
+1. suggestStrategy() maps simulated wappalyzergo output to a Bxc profile
 2. Browser.newPage() opens with the suggested profile
 3. The .price CSS selector is extracted
 4. Prices are compared against a baseline stored in /tmp/prices-baseline.json

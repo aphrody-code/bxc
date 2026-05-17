@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/rate-limit
+ * @module bxc/google/rate-limit
  *
  * Specialized rate limiting and backoff for Google domains.
  */

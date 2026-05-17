@@ -1,4 +1,4 @@
-// Apply a {fieldName -> cssSelector} map to a raw HTML string using bunlight's
+// Apply a {fieldName -> cssSelector} map to a raw HTML string using bxc's
 // native Zig DOM (Rust bridge). Pure Bun, no Page / Browser instance required.
 //
 // Throughput: ~0.5-2 ms per call on this VPS — orders of magnitude faster than

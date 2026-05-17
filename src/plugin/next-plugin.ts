@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/plugin/next-plugin
+ * @module bxc/plugin/next-plugin
  *
  * Bun plugin that brings Next.js conventions into a plain `Bun.build()` /
  * `Bun.plugin()` pipeline. Composed of five sub-plugins, each independently
@@ -650,7 +650,7 @@ export function nextEnvPlugin(options: NextPluginOptions = {}): BunPlugin {
  *
  * @example
  * ```ts
- * import { nextPlugin } from "@aphrody-code/bunlight/plugin";
+ * import { nextPlugin } from "@aphrody-code/bxc/plugin";
  * await Bun.build({
  *   entrypoints: ["./app.ts"],
  *   plugins: nextPlugin({ cwd: process.cwd(), emitManifest: true }),

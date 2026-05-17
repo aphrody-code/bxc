@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/stats/Statistics
+ * @module bxc/stats/Statistics
  *
  * Request statistics tracker inspired by Crawlee's Statistics class.
  * Tracks request counts, durations, error rates, and computes

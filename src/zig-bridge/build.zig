@@ -1,11 +1,11 @@
-// Bunlight — standalone build.zig for liblightpanda.{so,a}
+// Bxc — standalone build.zig for liblightpanda.{so,a}
 //
-// This build script can be run from the bunlight/src/zig-bridge/ directory
+// This build script can be run from the bxc/src/zig-bridge/ directory
 // but the RECOMMENDED workflow is to work directly from lightpanda-src/
 // after applying the patch:
 //
 //   cd lightpanda-src
-//   git apply ../../bunlight/patches/001-cdylib-target.patch
+//   git apply ../../bxc/patches/001-cdylib-target.patch
 //   zig build -Dno_v8=true -Doptimize=ReleaseFast lib
 //
 // This standalone build.zig exists as a reference and for CI environments
@@ -20,7 +20,7 @@
 //   - lightpanda-src/ with 001-cdylib-target.patch applied
 //
 // Usage:
-//   From bunlight/src/zig-bridge/:
+//   From bxc/src/zig-bridge/:
 //     zig build -Dlp_src=../../../lightpanda-src -Doptimize=ReleaseFast lib
 //
 // Zig version: 0.15.x

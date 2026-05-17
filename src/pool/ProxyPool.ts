@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/pool/ProxyPool
+ * @module bxc/pool/ProxyPool
  *
  * Proxy rotation with two strategies:
  *

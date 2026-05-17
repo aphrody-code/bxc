@@ -1,10 +1,10 @@
 [package]
-name = "bunlight-engine"
+name = "bxc-engine"
 version.workspace = true
 edition.workspace = true
 
 [[bin]]
-name = "bunlight-engine"
+name = "bxc-engine"
 path = "src/main.rs"
 
 [[bin]]

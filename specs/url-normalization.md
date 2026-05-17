@@ -7,7 +7,7 @@
 
 ## 1. Quel standard suivre ?
 
-Bunlight suit la **WHATWG URL Living Standard**, parce que c'est ce que `new URL()` implémente dans Bun, Chrome, Firefox, Node, Deno. RFC 3986 reste la référence formelle mais WHATWG est strictement plus permissif et matche le comportement réel des navigateurs.
+Bxc suit la **WHATWG URL Living Standard**, parce que c'est ce que `new URL()` implémente dans Bun, Chrome, Firefox, Node, Deno. RFC 3986 reste la référence formelle mais WHATWG est strictement plus permissif et matche le comportement réel des navigateurs.
 
 ## 2. Anatomie d'une URL absolue
 
@@ -33,13 +33,13 @@ Composants exposés par `new URL()`:
 | `hash` | `"#frag"` |
 | `origin` | `"https://host.example.com:443"` |
 
-## 3. Normalisation appliquée par bunlight
+## 3. Normalisation appliquée par bxc
 
 Pour qu'un crawler ne re-fetche pas la même page deux fois sous des URLs cosmétiquement différentes, on normalise:
 
 1. **Scheme et host en lowercase** — `HTTPS://Example.COM/Foo` → `https://example.com/Foo`. WHATWG le fait automatiquement à la construction.
-2. **Drop du fragment** — `#section` ne change jamais la réponse HTTP. Bunlight set `u.hash = ""`.
-3. **Drop des query strings** — heuristique côté docs sites: la plupart des params sont du tracking (`utm_*`, `ref=...`). Optionnel via flag (bunlight les drop par défaut sur les sites de docs, pas sur les apps).
+2. **Drop du fragment** — `#section` ne change jamais la réponse HTTP. Bxc set `u.hash = ""`.
+3. **Drop des query strings** — heuristique côté docs sites: la plupart des params sont du tracking (`utm_*`, `ref=...`). Optionnel via flag (bxc les drop par défaut sur les sites de docs, pas sur les apps).
 4. **Trailing slash** — `/foo/` → `/foo` sauf pour la racine `/`. Évite les doublons quand le serveur sert le même contenu pour les deux.
 5. **Pas de port default** — `:443` sur HTTPS, `:80` sur HTTP sont supprimés (WHATWG le fait).
 6. **Pas de userinfo** — on ne suit jamais des liens contenant `user:password@host`.
@@ -78,7 +78,7 @@ function sameOrigin(url: string, origin: string): boolean {
 
 ## 6. IRIs (RFC 3987) et IDN
 
-Les hosts non-ASCII (`http://例え.test/`) sont représentés en **Punycode** dans la `host` property (`xn--r8jz45g.test`). WHATWG fait la conversion automatique. Bunlight n'a rien à faire de spécial — on reçoit déjà le format wire.
+Les hosts non-ASCII (`http://例え.test/`) sont représentés en **Punycode** dans la `host` property (`xn--r8jz45g.test`). WHATWG fait la conversion automatique. Bxc n'a rien à faire de spécial — on reçoit déjà le format wire.
 
 Les paths non-ASCII sont **percent-encodés en UTF-8** par WHATWG: `/é` → `/%C3%A9`. Si le serveur fait de la résolution case/encoding différente, il faut suivre les redirects.
 

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/queue/RequestQueue
+ * @module bxc/queue/RequestQueue
  *
  * Persistent, crash-safe request queue backed by `bun:sqlite`.
  *
@@ -51,7 +51,7 @@ export type RequestState = "PENDING" | "LOCKED" | "DONE" | "FAILED";
 
 /**
  * A scrape target stored in the queue.
- * Mirrors Crawlee's Request shape but simplified to what Bunlight needs.
+ * Mirrors Crawlee's Request shape but simplified to what Bxc needs.
  */
 export interface QueuedRequest {
 	/** Internal SQLite rowid alias — assigned on insert. */

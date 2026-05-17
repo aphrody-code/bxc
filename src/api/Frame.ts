@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/api/frame
+ * @module bxc/api/frame
  */
 
 import type { Page } from "./browser.ts";

@@ -5,7 +5,7 @@ dist
 rust-bridge/target
 bin
 docs_gemini
-.bunlight/
+.bxc/
 .turbo/
 .tsbuildinfo
 *.log
@@ -62,7 +62,7 @@ vendor/gemma/uv.lock
 google-ecosystem-map.json
 mapping-and-atlas.log
 
-# Bunlight extension runtime/build artifacts
-packages/bunlight-extension/bunlight-mcp
-**/bunlight-memory.sqlite
-bunlight-memory.sqlite
+# Bxc extension runtime/build artifacts
+packages/bxc-extension/bxc-mcp
+**/bxc-memory.sqlite
+bxc-memory.sqlite

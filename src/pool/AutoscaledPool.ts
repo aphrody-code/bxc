@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/pool/AutoscaledPool
+ * @module bxc/pool/AutoscaledPool
  *
  * Dynamically adjusts task concurrency based on real-time CPU and RSS memory
  * pressure.  Inspired by Crawlee's AutoscaledPool

@@ -1,7 +1,7 @@
 /**
- * Runner: bunlight-static
+ * Runner: bxc-static
  *
- * Uses Bunlight's in-process StaticDomTransport (profile: "static").
+ * Uses Bxc's in-process StaticDomTransport (profile: "static").
  * This is the fastest profile: pure Bun fetch + in-process HTML parsing,
  * zero spawn, zero WebSocket.
  *
@@ -16,7 +16,7 @@ import type { RunResult } from "../types.ts";
 import { rssNow } from "../types.ts";
 import { Browser } from "../../src/api/browser.ts";
 
-export const RUNNER_ID = "bunlight-static";
+export const RUNNER_ID = "bxc-static";
 export const SKIP_REASON: string | null = null;
 
 export async function run(url: string): Promise<RunResult> {

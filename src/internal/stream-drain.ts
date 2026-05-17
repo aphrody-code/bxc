@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/internal/stream-drain
+ * @module bxc/internal/stream-drain
  *
  * Drain helper for `Bun.spawn` stdout/stderr pipes.  Fully consumes a
  * `ReadableStream<Uint8Array>` so the underlying OS pipe never fills up and

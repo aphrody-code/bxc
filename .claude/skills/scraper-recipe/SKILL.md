@@ -1,10 +1,10 @@
 ---
 name: scraper-recipe
-description: Génère un scraper Bunlight complet (profile choisi + extraction Zod typée + Dataset JSONL append). À utiliser quand l'utilisateur demande "scrape X", "extract Y from URL Z", ou veut un nouveau scraper one-shot dans `examples/` ou `src/scrapers/`.
+description: Génère un scraper Bxc complet (profile choisi + extraction Zod typée + Dataset JSONL append). À utiliser quand l'utilisateur demande "scrape X", "extract Y from URL Z", ou veut un nouveau scraper one-shot dans `examples/` ou `src/scrapers/`.
 disable-model-invocation: true
 ---
 
-# Bunlight scraper recipe
+# Bxc scraper recipe
 
 Quand invoquée via `/scraper-recipe`, cette skill produit un fichier scraper complet à partir des inputs suivants :
 
@@ -29,8 +29,8 @@ Quand invoquée via `/scraper-recipe`, cette skill produit un fichier scraper co
 
 ```typescript
 import { z } from "zod";
-import { Browser } from "@aphrody-code/bunlight";
-import { Dataset } from "@aphrody-code/bunlight";
+import { Browser } from "@aphrody-code/bxc";
+import { Dataset } from "@aphrody-code/bxc";
 // Choisis UNE des deux lignes suivantes selon le mode :
 // import { extractStructured } from "@aphrody-code/llm-extract";
 // import * as cheerio from "cheerio";

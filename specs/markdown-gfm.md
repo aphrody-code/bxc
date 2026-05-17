@@ -14,7 +14,7 @@ CommonMark fixe le sous-ensemble syntaxique standard. GFM ajoute, par dessus:
 - Tag filter (drop d'éléments HTML dangereux dans le rendu)
 - Autolinks (URLs et emails sans `<...>`)
 
-C'est ce que GitHub, Bun (`Bun.markdown`), htmd, et la majorité des renderers modernes implémentent. Bunlight cible GFM partout.
+C'est ce que GitHub, Bun (`Bun.markdown`), htmd, et la majorité des renderers modernes implémentent. Bxc cible GFM partout.
 
 ## 2. Bloc structurel
 
@@ -48,7 +48,7 @@ C'est ce que GitHub, Bun (`Bun.markdown`), htmd, et la majorité des renderers m
 
 ## 4. Frontmatter — pas dans la spec
 
-CommonMark/GFM **ne définit pas** YAML frontmatter. C'est une convention de facto Jekyll/Hugo/Astro/Pandoc. Bunlight le produit et le parse manuellement (voir [yaml-frontmatter.md](yaml-frontmatter.md)).
+CommonMark/GFM **ne définit pas** YAML frontmatter. C'est une convention de facto Jekyll/Hugo/Astro/Pandoc. Bxc le produit et le parse manuellement (voir [yaml-frontmatter.md](yaml-frontmatter.md)).
 
 Format reconnu par les renderers tolérants:
 
@@ -83,7 +83,7 @@ Pour une équivalence GitHub: `{ tables: true, strikethrough: true, tasklists: t
 
 ## 6. `Bun.markdown.render` — callbacks par élément
 
-Pattern central pour transformer markdown → autre chose (text, ANSI, HTML custom, JSX...). Bunlight utilise les callbacks qui retournent juste `children` pour produire le miroir plaintext (pattern "Stripping all formatting" du doc Bun).
+Pattern central pour transformer markdown → autre chose (text, ANSI, HTML custom, JSX...). Bxc utilise les callbacks qui retournent juste `children` pour produire le miroir plaintext (pattern "Stripping all formatting" du doc Bun).
 
 Callbacks disponibles côté blocs: `heading`, `paragraph`, `blockquote`, `code`, `list`, `listItem`, `hr`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `html`.
 
@@ -121,7 +121,7 @@ GFM tolère 3+ backticks ou 3+ tildes ; le bloc se ferme avec le même nombre mi
 ![alt-text](https://example.com/img.png "optional title")
 ```
 
-`alt` est requis côté accessibilité. `title` apparaît au survol. Bunlight strip systématiquement les images dans `plaintext/` (l'alt est gardé optionnellement selon le contexte LLM).
+`alt` est requis côté accessibilité. `title` apparaît au survol. Bxc strip systématiquement les images dans `plaintext/` (l'alt est gardé optionnellement selon le contexte LLM).
 
 ## 10. Compliance checklist côté pipeline
 

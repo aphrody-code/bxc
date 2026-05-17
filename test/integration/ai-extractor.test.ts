@@ -37,7 +37,7 @@ describe("Stagehand-style AI Extractor", () => {
 				</header>
 				<main>
 					<div class="product-container">
-						<h1 id="title" class="product-title-text">Bunlight Super Scraper 3000</h1>
+						<h1 id="title" class="product-title-text">Bxc Super Scraper 3000</h1>
 						<div class="price-box">
 							<span class="currency">$</span>
 							<span class="value">99.99</span>
@@ -65,7 +65,7 @@ describe("Stagehand-style AI Extractor", () => {
 		// Assertions on the extracted data
 		// Since we use LLM, keys might vary slightly, but we expect something like title, price, rating
 		const dataStr = JSON.stringify(data).toLowerCase();
-		expect(dataStr).toContain("bunlight super scraper 3000");
+		expect(dataStr).toContain("bxc super scraper 3000");
 		expect(dataStr).toContain("99.99");
 		expect(dataStr).toContain("4.8");
 

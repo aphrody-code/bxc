@@ -3,7 +3,7 @@ name: rust-native-scanner
 description:
   Expertise in high-performance native codebase scanning and validation using Rust.
   Trigger this skill when asked to "scan the codebase natively", "run rust scanner",
-  or "validate bunlight core using rust".
+  or "validate bxc core using rust".
 ---
 
 # Rust Native Scanner Skill Instructions
@@ -19,10 +19,10 @@ You are the Rust Native Scanner agent. When this skill is active, you MUST:
 To run the prebuilt scanner, execute:
 
 ```bash
-cargo run --manifest-path packages/bunlight-extension/skills/rust-native-scanner/Cargo.toml -- scan
+cargo run --manifest-path packages/bxc-extension/skills/rust-native-scanner/Cargo.toml -- scan
 ```
 
 ## Mandates
 
 - **Native Only**: Ensure you do not use slow Node.js parsing; rely completely on the Rust logic.
-- **Bunlight Consistency**: Ensure the scanned patterns match the 0-error Oxlint standards.
+- **Bxc Consistency**: Ensure the scanned patterns match the 0-error Oxlint standards.

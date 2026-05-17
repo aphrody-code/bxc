@@ -38,7 +38,7 @@
 +    //   zig build -Dno_v8=true -Doptimize=ReleaseFast lib
 +    //
 +    // The exports_path option points to the C-ABI entry point.
-+    // Default: ../bunlight/src/zig-bridge/exports.zig
++    // Default: ../bxc/src/zig-bridge/exports.zig
 +    // -----------------------------------------------------------------------
 +    if (no_v8) {
 +        const lib_step = b.step("lib", "Build liblightpanda.{so,a} (DOM-only cdylib, requires -Dno_v8=true and source patches)");
@@ -46,8 +46,8 @@
 +        const exports_path_opt = b.option(
 +            []const u8,
 +            "exports_path",
-+            "Path to the C-ABI exports.zig (default: ../bunlight/src/zig-bridge/exports.zig)",
-+        ) orelse "../bunlight/src/zig-bridge/exports.zig";
++            "Path to the C-ABI exports.zig (default: ../bxc/src/zig-bridge/exports.zig)",
++        ) orelse "../bxc/src/zig-bridge/exports.zig";
 +
 +        // Shared library (.so / .dylib)
 +        {
@@ -92,7 +92,7 @@
 --- /dev/null
 +++ b/src/browser/js/stub.zig
 @@ -0,0 +1,211 @@
-+// Bunlight stub — src/browser/js/stub.zig
++// Bxc stub — src/browser/js/stub.zig
 +//
 +// Replaces the ENTIRE js/ binding layer for the -Dno_v8=true build.
 +//

@@ -132,7 +132,7 @@ describe("HarRecorder lifecycle", () => {
 		const log = recorder.stop();
 
 		expect(log.version).toBe("1.2");
-		expect(log.creator.name).toBe("Bunlight");
+		expect(log.creator.name).toBe("Bxc");
 		expect(Array.isArray(log.pages)).toBe(true);
 		expect(Array.isArray(log.entries)).toBe(true);
 	});
@@ -396,7 +396,7 @@ describe("HarRecorder.save()", () => {
 
 		await new Promise<void>((r) => setTimeout(r, 20));
 
-		const tmpPath = join(tmpdir(), `bunlight-test-${Date.now()}.har`);
+		const tmpPath = join(tmpdir(), `bxc-test-${Date.now()}.har`);
 		await recorder.save(tmpPath);
 
 		const content = await Bun.file(tmpPath).text();
@@ -412,7 +412,7 @@ describe("HarRecorder.save()", () => {
 	test("save() produces human-readable indented JSON", async () => {
 		const recorder = new HarRecorder(page);
 		recorder.start();
-		const tmpPath = join(tmpdir(), `bunlight-indent-test-${Date.now()}.har`);
+		const tmpPath = join(tmpdir(), `bxc-indent-test-${Date.now()}.har`);
 		await recorder.save(tmpPath);
 
 		const content = await Bun.file(tmpPath).text();

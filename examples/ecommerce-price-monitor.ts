@@ -17,9 +17,9 @@
 /**
  * Example — E-Commerce Price Monitor (profile: auto-detected via suggestStrategy)
  *
- * Demonstrates Bunlight's profile escalation pipeline:
+ * Demonstrates Bxc's profile escalation pipeline:
  *   1. detectFromPage / detectFrameworks (wappalyzergo) runs on each URL
- *   2. suggestStrategy maps detected technologies onto the right Bunlight profile
+ *   2. suggestStrategy maps detected technologies onto the right Bxc profile
  *   3. Browser.newPage is opened with the suggested profile
  *   4. ".price" selector is extracted from the rendered page
  *   5. A baseline Map (persisted to /tmp/prices-baseline.json) is compared

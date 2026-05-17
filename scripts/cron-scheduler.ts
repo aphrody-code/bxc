@@ -15,14 +15,14 @@
  */
 
 /**
- * Bunlight Cron Scheduler
+ * Bxc Cron Scheduler
  * Allows scheduling periodic scraping tasks directly from Bun.
  */
 
 import { Browser } from "../src/api/browser";
-import { BunlightDB } from "../src/db/BunlightDB";
+import { BxcDB } from "../src/db/BxcDB";
 
-const db = new BunlightDB();
+const db = new BxcDB();
 
 interface Task {
     name: string;
@@ -84,4 +84,4 @@ for (const task of tasks) {
     }
 }
 
-console.log("⚡️ Bunlight Scheduler started.");
+console.log("⚡️ Bxc Scheduler started.");

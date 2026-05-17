@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/throttling/rate-limiter
+ * @module bxc/throttling/rate-limiter
  *
  * Per-domain rate limiter with sliding window + robots.txt Crawl-delay support.
  */
@@ -77,7 +77,7 @@ export class RateLimiter {
 		this.#maxRequestsPerSecond = config.maxRequestsPerSecond ?? 2;
 		this.#maxRequestsPerMinute = config.maxRequestsPerMinute ?? 60;
 		this.#obeyRobots = config.obeyRobots ?? config.respectRobotsTxt ?? false;
-		this.#userAgent = config.userAgent ?? "Bunlight/1.0";
+		this.#userAgent = config.userAgent ?? "Bxc/1.0";
 		this.#robotsFetchTimeoutMs = config.robotsFetchTimeoutMs ?? 8000;
 		this.#robotsCacheTtlMs = config.robotsCacheTtlMs ?? 3600000;
 	}

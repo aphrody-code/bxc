@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/search
+ * @module bxc/google/search
  *
  * Specialized Google Search (SERP) scraping.
  * Unified to use the high-performance ZigQuery SerpParser.

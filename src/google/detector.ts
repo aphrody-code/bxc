@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/detector
+ * @module bxc/google/detector
  *
  * Specialized fingerprinting for Google-specific frameworks and anti-bot signals.
  */

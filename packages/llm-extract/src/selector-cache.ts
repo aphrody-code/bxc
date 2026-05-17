@@ -71,7 +71,7 @@ export class SelectorCache {
 
 	#defaultPath(): string {
 		const home = Bun.env.HOME ?? "/tmp";
-		const dir = join(home, ".bunlight");
+		const dir = join(home, ".bxc");
 		try {
 			mkdirSync(dir, { recursive: true });
 		} catch {
