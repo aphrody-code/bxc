@@ -14,6 +14,7 @@ rôles et de l'état avec Gemini CLI.
 | Agent | `.claude/agents/bunlight-scrape-debugger.md` | Scraper bloqué (403/429/captcha/empty) |
 | Skill | `.claude/skills/scraper-recipe/SKILL.md` | `/scraper-recipe` — user-only, génère scraper Zod+Dataset |
 | Skill | `.claude/skills/gemma-bench/SKILL.md` | `/gemma-bench` — user-only, bench + diff baseline |
+| Command | `.claude/commands/refresh-claude-md.md` | `/refresh-claude-md [scope]` — audit + sync tous les CLAUDE.md selon les guidelines Anthropic officielles |
 
 ## Commands
 
