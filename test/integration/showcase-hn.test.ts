@@ -241,7 +241,7 @@ describe("showcase-hn — HN crawler integration (mock fetch)", () => {
 		originalFetch = globalThis.fetch;
 		// Install mock fetch
 		(globalThis as { fetch: unknown }).fetch = makeMockFetch();
-		tmpDir = `/tmp/bunlight-hn-test-${Date.now()}`;
+		tmpDir = `/tmp/bxc-hn-test-${Date.now()}`;
 	});
 
 	afterEach(async () => {

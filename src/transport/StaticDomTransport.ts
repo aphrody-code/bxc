@@ -744,7 +744,7 @@ class StaticDomHandler {
 
 		// Build request headers from emulation state.
 		const userAgent =
-			page.emulation.userAgent ?? "Bunlight/0.1.0 StaticDomTransport";
+			page.emulation.userAgent ?? "Bxc/0.1.0 StaticDomTransport";
 		const headers: Record<string, string> = {
 			"User-Agent": userAgent,
 			// Merge extra headers set via Network.setExtraHTTPHeaders

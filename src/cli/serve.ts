@@ -16,14 +16,14 @@
  */
 
 /**
- * `bunlight serve` — CLI entrypoint that spawns Bunlight as a CDP server on
+ * `bxc serve` — CLI entrypoint that spawns Bxc as a CDP server on
  * a local TCP port.  Designed to be invoked by external clients (such as
  * agent-browser's Rust orchestrator) which expect a Chrome-DevTools-Protocol
  * compatible HTTP + WebSocket endpoint.
  *
  * Usage:
  *
- *   bunlight serve --cdp-port <N> [--profile static|fast|http] \
+ *   bxc serve --cdp-port <N> [--profile static|fast|http] \
  *                  [--host 127.0.0.1] [--proxy http://...]
  *
  * Endpoints exposed:
@@ -39,7 +39,7 @@
  *   - static  : in-process StaticDomTransport bound to a WebSocket bridge.
  *   - fast    : spawn `lightpanda serve --port <ephemeral>`, reverse-proxy
  *               every endpoint and WebSocket frame to it.  The presence of
- *               this CLI just means we can speak the Bunlight CLI surface
+ *               this CLI just means we can speak the Bxc CLI surface
  *               while delegating actual CDP handling to Lightpanda.
  *   Forbidden engines : Chrome / Chromium / Firefox / Edge / Safari and
  *   any derivative are not exposed. For server-grade anti-detection use
@@ -69,7 +69,7 @@ interface CLIOptions {
 
 function parseArgs(argv: string[]): CLIOptions {
 	// Skip "bun", "<script>" — start parsing from "serve" onward.
-	// Accept either `bunlight serve --foo` or just `--foo`.
+	// Accept either `bxc serve --foo` or just `--foo`.
 	const args = [...argv];
 	if (args[0] === "serve") args.shift();
 
@@ -144,7 +144,7 @@ function parseArgs(argv: string[]): CLIOptions {
 }
 
 function printUsage(): void {
-	const usage = `bunlight serve --cdp-port <N> [options]
+	const usage = `bxc serve --cdp-port <N> [options]
 
 Options:
   --cdp-port <N>           TCP port for the CDP server (required)
@@ -169,16 +169,16 @@ class Logger {
 		return order[level] >= order[this.level];
 	}
 	debug(...args: unknown[]): void {
-		if (this.#shouldLog("debug")) console.error("[bunlight]", ...args);
+		if (this.#shouldLog("debug")) console.error("[bxc]", ...args);
 	}
 	info(...args: unknown[]): void {
-		if (this.#shouldLog("info")) console.error("[bunlight]", ...args);
+		if (this.#shouldLog("info")) console.error("[bxc]", ...args);
 	}
 	warn(...args: unknown[]): void {
-		if (this.#shouldLog("warn")) console.error("[bunlight] WARN", ...args);
+		if (this.#shouldLog("warn")) console.error("[bxc] WARN", ...args);
 	}
 	error(...args: unknown[]): void {
-		if (this.#shouldLog("error")) console.error("[bunlight] ERROR", ...args);
+		if (this.#shouldLog("error")) console.error("[bxc] ERROR", ...args);
 	}
 }
 
@@ -187,14 +187,14 @@ class Logger {
 // ---------------------------------------------------------------------------
 
 // Bun.randomUUIDv7 — sortable, monotonic, collision-resistant.
-const BROWSER_ID = `bunlight-${Bun.randomUUIDv7().slice(0, 8)}`;
+const BROWSER_ID = `bxc-${Bun.randomUUIDv7().slice(0, 8)}`;
 const PAGE_ID = `page-${Bun.randomUUIDv7().slice(0, 8)}`;
 
 function browserVersion(profile: CLIOptions["profile"], host: string, port: number) {
 	return {
-		Browser: `Bunlight/0.1.0 (${profile})`,
+		Browser: `Bxc/0.1.0 (${profile})`,
 		"Protocol-Version": "1.3",
-		"User-Agent": `Bunlight/0.1.0 (${profile})`,
+		"User-Agent": `Bxc/0.1.0 (${profile})`,
 		"V8-Version": "0.0.0",
 		"WebKit-Version": "0.0.0",
 		webSocketDebuggerUrl: `ws://${host}:${port}/devtools/browser/${BROWSER_ID}`,
@@ -206,7 +206,7 @@ function targetList(profile: CLIOptions["profile"], host: string, port: number) 
 		{
 			id: PAGE_ID,
 			type: "page",
-			title: "Bunlight",
+			title: "Bxc",
 			url: "about:blank",
 			devtoolsFrontendUrl: "",
 			webSocketDebuggerUrl: `ws://${host}:${port}/devtools/page/${PAGE_ID}`,
@@ -214,7 +214,7 @@ function targetList(profile: CLIOptions["profile"], host: string, port: number) 
 		{
 			id: BROWSER_ID,
 			type: "browser",
-			title: `Bunlight (${profile})`,
+			title: `Bxc (${profile})`,
 			url: "about:blank",
 			webSocketDebuggerUrl: `ws://${host}:${port}/devtools/browser/${BROWSER_ID}`,
 		},
@@ -386,8 +386,8 @@ interface FastState {
 }
 
 async function findLightpandaBinary(): Promise<string> {
-	if (Bun.env.BUNLIGHT_LIGHTPANDA_PATH) {
-		return Bun.env.BUNLIGHT_LIGHTPANDA_PATH;
+	if (Bun.env.BXC_LIGHTPANDA_PATH) {
+		return Bun.env.BXC_LIGHTPANDA_PATH;
 	}
 
 	const home = Bun.env.HOME ?? "";
@@ -532,7 +532,7 @@ async function startFast(opts: CLIOptions, logger: Logger): Promise<Server<WSDat
 						data: { pendingFrames: [], kind: "fast-proxy" } satisfies WSData,
 						headers: {
 							// Carry the original path so we know what to connect to upstream.
-							"x-bunlight-path": url.pathname + url.search,
+							"x-bxc-path": url.pathname + url.search,
 						},
 					})
 				) {
@@ -719,20 +719,20 @@ function rewriteWsUrls(
 
 // ---------------------------------------------------------------------------
 // Forbidden engines: stealth (patchright Chromium) and max (Camoufox FF)
-// have been removed from bunlight per workspace policy. Use the Lightpanda-
+// have been removed from bxc per workspace policy. Use the Lightpanda-
 // backed `ghost` helper in `src/profiles/ghost/` instead.
 // ---------------------------------------------------------------------------
 
 async function startStealth(_opts: CLIOptions, _logger: Logger): Promise<Server<WSData>> {
 	throw new Error(
-		"profile=stealth is removed. bunlight is Lightpanda-only. " +
+		"profile=stealth is removed. bxc is Lightpanda-only. " +
 			"Use `launchGhostBrowser` from `src/profiles/ghost/` for anti-detection.",
 	);
 }
 
 async function startMax(_opts: CLIOptions, _logger: Logger): Promise<Server<WSData>> {
 	throw new Error(
-		"profile=max is removed. bunlight is Lightpanda-only. " +
+		"profile=max is removed. bxc is Lightpanda-only. " +
 			"Use `launchGhostBrowser` from `src/profiles/ghost/` for anti-detection.",
 	);
 }
@@ -836,7 +836,7 @@ function handleHttpDiscovery(pathname: string, opts: CLIOptions, _logger: Logger
 		return Response.json({ domains: [] });
 	}
 	if (pathname === "/" || pathname === "/health") {
-		return new Response(`Bunlight CLI (profile=${opts.profile}) ready\n`, {
+		return new Response(`Bxc CLI (profile=${opts.profile}) ready\n`, {
 			headers: { "content-type": "text/plain" },
 		});
 	}
@@ -852,7 +852,7 @@ async function main(): Promise<void> {
 	try {
 		opts = parseArgs(process.argv.slice(2));
 	} catch (err) {
-		console.error(`[bunlight] ${(err as Error).message}\n`);
+		console.error(`[bxc] ${(err as Error).message}\n`);
 		printUsage();
 		process.exit(2);
 	}
@@ -887,6 +887,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-	console.error("[bunlight] fatal", err);
+	console.error("[bxc] fatal", err);
 	process.exit(1);
 });

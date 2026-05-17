@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/pool/SessionPool
+ * @module bxc/pool/SessionPool
  *
  * Per-domain cookie jar persistence.
  *

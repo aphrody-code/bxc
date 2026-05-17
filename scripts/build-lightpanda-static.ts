@@ -42,7 +42,7 @@ const argv = new Set(process.argv.slice(2));
 const DEBUG = argv.has("--debug");
 const optimize = DEBUG ? "Debug" : "ReleaseFast";
 
-console.log(`[bunlight] Building ZigQuery DOM library (optimize=${optimize})...`);
+console.log(`[bxc] Building ZigQuery DOM library (optimize=${optimize})...`);
 
 // 1. Build via zig build
 await $`mkdir -p ${BUILD_OUT}`;
@@ -57,27 +57,27 @@ for (const art of [shared, static_lib]) {
 	const src = resolve(WRAPPER_DIR, "zig-out/lib", art);
 	if (await Bun.file(src).exists()) {
 		await $`cp ${src} ${BUILD_OUT}/`;
-		console.log(`[bunlight] copied ${art} → build/lib/`);
+		console.log(`[bxc] copied ${art} → build/lib/`);
 	}
 }
 
 // 3. Smoke test
 const soPath = resolve(BUILD_OUT, shared);
 if (await Bun.file(soPath).exists()) {
-	console.log("[bunlight] running smoke test...");
+	console.log("[bxc] running smoke test...");
 	const { dlopen, FFIType } = await import("bun:ffi");
 	try {
 		const lib = dlopen(soPath, {
 			bl_init: { args: [], returns: FFIType.i32 },
 		});
 		const result = lib.symbols.bl_init();
-		console.log(`[bunlight] bl_init() = ${result} ✓`);
+		console.log(`[bxc] bl_init() = ${result} ✓`);
 		lib.close();
 	} catch (e) {
-		console.error(`[bunlight] ❌ Smoke test failed: ${e}`);
+		console.error(`[bxc] ❌ Smoke test failed: ${e}`);
 		process.exit(1);
 	}
 }
 
-console.log("[bunlight] ✓ done.");
+console.log("[bxc] ✓ done.");
 

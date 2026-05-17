@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/profiles/fingerprint
+ * @module bxc/profiles/fingerprint
  *
  * Coherent browser fingerprint generator — a TypeScript implementation of the
  * fingerprint-generation logic originally provided by daijro/browserforge.

@@ -18,7 +18,7 @@
  * @module test/mocks/cloudflare-simulator
  * 
  * A local mock server that simulates Cloudflare's security layers
- * to test Bunlight's bypass logic without violating the Google-only mandate.
+ * to test Bxc's bypass logic without violating the Google-only mandate.
  */
 
 import { serve } from "bun";

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/ffi/zigquery
+ * @module bxc/ffi/zigquery
  *
  * Re-implementation of the ZigQuery interface using the new light Rust DOM bridge.
  */

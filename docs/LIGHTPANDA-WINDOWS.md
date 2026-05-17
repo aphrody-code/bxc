@@ -16,7 +16,7 @@ Sur Linux et macOS, le upstream publie des prebuilts WebKit/V8 hermétiques. Sur
 
 1. Cross-compile depuis Linux avec `zig build -Dtarget=x86_64-windows-gnu` — **fonctionne pour le runtime Zig pur**, mais V8 manque.
 2. Build natif Windows MSVC avec `zig build -Dtarget=native` — demande WebKit prebuilts MSVC (absents).
-3. Skip Lightpanda et exposer un Bunlight `static`/`http` only (degraded mode) — option choisie en CI bunlight.
+3. Skip Lightpanda et exposer un Bxc `static`/`http` only (degraded mode) — option choisie en CI bxc.
 
 ---
 
@@ -81,7 +81,7 @@ PATH=/opt/zig-master:$PATH zig build -Dtarget=x86_64-windows-gnu
 
 V8 prebuilt manquant. Trois options :
 
-1. **Skip Lightpanda** côté bunlight : `bun scripts/build-windows.ts --skip-lightpanda` — bunlight `static`/`http` profiles fonctionnent sans, `fast`/`stealth`/`max` warnent au runtime.
+1. **Skip Lightpanda** côté bxc : `bun scripts/build-windows.ts --skip-lightpanda` — bxc `static`/`http` profiles fonctionnent sans, `fast`/`stealth`/`max` warnent au runtime.
 2. **Build V8 from source** : voir [v8.dev/docs/build-from-source](https://v8.dev/docs/build-gn) — long (4-8h CPU intensives), pas recommandé pour CI.
 3. **Attendre upstream** : Lightpanda team produit des prebuilts Windows. Suivre [developers.google.com/lightpanda-io/browser/issues](https://developers.google.com/lightpanda-io/browser/issues).
 
@@ -115,11 +115,11 @@ curl http://127.0.0.1:9222/json/version
 # Attendu: { "Browser": "Lightpanda/0.x.y", ... }
 ```
 
-Bunlight CLI peut s'attacher à ce process :
+Bxc CLI peut s'attacher à ce process :
 
 ```powershell
-bunlight serve --cdp-port 9223 --profile fast --lightpanda-path .\lightpanda.exe
-bunlight scrape https://google.com --profile fast
+bxc serve --cdp-port 9223 --profile fast --lightpanda-path .\lightpanda.exe
+bxc scrape https://google.com --profile fast
 ```
 
 ---
@@ -130,16 +130,16 @@ bunlight scrape https://google.com --profile fast
 |---|---|---|
 | Lightpanda `aarch64-windows` | non démarré | demande V8 ARM64 prebuilts |
 | Lightpanda `windows-msvc` | exploratoire | dépend du build WebKit MSVC |
-| `-Dno-v8` flag (skip JS engine) | à proposer | utile pour bunlight `static` profile |
+| `-Dno-v8` flag (skip JS engine) | à proposer | utile pour bxc `static` profile |
 | Static linking V8 sur Windows | en cours upstream | dépend de webkit2gtk-windows team |
 
 ---
 
-## 7. Approche pragmatique pour le release suite bunlight
+## 7. Approche pragmatique pour le release suite bxc
 
-Tant que Lightpanda Windows n'est pas stable upstream, le release bunlight pour Windows expose :
+Tant que Lightpanda Windows n'est pas stable upstream, le release bxc pour Windows expose :
 
-- `bunlight.exe` : tous les CLI subcommands sauf ceux qui demandent un browser engine.
+- `bxc.exe` : tous les CLI subcommands sauf ceux qui demandent un browser engine.
 - `libcurl-impersonate.dll` : profile `http` (Chrome 131 TLS fingerprint, anti-bot ready).
 - **Pas de `lightpanda.exe`** dans le bundle Windows par défaut.
 - Documentation explicite : "Profile `fast`/`stealth`/`max` requires Linux/macOS host. Windows users get `static` and `http` profiles."
@@ -158,7 +158,7 @@ cd ~/lightpanda-fork
 git checkout -b windows-prebuilt-stub
 
 # Stubber les sections V8/WebKit pour rendre le build linkable
-# (voir patches/ dans le bunlight repo si on les commit un jour)
+# (voir patches/ dans le bxc repo si on les commit un jour)
 
 zig build -Dtarget=x86_64-windows-gnu -Doptimize=Debug
 ```

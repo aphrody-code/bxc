@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/captcha/capsolver
+ * @module bxc/captcha/capsolver
  *
  * CapSolver API wrapper — supports Turnstile, reCAPTCHA v2/v3, hCaptcha.
  *

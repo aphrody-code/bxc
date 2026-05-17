@@ -1,5 +1,5 @@
 // Generate a CSS selector map from HTML + a list of fields, using the local
-// llama-server (Gemma 4 E2B). Replaces bunlight's `callAnthropicForSelectors`
+// llama-server (Gemma 4 E2B). Replaces bxc's `callAnthropicForSelectors`
 // — which targets Anthropic cloud — with our zero-cost local model.
 //
 // The LLM is invoked ONCE per (site, schema) pair; the result is cached.

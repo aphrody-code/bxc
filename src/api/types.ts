@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/api/types
+ * @module bxc/api/types
  */
 
 import type { Locator } from "./Locator.ts";
@@ -24,7 +24,7 @@ import type { BrowserContext } from "./BrowserContext.ts";
 import type { NavigationResponse, GotoOptions, ScreenshotOptions, PDFOptions, PageOptions } from "./browser.ts";
 
 /**
- * Unified interface for all Bunlight pages (Page and HttpPage).
+ * Unified interface for all Bxc pages (Page and HttpPage).
  */
 export interface AnyPage extends AsyncDisposable {
 	url(): string;

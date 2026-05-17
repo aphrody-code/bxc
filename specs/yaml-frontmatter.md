@@ -30,7 +30,7 @@ Variantes acceptées par certains parsers (mais à éviter en production):
 - `+++` … `+++` → TOML frontmatter (Hugo)
 - `;;;` … `;;;` → JSON frontmatter (Hugo)
 
-Bunlight n'émet et ne consomme que la variante `---` YAML.
+Bxc n'émet et ne consomme que la variante `---` YAML.
 
 ## 2. Champs conventionnels
 
@@ -50,7 +50,7 @@ Pas standardisés, mais largement adoptés:
 | `layout` | string | template à utiliser |
 | `permalink` | string | URL forcée |
 
-## 3. Champs émis par bunlight
+## 3. Champs émis par bxc
 
 ```yaml
 ---
@@ -85,9 +85,9 @@ Sémantique:
 | Tabulations | **interdites** dans l'indentation YAML — uniquement spaces. |
 | BOM UTF-8 | doit absolument être absent avant le `---` initial. |
 
-## 5. Parser bunlight
+## 5. Parser bxc
 
-Bunlight n'utilise pas `js-yaml` ni un parser complet — un mini-parser ligne-à-ligne suffit pour ses propres outputs:
+Bxc n'utilise pas `js-yaml` ni un parser complet — un mini-parser ligne-à-ligne suffit pour ses propres outputs:
 
 ```ts
 function readFrontmatter(text: string): {
@@ -121,7 +121,7 @@ function readFrontmatter(text: string): {
 
 Limites assumées: pas de support listes, pas d'imbrication, pas de multiline strings. Pour des frontmatters tiers riches, utiliser un vrai parser YAML.
 
-## 6. Convention d'écriture côté bunlight
+## 6. Convention d'écriture côté bxc
 
 Toujours en JSON-encodage des string fields (pour gérer guillemets internes et caractères spéciaux):
 

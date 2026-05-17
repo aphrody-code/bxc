@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/utils/sitemap
+ * @module bxc/utils/sitemap
  *
  * Streaming sitemap parser — supports:
  *  - `sitemap.xml` (urlset)
@@ -84,7 +84,7 @@ export interface ParseSitemapOptions {
 	signal?: AbortSignal;
 	/**
 	 * User-agent header for HTTP requests.
-	 * Default: "Bunlight/1.0 SitemapParser"
+	 * Default: "Bxc/1.0 SitemapParser"
 	 */
 	userAgent?: string;
 }
@@ -191,7 +191,7 @@ export async function* parseSitemap(
 ): AsyncGenerator<SitemapUrl> {
 	const maxDepth = opts.maxDepth ?? 3;
 	const maxUrls = opts.maxUrls ?? Infinity;
-	const userAgent = opts.userAgent ?? "Bunlight/1.0 SitemapParser";
+	const userAgent = opts.userAgent ?? "Bxc/1.0 SitemapParser";
 
 	if (_depth > maxDepth) return;
 	if (_seen.has(sitemapUrl)) return;
@@ -320,7 +320,7 @@ export async function discoverSitemapsFromRobots(
 ): Promise<string[]> {
 	const base = new URL(originUrl);
 	const robotsUrl = `${base.protocol}//${base.host}/robots.txt`;
-	const ua = opts?.userAgent ?? "Bunlight/1.0 SitemapParser";
+	const ua = opts?.userAgent ?? "Bxc/1.0 SitemapParser";
 
 	try {
 		const text = await fetchText(robotsUrl, ua, opts?.signal);

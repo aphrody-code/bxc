@@ -15,13 +15,13 @@
  */
 
 /**
- * @module bunlight/api/locator
+ * @module bxc/api/locator
  */
 
 import type { Page } from "./browser.ts";
 
 /**
- * Locators are the central piece of Bunlight's auto-waiting and resilience.
+ * Locators are the central piece of Bxc's auto-waiting and resilience.
  * A Locator represents a way to find element(s) on the page at any moment.
  * Unlike ElementHandles, Locators do not point to a specific element, but
  * rather a query that is re-evaluated before each action.

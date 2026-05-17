@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "name": "Bunlight Architecture Blueprint",
+  "name": "Bxc Architecture Blueprint",
   "version": "1.0.0",
   "description": "Strict architectural mapping of responsibilities across Bun, Rust, and Zig domains.",
   "domains": {
@@ -24,8 +24,8 @@
       "layer": "System FFI & Chromium Subprocess Control",
       "language": "Rust (cdylib & executable)",
       "responsibilities": [
-        "Headless / Native Chrome Process Spawning (bunlight-engine)",
-        "DOM Parsing and CSS Selectors via lol_html (libbunlight_rust_bridge)",
+        "Headless / Native Chrome Process Spawning (bxc-engine)",
+        "DOM Parsing and CSS Selectors via lol_html (libbxc_rust_bridge)",
         "High-performance HTML to Markdown conversion (AI token reduction)",
         "OS-level signal handling and process reaping",
         "CDP Websocket raw proxying (when applicable)"
@@ -45,8 +45,8 @@
     }
   },
   "integration": {
-    "ffi": "bun:ffi dynamically links to libbunlight_rust_bridge.so/dll",
-    "subprocess": "WebSocketTransport spawns bunlight-engine or local Chrome via Bun.spawn"
+    "ffi": "bun:ffi dynamically links to libbxc_rust_bridge.so/dll",
+    "subprocess": "WebSocketTransport spawns bxc-engine or local Chrome via Bun.spawn"
   },
   "guidance_for_agents": [
     "NEVER write slow Regex parsing for HTML in TypeScript. Port it to the Rust bridge.",

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/recorder/types
+ * @module bxc/recorder/types
  *
  * HAR 1.2 type definitions.
  * Spec: http://www.softwareishard.com/blog/har-12-spec/

@@ -101,7 +101,7 @@ const REDDIT_HEADERS: Record<string, string> = {
 	"accept-language": "en-US,en;q=0.9",
 	// Reddit requires a descriptive UA for API access — generic browser UA
 	// is rejected by the JSON API with a 429; identify as a bot script.
-	"user-agent": "bunlight-example/0.1 (educational scraping demo; contact: dev@google.com)",
+	"user-agent": "bxc-example/0.1 (educational scraping demo; contact: dev@google.com)",
 };
 
 async function fetchJson<T>(page: HttpPage, url: string): Promise<T> {

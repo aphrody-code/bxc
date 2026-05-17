@@ -16,20 +16,20 @@
  */
 
 /**
- * `bunlight challonge <url-or-path>` — extract a full typed snapshot
+ * `bxc challonge <url-or-path>` — extract a full typed snapshot
  * of a Challonge tournament page.
  *
  * Two modes :
  *
  *   - **Live URL** (`https://challonge.com/...`) : fetch via the
- *     bunlight `http` profile (curl-impersonate Chrome 131) so the
+ *     bxc `http` profile (curl-impersonate Chrome 131) so the
  *     request matches an authentic browser. Pass `--cookies` for
  *     Cloudflare-gated tournaments.
  *
  *   - **Local path** (file or mirror dir) : read the HTML directly
  *     from disk. This is the fastest mode and the one used by the
  *     test suite : the file may be a single `B_TS5` HTML page or a
- *     mirror directory produced by `bunlight mirror`.
+ *     mirror directory produced by `bxc mirror`.
  *
  * Output : JSON snapshot to stdout — matches `ChallongeTournamentSnapshot`.
  *
@@ -54,10 +54,10 @@ interface CliOptions {
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight challonge — extract a typed Challonge tournament snapshot
+		`bxc challonge — extract a typed Challonge tournament snapshot
 
 Usage:
-  bunlight challonge <url-or-path> [options]
+  bxc challonge <url-or-path> [options]
 
 Sources:
   - URL          https://challonge.com/<lang>/<slug> (live)
@@ -72,10 +72,10 @@ Options:
   --help, -h           this help
 
 Examples:
-  bunlight challonge https://challonge.com/fr/B_TS5 \\
+  bxc challonge https://challonge.com/fr/B_TS5 \\
       --cookies cookies/private/challonge.json
-  bunlight challonge /tmp/mirror-bts5/challonge.com/fr/B_TS5 --summary
-  bunlight challonge https://challonge.com/fr/B_TS5 | jq .standings[0]
+  bxc challonge /tmp/mirror-bts5/challonge.com/fr/B_TS5 --summary
+  bxc challonge https://challonge.com/fr/B_TS5 | jq .standings[0]
 
 Exit codes: 0 OK, 2 misuse, 65 upstream/IO error, 70 software error
 `,
@@ -113,7 +113,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		}
 	}
 	if (positional.length < 1) {
-		Bun.stderr.write("bunlight challonge: requires <url-or-path>\n");
+		Bun.stderr.write("bxc challonge: requires <url-or-path>\n");
 		return null;
 	}
 	opts.target = positional[0];
@@ -162,7 +162,7 @@ async function loadFromTarget(opts: CliOptions): Promise<ChallongeTournamentSnap
 			}
 		}
 	}
-	throw new Error(`bunlight challonge: cannot locate a Challonge HTML at ${path}`);
+	throw new Error(`bxc challonge: cannot locate a Challonge HTML at ${path}`);
 }
 
 function printSummary(snap: ChallongeTournamentSnapshot): void {
@@ -215,7 +215,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		}
 	} catch (err) {
 		Bun.stderr.write(
-			`bunlight challonge: ${err instanceof Error ? err.message : String(err)}\n`,
+			`bxc challonge: ${err instanceof Error ? err.message : String(err)}\n`,
 		);
 		process.exit(65);
 	}

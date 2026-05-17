@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Bunlight Installer — Production-ready standalone binary installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.sh | bash
+# Bxc Installer — Production-ready standalone binary installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
 
 set -e
 
-REPO="aphrody-code/bunlight"
-BINARY_NAME="bunlight"
+REPO="aphrody-code/bxc"
+BINARY_NAME="bxc"
 INSTALL_DIR="$HOME/.local/bin"
 
 # 1. Detect Environment
@@ -24,9 +24,9 @@ case "$OS" in
     *) echo "❌ Unsupported OS: $OS"; exit 1 ;;
 esac
 
-TARGET="bunlight-${OS_SUFFIX}-${ARCH_SUFFIX}"
+TARGET="bxc-${OS_SUFFIX}-${ARCH_SUFFIX}"
 
-echo "⚡️ Installing Bunlight for ${OS_SUFFIX}-${ARCH_SUFFIX}..."
+echo "⚡️ Installing Bxc for ${OS_SUFFIX}-${ARCH_SUFFIX}..."
 
 # 2. Get Version
 LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
@@ -51,7 +51,7 @@ fi
 mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
 chmod +x "$INSTALL_DIR/$BINARY_NAME"
 
-echo "✅ Bunlight $LATEST_RELEASE successfully installed to $INSTALL_DIR/$BINARY_NAME"
+echo "✅ Bxc $LATEST_RELEASE successfully installed to $INSTALL_DIR/$BINARY_NAME"
 
 # 4. PATH Check
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
@@ -61,14 +61,14 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
 fi
 
-# 5. Developer Runtime Check (Optional but recommended for Bunlight)
+# 5. Developer Runtime Check (Optional but recommended for Bxc)
 if command -v bun &> /dev/null; then
     echo ""
-    echo "💎 Bunlight is optimized for Bun Canary."
+    echo "💎 Bxc is optimized for Bun Canary."
     echo "To switch to Canary: bun upgrade --canary"
 fi
 
 echo ""
-echo "🚀 Try running: bunlight --version"
+echo "🚀 Try running: bxc --version"
 echo "📖 Documentation: https://github.com/$REPO"
 

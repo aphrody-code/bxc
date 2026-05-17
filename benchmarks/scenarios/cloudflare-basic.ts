@@ -12,8 +12,8 @@
  *   - fetch-native: receives 403 + challenge HTML → FAIL (no bypass capability)
  *   - cheerio:      same as fetch-native → FAIL
  *   - jsdom:        same as fetch-native → FAIL
- *   - bunlight-static: same (StaticDomTransport uses Bun.fetch) → FAIL
- *   - bunlight-fast: Lightpanda UA is "Lightpanda/1.0" — some basic Cloudflare
+ *   - bxc-static: same (StaticDomTransport uses Bun.fetch) → FAIL
+ *   - bxc-fast: Lightpanda UA is "Lightpanda/1.0" — some basic Cloudflare
  *                    challenges may pass, Turnstile does not → partial
  *
  * Honest outcome: All open-source non-stealth runners fail Cloudflare IUAM.
@@ -26,8 +26,8 @@
 import type { RunResult, ScenarioResult } from "../types.ts";
 import { summarise } from "../types.ts";
 import { startMockServer, stopMockServer } from "../mock-server.ts";
-import * as bunlightStatic from "../runners/bunlight-static.ts";
-import * as bunlightFast from "../runners/bunlight-fast.ts";
+import * as bxcStatic from "../runners/bxc-static.ts";
+import * as bxcFast from "../runners/bxc-fast.ts";
 import * as fetchNative from "../runners/fetch-native.ts";
 import * as cheerioRunner from "../runners/cheerio.ts";
 
@@ -53,7 +53,7 @@ function isChallengeHtml(content: string): boolean {
 }
 
 async function runWithCfCheck(
-	runner: typeof bunlightStatic,
+	runner: typeof bxcStatic,
 	url: string,
 ): Promise<RunResult & { bypassedChallenge: boolean }> {
 	const base = await runner.run(url);
@@ -67,7 +67,7 @@ async function runWithCfCheck(
 			// In this case we check the raw result — if success=true and content > 0 it means
 			// the runner got through (mock server returns challenge HTML with 403)
 			// The static/fetch runners will get content but it WILL be challenge HTML (403)
-			// bunlight-fast with Lightpanda attempts to solve basic JS challenges
+			// bxc-fast with Lightpanda attempts to solve basic JS challenges
 			"", // placeholder — see note below
 		);
 
@@ -80,7 +80,7 @@ async function runWithCfCheck(
 }
 
 async function runScenarioForRunner(
-	runner: typeof bunlightStatic,
+	runner: typeof bxcStatic,
 	mockPort: number,
 ): Promise<ScenarioResult> {
 	const allResults: RunResult[] = [];
@@ -130,11 +130,11 @@ export async function run(): Promise<ScenarioResult[]> {
 	console.log(`[${SCENARIO_ID}] success here = "fetched content", not "bypassed challenge".`);
 
 	const runners = [
-		bunlightStatic,
-		bunlightFast,
+		bxcStatic,
+		bxcFast,
 		fetchNative,
 		cheerioRunner,
-	] as (typeof bunlightStatic)[];
+	] as (typeof bxcStatic)[];
 
 	const results: ScenarioResult[] = [];
 

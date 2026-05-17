@@ -1,8 +1,8 @@
 {
-  "name": "bunlight-gemini",
+  "name": "bxc-gemini",
   "version": "1.0.0",
   "mcpServers": {
-    "bunlight-mcp": {
+    "bxc-mcp": {
       "command": "bun",
       "args": ["run", "${extensionPath}${/}server.ts"],
       "cwd": "${extensionPath}",
@@ -16,7 +16,7 @@
     {
       "name": "SQLite Memory Path",
       "description": "Path to the SQLite database used for memory tuning.",
-      "envVar": "BUNLIGHT_MEMORY_DB",
+      "envVar": "BXC_MEMORY_DB",
       "sensitive": false
     }
   ]

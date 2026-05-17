@@ -15,7 +15,7 @@
  */
 
 /**
- * E2E Challonge crawl suite — validates Bunlight against real Challonge patterns.
+ * E2E Challonge crawl suite — validates Bxc against real Challonge patterns.
  *
  * This suite exercises the 9 URL patterns that rpb-challonge (@rose-griffon/challonge
  * v2.0.0) consumes via its three transports:
@@ -27,7 +27,7 @@
  *   - 3 tournament slugs  (B_TS5, T_SS1, B_TS4) x 7 per-slug patterns
  *   - 2 usernames         (sunafterthereign, wild_breakers) x 2 per-user patterns
  *   - 1 community         (fixed URL, 1 pattern)
- *   - 5 Bunlight profiles (static, fast, http, stealth, max)
+ *   - 5 Bxc profiles (static, fast, http, stealth, max)
  *
  * Rate limiting: ≤ 1 request per 4 s per domain (< 15 req/min total).
  *
@@ -131,7 +131,7 @@ async function isOnline(): Promise<boolean> {
 		const r = await fetch("https://challonge.com/T_SS1.json", {
 			method: "HEAD",
 			signal: AbortSignal.timeout(6_000),
-			headers: { "User-Agent": "Bunlight-E2E/1.0" },
+			headers: { "User-Agent": "Bxc-E2E/1.0" },
 			redirect: "follow",
 		});
 		// 200, 403 or 404 all mean the host is reachable.
@@ -157,7 +157,7 @@ async function throttle(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Core probe: fetch a URL with the given Bunlight profile
+// Core probe: fetch a URL with the given Bxc profile
 // ---------------------------------------------------------------------------
 
 async function probeWithProfile(
@@ -189,7 +189,7 @@ async function probeWithProfile(
 				readyTimeoutMs: 10_000,
 				binaryPath: lightpandaBin ?? undefined,
 				stderrLogger: (s) => {
-					if (Bun.env.BUNLIGHT_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
+					if (Bun.env.BXC_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
 				},
 			},
 		})) as Page;
@@ -392,10 +392,10 @@ async function writeChallongeReport(): Promise<void> {
 	lines.push("## Recommendations for rpb-challonge");
 	lines.push("");
 	lines.push(
-		"The following table maps each rpb-challonge transport to its recommended Bunlight profile replacement.",
+		"The following table maps each rpb-challonge transport to its recommended Bxc profile replacement.",
 	);
 	lines.push("");
-	lines.push("| rpb-challonge transport | Current implementation | Bunlight replacement | Notes |");
+	lines.push("| rpb-challonge transport | Current implementation | Bxc replacement | Notes |");
 	lines.push("|---|---|---|---|");
 	lines.push(
 		"| scraper.ts (CF managed challenge) | puppeteer-extra + StealthPlugin | `stealth` (patchright Chromium) or `max` (Camoufox FF) | Requires Chromium/Firefox binary; skip cleanly when absent |",
@@ -465,7 +465,7 @@ async function writeChallongeReport(): Promise<void> {
 		);
 	} else if (allResults.length === 0) {
 		lines.push(
-			"No requests were executed (suite ran offline or all binaries absent). Re-run with network access and Bunlight binaries installed.",
+			"No requests were executed (suite ran offline or all binaries absent). Re-run with network access and Bxc binaries installed.",
 		);
 	} else {
 		lines.push(

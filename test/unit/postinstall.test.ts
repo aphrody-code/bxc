@@ -81,10 +81,10 @@ describe("shouldSkip", () => {
 		expect(shouldSkip({})).toBeNull();
 	});
 
-	test("opt-out via BUNLIGHT_NO_AUTOINSTALL=1", () => {
-		const reason = shouldSkip({ BUNLIGHT_NO_AUTOINSTALL: "1" });
+	test("opt-out via BXC_NO_AUTOINSTALL=1", () => {
+		const reason = shouldSkip({ BXC_NO_AUTOINSTALL: "1" });
 		expect(reason).not.toBeNull();
-		expect(reason).toContain("BUNLIGHT_NO_AUTOINSTALL");
+		expect(reason).toContain("BXC_NO_AUTOINSTALL");
 	});
 
 	test("CI=1 alone causes skip", () => {
@@ -97,12 +97,12 @@ describe("shouldSkip", () => {
 		expect(shouldSkip({ CI: "1", LIGHTPANDA_AUTOINSTALL: "1" })).toBeNull();
 	});
 
-	test("BUNLIGHT_NO_AUTOINSTALL takes precedence even with LIGHTPANDA_AUTOINSTALL", () => {
+	test("BXC_NO_AUTOINSTALL takes precedence even with LIGHTPANDA_AUTOINSTALL", () => {
 		const reason = shouldSkip({
-			BUNLIGHT_NO_AUTOINSTALL: "1",
+			BXC_NO_AUTOINSTALL: "1",
 			LIGHTPANDA_AUTOINSTALL: "1",
 		});
-		expect(reason).toContain("BUNLIGHT_NO_AUTOINSTALL");
+		expect(reason).toContain("BXC_NO_AUTOINSTALL");
 	});
 });
 
@@ -114,7 +114,7 @@ describe("resolveTargetPath", () => {
 		expect(target).toBe("/abs/scripts/../vendor/lightpanda-bin/linux-x64/lightpanda");
 	});
 
-	test("BUNLIGHT_VENDOR_DIR override is honored", () => {
+	test("BXC_VENDOR_DIR override is honored", () => {
 		const p = detectPlatform("darwin", "arm64");
 		expect(p).not.toBeNull();
 		const target = resolveTargetPath(p!, "/ignored", "/tmp/custom");
@@ -128,10 +128,10 @@ describe("runPostinstall (skip paths only — offline safe)", () => {
 	beforeEach(() => {
 		// Snapshot env keys we mutate.
 		for (const k of [
-			"BUNLIGHT_NO_AUTOINSTALL",
+			"BXC_NO_AUTOINSTALL",
 			"CI",
 			"LIGHTPANDA_AUTOINSTALL",
-			"BUNLIGHT_VENDOR_DIR",
+			"BXC_VENDOR_DIR",
 			"LIGHTPANDA_DOWNLOAD_URL",
 		]) {
 			originalEnv[k] = Bun.env[k];
@@ -149,11 +149,11 @@ describe("runPostinstall (skip paths only — offline safe)", () => {
 		}
 	});
 
-	test("returns status=skipped when BUNLIGHT_NO_AUTOINSTALL=1", async () => {
-		Bun.env.BUNLIGHT_NO_AUTOINSTALL = "1";
+	test("returns status=skipped when BXC_NO_AUTOINSTALL=1", async () => {
+		Bun.env.BXC_NO_AUTOINSTALL = "1";
 		const result = await runPostinstall();
 		expect(result.status).toBe("skipped");
-		expect(result.reason).toContain("BUNLIGHT_NO_AUTOINSTALL");
+		expect(result.reason).toContain("BXC_NO_AUTOINSTALL");
 	});
 
 	test("returns status=skipped when CI=1 without LIGHTPANDA_AUTOINSTALL", async () => {

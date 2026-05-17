@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/verticals
+ * @module bxc/google/verticals
  *
  * Specialized search verticals: News, Images, Videos, Scholar.
  * Optimized with high-performance ZigQuery element-scoped parsing.

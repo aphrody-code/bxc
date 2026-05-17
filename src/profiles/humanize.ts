@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/profiles/humanize
+ * @module bxc/profiles/humanize
  *
  * Human-like interaction helpers: Bezier mouse paths, natural typing delays,
  * scroll jitter. Used by both stealth and max profiles.

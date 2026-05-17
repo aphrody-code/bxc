@@ -25,7 +25,7 @@ async function bootstrap() {
             path: "/swagger",
             documentation: {
                 info: {
-                    title: "Bunlight API",
+                    title: "Bxc API",
                     description: "High-performance browser automation (REST + Type-GraphQL + Drizzle)",
                     version: "0.2.0"
                 }
@@ -33,7 +33,7 @@ async function bootstrap() {
         }))
         
         // --- Static Routes ---
-        .get("/", () => ({ status: "Bunlight API v0.2.0", docs: "/swagger", graphql: "/graphql" }))
+        .get("/", () => ({ status: "Bxc API v0.2.0", docs: "/swagger", graphql: "/graphql" }))
         .get("/health", () => "OK")
         
         // --- REST API ---
@@ -65,7 +65,7 @@ async function bootstrap() {
         
         .listen(process.env.PORT || 3000);
 
-    console.log("🚀 Bunlight API (Production Ready) running at " + app.server?.hostname + ":" + app.server?.port);
+    console.log("🚀 Bxc API (Production Ready) running at " + app.server?.hostname + ":" + app.server?.port);
 }
 
 bootstrap();

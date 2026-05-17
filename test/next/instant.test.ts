@@ -15,7 +15,7 @@
  */
 
 /**
- * Tests for the bunlight port of `@next/playwright`'s `instant()` helper.
+ * Tests for the bxc port of `@next/playwright`'s `instant()` helper.
  *
  * Uses a structural fake target (no real browser) to validate the
  * cookie acquire/release sequence, error paths, and the re-entrance guard.

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/plugin/modularize-imports-plugin
+ * @module bxc/plugin/modularize-imports-plugin
  *
  * Bun plugin that rewrites named imports of barrel packages (lodash, ramda,
  * date-fns, react-icons, ...) into per-symbol deep imports for better

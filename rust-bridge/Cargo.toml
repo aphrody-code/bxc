@@ -8,7 +8,7 @@ members = [
     "crates/obscura-cdp",
     "crates/obscura-js",
     "crates/obscura-mcp",
-    "crates/bunlight-engine",
+    "crates/bxc-engine",
 ]
 
 [workspace.package]
@@ -46,7 +46,7 @@ deno_error = "0.7.1"
 v8 = "147.4.0"
 
 [package]
-name = "bunlight-rust-bridge"
+name = "bxc-rust-bridge"
 version = "0.1.0"
 edition = "2021"
 
@@ -57,7 +57,7 @@ crate-type = ["cdylib"]
 serde_json = { workspace = true }
 obscura-dom = { workspace = true }
 # V8 and browser engine REMOVED from cdylib to fix linker errors
-# Dynamic features are now provided by the 'bunlight' binary
+# Dynamic features are now provided by the 'bxc' binary
 html2md = "0.2.15"
 
 [profile.release]

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/next/step
+ * @module bxc/next/step
  *
  * Optional `bun:test` step wrapper. Mirrors `@next/playwright`'s `step.ts`
  * but adapted to bun's test runner. When `bun:test` is the host (no

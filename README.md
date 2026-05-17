@@ -1,20 +1,20 @@
-# 🌖 Bunlight: The Zero-Spawn Browser Engine for AI Agents
+# 🌖 Bxc: The Zero-Spawn Browser Engine for AI Agents
 
 <div align="center">
   <p align="center">
-    <a href="https://github.com/aphrody-code/bunlight/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/aphrody-code/bunlight/ci.yml?branch=main&style=flat-square&label=CI" alt="Build Status" /></a>
-    <a href="https://github.com/aphrody-code/bunlight/releases"><img src="https://img.shields.io/github/v/release/aphrody-code/bunlight?style=flat-square&color=blue" alt="Version" /></a>
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/aphrody-code/bunlight?style=flat-square" alt="License" /></a>
+    <a href="https://github.com/aphrody-code/bxc/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/aphrody-code/bxc/ci.yml?branch=main&style=flat-square&label=CI" alt="Build Status" /></a>
+    <a href="https://github.com/aphrody-code/bxc/releases"><img src="https://img.shields.io/github/v/release/aphrody-code/bxc?style=flat-square&color=blue" alt="Version" /></a>
+    <a href="./LICENSE"><img src="https://img.shields.io/github/license/aphrody-code/bxc?style=flat-square" alt="License" /></a>
     <a href="https://bun.sh"><img src="https://img.shields.io/badge/runtime-bun-black?style=flat-square&logo=bun" alt="Bun" /></a>
   </p>
 
-  **Bunlight** is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses the **Bun** runtime with a high-performance **Zig DOM** core and **Rust V8** bindings, enabling native navigation without the overhead of heavy external processes.
+  **Bxc** is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses the **Bun** runtime with a high-performance **Zig DOM** core and **Rust V8** bindings, enabling native navigation without the overhead of heavy external processes.
 </div>
 
 ---
 
-### ⚡ Why Bunlight?
-Spawning heavy Chromium processes for simple scraping is a legacy pattern. Bunlight provides a unified, in-process fusion that allows your agents to browse the web with sub-millisecond latency.
+### ⚡ Why Bxc?
+Spawning heavy Chromium processes for simple scraping is a legacy pattern. Bxc provides a unified, in-process fusion that allows your agents to browse the web with sub-millisecond latency.
 
 - **🚀 Zero-Spawn Architecture**: No `child_process`, no PID 1 leaks. The browser *is* the runtime.
 - **🌗 Dual-Structural Mode**:
@@ -31,16 +31,16 @@ Spawning heavy Chromium processes for simple scraping is a legacy pattern. Bunli
 
 ### 1. Install (1-Click)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
 ```
 Or manually via npm/bun:
 ```bash
-bun add @aphrody-code/bunlight
+bun add @aphrody-code/bxc
 ```
 
 ### 2. Use (The "God Mode" Way)
 ```typescript
-import { google } from "@aphrody-code/bunlight/google";
+import { google } from "@aphrody-code/bxc/google";
 
 // Smart Routing: Automatically detects Wiz/Angular and adapts stealth profile
 const { page, audit } = await google.open("https://cloud.google.com");
@@ -53,7 +53,7 @@ await page.close();
 ## 📊 Benchmarks (The Proof)
 *Tested on Windows Server 2025 (AVX2) & AWS Graviton 4*
 
-| Metric | Playwright (Node) | **Bunlight (L1 Fusion)** | Improvement |
+| Metric | Playwright (Node) | **Bxc (L1 Fusion)** | Improvement |
 | :--- | :--- | :--- | :--- |
 | **Cold Start** | 850ms | **85ms** | **10x Faster** |
 | **Memory (Idle)** | 240MB | **38MB** | **6x Lighter** |
@@ -66,7 +66,7 @@ await page.close();
 
 ## 🏗️ Architecture
 
-Bunlight merges three high-performance worlds into a single, cohesive memory space.
+Bxc merges three high-performance worlds into a single, cohesive memory space.
 
 ```mermaid
 graph LR
@@ -91,7 +91,7 @@ graph LR
 
 ## 🛠️ Development & Standards
 
-Bunlight adheres to the **Google Open Source Style Guides** and is licensed under **Apache 2.0**.
+Bxc adheres to the **Google Open Source Style Guides** and is licensed under **Apache 2.0**.
 
 ### Compliance
 - **TS Style**: [Google TypeScript Guide](https://google.github.io/styleguide/tsguide.html) compliant.
@@ -113,7 +113,7 @@ bun run typecheck
 
 A first-class extraction layer for AI-driven scraping, runs entirely on the local **Gemma 4 E2B** llama.cpp server vendored at `vendor/gemma/`.
 
-Pattern: **one LLM call per (site, schema)** → cached CSS selectors → every subsequent page parsed natively through Bunlight's Zig DOM (`src/ffi/zigquery.ts`).
+Pattern: **one LLM call per (site, schema)** → cached CSS selectors → every subsequent page parsed natively through Bxc's Zig DOM (`src/ffi/zigquery.ts`).
 
 ```typescript
 import { z } from "zod";

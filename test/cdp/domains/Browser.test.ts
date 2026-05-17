@@ -102,7 +102,7 @@ describe("Browser domain — Phase 1 additions", () => {
 
 	test("Browser.getVersion returns product string (regression)", async () => {
 		const result = (await mux.call("Browser.getVersion")) as { product: string };
-		expect(result.product).toMatch("Bunlight");
+		expect(result.product).toMatch("Bxc");
 	});
 
 	// -------------------------------------------------------------------------

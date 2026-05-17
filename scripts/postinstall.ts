@@ -16,7 +16,7 @@
  */
 
 /**
- * Bunlight postinstall — auto-download Lightpanda browser binary for the current platform.
+ * Bxc postinstall — auto-download Lightpanda browser binary for the current platform.
  *
  * Behavior :
  * - Detects platform from process.platform + process.arch
@@ -26,13 +26,13 @@
  * - Never blocks install : on any failure (network, unsupported platform, write error) logs a warning and exits 0
  *
  * Opt-out env vars :
- * - BUNLIGHT_NO_AUTOINSTALL=1 → skip entirely (user opt-out)
+ * - BXC_NO_AUTOINSTALL=1 → skip entirely (user opt-out)
  * - CI=1                     → skip unless LIGHTPANDA_AUTOINSTALL=1 (CI environments often have caches)
  *
  * Override env vars :
  * - LIGHTPANDA_RELEASE_TAG   → fetch a specific release tag instead of "latest" (defaults to "nightly" upstream)
  * - LIGHTPANDA_DOWNLOAD_URL  → override asset URL entirely
- * - BUNLIGHT_VENDOR_DIR      → override target dir (default vendor/lightpanda-bin)
+ * - BXC_VENDOR_DIR      → override target dir (default vendor/lightpanda-bin)
  *
  * Bun-native APIs only : Bun.file, Bun.write, Bun.$, fetch.
  */
@@ -51,7 +51,7 @@ type DetectedPlatform = {
 };
 
 const TAG = Bun.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
-const VENDOR_DIR_ENV = Bun.env.BUNLIGHT_VENDOR_DIR;
+const VENDOR_DIR_ENV = Bun.env.BXC_VENDOR_DIR;
 
 /**
  * Detect the current platform mapping.
@@ -118,8 +118,8 @@ export function shouldSkip(
 		string | undefined
 	>,
 ): string | null {
-	if (env.BUNLIGHT_NO_AUTOINSTALL === "1") {
-		return "BUNLIGHT_NO_AUTOINSTALL=1 (user opt-out)";
+	if (env.BXC_NO_AUTOINSTALL === "1") {
+		return "BXC_NO_AUTOINSTALL=1 (user opt-out)";
 	}
 	if (env.CI === "1" && env.LIGHTPANDA_AUTOINSTALL !== "1") {
 		return "CI=1 detected and LIGHTPANDA_AUTOINSTALL!=1 (CI cache assumed)";
@@ -147,11 +147,11 @@ function fmtMB(bytes: number): string {
 }
 
 function log(msg: string): void {
-	console.log(`[bunlight postinstall] ${msg}`);
+	console.log(`[bxc postinstall] ${msg}`);
 }
 
 function warn(msg: string): void {
-	console.warn(`[bunlight postinstall] WARNING : ${msg}`);
+	console.warn(`[bxc postinstall] WARNING : ${msg}`);
 }
 
 /**
@@ -169,7 +169,7 @@ async function fetchReleaseAsset(
 	const apiUrl = `https://api.github.com/repos/lightpanda-io/browser/releases/tags/${encodeURIComponent(tag)}`;
 	const res = await fetch(apiUrl, {
 		headers: {
-			"User-Agent": "bunlight-postinstall",
+			"User-Agent": "bxc-postinstall",
 			Accept: "application/vnd.github+json",
 		},
 	});
@@ -206,7 +206,7 @@ async function streamDownload(
 	const partial = `${targetPath}.partial`;
 	await Bun.$`mkdir -p ${targetPath.substring(0, targetPath.lastIndexOf("/"))}`.quiet();
 	const res = await fetch(url, {
-		headers: { "User-Agent": "bunlight-postinstall" },
+		headers: { "User-Agent": "bxc-postinstall" },
 		redirect: "follow",
 	});
 	if (!res.ok || !res.body) {
@@ -314,11 +314,11 @@ export async function runPostinstall(
 }
 
 // ---------------------------------------------------------------------------
-// Extended profile install via BUNLIGHT_INSTALL_PROFILES env var
+// Extended profile install via BXC_INSTALL_PROFILES env var
 // ---------------------------------------------------------------------------
 
 /**
- * Parse the BUNLIGHT_INSTALL_PROFILES env var and run additional installs.
+ * Parse the BXC_INSTALL_PROFILES env var and run additional installs.
  *
  * Supported values (comma-separated) :
  *   stealth  — install Chrome for Testing (required by profile=stealth)
@@ -328,7 +328,7 @@ export async function runPostinstall(
  * This runs after the standard Lightpanda install.
  * Always resolves — never throws — does not affect the exit code.
  *
- * Requires BUNLIGHT_NO_PROMPT=1 or non-interactive stdin because postinstall
+ * Requires BXC_NO_PROMPT=1 or non-interactive stdin because postinstall
  * cannot prompt the user interactively. If prompt suppression is not set and
  * "max" is requested, the install is skipped with a warning.
  */

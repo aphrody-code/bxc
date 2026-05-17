@@ -207,7 +207,7 @@ describe("POST request with JSON body", () => {
 			return;
 		}
 
-		const payload = { message: "bunlight-test", ts: Date.now(), nested: { ok: true } };
+		const payload = { message: "bxc-test", ts: Date.now(), nested: { ok: true } };
 
 		let res: ImpersonatedResponse;
 		try {

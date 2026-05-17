@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/profiles/ghost
+ * @module bxc/profiles/ghost
  *
  * `ghost` profile — Lightpanda-backed anti-detection automation for servers.
  *
@@ -47,7 +47,7 @@
  * Usage :
  *
  * ```ts
- * import { launchGhostBrowser } from "@aphrody-code/bunlight/profiles/ghost";
+ * import { launchGhostBrowser } from "@aphrody-code/bxc/profiles/ghost";
  *
  * const ghost = await launchGhostBrowser({
  *   fingerprint: { os: "linux", browser: "chrome" },
@@ -206,7 +206,7 @@ export async function launchGhostBrowser(options: GhostOptions = {}): Promise<Gh
 // Internals
 // ---------------------------------------------------------------------------
 
-/** Bunlight `Page` exposes `_internalTransport`/`_internalSessionId` for direct CDP calls. */
+/** Bxc `Page` exposes `_internalTransport`/`_internalSessionId` for direct CDP calls. */
 async function sendCdp(
 	page: Page,
 	method: string,

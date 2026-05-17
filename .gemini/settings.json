@@ -18,7 +18,7 @@
 			"args": [
 				"--bun",
 				"@modelcontextprotocol/server-filesystem",
-				"/home/ubuntu/bunlight"
+				"/home/ubuntu/bxc"
 			]
 		},
 		"git": {
@@ -50,8 +50,8 @@
 		"jitContext": true
 	},
 	"extensions": {
-		"bunlight-native": {
-			"path": "packages/bunlight-extension",
+		"bxc-native": {
+			"path": "packages/bxc-extension",
 			"enabled": true,
 			"trusted": true
 		}

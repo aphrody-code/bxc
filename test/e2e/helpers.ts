@@ -85,24 +85,24 @@ async function anyExists(candidates: readonly string[]): Promise<string | null> 
 
 /**
  * Resolve the absolute path to a lightpanda binary if any is available, else null.
- * Side effect: when found, exposes the path via `BUNLIGHT_LIGHTPANDA_BIN` so the
+ * Side effect: when found, exposes the path via `BXC_LIGHTPANDA_BIN` so the
  * SocketPairTransport default lookup picks it up (it falls back to `"lightpanda"`
  * on $PATH otherwise, which is unreliable in CI).
  */
 export async function resolveLightpandaBin(): Promise<string | null> {
 	const candidates = [
-		Bun.env.BUNLIGHT_LIGHTPANDA_BIN,
-		Bun.env.BUNLIGHT_LIGHTPANDA_PATH,
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/lightpanda-bin/linux-x64/lightpanda",
+		Bun.env.BXC_LIGHTPANDA_BIN,
+		Bun.env.BXC_LIGHTPANDA_PATH,
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/lightpanda-bin/linux-x64/lightpanda",
 		`${HOME}/.cache/lightpanda-node/lightpanda`,
 		`${HOME}/.local/bin/lightpanda`,
 		`${HOME}/lightpanda`,
 		"/usr/local/bin/lightpanda",
 	].filter(Boolean) as string[];
 	const found = await anyExists(candidates);
-	if (found && !Bun.env.BUNLIGHT_LIGHTPANDA_BIN) {
-		Bun.env.BUNLIGHT_LIGHTPANDA_BIN = found;
-		Bun.env.BUNLIGHT_LIGHTPANDA_PATH = found;
+	if (found && !Bun.env.BXC_LIGHTPANDA_BIN) {
+		Bun.env.BXC_LIGHTPANDA_BIN = found;
+		Bun.env.BXC_LIGHTPANDA_PATH = found;
 	}
 	return found;
 }
@@ -168,12 +168,12 @@ async function camoufoxAvailable(): Promise<boolean> {
 // otherwise the API will throw on first newPage call and we surface it as fail.
 async function curlImpersonateAvailable(): Promise<boolean> {
 	const candidates = [
-		Bun.env.BUNLIGHT_CURL_IMPERSONATE_LIB,
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so.4",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate.so",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate-chrome.so.4.8.0",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bunlight/vendor/curl-impersonate/libcurl-impersonate-chrome.so",
+		Bun.env.BXC_CURL_IMPERSONATE_LIB,
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate.so.4",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate.so",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate-chrome.so.4.8.0",
+		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate-chrome.so",
 	].filter(Boolean) as string[];
 	return (await anyExists(candidates)) !== null;
 }
@@ -181,7 +181,7 @@ async function curlImpersonateAvailable(): Promise<boolean> {
 async function zigqueryAvailable(): Promise<boolean> {
 	const root = new URL("../../", import.meta.url).pathname;
 	const candidates = [
-		Bun.env.BUNLIGHT_ZIGQUERY_LIB,
+		Bun.env.BXC_ZIGQUERY_LIB,
 		`${root}vendor/zigquery-wrapper/zig-out/lib/liblightpanda_dom.so`,
 	].filter(Boolean) as string[];
 	return (await anyExists(candidates)) !== null;

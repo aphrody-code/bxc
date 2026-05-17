@@ -16,7 +16,7 @@
  */
 
 /**
- * `bunlight` — CLI router.
+ * `bxc` — CLI router.
  *
  * Dispatches subcommands to the appropriate module via dynamic import so
  * that FFI libraries (zigquery, curl-impersonate) are not loaded unless
@@ -37,13 +37,13 @@ import { join } from "node:path";
 // Version resolution
 // ---------------------------------------------------------------------------
 
-// Build-time identifier injected via `bun build --define __BUNLIGHT_VERSION__='"x.y.z"'`.
+// Build-time identifier injected via `bun build --define __BXC_VERSION__='"x.y.z"'`.
 // In dev (no define), `typeof` on an undefined identifier returns "undefined" without
 // throwing — so this is safe across both standalone executables and dev workflows.
-declare const __BUNLIGHT_VERSION__: string;
-declare const __BUNLIGHT_BUILD_TIME__: string;
+declare const __BXC_VERSION__: string;
+declare const __BXC_BUILD_TIME__: string;
 
-let _pkgVersion = typeof __BUNLIGHT_VERSION__ !== "undefined" ? __BUNLIGHT_VERSION__ : "0.0.0-dev";
+let _pkgVersion = typeof __BXC_VERSION__ !== "undefined" ? __BXC_VERSION__ : "0.0.0-dev";
 
 // ---------------------------------------------------------------------------
 // Usage
@@ -51,57 +51,57 @@ let _pkgVersion = typeof __BUNLIGHT_VERSION__ !== "undefined" ? __BUNLIGHT_VERSI
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight v${_pkgVersion} — Bun-native browser engine
+		`bxc v${_pkgVersion} — Bun-native browser engine
 
 Usage:
-  bunlight <subcommand> [options]
+  bxc <subcommand> [options]
 
 Subcommands:
   serve     Start a CDP server for browser automation
-            bunlight serve --cdp-port <N> [--profile static|fast|http|stealth|max]
+            bxc serve --cdp-port <N> [--profile static|fast|http|stealth|max]
 
   install   Download engine binaries (Lightpanda + native Chromium)
-            bunlight install [--dry-run]
+            bxc install [--dry-run]
 
   chrome    Native Chromium management
-            bunlight chrome fetch
-            bunlight chrome launch [--path path/to/chrome]
+            bxc chrome fetch
+            bxc chrome launch [--path path/to/chrome]
 
   recon     One-shot URL → recon doc (Markdown by default)
-            bunlight recon <url> [--profile static|fast|http|stealth|max] [--screenshot]
+            bxc recon <url> [--profile static|fast|http|stealth|max] [--screenshot]
                                  [--output path.md] [--snapshot-dir dir/] [--json]
   docs      Alias of recon
 
   detect    Framework / CMS / library detection via wappalyzergo
-            bunlight detect <url>
+            bxc detect <url>
 
   scrape    Extract textContent from CSS-matched elements
-            bunlight scrape <url> <css> [--profile name] [--max N]
+            bxc scrape <url> <css> [--profile name] [--max N]
 
   cookies   Cookie jar tools
-            bunlight cookies load <jar.json>
+            bxc cookies load <jar.json>
 
   har       HAR (HTTP Archive) recorder/replayer
-            bunlight har record <url> <out.har>
-            bunlight har replay <file.har>
+            bxc har record <url> <out.har>
+            bxc har replay <file.har>
 
   mirror    Download a full site (HTML+CSS+JS+assets) with rewritten links
-            bunlight mirror <url> <out-dir> [--profile http|static|fast|stealth]
+            bxc mirror <url> <out-dir> [--profile http|static|fast|stealth]
                                             [--cookies jar.json] [--verbose]
 
   challonge Extract typed snapshot from a Challonge tournament page
-            bunlight challonge <url-or-path> [--cookies jar.json] [--summary]
+            bxc challonge <url-or-path> [--cookies jar.json] [--summary]
 
 Flags:
   --version, -V   print version
   --help, -h      print this help
 
 Examples:
-  bunlight serve --cdp-port 9222 --profile stealth
-  bunlight install
-  bunlight detect https://www.google.com
+  bxc serve --cdp-port 9222 --profile stealth
+  bxc install
+  bxc detect https://www.google.com
 
-bunlight is a high-performance browser engine optimized for VPS
+bxc is a high-performance browser engine optimized for VPS
 and Google-grade stealth. It combines In-Process FFI (Zig/V8)
 with a native Rust-driven Chromium core.
 
@@ -130,7 +130,7 @@ async function main() {
 	}
 
 	const _buildTime =
-		typeof __BUNLIGHT_BUILD_TIME__ !== "undefined" ? __BUNLIGHT_BUILD_TIME__ : "dev";
+		typeof __BXC_BUILD_TIME__ !== "undefined" ? __BXC_BUILD_TIME__ : "dev";
 	void _buildTime;
 
 	const subcommand = process.argv[2];
@@ -204,7 +204,7 @@ async function main() {
 
 		case "--version":
 		case "-V": {
-			Bun.stdout.write(`bunlight ${_pkgVersion}\n`);
+			Bun.stdout.write(`bxc ${_pkgVersion}\n`);
 			break;
 		}
 
@@ -222,7 +222,7 @@ async function main() {
 }
 
 main().catch((err) => {
-	console.error(`[bunlight] ${err instanceof Error ? err.stack : String(err)}`);
+	console.error(`[bxc] ${err instanceof Error ? err.stack : String(err)}`);
 	process.exit(1);
 });
 

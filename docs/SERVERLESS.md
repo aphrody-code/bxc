@@ -1,6 +1,6 @@
-# Bunlight — Serverless
+# Bxc — Serverless
 
-Bunlight ships a single-file fetch handler designed for short-lived,
+Bxc ships a single-file fetch handler designed for short-lived,
 sub-second serverless invocations. Cold-start budget is dominated by the
 Bun runtime itself plus lazy-loaded modules — typically 100–250 ms on
 warm Vercel/AWS Bun functions.
@@ -39,7 +39,7 @@ The handler exposes 5 routes on whatever path you mount it under.
 
 ```ts
 export const runtime = "bun";
-export { handler as GET, handler as POST } from "@bunmium/bunlight/serverless";
+export { handler as GET, handler as POST } from "@bunmium/bxc/serverless";
 ```
 
 `vercel.json`:
@@ -56,13 +56,13 @@ export { handler as GET, handler as POST } from "@bunmium/bunlight/serverless";
 
 ```sh
 bun run build:serverless
-./dist/bunlight-serverless --port 3000
+./dist/bxc-serverless --port 3000
 ```
 
 Or programmatically:
 
 ```ts
-import { handler } from "@bunmium/bunlight/serverless";
+import { handler } from "@bunmium/bxc/serverless";
 
 Bun.serve({ port: 3000, fetch: handler });
 ```
@@ -70,14 +70,14 @@ Bun.serve({ port: 3000, fetch: handler });
 ## AWS Lambda (Bun layer)
 
 ```ts
-import { handler as bunlightHandler } from "@bunmium/bunlight/serverless";
+import { handler as bxcHandler } from "@bunmium/bxc/serverless";
 
 export const handler = async (event: { rawPath: string; queryStringParameters?: Record<string, string> }) => {
 	const url = new URL(`https://lambda${event.rawPath}`);
 	for (const [k, v] of Object.entries(event.queryStringParameters ?? {})) {
 		url.searchParams.set(k, v);
 	}
-	const res = await bunlightHandler(new Request(url, { method: "GET" }));
+	const res = await bxcHandler(new Request(url, { method: "GET" }));
 	return {
 		statusCode: res.status,
 		headers: Object.fromEntries(res.headers),

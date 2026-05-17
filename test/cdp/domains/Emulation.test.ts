@@ -200,7 +200,7 @@ describe("Emulation domain handler", () => {
 
 	test("setUserAgentOverride injects UA into next Page.navigate request headers", async () => {
 		const sessionId = await openSession(transport);
-		const customUA = "MyTestBot/2.0 (bunlight-test)";
+		const customUA = "MyTestBot/2.0 (bxc-test)";
 
 		await cdpCall(transport, "Emulation.setUserAgentOverride", { userAgent: customUA }, sessionId);
 
@@ -214,7 +214,7 @@ describe("Emulation domain handler", () => {
 		}
 	});
 
-	test("setUserAgentOverride with empty string reverts to default Bunlight UA", async () => {
+	test("setUserAgentOverride with empty string reverts to default Bxc UA", async () => {
 		const sessionId = await openSession(transport);
 
 		// Set a custom UA first
@@ -231,8 +231,8 @@ describe("Emulation domain handler", () => {
 		try {
 			await cdpCall(transport, "Page.navigate", { url }, sessionId);
 			const headers = await promise;
-			// Should fall back to the default Bunlight UA
-			expect(headers.get("user-agent")).toMatch(/Bunlight/);
+			// Should fall back to the default Bxc UA
+			expect(headers.get("user-agent")).toMatch(/Bxc/);
 		} finally {
 			stop();
 		}

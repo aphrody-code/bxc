@@ -1,7 +1,7 @@
 /**
- * Runner: bunlight-fast
+ * Runner: bxc-fast
  *
- * Uses Bunlight's Lightpanda sub-process profile (profile: "fast").
+ * Uses Bxc's Lightpanda sub-process profile (profile: "fast").
  * Each page spawns a fresh Lightpanda process connected via CDP WebSocket.
  * This enables real JS execution (V8 inside Lightpanda).
  *
@@ -12,18 +12,18 @@
  *   - RAM: 60-80 MB per page (Lightpanda process + bun process overhead)
  *   - Cloudflare: fails on Turnstile / managed challenge (UA = "Lightpanda/1.0")
  *
- * Skipped if: BUNLIGHT_LIGHTPANDA_BIN is not set AND lightpanda is not in PATH.
+ * Skipped if: BXC_LIGHTPANDA_BIN is not set AND lightpanda is not in PATH.
  */
 
 import type { RunResult } from "../types.ts";
 import { rssNow } from "../types.ts";
 import { Browser } from "../../src/api/browser.ts";
 
-export const RUNNER_ID = "bunlight-fast";
+export const RUNNER_ID = "bxc-fast";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 const KNOWN_CANDIDATES = [
-	process.env.BUNLIGHT_LIGHTPANDA_BIN,
+	process.env.BXC_LIGHTPANDA_BIN,
 	`${process.env.HOME}/bunmium/lightpanda`,
 	`${process.env.HOME}/lightpanda`,
 	`${ROOT}vendor/lightpanda-bin/linux-x64/lightpanda`,
@@ -55,7 +55,7 @@ const LIGHTPANDA_BIN: string | null = locateLightpanda();
 
 export const SKIP_REASON: string | null = LIGHTPANDA_BIN
 	? null
-	: "lightpanda binary not found — set BUNLIGHT_LIGHTPANDA_BIN or add lightpanda to PATH";
+	: "lightpanda binary not found — set BXC_LIGHTPANDA_BIN or add lightpanda to PATH";
 
 export async function run(url: string): Promise<RunResult> {
 	if (SKIP_REASON) {

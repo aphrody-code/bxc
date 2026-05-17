@@ -185,7 +185,7 @@ describe("StaticDomTransport CDP methods", () => {
 			product: string;
 			protocolVersion: string;
 		};
-		expect(result.product).toMatch("Bunlight");
+		expect(result.product).toMatch("Bxc");
 		expect(result.protocolVersion).toBe("1.3");
 	});
 
@@ -419,7 +419,7 @@ describe("Browser singleton", () => {
 
 	test("Browser.version() returns a string", () => {
 		expect(typeof Browser.version()).toBe("string");
-		expect(Browser.version()).toMatch("Bunlight");
+		expect(Browser.version()).toMatch("Bxc");
 	});
 
 	test("Browser.transport() returns a ConnectionTransport", () => {

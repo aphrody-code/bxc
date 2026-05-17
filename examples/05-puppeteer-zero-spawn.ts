@@ -17,7 +17,7 @@
 /**
  * 05-puppeteer-zero-spawn.ts
  *
- * Demonstrates connecting puppeteer-core to Bunlight without spawning any
+ * Demonstrates connecting puppeteer-core to Bxc without spawning any
  * external process.  Two modes are shown:
  *
  *   1. Static mode  — 100% in-process, no binary, DOM-only via StaticDomTransport
@@ -68,7 +68,7 @@ async function runStaticMode(): Promise<void> {
 			encodeURIComponent(`
     <!DOCTYPE html>
     <html>
-      <head><title>Hello Bunlight</title></head>
+      <head><title>Hello Bxc</title></head>
       <body>
         <h1 id="heading">Hello from StaticDomTransport</h1>
         <ul>
@@ -108,7 +108,7 @@ async function runStaticMode(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Mode 2 — WebSocketTransport (Chrome/bunlight-engine sub-process)
+// Mode 2 — WebSocketTransport (Chrome/bxc-engine sub-process)
 // ---------------------------------------------------------------------------
 
 async function runFullMode(): Promise<void> {
@@ -154,7 +154,7 @@ async function runFullMode(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function runBrowserSingletonDemo(): Promise<void> {
-	section("Mode 3: Browser singleton (built-in Bunlight API)");
+	section("Mode 3: Browser singleton (built-in Bxc API)");
 
 	const page = await Browser.newPage();
 	await page.goto(

@@ -15,13 +15,13 @@
  */
 
 /**
- * Tests for `bunlight install` CLI subcommand.
+ * Tests for `bxc install` CLI subcommand.
  *
  * Tests that perform actual network I/O or write to the filesystem are
- * controlled by the BUNLIGHT_TEST_NETWORK env var. Set it to "1" to run them.
+ * controlled by the BXC_TEST_NETWORK env var. Set it to "1" to run them.
  *
  * All tests can be run offline safely — network/download tests skip with a
- * clear reason when BUNLIGHT_TEST_NETWORK != "1".
+ * clear reason when BXC_TEST_NETWORK != "1".
  */
 
 import { describe, expect, test } from "bun:test";
@@ -32,7 +32,7 @@ import { join } from "node:path";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const NETWORK_TESTS = Bun.env.BUNLIGHT_TEST_NETWORK === "1";
+const NETWORK_TESTS = Bun.env.BXC_TEST_NETWORK === "1";
 
 function logSkip(reason: string): void {
 	console.log(`  [skip] ${reason}`);
@@ -40,7 +40,7 @@ function logSkip(reason: string): void {
 
 /** Create a unique temp dir for a test run. */
 function tempVendorDir(): string {
-	return join(tmpdir(), `bunlight-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	return join(tmpdir(), `bxc-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ describe("resolveLightpandaPath", () => {
 // ---------------------------------------------------------------------------
 
 describe("VENDOR_DIR", () => {
-	test("defaults to ~/.bunlight/vendor when env not set", () => {
+	test("defaults to ~/.bxc/vendor when env not set", () => {
 		// The env var may or may not be set in CI. Just check the shape.
 		expect(typeof VENDOR_DIR).toBe("string");
 		expect(VENDOR_DIR.length).toBeGreaterThan(0);
@@ -183,7 +183,7 @@ describe("runInstall", () => {
 // CLI index.ts — --version and --help via subprocess
 // ---------------------------------------------------------------------------
 
-describe("bunlight CLI (index.ts)", () => {
+describe("bxc CLI (index.ts)", () => {
 	const INDEX = join(import.meta.dir, "../../src/cli/index.ts");
 
 	test("--version prints a version string", async () => {
@@ -194,7 +194,7 @@ describe("bunlight CLI (index.ts)", () => {
 		const out = await new Response(proc.stdout).text();
 		await proc.exited;
 		// Should contain a version in semver-ish format.
-		expect(out.trim()).toMatch(/^bunlight \d+\.\d+\./);
+		expect(out.trim()).toMatch(/^bxc \d+\.\d+\./);
 	});
 
 	test("-V prints a version string", async () => {
@@ -204,7 +204,7 @@ describe("bunlight CLI (index.ts)", () => {
 		});
 		const out = await new Response(proc.stdout).text();
 		await proc.exited;
-		expect(out.trim()).toMatch(/^bunlight \d+\.\d+\./);
+		expect(out.trim()).toMatch(/^bxc \d+\.\d+\./);
 	});
 
 	test("--help prints usage including subcommands", async () => {
@@ -226,7 +226,7 @@ describe("bunlight CLI (index.ts)", () => {
 		});
 		const out = await new Response(proc.stdout).text();
 		await proc.exited;
-		expect(out).toContain("bunlight");
+		expect(out).toContain("bxc");
 	});
 
 	test("unknown subcommand exits with code 1", async () => {
@@ -256,10 +256,10 @@ describe("bunlight CLI (index.ts)", () => {
 // Network integration test — real Lightpanda install (opt-in)
 // ---------------------------------------------------------------------------
 
-describe("installLightpanda — real download (BUNLIGHT_TEST_NETWORK=1)", () => {
+describe("installLightpanda — real download (BXC_TEST_NETWORK=1)", () => {
 	test("downloads and installs Lightpanda binary", async () => {
 		if (!NETWORK_TESTS) {
-			logSkip("set BUNLIGHT_TEST_NETWORK=1 to run real download test");
+			logSkip("set BXC_TEST_NETWORK=1 to run real download test");
 			return;
 		}
 
@@ -293,7 +293,7 @@ describe("installLightpanda — real download (BUNLIGHT_TEST_NETWORK=1)", () => 
 
 	test("second install is idempotent (present, no re-download)", async () => {
 		if (!NETWORK_TESTS) {
-			logSkip("set BUNLIGHT_TEST_NETWORK=1 to run idempotency network test");
+			logSkip("set BXC_TEST_NETWORK=1 to run idempotency network test");
 			return;
 		}
 

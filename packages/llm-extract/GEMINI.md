@@ -3,13 +3,13 @@
 Structured extraction over scraped HTML, powered by the local **Gemma 4 E2B-it**
 llama.cpp server (sources et runtime sous `vendor/gemma/`). Bun-only, zero `node:*`.
 
-Le `CLAUDE.md` parent (`bunlight/CLAUDE.md`) couvre la mission Bunlight et les règles
+Le `CLAUDE.md` parent (`bxc/CLAUDE.md`) couvre la mission Bxc et les règles
 code (Bun-native, no emoji, strict TS). Ne pas dupliquer ici. La doc complète du runtime
 (`llama-server`, modèles, perf) est dans `vendor/gemma/CLAUDE.md`.
 
 ## Mission
 
-Bunlight produit du HTML (profils `static` / `fast` / `stealth` / `max`). Ce package
+Bxc produit du HTML (profils `static` / `fast` / `stealth` / `max`). Ce package
 transforme ce HTML en JSON typé via génération contrainte par JSON-Schema sur Gemma 4.
 Conçu pour scraping intensif :
 
@@ -107,7 +107,7 @@ Le bench officiel : `bun run bench` (10 samples, sortie p50/p95/tokens).
 
 ## Dépendance runtime
 
-Le package suppose `~/bunlight/vendor/gemma/` setup et le service `gemma` user-level UP :
+Le package suppose `~/bxc/vendor/gemma/` setup et le service `gemma` user-level UP :
 
 ```bash
 systemctl --user status gemma

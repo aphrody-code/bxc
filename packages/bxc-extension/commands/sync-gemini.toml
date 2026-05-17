@@ -6,7 +6,7 @@ Follow the official Gemini CLI schema and the current project state.
 **Mandate:**
 1. Scan the workspace to identify current technologies, commands, and architecture.
 2. Structure the `GEMINI.md` exactly as follows:
-   - # GEMINI.md — Bunlight Operating Guide (Extreme Autonomy)
+   - # GEMINI.md — Bxc Operating Guide (Extreme Autonomy)
    - ## Project Overview (Purpose, Main Technologies)
    - ## AI Interaction — Deep Think & YOLO (Hard mandates)
    - ## Building and Running (Consolidated commands)

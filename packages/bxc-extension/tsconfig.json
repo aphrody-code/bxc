@@ -10,5 +10,5 @@
 		"noEmit": true
 	},
 	"include": ["server.ts", "test/**/*"],
-	"exclude": ["node_modules", "../../vendor", "bunlight-mcp"]
+	"exclude": ["node_modules", "../../vendor", "bxc-mcp"]
 }

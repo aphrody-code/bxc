@@ -15,11 +15,11 @@
  */
 
 /**
- * @module bunlight/profiles
+ * @module bxc/profiles
  *
  * Lazy profile router.
  *
- * bunlight is Lightpanda-only by design. Forbidden engines : Chrome,
+ * bxc is Lightpanda-only by design. Forbidden engines : Chrome,
  * Chromium, Firefox, Edge, Safari, and any derivative (patchright,
  * Playwright Chromium, Camoufox Firefox, Puppeteer-bundled chromium).
  *
@@ -32,7 +32,7 @@
  */
 
 /** Human-readable profile identifiers. */
-export type BunlightProfile = "static" | "fast" | "http";
+export type BxcProfile = "static" | "fast" | "http";
 
 /** Lazily loads the `StaticDomTransport` class. */
 export async function loadStaticProfile(): Promise<

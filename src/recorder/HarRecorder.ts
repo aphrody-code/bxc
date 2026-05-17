@@ -15,10 +15,10 @@
  */
 
 /**
- * @module bunlight/recorder/HarRecorder
+ * @module bxc/recorder/HarRecorder
  *
  * Records network traffic through CDP Network events and exports it as a
- * HAR 1.2 archive. Works with any Bunlight `Page` (static, fast, or any
+ * HAR 1.2 archive. Works with any Bxc `Page` (static, fast, or any
  * CDP-backed transport) by tapping into the `Network.requestWillBeSent` and
  * `Network.responseReceived` CDP events.
  *
@@ -278,13 +278,13 @@ function buildTimings(
 // ---------------------------------------------------------------------------
 
 /**
- * Records network events from a Bunlight `Page` and produces a HAR 1.2 log.
+ * Records network events from a Bxc `Page` and produces a HAR 1.2 log.
  *
  * The recorder hooks into the CDP message stream via the page's internal
  * transport to intercept `Network.requestWillBeSent`, `Network.responseReceived`,
  * `Network.loadingFinished`, and `Network.loadingFailed` events.
  *
- * Because Bunlight's `StaticDomTransport` (profile=static) does not execute
+ * Because Bxc's `StaticDomTransport` (profile=static) does not execute
  * network requests, the recorder will produce an empty entries list for that
  * profile. It is most useful with profile=fast (Lightpanda CDP) or any real
  * browser-backed transport.
@@ -374,8 +374,8 @@ export class HarRecorder {
 
 		const log: HarLog = {
 			version: "1.2",
-			creator: { name: "Bunlight", version: "0.1.0" },
-			browser: { name: "Bunlight", version: "0.1.0" },
+			creator: { name: "Bxc", version: "0.1.0" },
+			browser: { name: "Bxc", version: "0.1.0" },
 			pages: [...this.#pages],
 			entries: [...this.#entries],
 		};

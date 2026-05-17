@@ -86,7 +86,7 @@ export const EmulationHandler: DomainHandler = async (method, params, ctx, sessi
 		case "Emulation.setUserAgentOverride": {
 			const page = ctx.pageBySession(sessionId);
 			const p = params as { userAgent?: string };
-			// Empty string clears the override (reverts to default Bunlight UA)
+			// Empty string clears the override (reverts to default Bxc UA)
 			if (typeof p.userAgent === "string" && p.userAgent.length > 0) {
 				page.emulation.userAgent = p.userAgent;
 			} else {

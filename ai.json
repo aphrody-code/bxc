@@ -1,5 +1,5 @@
 {
-  "project": "Bunlight",
+  "project": "Bxc",
   "version": "1.0.0",
   "agents": {
     "GeminiCLI": {
@@ -12,8 +12,8 @@
         "Memory Consolidation (bun-dream)"
       ],
       "config": "GEMINI.md",
-      "memory": "/home/ubuntu/.gemini/tmp/bunlight/memory/MEMORY.md",
-      "extension": "bunlight-native"
+      "memory": "/home/ubuntu/.gemini/tmp/bxc/memory/MEMORY.md",
+      "extension": "bxc-native"
     },
     "ClaudeCode": {
       "role": "Code Quality & Subagent Specialist",
@@ -33,7 +33,7 @@
     }
   },
   "shared_rules": [
-    "Runtime: Bun-only (preference). Exception: packages/bunlight-extension for MCP SDK compatibility.",
+    "Runtime: Bun-only (preference). Exception: packages/bxc-extension for MCP SDK compatibility.",
     "Autonomy: Extreme YOLO Mode enabled. 100% autonomous, zero confirmation for commands/deployments.",
     "Deep Think: Mandatory use of 'mcp_sequentialthinking' for complex tasks (>3 tools) or refactoring.",
     "Security: .env files are strictly read-only for users, blocked for agents. Use .env.example for templates.",

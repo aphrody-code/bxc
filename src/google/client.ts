@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/client
+ * @module bxc/google/client
  * 
  * High-level unified Google client for stealth scraping and audit.
  */

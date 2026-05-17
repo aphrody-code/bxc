@@ -1,6 +1,6 @@
-# Bunlight Native Gemini Extension Development Guide
+# Bxc Native Gemini Extension Development Guide
 
-Welcome to the Bunlight Native Gemini CLI Extension! This extension provides deep, native integration between the Gemini CLI and the high-performance, Zero-Spawn Bunlight Chromium engine.
+Welcome to the Bxc Native Gemini CLI Extension! This extension provides deep, native integration between the Gemini CLI and the high-performance, Zero-Spawn Bxc Chromium engine.
 
 ## Overview
 
@@ -20,11 +20,11 @@ This extension is built utilizing a **vendored and Bun-optimized version** of th
 
 2. **Native Vision API Integration**
    - **Tool:** `vision_analyze`
-   - **Details:** Instructs Bunlight to take native CDP screenshots and parse visual context directly via local models, completely bypassing the cloud.
+   - **Details:** Instructs Bxc to take native CDP screenshots and parse visual context directly via local models, completely bypassing the cloud.
 
 3. **Massive Subagent Scraping**
    - **Tool:** `start_scraping_subagent`
-   - **Details:** Triggers the Bunlight 24-worker/5656-page concurrent queue natively to perform massive Google searches and audits in the background.
+   - **Details:** Triggers the Bxc 24-worker/5656-page concurrent queue natively to perform massive Google searches and audits in the background.
 
 4. **Auto-Detect Native Skills**
    - **Tool:** `auto_detect_skills`
@@ -33,7 +33,7 @@ This extension is built utilizing a **vendored and Bun-optimized version** of th
 ## Directory Structure
 
 ```text
-packages/bunlight-extension/
+packages/bxc-extension/
 ├── gemini-extension.json      # Extension manifest and MCP execution commands
 ├── package.json               # Defines dependencies (MCP, Zod)
 ├── tsconfig.json              # Bun-native TS config

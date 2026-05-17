@@ -16,7 +16,7 @@
  */
 
 /**
- * `bunlight recon <url>` — one-shot URL → docs.
+ * `bxc recon <url>` — one-shot URL → docs.
  *
  * Probes a target URL and produces a Markdown reconnaissance report covering:
  *   - HTTP response headers (server / X-Powered-By / cache / CSP)
@@ -27,11 +27,11 @@
  *   - PNG screenshot when --screenshot is passed (uses fast profile)
  *
  * Usage:
- *   bunlight recon <url>
- *   bunlight recon <url> --profile fast
- *   bunlight recon <url> --output report.md --snapshot-dir ./snapshot
- *   bunlight recon <url> --screenshot
- *   bunlight recon <url> --json                    (emit JSON instead of Markdown)
+ *   bxc recon <url>
+ *   bxc recon <url> --profile fast
+ *   bxc recon <url> --output report.md --snapshot-dir ./snapshot
+ *   bxc recon <url> --screenshot
+ *   bxc recon <url> --json                    (emit JSON instead of Markdown)
  *
  * Exit codes:
  *   0 success
@@ -67,10 +67,10 @@ export interface ReconHeaders {
 
 /**
  * Stable JSON output schema. Agents should branch on this — when we change
- * field semantics, we bump the version (`bunlight-recon-v2`) and keep v1
+ * field semantics, we bump the version (`bxc-recon-v2`) and keep v1
  * available behind a flag.
  */
-export const RECON_SCHEMA = "bunlight-recon-v1";
+export const RECON_SCHEMA = "bxc-recon-v1";
 
 export interface ReconResult {
 	$schema: typeof RECON_SCHEMA;
@@ -379,7 +379,7 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	// Suppressed by --quiet so machine pipelines stay clean.
 	if (browserError && !opts.quiet) {
 		Bun.stderr.write(
-			`bunlight recon: browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.\n`,
+			`bxc recon: browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.\n`,
 		);
 	}
 
@@ -564,10 +564,10 @@ export function renderMarkdown(r: ReconResult): string {
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight recon — one-shot URL → docs (schema ${RECON_SCHEMA})
+		`bxc recon — one-shot URL → docs (schema ${RECON_SCHEMA})
 
 Usage:
-  bunlight recon <url> [options]
+  bxc recon <url> [options]
 
 Options:
   --profile <name>      static | fast | http  (default: http)
@@ -594,10 +594,10 @@ Output contract:
   - NO_COLOR=1 honored (plain ASCII output regardless)
 
 Examples:
-  bunlight recon https://design.google
-  bunlight recon https://nextjs.org --profile fast --screenshot --snapshot-dir ./report
-  bunlight recon https://m3.material.io --json > m3.json
-  bunlight recon https://m3.material.io --plain --quiet | grep -i framework
+  bxc recon https://design.google
+  bxc recon https://nextjs.org --profile fast --screenshot --snapshot-dir ./report
+  bxc recon https://m3.material.io --json > m3.json
+  bxc recon https://m3.material.io --plain --quiet | grep -i framework
 `,
 	);
 }
@@ -609,7 +609,7 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 		screenshot: false,
 		emitJson: false,
 		timeoutMs: 30_000,
-		quiet: Bun.env.BUNLIGHT_QUIET === "1",
+		quiet: Bun.env.BXC_QUIET === "1",
 		plain: Bun.env.NO_COLOR === "1",
 	};
 
@@ -688,7 +688,7 @@ const EXIT = {
 
 function logProgress(opts: ReconCliOptions, msg: string): void {
 	if (!opts.quiet) {
-		Bun.stderr.write(`bunlight recon: ${msg}\n`);
+		Bun.stderr.write(`bxc recon: ${msg}\n`);
 	}
 }
 
@@ -707,7 +707,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		result = await recon(opts);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		Bun.stderr.write(`bunlight recon: fetch/extraction failed — ${msg}\n`);
+		Bun.stderr.write(`bxc recon: fetch/extraction failed — ${msg}\n`);
 		await Browser.close().catch(() => {});
 		process.exit(EXIT.DATA_ERR);
 	}
@@ -725,7 +725,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 				: renderMarkdown(result);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		Bun.stderr.write(`bunlight recon: rendering failed — ${msg}\n`);
+		Bun.stderr.write(`bxc recon: rendering failed — ${msg}\n`);
 		await Browser.close().catch(() => {});
 		process.exit(EXIT.SOFTWARE);
 	}

@@ -15,7 +15,7 @@
  */
 
 /**
- * Tests for the bunlight React/Next.js hydration parsers.
+ * Tests for the bxc React/Next.js hydration parsers.
  */
 
 import { describe, expect, test } from "bun:test";

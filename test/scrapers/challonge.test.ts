@@ -16,7 +16,7 @@
 
 /**
  * Offline tests for the Challonge tournament extractor. The fixture
- * is the full mirror produced by `bunlight mirror https://challonge.com/fr/B_TS5`
+ * is the full mirror produced by `bxc mirror https://challonge.com/fr/B_TS5`
  * stored at `/tmp/mirror-bts5/challonge.com/fr/B_TS5`. If the mirror
  * is absent, the suite is skipped with a clear log line.
  *
@@ -143,6 +143,6 @@ describe("scrapers/challonge — error handling", () => {
 
 if (!fixtureExists) {
 	Bun.stderr.write(
-		`skip: ${FIXTURE} not present — run \`bunlight mirror https://challonge.com/fr/B_TS5 /tmp/mirror-bts5 --cookies cookies/private/challonge.json\` first\n`,
+		`skip: ${FIXTURE} not present — run \`bxc mirror https://challonge.com/fr/B_TS5 /tmp/mirror-bts5 --cookies cookies/private/challonge.json\` first\n`,
 	);
 }

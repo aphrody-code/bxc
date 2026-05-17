@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/browser
+ * @module bxc/browser
  *
- * Public high-level API for Bunlight.  Provides a `Browser` singleton and a
+ * Public high-level API for Bxc.  Provides a `Browser` singleton and a
  * `Page` class that mirrors the Puppeteer surface, backed by an in-process CDP
  * transport so no external binary is required for static-DOM workloads.
  *
@@ -27,7 +27,7 @@
  *
  * @example
  * ```ts
- * import { Browser } from "bunlight/browser";
+ * import { Browser } from "bxc/browser";
  *
  * const page = await Browser.newPage();
  * await page.goto("https://example.com");
@@ -39,7 +39,7 @@
  * ```ts
  * // Puppeteer-compatible: connect puppeteer-core to the in-process transport
  * import puppeteer from "puppeteer-core";
- * import { Browser } from "bunlight/browser";
+ * import { Browser } from "bxc/browser";
  *
  * const puppeteerBrowser = await puppeteer.connect({
  *   transport: Browser.transport(),
@@ -86,10 +86,10 @@ export interface PageOptions {
 	 */
 	headless?: boolean;
 	/**
-	 * Bunlight profile name.  When set, takes precedence over `mode`.
+	 * Bxc profile name.  When set, takes precedence over `mode`.
 	 *
 	 * - `"static"` -> in-process StaticDomTransport
-	 * - `"fast"` / `"stealth"` / `"max"` -> WebSocketTransport spawning Chrome/bunlight-engine
+	 * - `"fast"` / `"stealth"` / `"max"` -> WebSocketTransport spawning Chrome/bxc-engine
 	 * - `"http"`   -> ImpersonatedClient (curl-impersonate) — TLS-fingerprinted
 	 *                 HTTP only; no DOM, no JS execution, no binary required.
 	 */
@@ -306,7 +306,7 @@ export class Page implements AnyPage {
 	}> = [];
 	#interceptionEnabled = false;
 
-	/** @internal — Bunlight-private accessors (used by the singleton to wire cookies, etc.) */
+	/** @internal — Bxc-private accessors (used by the singleton to wire cookies, etc.) */
 	get _internalTransport(): ConnectionTransport {
 		return this.#transport;
 	}
@@ -1095,7 +1095,7 @@ function globToRegExp(glob: string): RegExp {
  * Or use `ImpersonatedClient` directly for full control:
  *
  * ```ts
- * import { ImpersonatedClient } from "bunlight/ffi/curl-impersonate";
+ * import { ImpersonatedClient } from "bxc/ffi/curl-impersonate";
  * const client = new ImpersonatedClient({ profile: "chrome131" });
  * const res = await client.fetch("https://example.com");
  * console.log(await res.text());
@@ -1317,7 +1317,7 @@ export class HttpPage implements AnyPage {
 
 // ---------------------------------------------------------------------------
 // Note: classes for forbidden engines (Chromium / Firefox / Chrome / Edge /
-// Safari) have been removed. bunlight is Lightpanda-only. Use the `ghost`
+// Safari) have been removed. bxc is Lightpanda-only. Use the `ghost`
 // profile (`profile: "fast"` + stealth patches via CDP) for anti-detection.
 // ---------------------------------------------------------------------------
 
@@ -1495,9 +1495,9 @@ class BrowserSingleton {
 		return [...this.#pages];
 	}
 
-	/** Returns the Bunlight version string. */
+	/** Returns the Bxc version string. */
 	version(): string {
-		return "Bunlight/0.1.0 (StaticDomTransport; SocketPairTransport; curl-impersonate; ghost)";
+		return "Bxc/0.1.0 (StaticDomTransport; SocketPairTransport; curl-impersonate; ghost)";
 	}
 
 	/** Closes the browser singleton, terminating any open pages. */
@@ -1527,7 +1527,7 @@ class BrowserSingleton {
 // ---------------------------------------------------------------------------
 
 /**
- * The default Bunlight browser instance.  Lazily initialised on first use and
+ * The default Bxc browser instance.  Lazily initialised on first use and
  * automatically closed at process exit.
  *
  * @example
@@ -1540,7 +1540,7 @@ class BrowserSingleton {
  *
  * @example Anti-detection (Lightpanda + ghost stealth injects):
  * ```ts
- * import { launchGhostBrowser } from "@aphrody-code/bunlight/profiles/ghost";
+ * import { launchGhostBrowser } from "@aphrody-code/bxc/profiles/ghost";
  * const ghost = await launchGhostBrowser({
  *   fingerprint: { os: "linux", browser: "chrome", version: 131 },
  *   locale: "fr-FR",
@@ -1571,7 +1571,7 @@ export const Browser: {
 	newContext(): Promise<BrowserContext>;
 	/** Returns all CDP-backed pages managed by this browser instance. */
 	pages(): AnyPage[];
-	/** Returns the Bunlight version string. */
+	/** Returns the Bxc version string. */
 	version(): string;
 	/** Closes all pages and disposes the underlying transport. */
 	close(): Promise<void>;
@@ -1581,7 +1581,7 @@ export const Browser: {
 	 * @example
 	 * ```ts
 	 * import puppeteer from "puppeteer-core";
-	 * import { Browser } from "bunlight/browser";
+	 * import { Browser } from "bxc/browser";
 	 *
 	 * const b = await puppeteer.connect({ transport: Browser.transport() });
 	 * ```

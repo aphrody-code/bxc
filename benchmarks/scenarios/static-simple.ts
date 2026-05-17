@@ -4,7 +4,7 @@
  * Tests all fetch+parse runners against a set of static HTML pages served
  * by the local mock server. This is the core comparison:
  *
- *   bunlight-static  vs  fetch-native  vs  cheerio  vs  jsdom
+ *   bxc-static  vs  fetch-native  vs  cheerio  vs  jsdom
  *
  * Puppeteer and playwright are excluded because spawning a full browser for
  * static pages is not the intended use case and skews the comparison unfairly.
@@ -16,7 +16,7 @@
 import type { RunResult, ScenarioResult } from "../types.ts";
 import { summarise, rssNow } from "../types.ts";
 import { startMockServer, stopMockServer } from "../mock-server.ts";
-import * as bunlightStatic from "../runners/bunlight-static.ts";
+import * as bxcStatic from "../runners/bxc-static.ts";
 import * as fetchNative from "../runners/fetch-native.ts";
 import * as cheerioRunner from "../runners/cheerio.ts";
 import * as jsdomRunner from "../runners/jsdom.ts";
@@ -34,7 +34,7 @@ async function sleep(ms: number): Promise<void> {
 }
 
 async function runScenarioForRunner(
-	runner: typeof bunlightStatic,
+	runner: typeof bxcStatic,
 	mockPort: number,
 ): Promise<ScenarioResult> {
 	const allResults: RunResult[] = [];
@@ -76,11 +76,11 @@ export async function run(): Promise<ScenarioResult[]> {
 	console.log(`[${SCENARIO_ID}] mock server on :${port}`);
 
 	const runners = [
-		bunlightStatic,
+		bxcStatic,
 		fetchNative,
 		cheerioRunner,
 		jsdomRunner,
-	] as (typeof bunlightStatic)[];
+	] as (typeof bxcStatic)[];
 
 	const results: ScenarioResult[] = [];
 

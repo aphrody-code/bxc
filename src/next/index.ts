@@ -15,16 +15,16 @@
  */
 
 /**
- * @module bunlight/next
+ * @module bxc/next
  *
  * Next.js test helpers ported from `@next/playwright`. Use directly with
- * a bunlight `Page` (CDP-backed) or with a Playwright `Page` via the
+ * a bxc `Page` (CDP-backed) or with a Playwright `Page` via the
  * `withPlaywrightPage()` adapter.
  *
- * @example bunlight (recommended)
+ * @example bxc (recommended)
  * ```ts
- * import { Browser } from "@aphrody-code/bunlight";
- * import { instant } from "@aphrody-code/bunlight/next";
+ * import { Browser } from "@aphrody-code/bxc";
+ * import { instant } from "@aphrody-code/bxc/next";
  *
  * const page = await Browser.newPage({ profile: "fast" });
  * await page.goto("http://localhost:3000");
@@ -36,7 +36,7 @@
  * @example Playwright bridge
  * ```ts
  * import { test, expect } from "@playwright/test";
- * import { instant, withPlaywrightPage } from "@aphrody-code/bunlight/next";
+ * import { instant, withPlaywrightPage } from "@aphrody-code/bxc/next";
  *
  * test("instant", async ({ page }) => {
  *   await page.goto("http://localhost:3000");

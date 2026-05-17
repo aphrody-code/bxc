@@ -17,7 +17,7 @@
 /**
  * ContextEngine: Inspired by OpenClaw architecture.
  * Manages short-term transcript DAG and performs recursive compaction
- * when token thresholds are reached, using Bunlight's native LLM extraction queue.
+ * when token thresholds are reached, using Bxc's native LLM extraction queue.
  */
 
 export interface ContextMessage {
@@ -80,7 +80,7 @@ export class ContextEngine {
 
 		const textToCompact = messagesToCompact.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n");
 
-		// Offload to Bunlight's LLM Extract Queue
+		// Offload to Bxc's LLM Extract Queue
 		try {
 			// Mocking the call to globalLlmQueue which talks to local models (e.g. gemma-4)
 			// const summary = await globalLlmQueue.enqueue(async () => extractSummary(textToCompact));

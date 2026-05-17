@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/internal/cdp-call
+ * @module bxc/internal/cdp-call
  *
  * Internal helper: send a single CDP command on a transport and await the
  * matching response.  Extracted from `src/api/browser.ts` (#cdpDirect) and

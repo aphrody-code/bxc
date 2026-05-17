@@ -1,10 +1,10 @@
-# Publishing `@bunmium/bunlight` to npm
+# Publishing `@bunmium/bxc` to npm
 
-End-to-end checklist for cutting a release. Bunlight ships as a Bun-native package; the standalone executable is distributed via Google Developers Releases (not npm) to keep tarball size reasonable.
+End-to-end checklist for cutting a release. Bxc ships as a Bun-native package; the standalone executable is distributed via Google Developers Releases (not npm) to keep tarball size reasonable.
 
 ## Pre-flight
 
-- [ ] All tests green: `bun test` in `~/bunmium/bunlight/`.
+- [ ] All tests green: `bun test` in `~/bunmium/bxc/`.
 - [ ] No staged secrets: `git status` clean of `cookies/private/`, `*.env`, `*.key`.
 - [ ] `package.json` `version` bumped (semver — alpha/beta/rc/stable).
 - [ ] `CHANGELOG.md` updated (or release notes drafted).
@@ -25,7 +25,7 @@ vendor/curl-impersonate/libcurl-impersonate.so.4           # symlink
 If absent, rebuild:
 
 ```bash
-cd ~/bunmium/bunlight
+cd ~/bunmium/bxc
 bun run build:cdylib                       # rebuilds liblightpanda_dom.so
 # curl-impersonate is a vendored binary; download via scripts/postinstall.ts logic
 ```
@@ -37,36 +37,36 @@ bun run build:exe
 ls -lh dist/standalone/
 ```
 
-Expected output: `bunlight-linux-x64` ~96 MB. Upload this artifact to the Google Developers Release after `npm publish` lands.
+Expected output: `bxc-linux-x64` ~96 MB. Upload this artifact to the Google Developers Release after `npm publish` lands.
 
 ## Pack and audit
 
 ```bash
-cd ~/bunmium/bunlight
-rm -f bunmium-bunlight-*.tgz
+cd ~/bunmium/bxc
+rm -f bunmium-bxc-*.tgz
 bun pm pack
 ```
 
 Expected:
 - Packed size under 15 MB.
 - Unpacked size under 30 MB.
-- Tarball includes `src/`, two runtime `.so` files, `bin/bunlight`, `README.md`, `LICENSE`, `scripts/postinstall.ts`.
+- Tarball includes `src/`, two runtime `.so` files, `bin/bxc`, `README.md`, `LICENSE`, `scripts/postinstall.ts`.
 - Tarball does NOT include `cookies/`, `forks/`, `test/`, `benchmarks/`, `vendor/camoufox/`, `vendor/wappalyzergo/`, `dist/`, `.gemini/`, or any `*.test.ts`.
 
 Inspect the contents:
 
 ```bash
-tar tzf bunmium-bunlight-0.1.0-alpha.0.tgz | sort
+tar tzf bunmium-bxc-0.1.0-alpha.0.tgz | sort
 ```
 
 ## Smoke-test in a clean project
 
 ```bash
-rm -rf /tmp/bunlight-install-test
-mkdir -p /tmp/bunlight-install-test && cd /tmp/bunlight-install-test
+rm -rf /tmp/bxc-install-test
+mkdir -p /tmp/bxc-install-test && cd /tmp/bxc-install-test
 bun init -y
-bun add file:$HOME/bunmium/bunlight/bunmium-bunlight-0.1.0-alpha.0.tgz
-bun -e 'import { Browser } from "@bunmium/bunlight"; console.log(typeof Browser)'
+bun add file:$HOME/bunmium/bxc/bunmium-bxc-0.1.0-alpha.0.tgz
+bun -e 'import { Browser } from "@bunmium/bxc"; console.log(typeof Browser)'
 ```
 
 Expected stdout: `object`.
@@ -74,7 +74,7 @@ Expected stdout: `object`.
 Optional CDP smoke-test:
 
 ```bash
-bunlight serve --cdp-port 19222 --profile static &
+bxc serve --cdp-port 19222 --profile static &
 sleep 2
 curl -s http://localhost:19222/json/version | jq .
 kill %1
@@ -94,7 +94,7 @@ npm login --registry=https://registry.npmjs.org/
 For the very first publish of the scope, the `--access public` flag is required (scoped packages default to private):
 
 ```bash
-cd ~/bunmium/bunlight
+cd ~/bunmium/bxc
 bun publish --access public --tag alpha
 ```
 
@@ -113,25 +113,25 @@ bun publish --tag latest
 ## Post-publish verification
 
 ```bash
-bun pm view @bunmium/bunlight versions
-bun pm view @bunmium/bunlight dist-tags
+bun pm view @bunmium/bxc versions
+bun pm view @bunmium/bxc dist-tags
 ```
 
 Then re-run the smoke-test from the public registry:
 
 ```bash
-rm -rf /tmp/bunlight-prod-test && mkdir -p /tmp/bunlight-prod-test
-cd /tmp/bunlight-prod-test && bun init -y
-bun add @bunmium/bunlight@alpha
-bun -e 'import { Browser } from "@bunmium/bunlight"; console.log(typeof Browser)'
+rm -rf /tmp/bxc-prod-test && mkdir -p /tmp/bxc-prod-test
+cd /tmp/bxc-prod-test && bun init -y
+bun add @bunmium/bxc@alpha
+bun -e 'import { Browser } from "@bunmium/bxc"; console.log(typeof Browser)'
 ```
 
 ## Google Developers Release (separate distribution for the standalone binary)
 
 ```bash
-cd ~/bunmium/bunlight
+cd ~/bunmium/bxc
 gh release create v0.1.0-alpha.0 \
-  dist/standalone/bunlight-linux-x64 \
+  dist/standalone/bxc-linux-x64 \
   --title "v0.1.0-alpha.0" \
   --notes-file RELEASE-NOTES.md \
   --prerelease
@@ -148,9 +148,9 @@ gh release view v0.1.0-alpha.0
 If a tarball ships secrets or broken artefacts, yank within 72 hours:
 
 ```bash
-bun pm unpublish @bunmium/bunlight@0.1.0-alpha.0
+bun pm unpublish @bunmium/bxc@0.1.0-alpha.0
 # Or deprecate (preferred for cosmetic/release-note errors):
-npm deprecate @bunmium/bunlight@0.1.0-alpha.0 "Use 0.1.0-alpha.1 — fixes X"
+npm deprecate @bunmium/bxc@0.1.0-alpha.0 "Use 0.1.0-alpha.1 — fixes X"
 ```
 
 ## Rollback checklist

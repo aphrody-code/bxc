@@ -16,7 +16,7 @@
  */
 
 /**
- * `bunlight har <action>` — HAR (HTTP Archive) recorder/replayer.
+ * `bxc har <action>` — HAR (HTTP Archive) recorder/replayer.
  *
  * Actions:
  *   record <url> <out.har>    record HTTP traffic during a navigation (fast profile)
@@ -29,15 +29,15 @@ import { HarReplayer } from "../recorder/HarReplayer.ts";
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight har — HAR recorder/replayer
+		`bxc har — HAR recorder/replayer
 
 Usage:
-  bunlight har record <url> <out.har>   record HTTP traffic to a HAR file
-  bunlight har replay <file.har>        inspect a HAR file (JSON summary on stdout)
+  bxc har record <url> <out.har>   record HTTP traffic to a HAR file
+  bxc har replay <file.har>        inspect a HAR file (JSON summary on stdout)
 
 Examples:
-  bunlight har record https://google.com /tmp/example.har
-  bunlight har replay /tmp/example.har
+  bxc har record https://google.com /tmp/example.har
+  bxc har replay /tmp/example.har
 
 Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
 `,
@@ -54,7 +54,7 @@ async function recordHar(url: string, out: string): Promise<void> {
 		recorder.start();
 		await page.goto(url, { timeoutMs: 25_000 });
 		await recorder.save(out);
-		Bun.stderr.write(`bunlight har: recorded to ${out}\n`);
+		Bun.stderr.write(`bxc har: recorded to ${out}\n`);
 	} finally {
 		try {
 			await page.close();
@@ -87,7 +87,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 				const url = argv[1];
 				const out = argv[2];
 				if (!url || !out) {
-					Bun.stderr.write("bunlight har record <url> <out.har>\n");
+					Bun.stderr.write("bxc har record <url> <out.har>\n");
 					process.exit(2);
 				}
 				await recordHar(url, out);
@@ -96,19 +96,19 @@ export async function main(argv: readonly string[]): Promise<void> {
 			case "replay": {
 				const file = argv[1];
 				if (!file) {
-					Bun.stderr.write("bunlight har replay <file.har>\n");
+					Bun.stderr.write("bxc har replay <file.har>\n");
 					process.exit(2);
 				}
 				await replayHar(file);
 				break;
 			}
 			default:
-				Bun.stderr.write(`bunlight har: unknown action '${action}'\n`);
+				Bun.stderr.write(`bxc har: unknown action '${action}'\n`);
 				printUsage();
 				process.exit(2);
 		}
 	} catch (err) {
-		Bun.stderr.write(`bunlight har: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bxc har: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	}
 }

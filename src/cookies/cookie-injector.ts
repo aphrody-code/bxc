@@ -15,9 +15,9 @@
  */
 
 /**
- * @module bunlight/cookies/cookie-injector
+ * @module bxc/cookies/cookie-injector
  *
- * Injects {@link Cookie} arrays into Bunlight's various transport layers.
+ * Injects {@link Cookie} arrays into Bxc's various transport layers.
  *
  * Two injection paths:
  *
@@ -59,7 +59,7 @@ import type { Cookie } from "./cookie-loader.ts";
  *   SocketPairTransport, …).
  * @param cookies   - Cookies to inject.
  * @param sessionId - Optional CDP session id (required for `flatten=true`
- *   sessions like the ones Bunlight's `Page` uses).
+ *   sessions like the ones Bxc's `Page` uses).
  */
 export async function injectCookies(
 	transport: ConnectionTransport,

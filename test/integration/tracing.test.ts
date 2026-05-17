@@ -19,7 +19,7 @@ import { Browser } from "../../src/api/browser.ts";
 import { unlink } from "node:fs/promises";
 
 test("TraceRecorder > captures actions, snapshots and network, and outputs a valid zstd compressed JSON", async () => {
-	const tracePath = `/tmp/bunlight-test-trace-${Date.now()}.trace.zst`;
+	const tracePath = `/tmp/bxc-test-trace-${Date.now()}.trace.zst`;
 	const context = await Browser.newContext();
 	const tracer = context.tracing();
 	

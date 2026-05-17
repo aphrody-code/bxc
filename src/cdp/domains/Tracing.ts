@@ -81,7 +81,7 @@ function buildSyntheticTrace(config: TracingConfig): Array<Record<string, unknow
 			ph: "M",
 			cat: "__metadata",
 			name: "process_name",
-			args: { name: "Bunlight StaticDomTransport" },
+			args: { name: "Bxc StaticDomTransport" },
 			ts: startTs,
 		},
 		// Metadata: thread name

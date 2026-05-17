@@ -22,9 +22,9 @@ jobs:
       - name: Typecheck (TSC)
         run: bun run typecheck
       - name: Lint Extension
-        run: cd packages/bunlight-extension && bun run lint
+        run: cd packages/bxc-extension && bun run lint
       - name: Build Extension (smoke compile)
-        run: cd packages/bunlight-extension && bun run build
+        run: cd packages/bxc-extension && bun run build
 
   test-linux:
     name: Test (Linux x64)
@@ -41,9 +41,9 @@ jobs:
       - name: Run Tests (Core)
         run: bun test
         env:
-          BUNLIGHT_RUST_BRIDGE_LIB: ${{ github.workspace }}/rust-bridge/target/release/libbunlight_rust_bridge.so
+          BXC_RUST_BRIDGE_LIB: ${{ github.workspace }}/rust-bridge/target/release/libbxc_rust_bridge.so
       - name: Run Tests (Extension)
-        run: cd packages/bunlight-extension && bun test
+        run: cd packages/bxc-extension && bun test
 
   test-windows:
     name: Test (Windows x64 MSVC)
@@ -66,6 +66,6 @@ jobs:
       - name: Run Tests (Core)
         run: bun test
         env:
-          BUNLIGHT_RUST_BRIDGE_LIB: ${{ github.workspace }}\rust-bridge\target\x86_64-pc-windows-msvc\release\bunlight_rust_bridge.dll
+          BXC_RUST_BRIDGE_LIB: ${{ github.workspace }}\rust-bridge\target\x86_64-pc-windows-msvc\release\bxc_rust_bridge.dll
       - name: Run Tests (Extension)
-        run: cd packages/bunlight-extension && bun test
+        run: cd packages/bxc-extension && bun test

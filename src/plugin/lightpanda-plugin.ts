@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/plugin/lightpanda-plugin
+ * @module bxc/plugin/lightpanda-plugin
  *
  * Bun plugin that exposes Lightpanda-rendered pages as importable modules.
  *
@@ -25,7 +25,7 @@
  *
  * @example Runtime usage (Bun.plugin)
  * ```ts
- * import { lightpandaPlugin } from "@aphrody-code/bunlight/plugin";
+ * import { lightpandaPlugin } from "@aphrody-code/bxc/plugin";
  * Bun.plugin(lightpandaPlugin());
  *
  * const html = (await import("lightpanda:https://google.com")).default;
@@ -34,7 +34,7 @@
  *
  * @example Build-time usage (Bun.build)
  * ```ts
- * import { lightpandaPlugin } from "@aphrody-code/bunlight/plugin";
+ * import { lightpandaPlugin } from "@aphrody-code/bxc/plugin";
  *
  * await Bun.build({
  *   entrypoints: ["./app.ts"],
@@ -60,7 +60,7 @@ import { Browser } from "../api/browser.ts";
 // ---------------------------------------------------------------------------
 
 export interface LightpandaPluginOptions {
-	/** Lightpanda binary path override (defaults to bunlight resolver). */
+	/** Lightpanda binary path override (defaults to bxc resolver). */
 	binaryPath?: string;
 	/** Navigation timeout per request (ms). Default 25_000. */
 	navigationTimeoutMs?: number;
@@ -267,7 +267,7 @@ export function registerLightpandaPlugin(options: LightpandaPluginOptions = {}):
  *
  * @example
  * ```ts
- * import { renderPage } from "@aphrody-code/bunlight/plugin";
+ * import { renderPage } from "@aphrody-code/bxc/plugin";
  * const html = await renderPage("https://google.com");
  * ```
  */

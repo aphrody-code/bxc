@@ -1,4 +1,4 @@
-// Bun-native, bunlight-integrated structured extraction.
+// Bun-native, bxc-integrated structured extraction.
 //
 // Default path: one LLM call → cached CSS selectors → native Zig DOM extraction
 // for every subsequent page on the same (hostname, schema). Sub-millisecond

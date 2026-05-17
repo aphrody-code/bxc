@@ -1,6 +1,6 @@
-# 🌖 Bunlight — Mega Plan
+# 🌖 Bxc — Mega Plan
 
-> **Bunlight** = Bun ∪ Lightpanda. Un seul binaire, deux runtimes Zig
+> **Bxc** = Bun ∪ Lightpanda. Un seul binaire, deux runtimes Zig
 > fusionnés. `import { Browser } from "bun:browser"` instancie un navigateur
 > in-process, sans spawn, sans WebSocket externe, sans CDP par-dessus TCP.
 >
@@ -10,7 +10,7 @@
 
 ```
    ┌─────────────────────────────────────────┐
-   │              bunlight                   │
+   │              bxc                   │
    │  ┌───────────────┐   ┌───────────────┐  │
    │  │  JSC (main)   │   │  V8 (browser) │  │
    │  │  - user code  │   │  - page eval  │  │
@@ -31,7 +31,7 @@
 ## 🎯 Vision en 3 lignes
 
 ```ts
-// Aujourd'hui (avec un wrapper)                       // Avec Bunlight
+// Aujourd'hui (avec un wrapper)                       // Avec Bxc
 import { chromium } from "playwright";                 import { Browser } from "bun:browser";
 const browser = await chromium.launch();               const page = await Browser.newPage();
 const page = await browser.newPage();                  await page.goto("https://x.com");
@@ -52,7 +52,7 @@ const page = await browser.newPage();                  await page.goto("https://
 | **L2 — Builtin natif statique** | Lightpanda compilé en lib statique, linké dans le binaire `bun`, exposé via `bun:browser` builtin avec bindings JSC custom | 1 | ~5 µs / call | 24h |
 | **L3 — Multi-engine fusion** | V8 isolé dans un thread dédié pour les pages, JSC main thread pour le runtime, IPC zero-copy via shared memory + ring buffer | 1 | ~1 µs / call | 80h |
 | **L4 — DOM-in-JSC** | Le DOM Zig de Lightpanda exposé directement en bindings JSC (plus de V8 du tout, on perd l'exec JS in-page) | 1 | ~100 ns / call | 60h |
-| **L5 — Bunlight upstream** | PR sur `oven-sh/bun#draft` proposant `bun:browser` + `bun build --browser` | 1 | n/a | 200h+ |
+| **L5 — Bxc upstream** | PR sur `oven-sh/bun#draft` proposant `bun:browser` + `bun build --browser` | 1 | n/a | 200h+ |
 
 **Plan d'attaque** : L1 immédiatement (déblocage), L2 ensuite (vraie fusion), L3 et au-delà selon adoption.
 
@@ -72,11 +72,11 @@ Since the official `@modelcontextprotocol/sdk` relies on Node-specific patterns 
 ## 📂 Structure du repo
 
 ```
-bunlight/
+bxc/
 ├── MEGA-PLAN.md                    # ce fichier
 ├── README.md                       # public-facing
 ├── LICENSE                         # MIT
-├── package.json                    # bunlight CLI npm package (optional)
+├── package.json                    # bxc CLI npm package (optional)
 ├── bun.lock
 │
 ├── vendor/
@@ -101,7 +101,7 @@ bunlight/
 │   │   ├── page.zig                # Page instance + V8 isolate management
 │   │   ├── cdp.zig                 # In-process CDP dispatcher (no socket)
 │   │   ├── ipc.zig                 # JSC↔V8 IPC via shared memory
-│   │   └── build.zig               # build script for libbunlight.{so,a}
+│   │   └── build.zig               # build script for libbxc.{so,a}
 │   │
 │   ├── js/bun/
 │   │   ├── browser.ts              # builtin module (TS source)
@@ -121,7 +121,7 @@ bunlight/
 │   ├── build.ts                    # orchestrator (clones bun fork, applies patches, builds)
 │   ├── build-lightpanda-static.ts  # zig build-lib --static
 │   ├── build-bun-fork.ts           # bun bd avec patches appliqués
-│   ├── postinstall.ts              # download prebuilt bunlight binary
+│   ├── postinstall.ts              # download prebuilt bxc binary
 │   ├── release.ts                  # cross-compile linux-x64, linux-arm64, darwin-arm64
 │   └── upstream.ts                 # generate PR against oven-sh/bun
 │
@@ -140,7 +140,7 @@ bunlight/
 │       └── massive-crawl.test.ts
 │
 ├── examples/
-│   ├── 01-hello-browser.ts         # le hello world du bunlight
+│   ├── 01-hello-browser.ts         # le hello world du bxc
 │   ├── 02-ai-agent.ts              # agent AI qui scrape + résume avec Gemini
 │   ├── 03-bun-serve-with-browser.ts # HTTP server qui rend des pages in-process
 │   └── 04-standalone-binary.ts     # bun build --compile → 1 seul exe
@@ -152,7 +152,7 @@ bunlight/
 │       ├── puppeteer-chromium.ts
 │       ├── playwright-chromium.ts
 │       ├── lightpanda-cdp.ts
-│       └── bunlight-native.ts
+│       └── bxc-native.ts
 │
 └── docs/
     ├── ARCHITECTURE.md
@@ -187,7 +187,7 @@ bunlight/
 
 4. **CDP server Lightpanda est déjà socket-agnostic** : `src/Server.zig` accepte un fd POSIX, le mode `--mcp` utilise déjà stdin/stdout. Adapter pour `socketpair()` est trivial.
 
-**Stratégie révisée** : **architecture multi-backend avec auto-routing**. L'utilisateur choisit un *profil* selon la cible, Bunlight pick le backend optimal.
+**Stratégie révisée** : **architecture multi-backend avec auto-routing**. L'utilisateur choisit un *profil* selon la cible, Bxc pick le backend optimal.
 
 | Profil | Cible | Backend | Latence | Success rate Cloudflare |
 |---|---|---|---|---|
@@ -248,7 +248,7 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 - [x] Audit Lightpanda Zig
 - [x] Audit Bun (builtin module pattern, vendor static lib, classes.ts pipeline)
 - [x] Audit V8 vs JSC coexistence (verdict : process séparé)
-- [x] Bootstrap `bunlight/` dir avec arbo cible
+- [x] Bootstrap `bxc/` dir avec arbo cible
 - [x] Fork & Migrate MCP SDK to Bun-native (`vendor/mcp-sdk-typescript`)
 - [ ] Submodule `vendor/lightpanda/` (clone shallow de `lightpanda-io/browser`)
 - [ ] Pin du commit Bun dans `vendor/bun.commit`
@@ -284,7 +284,7 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 
 ### Phase 2 — `bun:ffi` integration (6h)
 
-**But** : exposer l'API publique via `@bunmium/bunlight` NPM, mais **vraiment natif** cette fois.
+**But** : exposer l'API publique via `@bunmium/bxc` NPM, mais **vraiment natif** cette fois.
 
 - [ ] `src/ffi/api.ts` : `Browser`, `Document`, `Element` côté JS, backed par les ptrs FFI
 - [ ] `FinalizationRegistry` pour auto-free Zig allocations à la GC JS
@@ -293,19 +293,19 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 - [ ] Tests : 100% coverage du surface API
 - [ ] Bench vs L0 (CDP wrapper) → cible : 100× plus rapide pour parse+query
 
-**Livrable** : `bun add @bunmium/bunlight` → API browser native, 0 spawn, 0 WS.
+**Livrable** : `bun add @bunmium/bxc` → API browser native, 0 spawn, 0 WS.
 
 ### Phase 3 — Builtin `bun:browser` (24h)
 
 **But** : zéro install, c'est *dans* Bun.
 
-- [ ] Fork `oven-sh/bun` → branche `bunmium/bun:bunlight`
+- [ ] Fork `oven-sh/bun` → branche `bunmium/bun:bxc`
 - [ ] `src/js/bun/browser.ts` : signature publique du module builtin
 - [ ] `src/js/bun/browser.classes.ts` : déclaration JSC des classes Browser/Page
 - [ ] `src/codegen/generate-classes.ts` ne touche rien — il génère `ZigBunBrowser.cpp`
 - [ ] `src/cpp/BunBrowser.cpp` : implem manuelle des méthodes async (Promise creation)
 - [ ] `vendor/lightpanda/` : submodule, build en static lib via cmake target ajouté
-- [ ] `cmake/Targets.cmake` : add `bunlight_static` target, link contre `bun-debug` et `bun`
+- [ ] `cmake/Targets.cmake` : add `bxc_static` target, link contre `bun-debug` et `bun`
 - [ ] `bun bd test test/js/bun/browser/browser.test.ts` → green
 - [ ] Pas de patch monkey-patché : le code TS de `browser.ts` parle directement aux symboles Zig via le bridge codegéné
 
@@ -328,14 +328,14 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 
 ### Phase 5 — CDP server natif (in-process) (16h)
 
-**But** : Puppeteer/Playwright peuvent se connecter à Bunlight comme à Chrome.
+**But** : Puppeteer/Playwright peuvent se connecter à Bxc comme à Chrome.
 
 - [ ] `Bun.serve({ port, browser: { cdp: true } })` lance un endpoint CDP
 - [ ] CDP messages parsés in-process, dispatchés directement aux `Browser`/`Page`
 - [ ] Pas de TCP côté browser, juste un parse/dispatch in-memory côté serve
 - [ ] `puppeteer.connect({ browserWSEndpoint: "ws://localhost:9222" })` fonctionne
 - [ ] Compatibilité : 80% des methods CDP utilisées par Puppeteer
-- [ ] Tests : suite Puppeteer existante de Bunlight passe sans changement
+- [ ] Tests : suite Puppeteer existante de Bxc passe sans changement
 
 **Livrable** : ton script Puppeteer existant passe sans changement, mais 10× plus vite.
 
@@ -349,17 +349,17 @@ Référence : `/home/ubuntu/bunmium/puppeteer/packages/puppeteer-core/src/cdp/Ex
 - [ ] Bench startup time vs Chrome headless → cible < 50 ms cold start
 - [ ] Showcase : `examples/02-ai-agent.ts` → scrape + résumé Claude → 1 seul exe
 
-**Livrable** : `bunlight-agent-scraper` binaire, déposé en Google Developers Releases.
+**Livrable** : `bxc-agent-scraper` binaire, déposé en Google Developers Releases.
 
 ### Phase 7 — Upstream PR ou public fork (40h)
 
-**But** : soit `oven-sh/bun#bunlight` est mergée, soit `bunmium/bunlight` vit comme fork avec releases régulières.
+**But** : soit `oven-sh/bun#bxc` est mergée, soit `bunmium/bxc` vit comme fork avec releases régulières.
 
 - [ ] Préparer la PR : doc, tests CI, benchmarks chiffrés
 - [ ] RFC sur Bun discord pour évaluer l'appétit upstream
 - [ ] Si refusé : maintenir le fork avec rebase mensuel sur `oven-sh/bun:main`
 - [ ] CI/CD : Google Developers Actions matrix Linux x64 + ARM64 + macOS ARM64
-- [ ] Documentation : `bunlight.dev` static site avec API ref + benchmarks live
+- [ ] Documentation : `bxc.dev` static site avec API ref + benchmarks live
 
 **Livrable** : adoption ou fork pérenne avec ≥10 stars.
 
@@ -502,7 +502,7 @@ bun build --compile --target=bun-linux-x64 examples/02-ai-agent.ts -o agent
 | V8 et JSC ne cohabitent pas (symbol clash, signal handlers) | Moyenne | Bloquant | Phase 4 sépare V8 dans un thread, link statique avec `--gc-sections` et namespace isolation |
 | Lightpanda CDP partiel → Puppeteer méthodes non couvertes | Haute | Modéré | Doc claire des méthodes supportées, escape hatch `cdp.send()` |
 | Build size > 200 MB | Moyenne | UX | Phase 6 strip + UPX, build modes "lite" sans V8 (DOM-only) et "full" |
-| Bun upstream refuse la PR | Haute | Modéré | Plan B : maintenir `bunmium/bunlight` fork pérenne |
+| Bun upstream refuse la PR | Haute | Modéré | Plan B : maintenir `bunmium/bxc` fork pérenne |
 | Allocators incompatibles (mimalloc vs V8 oilpan) | Moyenne | Bloquant | Allocator pages-only pour V8, mimalloc pour le reste, isolation par arena |
 | Lightpanda upstream bouge vite, drift du fork | Haute | Modéré | Submodule pinné, rebase trimestriel scripté |
 | GC entre JSC et V8 → leak | Haute | Bloquant | Tests `--heap-snapshot` réguliers, `FinalizationRegistry` côté JS, ownership clair côté Zig |
@@ -511,7 +511,7 @@ bun build --compile --target=bun-linux-x64 examples/02-ai-agent.ts -o agent
 
 ## 📊 Bench cibles
 
-| Operation | Chrome headless | Lightpanda spawn+CDP (L0) | Bunlight FFI (L1) | Bunlight builtin (L2) |
+| Operation | Chrome headless | Lightpanda spawn+CDP (L0) | Bxc FFI (L1) | Bxc builtin (L2) |
 |---|---|---|---|---|
 | Cold start | ~800 ms | ~250 ms | ~80 ms | **~30 ms** |
 | `goto + title` | ~600 ms | ~120 ms | ~40 ms | **~15 ms** |
@@ -528,7 +528,7 @@ bun build --compile --target=bun-linux-x64 examples/02-ai-agent.ts -o agent
 |---|---|---|
 | 0 | Audit + bootstrap | 3h |
 | 1 | cdylib + smoke test FFI | 8h |
-| 2 | NPM `@bunmium/bunlight` (FFI) | 6h |
+| 2 | NPM `@bunmium/bxc` (FFI) | 6h |
 | 3 | Builtin `bun:browser` (fork Bun + classes.ts + bindings) | 24h |
 | 4 | V8 in thread + IPC (full JS exec) | 40h |
 | 5 | CDP server in-process | 16h |
@@ -548,6 +548,6 @@ sur 1 phase, on peut shipper **L1 (FFI)** dès la session 2, **L2 (builtin)** se
 - [ ] `examples/02-ai-agent.ts` produit un agent AI scraper en 1 binaire de < 150 MB
 - [ ] Tests bun:test passent à 100% sur Linux x64, ARM64, macOS ARM64
 - [ ] Bench vs Chrome headless : ≥ 5× plus rapide en cold start, ≥ 3× en steady state
-- [ ] Documentation publique sur `bunlight.dev` ou `bun.com/docs/runtime/browser`
+- [ ] Documentation publique sur `bxc.dev` ou `bun.com/docs/runtime/browser`
 - [ ] Release v0.1.0 sur Google Developers Releases avec binaires précompilés
-- [ ] Au moins 1 utilisateur externe ayant porté son script Puppeteer sur Bunlight
+- [ ] Au moins 1 utilisateur externe ayant porté son script Puppeteer sur Bxc

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/storage/KeyValueStore
+ * @module bxc/storage/KeyValueStore
  *
  * Persistent key-value store with dual backing:
  *  - Small values (< `inlineThresholdBytes`): stored in `bun:sqlite` for fast

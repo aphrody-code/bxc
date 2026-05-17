@@ -80,8 +80,8 @@ async function writeHarFile(entries: HarEntry[]): Promise<string> {
 	const harFile: HarFile = {
 		log: {
 			version: "1.2",
-			creator: { name: "Bunlight", version: "0.1.0" },
-			browser: { name: "Bunlight", version: "0.1.0" },
+			creator: { name: "Bxc", version: "0.1.0" },
+			browser: { name: "Bxc", version: "0.1.0" },
 			pages: [
 				{
 					startedDateTime: new Date().toISOString(),
@@ -93,7 +93,7 @@ async function writeHarFile(entries: HarEntry[]): Promise<string> {
 			entries,
 		},
 	};
-	const path = join(tmpdir(), `bunlight-har-roundtrip-${Date.now()}.har`);
+	const path = join(tmpdir(), `bxc-har-roundtrip-${Date.now()}.har`);
 	await Bun.write(path, JSON.stringify(harFile, null, 2));
 	return path;
 }
@@ -237,7 +237,7 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 		const raw = await Bun.file(harPath).text();
 		const parsed = JSON.parse(raw) as HarFile;
 		expect(parsed.log.version).toBe("1.2");
-		expect(parsed.log.creator.name).toBe("Bunlight");
+		expect(parsed.log.creator.name).toBe("Bxc");
 		expect(parsed.log.entries).toHaveLength(1);
 	});
 

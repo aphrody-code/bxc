@@ -49,7 +49,7 @@ describe("Google Ecosystem Atlas - Smart Routing Verification", () => {
 
 	// Test Search with HL/GL (Smart search)
 	it("should perform a stealth search with custom hl/gl", async () => {
-		const results = await google.search("Bunlight engine", { hl: "fr", gl: "FR" });
+		const results = await google.search("Bxc engine", { hl: "fr", gl: "FR" });
 		if (results.length === 0) {
 			console.warn("[google-atlas-test] IP is blocked or CAPTCHA hit. Skipping assertion.");
 			return;

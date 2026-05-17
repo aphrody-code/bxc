@@ -16,7 +16,7 @@
  */
 
 /**
- * `bunlight cookies <action>` — cookie jar tools.
+ * `bxc cookies <action>` — cookie jar tools.
  *
  * Actions:
  *   load <jar.json>    parse + summarize a cookie jar
@@ -28,10 +28,10 @@ import { filterExpired, loadCookieJar, maskCookiesForLog } from "../cookies/cook
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight cookies — cookie jar tools
+		`bxc cookies — cookie jar tools
 
 Usage:
-  bunlight cookies load <jar.json>
+  bxc cookies load <jar.json>
 
 Output (stdout): JSON { total, fresh, masked[] }
 
@@ -53,7 +53,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		case "load": {
 			const file = argv[1];
 			if (!file) {
-				Bun.stderr.write("bunlight cookies load <jar.json> — file argument missing\n");
+				Bun.stderr.write("bxc cookies load <jar.json> — file argument missing\n");
 				process.exit(2);
 			}
 			try {
@@ -65,14 +65,14 @@ export async function main(argv: readonly string[]): Promise<void> {
 				);
 			} catch (err) {
 				Bun.stderr.write(
-					`bunlight cookies: ${err instanceof Error ? err.message : String(err)}\n`,
+					`bxc cookies: ${err instanceof Error ? err.message : String(err)}\n`,
 				);
 				process.exit(65);
 			}
 			break;
 		}
 		default:
-			Bun.stderr.write(`bunlight cookies: unknown action '${action}'\n`);
+			Bun.stderr.write(`bxc cookies: unknown action '${action}'\n`);
 			printUsage();
 			process.exit(2);
 	}

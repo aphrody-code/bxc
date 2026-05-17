@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/scrapers/challonge
+ * @module bxc/scrapers/challonge
  *
  * Typed extractor for the Challonge tournament HTML page (e.g.
  * `https://challonge.com/<lang>/<slug>`). Reverse-engineered from a
@@ -47,7 +47,7 @@
  * Example :
  *
  * ```ts
- * import { extractChallongeTournament } from "bunlight/scrapers/challonge";
+ * import { extractChallongeTournament } from "bxc/scrapers/challonge";
  *
  * const html = await Bun.file("/tmp/mirror-bts5/challonge.com/fr/B_TS5").text();
  * const snap = extractChallongeTournament(html);

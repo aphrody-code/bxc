@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Bunlight Updater — Simple wrapper around the installer
+# Bxc Updater — Simple wrapper around the installer
 # Usage: ./update.sh
 
 set -e
 
-echo "🔄 Checking for Bunlight updates..."
+echo "🔄 Checking for Bxc updates..."
 
 if [ -f "./install.sh" ]; then
     bash ./install.sh
 else
-    curl -fsSL https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
 fi
 

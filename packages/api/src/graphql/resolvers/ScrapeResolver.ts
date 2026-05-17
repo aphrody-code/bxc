@@ -1,9 +1,9 @@
 import "reflect-metadata";
 import { Resolver, Query, Mutation, Arg, ObjectType, Field, ID, Int } from "type-graphql";
 import { Browser } from "../../../../../src/api/browser.ts";
-import { BunlightDB } from "../../db/BunlightDB.ts";
+import { BxcDB } from "../../db/BxcDB.ts";
 
-const db = new BunlightDB();
+const db = new BxcDB();
 
 @ObjectType()
 export class Scrape {
@@ -53,7 +53,7 @@ export class ScrapeResolver {
 
     @Query(() => String)
     health(): string {
-        return "⚡️ Bunlight API (Modular Type-GraphQL) is healthy";
+        return "⚡️ Bxc API (Modular Type-GraphQL) is healthy";
     }
 
     @Mutation(() => Scrape)

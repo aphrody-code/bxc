@@ -255,7 +255,7 @@ async fn main() -> anyhow::Result<()> {
             reject_stealth_with_socks5(proxy.as_deref(), stealth)?;
             
             if let Some(ref path) = chrome_path {
-                std::env::set_var("BUNLIGHT_CHROME_BIN", path);
+                std::env::set_var("BXC_CHROME_BIN", path);
             }
 
             // Print the WS URL to stdout for WebSocketTransport.ts to parse
@@ -302,7 +302,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn resolve_chrome_path() -> anyhow::Result<std::path::PathBuf> {
-    if let Ok(p) = std::env::var("BUNLIGHT_CHROME_BIN") {
+    if let Ok(p) = std::env::var("BXC_CHROME_BIN") {
         return Ok(std::path::PathBuf::from(p));
     }
     if let Ok(p) = std::env::var("CHROME_PATH") {
@@ -338,7 +338,7 @@ fn resolve_chrome_path() -> anyhow::Result<std::path::PathBuf> {
         }
     }
 
-    anyhow::bail!("Chromium binary (lightpanda) not found. Set BUNLIGHT_CHROME_BIN or run 'bunlight chrome fetch'.")
+    anyhow::bail!("Chromium binary (lightpanda) not found. Set BXC_CHROME_BIN or run 'bxc chrome fetch'.")
 }
 
 async fn run_multi_worker_serve(

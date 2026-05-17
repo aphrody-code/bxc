@@ -18,11 +18,11 @@ import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 
-export class BunlightDB {
+export class BxcDB {
     private db: Database;
 
     constructor(path?: string) {
-        const dbPath = path ?? Bun.env.BUNLIGHT_DB_PATH ?? resolve(process.cwd(), "data/bunlight.sqlite");
+        const dbPath = path ?? Bun.env.BXC_DB_PATH ?? resolve(process.cwd(), "data/bxc.sqlite");
 
         // Ensure directory exists
         const dir = resolve(dbPath, "..");

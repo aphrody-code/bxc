@@ -234,7 +234,7 @@ describe("Network domain handler", () => {
 
 	test("Network.setExtraHTTPHeaders returns empty object", async () => {
 		const result = await cdpCall(transport, "Network.setExtraHTTPHeaders", {
-			headers: { "X-Custom": "bunlight-test", Authorization: "Bearer tok" },
+			headers: { "X-Custom": "bxc-test", Authorization: "Bearer tok" },
 		});
 		expect(result).toEqual({});
 	});

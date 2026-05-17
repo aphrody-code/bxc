@@ -63,9 +63,9 @@ Le format le plus riche, embarqué dans `<script>`:
 </script>
 ```
 
-C'est ce que Google et Bing préfèrent. Bunlight peut le parser pour des `description`, `headline`, `datePublished`, `breadcrumb` plus précis que ce que les `<meta>` exposent. Pour l'instant le crawler extrait seulement `<title>` et `<meta name|property=description>`.
+C'est ce que Google et Bing préfèrent. Bxc peut le parser pour des `description`, `headline`, `datePublished`, `breadcrumb` plus précis que ce que les `<meta>` exposent. Pour l'instant le crawler extrait seulement `<title>` et `<meta name|property=description>`.
 
-## 5. Cascade de fallback côté bunlight
+## 5. Cascade de fallback côté bxc
 
 Pour le champ `description` du frontmatter:
 
@@ -103,7 +103,7 @@ Valeurs courantes:
 
 L'équivalent en HTTP header: `X-Robots-Tag: noindex, nofollow`.
 
-> Statut côté bunlight: à respecter pour les crawls externes (`--respect-robots`), peut être ignoré pour la doc qu'on possède.
+> Statut côté bxc: à respecter pour les crawls externes (`--respect-robots`), peut être ignoré pour la doc qu'on possède.
 
 ## 8. `hreflang` — pages multilingues
 
@@ -113,7 +113,7 @@ L'équivalent en HTTP header: `X-Robots-Tag: noindex, nofollow`.
 <link rel="alternate" hreflang="x-default" href="https://example.com/foo">
 ```
 
-À utiliser pour ne pas crawler 5 fois la même page traduite. Bunlight peut filtrer via `--include="/en/**"` côté CLI.
+À utiliser pour ne pas crawler 5 fois la même page traduite. Bxc peut filtrer via `--include="/en/**"` côté CLI.
 
 ## 9. Compliance checklist côté `scripts/url-to-docs.ts`
 

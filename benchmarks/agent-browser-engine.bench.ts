@@ -2,16 +2,16 @@
  * agent-browser engine comparison benchmark
  *
  * Measures cold-start time, per-command latency (p50/p95), and peak RSS for
- * three engines: chrome, lightpanda, and bunlight.
+ * three engines: chrome, lightpanda, and bxc.
  *
  * Usage:
  *   bun benchmarks/agent-browser-engine.bench.ts
  *   bun benchmarks/agent-browser-engine.bench.ts --iterations 10
- *   bun benchmarks/agent-browser-engine.bench.ts --engines chrome,bunlight
+ *   bun benchmarks/agent-browser-engine.bench.ts --engines chrome,bxc
  *   bun benchmarks/agent-browser-engine.bench.ts --output-only
  *
  * Environment variables:
- *   BUNLIGHT_PATH    Path to bunlight serve script (default: src/cli/serve.ts relative to this file)
+ *   BXC_PATH    Path to bxc serve script (default: src/cli/serve.ts relative to this file)
  *   AGENT_BROWSER    Path to agent-browser binary (default: auto-detect)
  *   BENCH_ITERATIONS Number of iterations per engine per scenario (default: 20)
  *   CHROME_ARGS      Extra args for Chrome (default: "--no-sandbox" in container env)
@@ -19,7 +19,7 @@
  * Skip conditions (engine unavailable → logged + skipped, no failure):
  *   - chrome    : binary not found or CHROME_ARGS sandbox error
  *   - lightpanda: binary not found or lightpanda serve subcommand unsupported
- *   - bunlight  : serve.ts not found or bun not available
+ *   - bxc  : serve.ts not found or bun not available
  */
 
 import { percentile } from "./types.ts";
@@ -41,7 +41,7 @@ function argFlag(flag: string): boolean {
 }
 
 const ITERATIONS = Number(argValue("--iterations", process.env.BENCH_ITERATIONS ?? "20"));
-const ENGINES_ARG = argValue("--engines", process.env.BENCH_ENGINES ?? "chrome,lightpanda,bunlight")
+const ENGINES_ARG = argValue("--engines", process.env.BENCH_ENGINES ?? "chrome,lightpanda,bxc")
 	.split(",")
 	.map((e) => e.trim());
 
@@ -49,15 +49,15 @@ const ENGINES_ARG = argValue("--engines", process.env.BENCH_ENGINES ?? "chrome,l
 // Paths
 // ---------------------------------------------------------------------------
 
-// import.meta.dir = /abs/path/to/bunlight/benchmarks
+// import.meta.dir = /abs/path/to/bxc/benchmarks
 const BENCH_DIR = import.meta.dir;
-// One level up: /abs/path/to/bunlight
-const BUNLIGHT_ROOT = `${BENCH_DIR}/..`;
+// One level up: /abs/path/to/bxc
+const BXC_ROOT = `${BENCH_DIR}/..`;
 // Two levels up: /abs/path/to/bunmium; then into agent-browser
 const AGENT_BROWSER_BIN =
 	process.env.AGENT_BROWSER ?? `${BENCH_DIR}/../../agent-browser/cli/target/release/agent-browser`;
 
-const BUNLIGHT_PATH = process.env.BUNLIGHT_PATH ?? `${BUNLIGHT_ROOT}/src/cli/serve.ts`;
+const BXC_PATH = process.env.BXC_PATH ?? `${BXC_ROOT}/src/cli/serve.ts`;
 
 // ---------------------------------------------------------------------------
 // Engine probe: check availability before running
@@ -155,26 +155,26 @@ async function probeLightpanda(): Promise<EngineStatus> {
 	return { engine: "lightpanda", available: true, skipReason: "" };
 }
 
-async function probeBunlight(): Promise<EngineStatus> {
+async function probeBxc(): Promise<EngineStatus> {
 	if (!(await Bun.file(AGENT_BROWSER_BIN).exists())) {
 		return {
-			engine: "bunlight",
+			engine: "bxc",
 			available: false,
 			skipReason: `agent-browser binary not found at ${AGENT_BROWSER_BIN}`,
 		};
 	}
-	if (!(await Bun.file(BUNLIGHT_PATH).exists())) {
+	if (!(await Bun.file(BXC_PATH).exists())) {
 		return {
-			engine: "bunlight",
+			engine: "bxc",
 			available: false,
-			skipReason: `BUNLIGHT_PATH not found: ${BUNLIGHT_PATH}`,
+			skipReason: `BXC_PATH not found: ${BXC_PATH}`,
 		};
 	}
 
-	const proc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", "bunlight", "open", "about:blank"], {
+	const proc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", "bxc", "open", "about:blank"], {
 		stdout: "pipe",
 		stderr: "pipe",
-		env: { ...process.env, BUNLIGHT_PATH },
+		env: { ...process.env, BXC_PATH },
 	});
 
 	const timer = setTimeout(() => proc.kill(), 15_000);
@@ -185,14 +185,14 @@ async function probeBunlight(): Promise<EngineStatus> {
 
 	if (exitCode !== 0 && stderr.includes("exited before CDP became ready")) {
 		return {
-			engine: "bunlight",
+			engine: "bxc",
 			available: false,
-			skipReason: `Bunlight failed to start: ${stderr.slice(0, 200)}`,
+			skipReason: `Bxc failed to start: ${stderr.slice(0, 200)}`,
 		};
 	}
 
-	await closeEngine("bunlight").catch(() => {});
-	return { engine: "bunlight", available: true, skipReason: "" };
+	await closeEngine("bxc").catch(() => {});
+	return { engine: "bxc", available: true, skipReason: "" };
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +200,7 @@ async function probeBunlight(): Promise<EngineStatus> {
 // ---------------------------------------------------------------------------
 
 async function closeEngine(engine: string): Promise<void> {
-	const env = engine === "bunlight" ? { ...process.env, BUNLIGHT_PATH } : { ...process.env };
+	const env = engine === "bxc" ? { ...process.env, BXC_PATH } : { ...process.env };
 	const proc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", engine, "close", "--all"], {
 		stdout: "pipe",
 		stderr: "pipe",
@@ -287,7 +287,7 @@ async function runIteration(
 	scenario: Scenario,
 	iteration: number,
 ): Promise<ScenarioSample> {
-	const env = engine === "bunlight" ? { ...process.env, BUNLIGHT_PATH } : { ...process.env };
+	const env = engine === "bxc" ? { ...process.env, BXC_PATH } : { ...process.env };
 
 	const chromeExtraArgs = engine === "chrome" ? ["--args", "--no-sandbox"] : [];
 
@@ -397,7 +397,7 @@ function generateMarkdown(
 
 	lines.push(`# Engine Comparison Benchmark — ${date}`);
 	lines.push("");
-	lines.push("Compares `chrome`, `lightpanda`, and `bunlight` engines via the");
+	lines.push("Compares `chrome`, `lightpanda`, and `bxc` engines via the");
 	lines.push("`agent-browser` CLI for cold-start time, per-command latency, and peak RSS.");
 	lines.push("");
 
@@ -410,7 +410,7 @@ function generateMarkdown(
 	lines.push(`| Bun version | ${Bun.version} |`);
 	lines.push(`| Iterations | ${ITERATIONS} per engine per scenario |`);
 	lines.push(`| agent-browser | ${AGENT_BROWSER_BIN} |`);
-	lines.push(`| bunlight serve | ${BUNLIGHT_PATH} |`);
+	lines.push(`| bxc serve | ${BXC_PATH} |`);
 	lines.push("");
 
 	// Engine availability
@@ -564,27 +564,27 @@ function generateMarkdown(
 		lines.push("");
 	}
 
-	// Bunlight vs Chrome comparison note
-	const bunlightStatus = engineStatuses.find((e) => e.engine === "bunlight");
+	// Bxc vs Chrome comparison note
+	const bxcStatus = engineStatuses.find((e) => e.engine === "bxc");
 	const chromeStatus = engineStatuses.find((e) => e.engine === "chrome");
-	if (bunlightStatus?.available && chromeStatus?.available) {
-		lines.push("## Bunlight vs Chrome Analysis");
+	if (bxcStatus?.available && chromeStatus?.available) {
+		lines.push("## Bxc vs Chrome Analysis");
 		lines.push("");
 		for (const scenario of SCENARIOS) {
-			const bunlightSamples = allSamples.filter(
-				(s) => s.engine === "bunlight" && s.scenario === scenario.name && s.success,
+			const bxcSamples = allSamples.filter(
+				(s) => s.engine === "bxc" && s.scenario === scenario.name && s.success,
 			);
 			const chromeSamples = allSamples.filter(
 				(s) => s.engine === "chrome" && s.scenario === scenario.name && s.success,
 			);
-			if (bunlightSamples.length === 0 || chromeSamples.length === 0) continue;
-			const bunSt = statsFromSamples(bunlightSamples.map((s) => s.coldStartMs));
+			if (bxcSamples.length === 0 || chromeSamples.length === 0) continue;
+			const bunSt = statsFromSamples(bxcSamples.map((s) => s.coldStartMs));
 			const chrSt = statsFromSamples(chromeSamples.map((s) => s.coldStartMs));
 			const ratio = chrSt.p50 > 0 ? ((chrSt.p50 / bunSt.p50) * 100).toFixed(0) : "n/a";
 			const diff = chrSt.p50 - bunSt.p50;
 			lines.push(
-				`**${scenario.name}**: bunlight p50=${bunSt.p50}ms, chrome p50=${chrSt.p50}ms — ` +
-					`bunlight is ${diff >= 0 ? "faster" : "slower"} by ${Math.abs(diff)}ms (${ratio}% of Chrome time).`,
+				`**${scenario.name}**: bxc p50=${bunSt.p50}ms, chrome p50=${chrSt.p50}ms — ` +
+					`bxc is ${diff >= 0 ? "faster" : "slower"} by ${Math.abs(diff)}ms (${ratio}% of Chrome time).`,
 			);
 		}
 		lines.push("");
@@ -606,7 +606,7 @@ async function main(): Promise<void> {
 	console.log(`[bench] agent-browser engine comparison — ${date}`);
 	console.log(`[bench] iterations=${ITERATIONS} engines=${ENGINES_ARG.join(",")}`);
 	console.log(`[bench] agent-browser: ${AGENT_BROWSER_BIN}`);
-	console.log(`[bench] bunlight: ${BUNLIGHT_PATH}`);
+	console.log(`[bench] bxc: ${BXC_PATH}`);
 	console.log("");
 
 	// Check agent-browser binary exists
@@ -620,7 +620,7 @@ async function main(): Promise<void> {
 
 	// Probe each engine
 	// Ensure a clean slate before probing (kill any leftover daemons).
-	for (const eng of ["chrome", "lightpanda", "bunlight"]) {
+	for (const eng of ["chrome", "lightpanda", "bxc"]) {
 		await closeEngine(eng).catch(() => {});
 	}
 	await Bun.sleep(500);
@@ -630,7 +630,7 @@ async function main(): Promise<void> {
 
 	for (const engine of ENGINES_ARG) {
 		// Clear state from previous probe before each engine check.
-		for (const eng of ["chrome", "lightpanda", "bunlight"]) {
+		for (const eng of ["chrome", "lightpanda", "bxc"]) {
 			await closeEngine(eng).catch(() => {});
 		}
 		await Bun.sleep(300);
@@ -640,8 +640,8 @@ async function main(): Promise<void> {
 			status = await probeChrome();
 		} else if (engine === "lightpanda") {
 			status = await probeLightpanda();
-		} else if (engine === "bunlight") {
-			status = await probeBunlight();
+		} else if (engine === "bxc") {
+			status = await probeBxc();
 		} else {
 			status = { engine, available: false, skipReason: `unknown engine: ${engine}` };
 		}

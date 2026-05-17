@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/serp-parser
+ * @module bxc/google/serp-parser
  * 
  * High-performance parser for Google Search Engine Result Pages (SERP).
  * Extracts organic results, featured snippets, knowledge panels, and "People Also Ask".

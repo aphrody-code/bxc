@@ -7,7 +7,7 @@
 //   2. **LLM-direct fallback**: when no URL is provided or the cache is
 //      disabled, the LLM is invoked per call (slower, original behaviour).
 //
-// Pattern lifted from `bunlight/src/ai/extractor.ts` — adapted to use the
+// Pattern lifted from `bxc/src/ai/extractor.ts` — adapted to use the
 // local llama-server instead of Anthropic cloud.
 
 import { z } from "zod";

@@ -16,7 +16,7 @@
  */
 
 /**
- * `bunlight scrape <url> <css-selector>` — extract textContent of matched elements.
+ * `bxc scrape <url> <css-selector>` — extract textContent of matched elements.
  *
  * Output contract:
  *   - stdout = JSON array of { index, text }
@@ -37,10 +37,10 @@ interface ScrapeOptions {
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bunlight scrape — extract textContent of CSS-selected elements
+		`bxc scrape — extract textContent of CSS-selected elements
 
 Usage:
-  bunlight scrape <url> <css-selector> [options]
+  bxc scrape <url> <css-selector> [options]
 
 Options:
   --profile <name>   static (default) | fast | http
@@ -49,8 +49,8 @@ Options:
   --help, -h         this help
 
 Examples:
-  bunlight scrape https://google.com "td.title > span.titleline > a"
-  bunlight scrape https://google.com h1 --profile fast
+  bxc scrape https://google.com "td.title > span.titleline > a"
+  bxc scrape https://google.com h1 --profile fast
 
 Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
 `,
@@ -92,7 +92,7 @@ function parseArgs(argv: readonly string[]): ScrapeOptions | null {
 		}
 	}
 	if (positional.length < 2) {
-		Bun.stderr.write("bunlight scrape: requires <url> and <selector>\n");
+		Bun.stderr.write("bxc scrape: requires <url> and <selector>\n");
 		return null;
 	}
 	opts.url = positional[0];
@@ -124,7 +124,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		}
 		Bun.stdout.write(JSON.stringify(out, null, 2) + "\n");
 	} catch (err) {
-		Bun.stderr.write(`bunlight scrape: ${err instanceof Error ? err.message : String(err)}\n`);
+		Bun.stderr.write(`bxc scrape: ${err instanceof Error ? err.message : String(err)}\n`);
 		process.exit(65);
 	} finally {
 		try {

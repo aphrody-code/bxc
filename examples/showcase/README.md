@@ -1,6 +1,6 @@
 # Showcase: HN 1000 Articles Crawler
 
-A production-grade web crawler built with Bunlight's core primitives:
+A production-grade web crawler built with Bxc's core primitives:
 
 - `RequestQueue` (bun:sqlite, persistent, crash-safe, auto-resume)
 - `AutoscaledPool` (dynamic concurrency based on CPU and RAM pressure)
@@ -12,7 +12,7 @@ A production-grade web crawler built with Bunlight's core primitives:
 1. Fetches the top-N HackerNews story IDs from the Firebase REST API
 2. Enqueues each story's item API URL into a persistent SQLite queue
 3. For each story, fetches the HN item metadata (title, score, author, URL)
-4. Navigates to the external article URL via Bunlight, runs framework detection
+4. Navigates to the external article URL via Bxc, runs framework detection
 5. Picks the optimal profile (static / fast / stealth / max) for that site
 6. Saves all metadata to a JSONL dataset
 7. On re-run, resumes exactly where it left off (queue deduplication + done tracking)
@@ -20,7 +20,7 @@ A production-grade web crawler built with Bunlight's core primitives:
 ## Quick start
 
 ```bash
-cd ~/bunmium/bunlight
+cd ~/bunmium/bxc
 
 # Smoke test — 5 articles
 SHOWCASE_LIMIT=5 bun examples/showcase/hn-1000-crawler.ts
@@ -71,7 +71,7 @@ Each JSONL record:
 
 ## Auto-routing
 
-The crawler uses `detectFromPage` (wappalyzergo) + `suggestStrategy` to pick the right Bunlight profile per article:
+The crawler uses `detectFromPage` (wappalyzergo) + `suggestStrategy` to pick the right Bxc profile per article:
 
 | Detected tech | Profile used | Rationale |
 |---|---|---|

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/plugin/tailwind-plugin
+ * @module bxc/plugin/tailwind-plugin
  *
  * Bun plugin that compiles Tailwind CSS (v3 + v4) at build time.
  *
@@ -268,7 +268,7 @@ export function tailwindPlugin(options: TailwindPluginOptions = {}): BunPlugin {
  *
  * @example
  * ```ts
- * import { compileTailwindCss } from "@aphrody-code/bunlight/plugin";
+ * import { compileTailwindCss } from "@aphrody-code/bxc/plugin";
  * const out = await compileTailwindCss(`@tailwind utilities;`, {
  *   content: ["src/**\/*.tsx"],
  *   minify: true,

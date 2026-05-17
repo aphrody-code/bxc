@@ -87,7 +87,7 @@ export class WebSocketTransport implements ConnectionTransport {
 			const cargoTomlPath = join(repoRoot, "rust-bridge", "Cargo.toml");
 			
 			const ext = process.platform === "win32" ? ".exe" : "";
-			const binName = `bunlight-engine${ext}`;
+			const binName = `bxc-engine${ext}`;
 			const binPaths = [
 				join(repoRoot, "rust-bridge", "target", "release", binName),
 				join(repoRoot, "rust-bridge", "target", "debug", binName),
@@ -103,8 +103,8 @@ export class WebSocketTransport implements ConnectionTransport {
 				}
 			}
 
-			let chromePath = Bun.env["BUNLIGHT_CHROME_BIN"] ?? Bun.env["CHROME_PATH"];
-			let userDataDir = Bun.env["BUNLIGHT_USER_DATA_DIR"];
+			let chromePath = Bun.env["BXC_CHROME_BIN"] ?? Bun.env["CHROME_PATH"];
+			let userDataDir = Bun.env["BXC_USER_DATA_DIR"];
 			const isWin = process.platform === "win32";
 
 			if (isWin) {
@@ -130,7 +130,7 @@ export class WebSocketTransport implements ConnectionTransport {
 			if (!chromePath) {
 				const pathArgs = bin 
 					? [bin, "chrome-path"]
-					: ["cargo", "run", "--manifest-path", cargoTomlPath, "--bin", "bunlight-engine", "--", "chrome-path"];
+					: ["cargo", "run", "--manifest-path", cargoTomlPath, "--bin", "bxc-engine", "--", "chrome-path"];
 
 				const pathProc = Bun.spawnSync(pathArgs, {
 					env: Bun.env,
@@ -189,7 +189,7 @@ export class WebSocketTransport implements ConnectionTransport {
 				args = [chromePath, ...launchArgs];
 			}
 
-			// Inherit advanced VPS variables: BUNLIGHT_USER_DATA_DIR, BUNLIGHT_PROFILE
+			// Inherit advanced VPS variables: BXC_USER_DATA_DIR, BXC_PROFILE
 			proc = Bun.spawn(args, {
 				stdin: "ignore",
 				stdout: "pipe",

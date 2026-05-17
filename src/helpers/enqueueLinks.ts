@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/helpers/enqueueLinks
+ * @module bxc/helpers/enqueueLinks
  *
  * Helper that extracts anchor hrefs from a page and enqueues them into a
  * RequestQueue, with optional filtering by domain strategy, glob patterns,
@@ -26,9 +26,9 @@
  *
  * @example
  * ```ts
- * import { Browser } from "bunlight/api/browser";
- * import { RequestQueue } from "bunlight/queue/RequestQueue";
- * import { enqueueLinks } from "bunlight/helpers/enqueueLinks";
+ * import { Browser } from "bxc/api/browser";
+ * import { RequestQueue } from "bxc/queue/RequestQueue";
+ * import { enqueueLinks } from "bxc/helpers/enqueueLinks";
  *
  * const queue = RequestQueue.open(":memory:");
  * const page = await Browser.newPage({ profile: "static" });

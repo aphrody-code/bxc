@@ -8,7 +8,7 @@
 		"description": "Core Google services and landing pages",
 		"urls": [
 			{ "id": "google-home", "url": "https://www.google.com", "expect": "Google" },
-			{ "id": "google-search", "url": "https://www.google.com/search?q=bunlight", "expect": "Google" },
+			{ "id": "google-search", "url": "https://www.google.com/search?q=bxc", "expect": "Google" },
 			{ "id": "google-news", "url": "https://news.google.com", "expect": "Google" },
 			{ "id": "google-maps", "url": "https://maps.google.com", "expect": "Google" },
 			{ "id": "google-photos", "url": "https://photos.google.com", "expect": "Google" },

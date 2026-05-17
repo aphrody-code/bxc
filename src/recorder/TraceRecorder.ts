@@ -17,7 +17,7 @@
 import { HarRecorder } from "./HarRecorder.ts";
 import type { Page } from "../api/browser.ts";
 
-export interface BunlightAction {
+export interface BxcAction {
 	type: "goto" | "click" | "fill" | "evaluate" | "keyboard" | "mouse";
 	target: string;
 	value?: string;
@@ -25,30 +25,30 @@ export interface BunlightAction {
 	durationMs?: number;
 }
 
-export interface BunlightSnapshot {
+export interface BxcSnapshot {
 	url: string;
 	html: string;
 	timestamp: number;
 }
 
-export interface BunlightTrace {
+export interface BxcTrace {
 	version: "1.0";
 	creator: string;
-	actions: BunlightAction[];
-	snapshots: BunlightSnapshot[];
+	actions: BxcAction[];
+	snapshots: BxcSnapshot[];
 	network: ReturnType<HarRecorder["stop"]>;
 }
 
 /**
- * Records a full trace of a Bunlight session including network (HAR),
+ * Records a full trace of a Bxc session including network (HAR),
  * DOM snapshots, and logical actions.
  * Outputs a highly compressed .trace.zst file using Bun.zstdCompressSync.
  */
 export class TraceRecorder {
 	readonly #page: Page;
 	readonly #harRecorder: HarRecorder;
-	#actions: BunlightAction[] = [];
-	#snapshots: BunlightSnapshot[] = [];
+	#actions: BxcAction[] = [];
+	#snapshots: BxcSnapshot[] = [];
 	#recording = false;
 
 	constructor(page: Page) {
@@ -70,9 +70,9 @@ export class TraceRecorder {
 		
 		const har = this.#harRecorder.stop();
 		
-		const trace: BunlightTrace = {
+		const trace: BxcTrace = {
 			version: "1.0",
-			creator: "bunlight",
+			creator: "bxc",
 			actions: this.#actions,
 			snapshots: this.#snapshots,
 			network: har,
@@ -86,7 +86,7 @@ export class TraceRecorder {
 	}
 
 	// Used internally or by Page wrappers to log actions
-	recordAction(action: Omit<BunlightAction, "timestamp">): void {
+	recordAction(action: Omit<BxcAction, "timestamp">): void {
 		if (!this.#recording) return;
 		this.#actions.push({ ...action, timestamp: Date.now() });
 	}

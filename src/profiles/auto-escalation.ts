@@ -18,7 +18,7 @@
  * Auto-escalation: attempt profile chain static → fast → ghost
  * on detecting escape signals (403, Cloudflare, empty body, etc.).
  *
- * bunlight is Lightpanda-only; the escalation never falls into
+ * bxc is Lightpanda-only; the escalation never falls into
  * Chromium/Firefox/Edge/Safari. `ghost` = Lightpanda + CDP stealth injects.
  *
  * Usage:

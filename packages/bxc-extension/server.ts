@@ -9,13 +9,13 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { Database } from "bun:sqlite";
 
-// Bunlight Engine Imports (assuming access to monorepo internals)
+// Bxc Engine Imports (assuming access to monorepo internals)
 // In a real execution context, these would point to compiled binaries or modules
 // import { launchGhostBrowser } from "../../src/profiles/ghost/index.ts";
 // import { googleWebSearch } from "../../src/google/search.ts";
 
 const server = new McpServer({
-	name: "bunlight-native-mcp",
+	name: "bxc-native-mcp",
 	version: "1.0.0",
 });
 
@@ -25,7 +25,7 @@ const server = new McpServer({
  * for high-performance memory tuning and vector-like retrieval.
  */
 const dbPath =
-	process.env.BUNLIGHT_MEMORY_DB || `${process.cwd()}/bunlight-memory.sqlite`;
+	process.env.BXC_MEMORY_DB || `${process.cwd()}/bxc-memory.sqlite`;
 const db = new Database(dbPath);
 db.run(`
   CREATE TABLE IF NOT EXISTS memories (
@@ -80,7 +80,7 @@ server.registerTool(
 
 /**
  * 2. Native Vision API
- * Exposes a tool for native image/vision analysis. In the Bunlight context,
+ * Exposes a tool for native image/vision analysis. In the Bxc context,
  * this can leverage headless Chromium screenshots passed to local models or APIs.
  */
 server.registerTool(
@@ -95,7 +95,7 @@ server.registerTool(
 	},
 	async (args) => {
 		// Mocked for architectural demonstration.
-		// In production, this bridges to bunlight-engine (Chromium) to take a CDP screenshot
+		// In production, this bridges to bxc-engine (Chromium) to take a CDP screenshot
 		// and pipes it to a local Gemma-Vision or native API.
 		return {
 			content: [
@@ -110,20 +110,20 @@ server.registerTool(
 
 /**
  * 3. Start Subagents Scraping
- * Spawns a background mass-scraping subagent workflow utilizing Bunlight's 24/5656 concurrency.
+ * Spawns a background mass-scraping subagent workflow utilizing Bxc's 24/5656 concurrency.
  */
 server.registerTool(
 	"start_scraping_subagent",
 	{
 		description:
-			"Delegates a massive scraping task to the Bunlight Zero-Spawn Chromium engine subagent.",
+			"Delegates a massive scraping task to the Bxc Zero-Spawn Chromium engine subagent.",
 		inputSchema: z.object({
 			urls: z.array(z.string()),
 			concurrency: z.number().default(24),
 		}),
 	},
 	async (args) => {
-		// Native offloading to Bunlight's pool
+		// Native offloading to Bxc's pool
 		return {
 			content: [
 				{
@@ -178,13 +178,13 @@ server.registerTool(
 
 /**
  * 5. CDP Native DOM Snapshot (Surpasses Chrome DevTools MCP 'take_snapshot')
- * Takes a highly optimized A11y/DOM snapshot natively via Bunlight's Zero-Spawn engine.
+ * Takes a highly optimized A11y/DOM snapshot natively via Bxc's Zero-Spawn engine.
  */
 server.registerTool(
-	"bunlight_cdp_snapshot",
+	"bxc_cdp_snapshot",
 	{
 		description:
-			"Take a text snapshot of the current page based on the a11y tree via Bunlight native CDP. Prefer this over screenshots for element identification.",
+			"Take a text snapshot of the current page based on the a11y tree via Bxc native CDP. Prefer this over screenshots for element identification.",
 		inputSchema: z.object({
 			verbose: z
 				.boolean()
@@ -210,7 +210,7 @@ server.registerTool(
  * Injects and executes raw JavaScript natively via V8 without Puppeteer overhead.
  */
 server.registerTool(
-	"bunlight_cdp_evaluate",
+	"bxc_cdp_evaluate",
 	{
 		description:
 			"Evaluates raw JavaScript directly in the page context natively via V8 CDP.",
@@ -239,7 +239,7 @@ server.registerTool(
  * Extracts deep network and console logs concurrently.
  */
 server.registerTool(
-	"bunlight_cdp_logs",
+	"bxc_cdp_logs",
 	{
 		description:
 			"List all native console messages and network HAR events since the last navigation.",
@@ -263,10 +263,10 @@ server.registerTool(
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
-	console.error("Bunlight MCP Server started securely over stdio.");
+	console.error("Bxc MCP Server started securely over stdio.");
 }
 
 main().catch((error) => {
-	console.error("Fatal error running Bunlight MCP Server:", error);
+	console.error("Fatal error running Bxc MCP Server:", error);
 	process.exit(1);
 });

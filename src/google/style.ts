@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/style
+ * @module bxc/google/style
  *
  * Google Style Guide rules for TypeScript and JavaScript.
  * Reference: https://google.github.io/styleguide/tsguide.html
@@ -33,7 +33,7 @@ export interface StyleRule {
 export const GOOGLE_TS_STYLE_RULES: StyleRule[] = [
 	{
 		id: "indentation",
-		description: "Use 2-space indentation (no tabs). Note: Bunlight uses tabs via Biome.",
+		description: "Use 2-space indentation (no tabs). Note: Bxc uses tabs via Biome.",
 		example: "  if (true) {\n    return;\n  }",
 	},
 	{

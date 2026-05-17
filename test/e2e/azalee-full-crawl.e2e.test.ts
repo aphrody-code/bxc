@@ -18,7 +18,7 @@
  * E2E full-crawl suite — workspace.google.com
  *
  * Walks every URL discovered for the origin and exercises each of the five
- * Bunlight profiles (static, fast, http, stealth, max) against it. The
+ * Bxc profiles (static, fast, http, stealth, max) against it. The
  * `fast` profile (Lightpanda) is the primary acceptance target with a
  * required >= 95% pass rate.
  *
@@ -139,7 +139,7 @@ async function runOne(profile: ProfileName, url: string): Promise<SiteResult> {
 				readyTimeoutMs: 10_000,
 				binaryPath: lightpandaBin ?? undefined,
 				stderrLogger: (s) => {
-					if (Bun.env.BUNLIGHT_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
+					if (Bun.env.BXC_E2E_VERBOSE) Bun.stderr.write(`[lp] ${s}`);
 				},
 			},
 		})) as Page;

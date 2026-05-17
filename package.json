@@ -1,7 +1,7 @@
 {
-	"name": "@aphrody-code/bunlight",
+	"name": "@aphrody-code/bxc",
 	"version": "0.1.0",
-	"description": "Bunlight: High-performance browser automation engine (Bun + Lightpanda fusion)",
+	"description": "Bxc: High-performance browser automation engine (Bun + Lightpanda fusion)",
 	"packageManager": "bun@1.3.14",
 	"type": "module",
 	"workspaces": [
@@ -16,7 +16,7 @@
 	"main": "./src/api/browser.ts",
 	"types": "./src/api/browser.ts",
 	"bin": {
-		"bunlight": "./bin/bunlight"
+		"bxc": "./bin/bxc"
 	},
 	"files": [
 		"src/",

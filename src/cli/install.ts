@@ -16,18 +16,18 @@
  */
 
 /**
- * `bunlight install` — download Lightpanda for the current platform.
+ * `bxc install` — download Lightpanda for the current platform.
  *
- * bunlight is Lightpanda-only by design. Chrome / Chromium / Firefox /
+ * bxc is Lightpanda-only by design. Chrome / Chromium / Firefox /
  * Edge / Safari and any derivative (patchright, Playwright Chromium,
  * Camoufox FF) are forbidden. There are no `--with-*` flags.
  *
  * Usage:
- *   bunlight install                  # Lightpanda only (~100 MB)
- *   bunlight install --dry-run        # print what would be downloaded, no side effects
+ *   bxc install                  # Lightpanda only (~100 MB)
+ *   bxc install --dry-run        # print what would be downloaded, no side effects
  *
  * Environment overrides:
- *   BUNLIGHT_VENDOR_DIR          — base dir for binaries (default ~/.bunlight/vendor)
+ *   BXC_VENDOR_DIR          — base dir for binaries (default ~/.bxc/vendor)
  *   LIGHTPANDA_RELEASE_TAG       — Lightpanda release tag (default "nightly")
  *   LIGHTPANDA_DOWNLOAD_URL      — skip Google Developers lookup, use this URL directly
  *
@@ -63,22 +63,22 @@ interface LightpandaPlatform {
 // ---------------------------------------------------------------------------
 
 /** Default vendor root — can be overridden by env var. */
-export const VENDOR_DIR = Bun.env.BUNLIGHT_VENDOR_DIR ?? join(homedir(), ".bunlight", "vendor");
+export const VENDOR_DIR = Bun.env.BXC_VENDOR_DIR ?? join(homedir(), ".bxc", "vendor");
 
 const LIGHTPANDA_TAG = Bun.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
 
-// Forbidden engine versions removed: bunlight is Lightpanda-only.
+// Forbidden engine versions removed: bxc is Lightpanda-only.
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function log(msg: string): void {
-	Bun.stdout.write(`[bunlight install] ${msg}\n`);
+	Bun.stdout.write(`[bxc install] ${msg}\n`);
 }
 
 function warn(msg: string): void {
-	Bun.stderr.write(`[bunlight install] WARNING : ${msg}\n`);
+	Bun.stderr.write(`[bxc install] WARNING : ${msg}\n`);
 }
 
 function fmtMB(bytes: number): string {
@@ -108,7 +108,7 @@ async function streamDownload(
 	await Bun.$`mkdir -p ${parentDir}`.quiet();
 
 	const res = await fetch(url, {
-		headers: { "User-Agent": "bunlight-install" },
+		headers: { "User-Agent": "bxc-install" },
 		redirect: "follow",
 	});
 	if (!res.ok || !res.body) {
@@ -133,7 +133,7 @@ async function streamDownload(
 				const pct = Math.floor((written / totalBytes) * 100);
 				if (pct !== lastPct && pct % 10 === 0) {
 					Bun.stdout.write(
-						`\r[bunlight install]   ${fmtMB(written)} / ${fmtMB(totalBytes)} (${pct}%)   `,
+						`\r[bxc install]   ${fmtMB(written)} / ${fmtMB(totalBytes)} (${pct}%)   `,
 					);
 					lastPct = pct;
 				}
@@ -231,7 +231,7 @@ async function fetchLightpandaAsset(
 	try {
 		const res = await fetch(apiUrl, {
 			headers: {
-				"User-Agent": "bunlight-install",
+				"User-Agent": "bxc-install",
 				Accept: "application/vnd.github+json",
 			},
 		});
@@ -321,7 +321,7 @@ export async function installLightpanda(
  * Install Chrome for Testing at the pinned version.
  * Idempotent: skips if the chrome binary already exists.
  */
-// installChromium / installCamoufox removed: bunlight is Lightpanda-only.
+// installChromium / installCamoufox removed: bxc is Lightpanda-only.
 // Forbidden engines: Chrome / Chromium / Firefox / Edge / Safari and any derivative.
 // For server-grade anti-detection use launchGhostBrowser from src/profiles/ghost/.
 
@@ -357,21 +357,21 @@ export async function main(argv: string[]): Promise<void> {
 	const help = argv.includes("--help") || argv.includes("-h");
 	if (help) {
 		Bun.stdout.write(
-			`bunlight install — download Lightpanda for the current platform
+			`bxc install — download Lightpanda for the current platform
 
 Usage:
-  bunlight install [options]
+  bxc install [options]
 
 Options:
   --dry-run         print what would be downloaded without side effects
   --help, -h        show this help
 
 Environment overrides:
-  BUNLIGHT_VENDOR_DIR        base directory for binaries (default ~/.bunlight/vendor)
+  BXC_VENDOR_DIR        base directory for binaries (default ~/.bxc/vendor)
   LIGHTPANDA_RELEASE_TAG     Lightpanda release tag (default: nightly)
   LIGHTPANDA_DOWNLOAD_URL    override Lightpanda download URL
 
-bunlight is Lightpanda-only. Forbidden engines : Chrome / Chromium /
+bxc is Lightpanda-only. Forbidden engines : Chrome / Chromium /
 Firefox / Edge / Safari and any derivative.
 `,
 		);

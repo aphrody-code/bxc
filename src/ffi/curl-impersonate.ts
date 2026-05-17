@@ -18,7 +18,7 @@
 // FFI ABI-level casts (number <-> Pointer, ArrayBufferLike <-> ArrayBuffer)
 // are correct at runtime on x86_64 SysV ABI but TS cannot model them.
 /**
- * @module bunlight/ffi/curl-impersonate
+ * @module bxc/ffi/curl-impersonate
  *
  * Thin bun:ffi wrapper around libcurl-impersonate (lexiforest/curl-impersonate).
  *
@@ -44,7 +44,7 @@
  *
  * @example
  * ```ts
- * import { ImpersonatedClient } from "bunlight/ffi/curl-impersonate";
+ * import { ImpersonatedClient } from "bxc/ffi/curl-impersonate";
  *
  * const client = new ImpersonatedClient({ profile: "chrome131" });
  * const res = await client.fetch("https://tls.peet.ws/api/all");
@@ -266,7 +266,7 @@ function resolveLibPath(): string {
 		candidates = [
 			join(vendor, "libcurl-impersonate.dll"),
 			join(vendor, "libcurl-impersonate-chrome.dll"),
-			// Bundled next to a standalone bunlight.exe (build-windows.ts layout).
+			// Bundled next to a standalone bxc.exe (build-windows.ts layout).
 			join(dir, "libcurl-impersonate.dll"),
 		];
 	} else if (process.platform === "darwin") {
@@ -918,7 +918,7 @@ export function getDefaultClient(): ImpersonatedClient {
  *
  * @example
  * ```ts
- * import { impersonateFetch } from "bunlight/ffi/curl-impersonate";
+ * import { impersonateFetch } from "bxc/ffi/curl-impersonate";
  * const res = await impersonateFetch("https://google.com");
  * ```
  */

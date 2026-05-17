@@ -16,8 +16,8 @@
  */
 
 /**
- * Build the Bunlight serverless handler into a standalone executable
- * (`dist/bunlight-serverless`) using `Bun.build({ compile: true })`.
+ * Build the Bxc serverless handler into a standalone executable
+ * (`dist/bxc-serverless`) using `Bun.build({ compile: true })`.
  */
 
 import { rm } from "node:fs/promises";

@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/google/mass-scanner
+ * @module bxc/google/mass-scanner
  * 
  * Massive Google Stealth Crawler: 5656+ pages audit with real-time DNS/CDN analysis.
  * Optimized for high-concurrency and resilience.

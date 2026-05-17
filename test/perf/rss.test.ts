@@ -17,7 +17,7 @@
 /**
  * test/perf/rss.test.ts
  *
- * RSS (Resident Set Size) performance tests for `bunlight serve`.
+ * RSS (Resident Set Size) performance tests for `bxc serve`.
  *
  * Validates that the daemon stays within memory budgets:
  *   - Idle RSS (profile=static) : <45 MB
@@ -42,7 +42,7 @@
  *   - Platform is not Linux (no /proc filesystem)
  *   - RSS reads from /proc return 0 (kernel may deny access in some sandboxes)
  *
- * Phase 2 spec: bunlight/docs/plan-optimization/04b-perf-memory.md
+ * Phase 2 spec: bxc/docs/plan-optimization/04b-perf-memory.md
  */
 
 import { describe, expect, test } from "bun:test";
@@ -79,10 +79,10 @@ const CHARGED_NAV_COUNT = 10;
 /** Timeout per test in milliseconds. */
 const TEST_TIMEOUT_MS = 60_000;
 
-const BUNLIGHT_DIR = join(import.meta.dir, "..", "..");
-const SERVE_SCRIPT = join(BUNLIGHT_DIR, "src/cli/serve.ts");
+const BXC_DIR = join(import.meta.dir, "..", "..");
+const SERVE_SCRIPT = join(BXC_DIR, "src/cli/serve.ts");
 const STATIC_DOM_TRANSPORT = join(
-	BUNLIGHT_DIR,
+	BXC_DIR,
 	"src/transport/StaticDomTransport.ts",
 );
 
@@ -283,7 +283,7 @@ describe("RSS memory targets", () => {
 					stdin: "ignore",
 					stdout: "ignore",
 					stderr: "ignore",
-					cwd: BUNLIGHT_DIR,
+					cwd: BXC_DIR,
 				},
 			);
 
@@ -344,7 +344,7 @@ describe("RSS memory targets", () => {
 					stdin: "ignore",
 					stdout: "ignore",
 					stderr: "ignore",
-					cwd: BUNLIGHT_DIR,
+					cwd: BXC_DIR,
 				},
 			);
 

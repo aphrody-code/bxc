@@ -81,7 +81,7 @@ Effet net: capacité max théorique = 50_000 × 50_000 = **2.5 milliards** d'URL
 - `sitemap.txt` — un URL par ligne, encoding UTF-8, BOM optionnel (sans lastmod/priority)
 - RSS 2.0 / Atom 1.0 — chaque item devient un URL
 
-Bunlight produit la forme XML canonique.
+Bxc produit la forme XML canonique.
 
 ## 7. W3C Datetime pour `<lastmod>`
 
@@ -95,7 +95,7 @@ Formats acceptés (du moins précis au plus précis):
 - `YYYY-MM-DDThh:mm:ssTZD` — `2026-05-10T15:30:42Z`
 - `YYYY-MM-DDThh:mm:ss.sTZD` — fraction de seconde
 
-`TZD` = `Z` (UTC) ou `+hh:mm` / `-hh:mm`. Bunlight émet `YYYY-MM-DD` (suffisant + le plus court).
+`TZD` = `Z` (UTC) ou `+hh:mm` / `-hh:mm`. Bxc émet `YYYY-MM-DD` (suffisant + le plus court).
 
 ## 8. Compliance checklist côté `scripts/url-to-docs.ts`
 
@@ -109,7 +109,7 @@ Formats acceptés (du moins précis au plus précis):
 - [x] Shards nommés `sitemap-001.xml`, `sitemap-002.xml`, etc.
 - [ ] Compression `.gz` (non implémenté — peu utile localement)
 
-## 9. Exemple produit par bunlight
+## 9. Exemple produit par bxc
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>

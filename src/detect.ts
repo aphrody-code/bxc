@@ -15,7 +15,7 @@
  */
 
 /**
- * @module bunlight/detect
+ * @module bxc/detect
  *
  * Framework / CMS / library / waf detection backed by the
  * `projectdiscovery/wappalyzergo` Go library, vendored as a small CLI binary
@@ -27,7 +27,7 @@
  *      fetch it itself with a generic User-Agent) or `{ html, headers }` to
  *      reuse a response already gathered by `Browser.newPage()`.
  *
- *   2. {@link detectFromPage} — convenience wrapper that takes a Bunlight
+ *   2. {@link detectFromPage} — convenience wrapper that takes a Bxc
  *      `Page` (or anything with `.url()` + `.content()`) and runs the
  *      detector on the rendered HTML. This works across every profile
  *      (`static`, `fast`, `stealth`, `max`) because it only relies on the
@@ -35,8 +35,8 @@
  *
  * @example
  * ```ts
- * import { detectFrameworks, detectFromPage } from "bunlight/detect";
- * import { Browser } from "bunlight/browser";
+ * import { detectFrameworks, detectFromPage } from "bxc/detect";
+ * import { Browser } from "bxc/browser";
  *
  * // Direct URL fetch (no JS rendering — uses Go's net/http).
  * const tech = await detectFrameworks("https://nextjs.org");
@@ -99,11 +99,11 @@ const HERE = import.meta.dir;
 
 /**
  * Resolve the path to the `wappalyzergo-cli` binary. Looks at, in order:
- *   1. The `BUNLIGHT_WAPPALYZERGO_BIN` env var.
+ *   1. The `BXC_WAPPALYZERGO_BIN` env var.
  *   2. `<repo>/vendor/wappalyzergo/wappalyzergo-cli`.
  */
 export async function resolveBinary(): Promise<string> {
-	const fromEnv = Bun.env.BUNLIGHT_WAPPALYZERGO_BIN;
+	const fromEnv = Bun.env.BXC_WAPPALYZERGO_BIN;
 	if (fromEnv && (await Bun.file(fromEnv).exists())) return fromEnv;
 
 	// `src/detect.ts` lives one level under repo root.
@@ -120,9 +120,9 @@ export async function resolveBinary(): Promise<string> {
 	}
 
 	throw new Error(
-		`bunlight/detect: wappalyzergo-cli binary not found. ` +
+		`bxc/detect: wappalyzergo-cli binary not found. ` +
 			`Build it with \`(cd vendor/wappalyzergo/cli && go build -o ../wappalyzergo-cli)\` ` +
-			`or set BUNLIGHT_WAPPALYZERGO_BIN.`,
+			`or set BXC_WAPPALYZERGO_BIN.`,
 	);
 }
 
@@ -285,7 +285,7 @@ export async function detectFrameworks(
 
 /**
  * Minimal duck-type for what {@link detectFromPage} needs from a Page.
- * Compatible with `bunlight/browser` Pages across every profile.
+ * Compatible with `bxc/browser` Pages across every profile.
  */
 export interface PageLike {
 	url(): string;
@@ -293,7 +293,7 @@ export interface PageLike {
 }
 
 /**
- * Run framework detection against the rendered HTML of a Bunlight `Page`.
+ * Run framework detection against the rendered HTML of a Bxc `Page`.
  *
  * Headers from the original navigation are not currently exposed by `Page`,
  * so this call relies purely on the rendered body. For header-only

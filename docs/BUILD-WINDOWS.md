@@ -1,4 +1,4 @@
-# Build Windows — Stack complète bunlight + lightpanda + agent-browser
+# Build Windows — Stack complète bxc + lightpanda + agent-browser
 
 > Cible : Windows x64 (et ARM64 best-effort) sans WSL, sans MSYS2, sans Cygwin.
 > Toolchain : Windows-native via winget OU cross-compilation depuis Linux/macOS.
@@ -10,7 +10,7 @@
 
 | Projet | Hôte recommandé | Commande one-shot |
 |---|---|---|
-| **bunlight** (Bun TS) | Linux/macOS | `bun scripts/build-windows.ts` |
+| **bxc** (Bun TS) | Linux/macOS | `bun scripts/build-windows.ts` |
 | **lightpanda** (Zig) | Linux/macOS | `zig build -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseFast` |
 | **agent-browser** (Rust) | Linux | `cargo xwin build --target x86_64-pc-windows-msvc --release` |
 
@@ -77,22 +77,22 @@ winget install --id OpenJS.NodeJS               # postinstall scripts
 
 ---
 
-## 2. Bunlight — `bun build --compile`
+## 2. Bxc — `bun build --compile`
 
 ### 2.1 Cross-compile depuis Linux/macOS (recommandé)
 
 ```bash
-cd /path/to/bunlight
+cd /path/to/bxc
 bun install --frozen-lockfile
 
 # Le script Bun-native qui orchestre tout :
 bun scripts/build-windows.ts
-# → dist/standalone/windows/{bunlight.exe, lightpanda.exe, libcurl-impersonate.dll, bunlight-windows-x64.zip}
+# → dist/standalone/windows/{bxc.exe, lightpanda.exe, libcurl-impersonate.dll, bxc-windows-x64.zip}
 
 # Ou ciblé :
 bun scripts/build-windows.ts --baseline           # pre-AVX2 CPUs (Nehalem)
 bun scripts/build-windows.ts --arch arm64         # ARM64 (Snapdragon X / Surface)
-bun scripts/build-windows.ts --skip-lightpanda    # bunlight.exe + curl-impersonate.dll seuls
+bun scripts/build-windows.ts --skip-lightpanda    # bxc.exe + curl-impersonate.dll seuls
 bun scripts/build-windows.ts --skip-curl          # pas de TLS-fingerprint http profile
 ```
 
@@ -101,7 +101,7 @@ Sous le capot : `bun build src/cli/index.ts --compile --target=bun-windows-x64 -
 ### 2.2 Native Windows (winget host)
 
 ```powershell
-cd C:\path\to\bunlight
+cd C:\path\to\bxc
 bun install --frozen-lockfile
 .\scripts\build-windows.ps1                       # PowerShell équivalent du .ts
 .\scripts\build-windows.ps1 -SkipLightpanda       # idem
@@ -113,7 +113,7 @@ bun install --frozen-lockfile
 
 - **Top-level `await` rejeté** — `bun build --compile --target=bun-windows-x64` n'accepte pas `await` au top-level d'un module. Wrappez dans une `async function _main(){}` puis appelez `_main().catch(...)`. Le runtime se comporte identiquement.
 - **`Bun.file().writer()` sans `flush()`** — sur Windows les FS sync sont plus stricts. Toujours `await writer.flush()` + `writer.end()` avant exit.
-- **`process.argv[0]`** — sur Windows c'est `C:\\path\\bunlight.exe`, pas `bun`. N'utilisez pas pour spawn récursif ; préférez `process.execPath`.
+- **`process.argv[0]`** — sur Windows c'est `C:\\path\\bxc.exe`, pas `bun`. N'utilisez pas pour spawn récursif ; préférez `process.execPath`.
 - **Path separators** — `path.join` est portable, mais évitez les littéraux `/` quand vous appelez des CLI Windows (cmd.exe gère les `/` comme flags).
 
 ---
@@ -155,7 +155,7 @@ Erreur typique : `'@import' of ZON must have a known result type` — feature Zi
    git -C ~/lightpanda checkout v0.5.0  # ou tag du jour
    zig build -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseFast
    ```
-2. Skipper Lightpanda et exposer un fallback runtime (`bunlight scripts/build-windows.ts --skip-lightpanda`) — bunlight `static`/`http` profiles fonctionnent sans.
+2. Skipper Lightpanda et exposer un fallback runtime (`bxc scripts/build-windows.ts --skip-lightpanda`) — bxc `static`/`http` profiles fonctionnent sans.
 3. Récupérer un prebuilt depuis [developers.google.com/lightpanda-io/browser/releases](https://developers.google.com/lightpanda-io/browser/releases) (s'il en existe un pour `x86_64-windows-gnu` à la date du build).
 
 ### 3.4 Native Windows host
@@ -239,8 +239,8 @@ cargo build --manifest-path cli/Cargo.toml --target x86_64-pc-windows-msvc --rel
 ### 5.1 Layout cible
 
 ```
-bunlight-windows-x64.zip
-├── bunlight.exe                       # Bun standalone, ~95 MB
+bxc-windows-x64.zip
+├── bxc.exe                       # Bun standalone, ~95 MB
 ├── lightpanda.exe                     # Zig native, ~120 MB (optionnel)
 ├── libcurl-impersonate.dll            # FFI TLS Chrome 131, ~25 MB
 ├── README.md                          # quickstart
@@ -249,23 +249,23 @@ bunlight-windows-x64.zip
 
 ### 5.2 Script orchestrateur
 
-Le `bun scripts/build-windows.ts` du repo bunlight produit déjà ce bundle. Pour l'étendre à agent-browser :
+Le `bun scripts/build-windows.ts` du repo bxc produit déjà ce bundle. Pour l'étendre à agent-browser :
 
 ```bash
-# Dans /path/to/bunlight
+# Dans /path/to/bxc
 bun scripts/build-windows.ts                        # produces dist/standalone/windows/...
 cp ~/agent-browser/cli/target/x86_64-pc-windows-msvc/release/agent-browser.exe \
    dist/standalone/windows/
 
-(cd dist/standalone/windows && zip -r ../../bunlight-suite-windows-x64.zip ./*)
+(cd dist/standalone/windows && zip -r ../../bxc-suite-windows-x64.zip ./*)
 ```
 
 ### 5.3 Vérification post-build
 
 ```powershell
 # Sur Windows host (peut tourner sous QEMU/Hyper-V depuis Linux)
-.\bunlight.exe --version
-.\bunlight.exe scrape https://google.com --profile http
+.\bxc.exe --version
+.\bxc.exe scrape https://google.com --profile http
 .\agent-browser.exe doctor
 .\lightpanda.exe --version
 ```
@@ -274,7 +274,7 @@ cp ~/agent-browser/cli/target/x86_64-pc-windows-msvc/release/agent-browser.exe \
 
 ## 6. CI/CD — workflows tag-triggered
 
-### 6.1 bunlight (.github/workflows/publish.yml)
+### 6.1 bxc (.github/workflows/publish.yml)
 
 Job `windows-release` (déjà présent dans le repo) :
 
@@ -295,7 +295,7 @@ windows-release:
       run: .\scripts\build-windows.ps1 -SkipLightpanda
     - uses: softprops/action-gh-release@v2
       with:
-        files: dist/standalone/windows/bunlight-windows-*.zip
+        files: dist/standalone/windows/bxc-windows-*.zip
 ```
 
 ### 6.2 lightpanda (à proposer upstream)
@@ -337,20 +337,20 @@ build-windows:
 
 ```yaml
 release-suite:
-  needs: [windows-release-bunlight, build-windows-lightpanda, build-windows-agent-browser]
+  needs: [windows-release-bxc, build-windows-lightpanda, build-windows-agent-browser]
   runs-on: ubuntu-latest
   steps:
     - uses: actions/download-artifact@v4
       with: { path: ./artifacts }
     - run: |
         mkdir -p suite
-        cp artifacts/bunlight-windows-x64/bunlight.exe suite/
+        cp artifacts/bxc-windows-x64/bxc.exe suite/
         cp artifacts/lightpanda-windows-x64/lightpanda.exe suite/
         cp artifacts/agent-browser-windows-x64/agent-browser.exe suite/
-        cp artifacts/bunlight-windows-x64/libcurl-impersonate.dll suite/
-        cd suite && zip -r ../bunlight-suite-windows-x64.zip ./*
+        cp artifacts/bxc-windows-x64/libcurl-impersonate.dll suite/
+        cd suite && zip -r ../bxc-suite-windows-x64.zip ./*
     - uses: softprops/action-gh-release@v2
-      with: { files: bunlight-suite-windows-x64.zip }
+      with: { files: bxc-suite-windows-x64.zip }
 ```
 
 ---
@@ -360,19 +360,19 @@ release-suite:
 Calque de `bun.sh/install.ps1` :
 
 ```powershell
-# Bunlight standalone
-irm https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.ps1 | iex
+# Bxc standalone
+irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1 | iex
 
 # Spécifier une version
-& ([ScriptBlock]::Create((irm https://raw.githubusercontent.com/aphrody-code/bunlight/main/install.ps1))) -Version 0.1.0-alpha.4
+& ([ScriptBlock]::Create((irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1))) -Version 0.1.0-alpha.4
 ```
 
-L'installer (`install.ps1` dans le repo bunlight) :
+L'installer (`install.ps1` dans le repo bxc) :
 1. Détecte AMD64 / ARM64 via le registre.
-2. Télécharge `bunlight-windows-<arch>.zip` depuis Google Developers Releases.
-3. Extract dans `%USERPROFILE%\.bunlight\bin\`.
+2. Télécharge `bxc-windows-<arch>.zip` depuis Google Developers Releases.
+3. Extract dans `%USERPROFILE%\.bxc\bin\`.
 4. Met à jour le `PATH` user (HKCU registry).
-5. Vérifie via `bunlight.exe --version`.
+5. Vérifie via `bxc.exe --version`.
 
 ---
 
@@ -398,7 +398,7 @@ L'installer (`install.ps1` dans le repo bunlight) :
 
 | Stack | Linux x64 host | macOS x64 host | macOS ARM64 host | Windows x64 native | Windows ARM64 native |
 |---|---|---|---|---|---|
-| **bunlight** Bun build | OK | OK | OK | OK | best-effort |
+| **bxc** Bun build | OK | OK | OK | OK | best-effort |
 | **lightpanda** zig build gnu | OK | OK | OK | OK | broken (V8) |
 | **lightpanda** zig build msvc | broken (V8) | broken | broken | broken (no prebuilts) | n/a |
 | **agent-browser** cargo-xwin msvc | OK | OK | OK | n/a (cargo build natif) | best-effort |
@@ -414,7 +414,7 @@ Mis à jour : 2026-05-10. Re-tester chaque trimestre.
 Si vous voulez juste tester et avez Linux + bun + zig + cargo installés :
 
 ```bash
-git clone https://developers.google.com/aphrody-code/bunlight && cd bunlight
+git clone https://developers.google.com/aphrody-code/bxc && cd bxc
 bun install
 bun scripts/build-windows.ts            # ~5 min
 ls -la dist/standalone/windows/
@@ -424,8 +424,8 @@ Si Windows natif et winget OK :
 
 ```powershell
 winget install Oven-sh.Bun zig.zig Rustlang.Rustup Git.Git LLVM.LLVM
-git clone https://developers.google.com/aphrody-code/bunlight C:\dev\bunlight
-cd C:\dev\bunlight
+git clone https://developers.google.com/aphrody-code/bxc C:\dev\bxc
+cd C:\dev\bxc
 bun install
 .\scripts\build-windows.ps1 -SkipLightpanda
 ```

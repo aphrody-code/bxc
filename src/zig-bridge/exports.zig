@@ -1,7 +1,7 @@
-// Bunlight Phase 1 — C ABI exports for liblightpanda (DOM-only, no V8)
+// Bxc Phase 1 — C ABI exports for liblightpanda (DOM-only, no V8)
 //
 // Root source file for the `lib` build target added by
-// bunlight/patches/001-cdylib-target.patch.
+// bxc/patches/001-cdylib-target.patch.
 //
 // Prerequisites (the patch adds these to Lightpanda):
 //   - Browser.parseStatic(html) -> !*Frame

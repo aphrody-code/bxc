@@ -15,7 +15,7 @@
  */
 
 /**
- * Integration tests for `bunlight/detect` and `bunlight/router/framework-strategy`.
+ * Integration tests for `bxc/detect` and `bxc/router/framework-strategy`.
  *
  * These tests require :
  *   - The wappalyzergo-cli binary at `vendor/wappalyzergo/wappalyzergo-cli`
@@ -47,7 +47,7 @@ import { shouldReDetectAfter, suggestStrategy } from "../../src/router/framework
 // ---------------------------------------------------------------------------
 
 const BIN_PATH = join(import.meta.dir, "../../vendor/wappalyzergo/wappalyzergo-cli");
-const BIN_PRESENT = (await Bun.file(BIN_PATH).exists()) || !!Bun.env.BUNLIGHT_WAPPALYZERGO_BIN;
+const BIN_PRESENT = (await Bun.file(BIN_PATH).exists()) || !!Bun.env.BXC_WAPPALYZERGO_BIN;
 const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
 function logSkip(reason: string): void {

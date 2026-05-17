@@ -1,6 +1,6 @@
-# bunlight/specs
+# bxc/specs
 
-Specs canoniques que bunlight et `scripts/url-to-docs.ts` respectent ou produisent. Chaque fichier est un digest condensé de la source officielle, avec quotes exactes, et une checklist de conformité côté bunlight.
+Specs canoniques que bxc et `scripts/url-to-docs.ts` respectent ou produisent. Chaque fichier est un digest condensé de la source officielle, avec quotes exactes, et une checklist de conformité côté bxc.
 
 | Fichier | Sujet | Source canonique |
 |---|---|---|

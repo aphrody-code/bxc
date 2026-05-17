@@ -15,7 +15,7 @@
  */
 
 /**
- * test/perf/coldstart.test.ts — Cold start performance tests for `bunlight serve`.
+ * test/perf/coldstart.test.ts — Cold start performance tests for `bxc serve`.
  *
  * Targets:
  *   profile=static  p50 < 50 ms  (Bun startup + Bun.serve bind, lazy FFI)
@@ -153,7 +153,7 @@ let lightpandaAvailable = false;
 beforeAll(async () => {
 	const home = Bun.env.HOME ?? "";
 	const candidates = [
-		Bun.env.BUNLIGHT_LIGHTPANDA_PATH,
+		Bun.env.BXC_LIGHTPANDA_PATH,
 		`${home}/.cache/lightpanda-node/lightpanda`,
 		`${home}/.lightpanda/lightpanda`,
 		`${home}/.local/bin/lightpanda`,
@@ -224,7 +224,7 @@ describe("cold start performance", () => {
 		async () => {
 			if (!lightpandaAvailable) {
 				logSkip(
-					"lightpanda binary not found — install it via `bun run postinstall` or set BUNLIGHT_LIGHTPANDA_PATH. Skipping fast cold start test.",
+					"lightpanda binary not found — install it via `bun run postinstall` or set BXC_LIGHTPANDA_PATH. Skipping fast cold start test.",
 				);
 				// Return without failing — the test infrastructure will show the skip log.
 				return;
@@ -282,7 +282,7 @@ describe("cold start performance", () => {
 
 			const body = (await res.json()) as Record<string, string>;
 			expect(typeof body.Browser).toBe("string");
-			expect(body.Browser).toContain("Bunlight");
+			expect(body.Browser).toContain("Bxc");
 			expect(typeof body.webSocketDebuggerUrl).toBe("string");
 			expect(body.webSocketDebuggerUrl).toMatch(/^ws:\/\//);
 		} finally {

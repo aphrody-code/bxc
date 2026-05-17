@@ -52,9 +52,9 @@ Cloudflare managed-challenge blocked requests. This is the expected behaviour fo
 
 ## Recommendations for rpb-challonge
 
-The following table maps each rpb-challonge transport to its recommended Bunlight profile replacement.
+The following table maps each rpb-challonge transport to its recommended Bxc profile replacement.
 
-| rpb-challonge transport | Current implementation | Bunlight replacement | Notes |
+| rpb-challonge transport | Current implementation | Bxc replacement | Notes |
 |---|---|---|---|
 | scraper.ts (CF managed challenge) | puppeteer-extra + StealthPlugin | `stealth` (patchright Chromium) or `max` (Camoufox FF) | Requires Chromium/Firefox binary; skip cleanly when absent |
 | curl-impersonate.ts (TLS bypass) | curl-impersonate Chrome 131 subprocess | `http` (curl-impersonate FFI, chrome131) | Same JA4 fingerprint, zero subprocess overhead via bun:ffi |
