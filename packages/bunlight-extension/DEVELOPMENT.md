@@ -4,8 +4,10 @@ Welcome to the Bunlight Native Gemini CLI Extension! This extension provides dee
 
 ## Overview
 
-This extension is built utilizing the official `@modelcontextprotocol/sdk` to securely expose native tools and APIs to the Gemini CLI. It follows all official MCP best practices:
+This extension is built utilizing a **vendored and Bun-optimized version** of the official `@modelcontextprotocol/sdk` to securely expose native tools and APIs to the Gemini CLI. It follows all official MCP best practices while eliminating Node.js-specific overhead:
 
+- **Vendored SDK**: Located at `vendor/mcp-sdk-typescript` in the monorepo root.
+- **Bun-Native**: Fully migrated using `n2b` to remove Node dependencies (eventsource, cross-spawn) and pnpm-specific features.
 - **Strict Schema Definitions:** Uses `zod` for rigorous parameter validation.
 - **Robust Transport:** Leverages `StdioServerTransport` for secure communication.
 - **Local Native Capabilities:** By linking directly to our Rust and Zig components, we avoid slow Node.js abstractions.
