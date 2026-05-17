@@ -31,6 +31,18 @@ bun run clean      # scripts/cleanup.ts
 Sous-packages : `cd packages/api && bun run dev` (Elysia + Drizzle),
 `cd packages/llm-extract && bun run bench` (Gemma 4), voir leur CLAUDE.md.
 
+## Workflow notes (subies cette session)
+
+- **Linter reformate entre Edits** : Biome (`bun run format`) + hook PostToolUse
+  `oxlint --fix` modifient le fichier après chaque Write/Edit. Si `Edit` retourne
+  "File has been modified since read", Re-read puis re-apply — c'est normal.
+- **`bun run typecheck` remonte des erreurs upstream** dans
+  `vendor/mcp-sdk-typescript/packages/server/src/server/server.ts` (TS7006/TS2339/TS2307).
+  Ce sont des erreurs préexistantes du SDK vendoré, PAS des régressions. Filtrer
+  avec `grep -v vendor/mcp-sdk-typescript` pour ne voir que les vraies.
+- **Lire `@ai.json` early** dans la session : il déclare l'état du vendoring,
+  les shared_rules, et qui owns quoi (Gemini = FFI/Windows, Claude = scraping/UI).
+
 ## Gotchas spécifiques
 
 - **Pas de `.env`** : `.env.example` seul tracké, le hook PreToolUse refuse toute
