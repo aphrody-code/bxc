@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "bunlight-mcp": {
-      "command": "bun",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/.claude/mcp/bunlight-mcp/index.ts"]
-    }
-  }
-}
