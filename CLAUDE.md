@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 Contexte projet identique à `@GEMINI.md` (mêmes règles, mêmes garde-fous,
-mêmes préférences code). Lis-le, puis reviens ici pour les ajouts Claude-spec.
+mêmes préférences code). Consulter **`ai.json`** pour la synchronisation des
+rôles et de l'état avec Gemini CLI.
 
 ## Surface Claude Code (`.claude/`)
 

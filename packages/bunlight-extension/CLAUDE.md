@@ -47,14 +47,16 @@ bun run skills/rust-native-scanner/scripts/build-rust-skill.ts
 cargo run --manifest-path skills/rust-native-scanner/Cargo.toml -- scan
 ```
 
-## Exception consciente au mandate Bun-only
+## Bun-native — pas d'exception
 
-`server.ts` importe `node:path`, `node:fs`, et utilise `process.env`, `process.cwd`,
-`process.exit`. C'est **volontaire** : le SDK `@modelcontextprotocol/sdk` est
-Node-first et l'extension tourne sous le runtime Gemini CLI (Node), pas Bun
-direct. Ne PAS migrer ces imports vers `Bun.*` — ça casserait l'interop MCP.
-
-Le reste du monorepo Bunlight reste strict Bun-only.
+`server.ts` est désormais 100% Bun-native (cf `ai.json` shared_rules) :
+- Plus d'imports `node:path` / `node:fs` — remplacés par template strings
+  (`${process.cwd()}/skills`) et `Bun.Glob("*/").scan({cwd, onlyFiles:false})`.
+- `process.env` / `process.cwd` / `process.exit` restent : ce sont des globals
+  natifs Bun (pas des imports `node:`), aucune dépendance Node.
+- Le SDK `@modelcontextprotocol/sdk` est vendoré et migré Bun-native dans
+  `vendor/mcp-sdk-typescript/` (workspace:* via `package.json`). Plus de bump
+  npm direct ; bump le submodule.
 
 ## Pièges
 

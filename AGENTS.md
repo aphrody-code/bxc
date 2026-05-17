@@ -14,7 +14,7 @@ It operates as a **Monorepo** managed by **Turborepo**.
 - **Build System**: Turborepo
 - **Linting**: Biome
 - **Tests**: `bun:test`
-- **MCP SDK**: `@modelcontextprotocol/server` (v2)
+- **MCP SDK**: Vendored Bun-native SDK (`vendor/mcp-sdk-typescript`)
 
 ---
 
@@ -37,7 +37,7 @@ Always use the root-level scripts for consistency:
 - `/src`: Core library source.
 - `/bin`: CLI entrypoints.
 - `/extensions`: Extensions and MCP servers.
-- `/vendor`: Native binaries and C/Zig sources.
+- `/vendor`: Native binaries, C/Zig sources, and the **vendored MCP SDK**.
 - `/scripts`: Build, install, and maintenance scripts.
 
 ---

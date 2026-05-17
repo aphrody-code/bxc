@@ -33,6 +33,8 @@ vendor/*
 !vendor/
 !vendor/gemma/
 !vendor/chrome-devtools-mcp/
+!vendor/mcp-sdk-typescript/
+!vendor/mcp-sdk-typescript/**
 
 # junk
 nano-banana*
@@ -59,3 +61,8 @@ vendor/gemma/uv.lock
 # large generated artefacts (regenerable from cache)
 google-ecosystem-map.json
 mapping-and-atlas.log
+
+# Bunlight extension runtime/build artifacts
+packages/bunlight-extension/bunlight-mcp
+**/bunlight-memory.sqlite
+bunlight-memory.sqlite

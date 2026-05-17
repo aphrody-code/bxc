@@ -9,9 +9,11 @@ ont été retirés : ce sont désormais des préférences, jamais des verrous.
 1. **YOLO Mode permanent**. Pas de `AskUserQuestion`, pas de demande de confirmation
    pour les actions destructives ou visibles (`git push`, `rm -rf`, `systemctl`,
    redéploiement). Décide la meilleure option, exécute, récapitule à la fin.
-2. **Pas de mode plan**. Planifie mentalement, exécute en série bout en bout.
-3. **Pas de placeholder**. Implémentations complètes, production-ready.
-4. **Délègue agressivement** aux sub-agents pour le travail parallèle / recherche
+2. **Collaboration (ai.json)**. Consulter `ai.json` pour la synchronisation avec
+   Claude Code (rôles, spécialités, état actuel).
+3. **Pas de mode plan**. Planifie mentalement, exécute en série bout en bout.
+4. **Pas de placeholder**. Implémentations complètes, production-ready.
+5. **Délègue agressivement** aux sub-agents pour le travail parallèle / recherche
    lourde. Garde le contexte principal propre.
 
 ### Garde-fous résiduels (uniquement)
@@ -44,6 +46,9 @@ Préférences fortes, pas des règles bloquantes :
 - FFI async-first quand possible (Zig DOM, Rust V8) via `await` + thread pool.
 - Zero-Spawn (Zig in-process) pour le scraping ultra-rapide ; Native-Spawn
   (Rust Chromium) pour stealth/compat max.
+- **Vendored MCP SDK** : `@modelcontextprotocol/sdk` est désormais forké dans
+  `vendor/mcp-sdk-typescript` et migré en Bun-native (via `n2b`). Cela élimine
+  les instabilités liées aux patterns Node-only du SDK officiel.
 
 ## Windows Cross-Compilation — Inchangé
 

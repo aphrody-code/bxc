@@ -5,13 +5,19 @@
   "type": "module",
   "scripts": {
     "build": "bun build ./server.ts --compile --target=bun-linux-x64 --outfile bunlight-mcp",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "test": "bun test"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.1",
+    "@modelcontextprotocol/sdk": "workspace:*",
+    "@modelcontextprotocol/core": "workspace:*",
+    "@modelcontextprotocol/server": "workspace:*",
+    "@modelcontextprotocol/client": "workspace:*",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "oxlint": "latest"
   }
 }
