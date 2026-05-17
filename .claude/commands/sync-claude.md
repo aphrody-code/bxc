@@ -4,7 +4,7 @@ argument-hint: "[scope optionnel : root | packages | all (défaut: all)]"
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep
 ---
 
-# /refresh-claude-md — audit + update CLAUDE.md selon les guidelines Anthropic
+# /sync-claude — audit + update CLAUDE.md selon les guidelines Anthropic
 
 Tu vas faire un audit COMPLET puis appliquer des updates ciblés sur les `CLAUDE.md`
 du repo. Scope = `$ARGUMENTS` (défaut `all`).
