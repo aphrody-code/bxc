@@ -8,8 +8,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { Database } from "bun:sqlite";
-import { join } from "node:path";
-import { readdirSync } from "node:fs";
 
 // Bunlight Engine Imports (assuming access to monorepo internals)
 // In a real execution context, these would point to compiled binaries or modules
@@ -26,7 +24,8 @@ const server = new McpServer({
  * Replaces the flat GEMINI.md text-based memory with a structured SQLite DB
  * for high-performance memory tuning and vector-like retrieval.
  */
-const dbPath = process.env.BUNLIGHT_MEMORY_DB || join(process.cwd(), "bunlight-memory.sqlite");
+const dbPath =
+	process.env.BUNLIGHT_MEMORY_DB || `${process.cwd()}/bunlight-memory.sqlite`;
 const db = new Database(dbPath);
 db.run(`
   CREATE TABLE IF NOT EXISTS memories (
@@ -40,7 +39,8 @@ db.run(`
 server.registerTool(
 	"tune_memory_sqlite",
 	{
-		description: "Stores or retrieves a fine-tuned memory fact in the high-performance SQLite database.",
+		description:
+			"Stores or retrieves a fine-tuned memory fact in the high-performance SQLite database.",
 		inputSchema: z.object({
 			action: z.enum(["get", "set"]),
 			key: z.string(),
@@ -49,17 +49,30 @@ server.registerTool(
 	},
 	async (args) => {
 		if (args.action === "set" && args.value) {
-			const stmt = db.prepare("INSERT OR REPLACE INTO memories (key, value) VALUES (?, ?)");
+			const stmt = db.prepare(
+				"INSERT OR REPLACE INTO memories (key, value) VALUES (?, ?)",
+			);
 			stmt.run(args.key, args.value);
-			return { content: [{ type: "text", text: `Memory '${args.key}' tuned and saved to SQLite.` }] };
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Memory '${args.key}' tuned and saved to SQLite.`,
+					},
+				],
+			};
 		} else {
 			const stmt = db.prepare("SELECT value FROM memories WHERE key = ?");
 			const result = stmt.get(args.key) as { value: string } | undefined;
 			return {
-				content: [{
-					type: "text",
-					text: result ? result.value : `No memory found for key '${args.key}'.`
-				}],
+				content: [
+					{
+						type: "text",
+						text: result
+							? result.value
+							: `No memory found for key '${args.key}'.`,
+					},
+				],
 			};
 		}
 	},
@@ -73,7 +86,8 @@ server.registerTool(
 server.registerTool(
 	"vision_analyze",
 	{
-		description: "Analyzes an image or a webpage screenshot using native Vision capabilities.",
+		description:
+			"Analyzes an image or a webpage screenshot using native Vision capabilities.",
 		inputSchema: z.object({
 			targetUrl: z.string(),
 			prompt: z.string().default("Describe what is in this image or webpage."),
@@ -84,10 +98,12 @@ server.registerTool(
 		// In production, this bridges to bunlight-engine (Chromium) to take a CDP screenshot
 		// and pipes it to a local Gemma-Vision or native API.
 		return {
-			content: [{
-				type: "text",
-				text: `[Native Vision API] Analyzed ${args.targetUrl}.\nResult: High-performance visual scraping complete based on prompt: "${args.prompt}".`,
-			}],
+			content: [
+				{
+					type: "text",
+					text: `[Native Vision API] Analyzed ${args.targetUrl}.\nResult: High-performance visual scraping complete based on prompt: "${args.prompt}".`,
+				},
+			],
 		};
 	},
 );
@@ -99,7 +115,8 @@ server.registerTool(
 server.registerTool(
 	"start_scraping_subagent",
 	{
-		description: "Delegates a massive scraping task to the Bunlight Zero-Spawn Chromium engine subagent.",
+		description:
+			"Delegates a massive scraping task to the Bunlight Zero-Spawn Chromium engine subagent.",
 		inputSchema: z.object({
 			urls: z.array(z.string()),
 			concurrency: z.number().default(24),
@@ -108,10 +125,12 @@ server.registerTool(
 	async (args) => {
 		// Native offloading to Bunlight's pool
 		return {
-			content: [{
-				type: "text",
-				text: `Successfully dispatched scraping subagent for ${args.urls.length} URLs with concurrency ${args.concurrency}. Background tracking initiated.`,
-			}],
+			content: [
+				{
+					type: "text",
+					text: `Successfully dispatched scraping subagent for ${args.urls.length} URLs with concurrency ${args.concurrency}. Background tracking initiated.`,
+				},
+			],
 		};
 	},
 );
@@ -123,25 +142,35 @@ server.registerTool(
 server.registerTool(
 	"auto_detect_skills",
 	{
-		description: "Scans the extension directories to auto-detect pre-built skills and tools.",
+		description:
+			"Scans the extension directories to auto-detect pre-built skills and tools.",
 		inputSchema: z.object({}).shape,
 	},
 	async () => {
 		try {
-			const skillsDir = join(process.cwd(), "packages/bunlight-extension/skills");
-			const skills = readdirSync(skillsDir, { withFileTypes: true })
-				.filter(dirent => dirent.isDirectory())
-				.map(dirent => dirent.name);
-			
+			const skillsDir = `${process.cwd()}/skills`;
+			const glob = new Bun.Glob("*/");
+			const skills: string[] = [];
+			for await (const entry of glob.scan({
+				cwd: skillsDir,
+				onlyFiles: false,
+			})) {
+				skills.push(entry.replace(/\/$/, ""));
+			}
+
 			return {
-				content: [{
-					type: "text",
-					text: `Auto-detected native skills:\n${skills.map(s => `- ${s}`).join("\n")}`,
-				}],
+				content: [
+					{
+						type: "text",
+						text: `Auto-detected native skills:\n${skills.map((s) => `- ${s}`).join("\n")}`,
+					},
+				],
 			};
 		} catch (error) {
 			return {
-				content: [{ type: "text", text: `Error auto-detecting skills: ${error}` }]
+				content: [
+					{ type: "text", text: `Error auto-detecting skills: ${error}` },
+				],
 			};
 		}
 	},
@@ -154,18 +183,24 @@ server.registerTool(
 server.registerTool(
 	"bunlight_cdp_snapshot",
 	{
-		description: "Take a text snapshot of the current page based on the a11y tree via Bunlight native CDP. Prefer this over screenshots for element identification.",
+		description:
+			"Take a text snapshot of the current page based on the a11y tree via Bunlight native CDP. Prefer this over screenshots for element identification.",
 		inputSchema: z.object({
-			verbose: z.boolean().default(false).describe("Include full a11y tree information."),
-			targetUrl: z.string().describe("The URL of the target page to snapshot.")
+			verbose: z
+				.boolean()
+				.default(false)
+				.describe("Include full a11y tree information."),
+			targetUrl: z.string().describe("The URL of the target page to snapshot."),
 		}).shape,
 	},
 	async (args) => {
 		return {
-			content: [{
-				type: "text",
-				text: `[Native CDP Snapshot] Successfully captured DOM/A11y state for ${args.targetUrl} (verbose: ${args.verbose}).\n<snapshot_data_mocked_for_arch>\n- [Button] Submit\n- [Link] Login\n</snapshot_data_mocked_for_arch>`
-			}],
+			content: [
+				{
+					type: "text",
+					text: `[Native CDP Snapshot] Successfully captured DOM/A11y state for ${args.targetUrl} (verbose: ${args.verbose}).\n<snapshot_data_mocked_for_arch>\n- [Button] Submit\n- [Link] Login\n</snapshot_data_mocked_for_arch>`,
+				},
+			],
 		};
 	},
 );
@@ -177,18 +212,24 @@ server.registerTool(
 server.registerTool(
 	"bunlight_cdp_evaluate",
 	{
-		description: "Evaluates raw JavaScript directly in the page context natively via V8 CDP.",
+		description:
+			"Evaluates raw JavaScript directly in the page context natively via V8 CDP.",
 		inputSchema: z.object({
 			script: z.string().describe("The JavaScript code to execute."),
-			targetUrl: z.string().optional().describe("The URL context to evaluate against.")
+			targetUrl: z
+				.string()
+				.optional()
+				.describe("The URL context to evaluate against."),
 		}).shape,
 	},
 	async (args) => {
 		return {
-			content: [{
-				type: "text",
-				text: `[Native CDP Evaluate] Execution of script length ${args.script.length} successful.\nResult: {"status":"ok","return_value":"mocked_result_from_v8"}`
-			}],
+			content: [
+				{
+					type: "text",
+					text: `[Native CDP Evaluate] Execution of script length ${args.script.length} successful.\nResult: {"status":"ok","return_value":"mocked_result_from_v8"}`,
+				},
+			],
 		};
 	},
 );
@@ -200,18 +241,21 @@ server.registerTool(
 server.registerTool(
 	"bunlight_cdp_logs",
 	{
-		description: "List all native console messages and network HAR events since the last navigation.",
+		description:
+			"List all native console messages and network HAR events since the last navigation.",
 		inputSchema: z.object({
 			type: z.enum(["console", "network", "all"]).default("all"),
-			limit: z.number().default(100)
+			limit: z.number().default(100),
 		}).shape,
 	},
 	async (args) => {
 		return {
-			content: [{
-				type: "text",
-				text: `[Native CDP Logs] Fetched ${args.limit} ${args.type} logs natively.\n- [INFO] Page loaded successfully\n- [NETWORK] 200 OK https://example.com/api`
-			}],
+			content: [
+				{
+					type: "text",
+					text: `[Native CDP Logs] Fetched ${args.limit} ${args.type} logs natively.\n- [INFO] Page loaded successfully\n- [NETWORK] 200 OK https://example.com/api`,
+				},
+			],
 		};
 	},
 );
