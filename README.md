@@ -92,7 +92,20 @@ const { page } = await google.open("https://www.google.com/search?q=bxc+engine")
 
 ---
 
-## 📜 Standards & Compliance
+## 🧩 Gemini CLI Extension
+Bxc is a first-class Gemini CLI extension. It provides native skills and slash commands to the agent.
+
+### 🛠️ Activation
+If you are running Gemini CLI in this workspace, the extension is automatically detected. To link it globally:
+```bash
+gemini extensions link .
+```
+
+### ⚡ Custom Commands
+- `/bxc:scrape <url>`: Instant markdown extraction.
+- `/skills`: Access `bxc-recon`, `bxc-scrape`, and `bxc-detect`.
+
+---
 - **License**: Apache-2.0
 - **Style**: Google TypeScript Style Guide
 - **Provenance**: SLSA Level 3 signed releases

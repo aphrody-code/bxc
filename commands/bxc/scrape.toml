@@ -1,0 +1,14 @@
+# /scrape command
+description = "Quickly scrape a URL to Markdown"
+
+[options]
+insecure = { type = "boolean", description = "Ignore TLS errors", default = false }
+
+[[parameters]]
+name = "url"
+description = "The target URL to scrape"
+required = true
+
+[execution]
+command = "bxc"
+args = ["scrape", "{{url}}", "--markdown", "{% if insecure %}--insecure{% endif %}"]
