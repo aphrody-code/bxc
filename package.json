@@ -48,6 +48,7 @@
 		"lint:fix": "oxlint --fix src test examples scripts",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
+		"build:mcp": "bun build ./src/mcp/server.ts --compile --target=bun-linux-x64 --outfile ./dist/standalone/bxc-mcp",
 		"clean": "bun scripts/cleanup.ts",
 		"bench": "bun benchmarks/run-all.ts"
 	},
