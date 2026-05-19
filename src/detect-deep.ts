@@ -19,36 +19,11 @@
  *
  * Multi-signal detection of frontend, backend, CDN, DNS, hosting, and
  * analytics technologies behind a URL.
- *
- * Sources combined:
- *   1. Authoritative response headers (Server, X-Powered-By, X-Cache,
- *      X-Vercel-*, CF-Ray, X-Amz-Cf-*, X-Akamai-*, X-Served-By, …).
- *   2. DNS records: NS (auth provider), A / AAAA (IPs),
- *      CNAME chain (often reveals Vercel/Netlify/Cloudflare/etc.),
- *      reverse PTR lookup of resolved IPs.
- *   3. IP → CDN range matching (Cloudflare 104.16/12 + others, Fastly,
- *      AWS CloudFront, GCP, Azure Front Door, …).
- *   4. HTML body signatures (`<meta name="generator">`, `_next/static`,
- *      `__nuxt`, `/wp-content/`, Svelte / Vue / React markers,
- *      Astro islands, etc.).
- *   5. CSP-allowed hosts (often expose backend CMS).
- *   6. Wappalyzergo for everything else (Tag Managers, JS libs, etc.).
- *
- * The module exports a single async entrypoint:
- *
- *   const result = await deepDetect("https://design.google");
- *
- * Result shape is structured to be agent-friendly: every field is either
- * an array of `{ name, evidence, source }` or a string-keyed map keyed by
- * detection bucket (frontend / backend / cdn / dns / hosting / analytics
- * / language / server / cms).
  */
 
-// DNS: Bun.dns is native (cached, prefetch-aware) for A/AAAA lookups.
-// NS / CNAME / PTR record types are not exposed by Bun.dns yet — fall back
-// to node:dns/promises (Bun-compat) for those. https://bun.com/docs/runtime/networking/dns
 import { promises as nodeDns } from "node:dns";
 import { detectFrameworks } from "./detect.ts";
+import { bxcFetch } from "./utils/bxc-fetch.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,17 +45,11 @@ export type DetectionBucket =
 	| "other";
 
 export interface DetectionEvidence {
-	/** Human-readable name (e.g. `"Next.js"`, `"Cloudflare"`). */
 	name: string;
-	/** Evidence excerpt that triggered the match (truncated). */
 	evidence: string;
-	/** Source signal: `"header"`, `"dns"`, `"ip"`, `"body"`, `"csp"`, `"wappalyzer"`, `"cert"`. */
 	source: string;
-	/** Optional confidence score 0..1. */
 	confidence?: number;
-	/** Optional version string. */
 	version?: string;
-	/** Optional category list returned by wappalyzergo. */
 	categories?: string[];
 }
 
@@ -109,14 +78,9 @@ export interface DeepDetectionResult {
 }
 
 // ---------------------------------------------------------------------------
-// IP range tables (compact, common-case CDNs)
+// IP range tables
 // ---------------------------------------------------------------------------
 
-/**
- * Static IPv4 prefix tables. We do NOT fetch live ranges — that would be
- * a data source dependency. These are the canonical CIDR prefixes shipped
- * by each provider in 2025-2026 (top of their published ranges).
- */
 const CDN_IP_PREFIXES: Array<{ name: string; prefixes: string[] }> = [
 	{
 		name: "Cloudflare",
@@ -198,14 +162,8 @@ const CDN_IP_PREFIXES: Array<{ name: string; prefixes: string[] }> = [
 			"108.158.",
 		],
 	},
-	{
-		name: "Vercel",
-		prefixes: ["76.76.21.", "76.76.19.", "64.252."],
-	},
-	{
-		name: "Netlify",
-		prefixes: ["75.2.", "99.83.", "13.249.", "151.101."],
-	},
+	{ name: "Vercel", prefixes: ["76.76.21.", "76.76.19.", "64.252."] },
+	{ name: "Netlify", prefixes: ["75.2.", "99.83.", "13.249.", "151.101."] },
 	{
 		name: "Akamai",
 		prefixes: [
@@ -377,10 +335,7 @@ const CDN_IP_PREFIXES: Array<{ name: string; prefixes: string[] }> = [
 		name: "Google Developers Pages",
 		prefixes: ["185.199.108.", "185.199.109.", "185.199.110.", "185.199.111."],
 	},
-	{
-		name: "Heroku",
-		prefixes: ["54.144.", "54.158.", "54.159.", "54.161.", "54.165.", "54.166."],
-	},
+	{ name: "Heroku", prefixes: ["54.144.", "54.158.", "54.159.", "54.161.", "54.165.", "54.166."] },
 ];
 
 function ipToCdn(ip: string): string | null {
@@ -393,7 +348,7 @@ function ipToCdn(ip: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// NS → DNS provider mapping
+// DNS providers
 // ---------------------------------------------------------------------------
 
 const NS_PATTERNS: Array<{ name: string; matches: RegExp }> = [
@@ -410,7 +365,6 @@ const NS_PATTERNS: Array<{ name: string; matches: RegExp }> = [
 	{ name: "Namecheap", matches: /\.registrar-servers\.com$/i },
 	{ name: "Vercel DNS", matches: /\.vercel-dns\.com$/i },
 	{ name: "Netlify DNS", matches: /\.nsone\.net$|\.netlify\.com$/i },
-	{ name: "Cloudflare Registrar", matches: /\.cloudflare-dns\.com$/i },
 	{ name: "Hover", matches: /\.hover\.com$/i },
 	{ name: "Gandi", matches: /\.gandi\.net$/i },
 	{ name: "OVH", matches: /\.ovh\.net$|\.ovh\.com$/i },
@@ -423,10 +377,6 @@ function nsToProvider(ns: string): string | null {
 	return null;
 }
 
-// ---------------------------------------------------------------------------
-// CNAME → hosting provider
-// ---------------------------------------------------------------------------
-
 const CNAME_HOSTING_PATTERNS: Array<{ name: string; bucket: DetectionBucket; matches: RegExp }> = [
 	{ name: "Vercel", bucket: "hosting", matches: /\.vercel-dns\.com$|\.vercel\.app$|\.now\.sh$/i },
 	{ name: "Netlify", bucket: "hosting", matches: /\.netlify\.com$|\.netlify\.app$/i },
@@ -437,28 +387,14 @@ const CNAME_HOSTING_PATTERNS: Array<{ name: string; bucket: DetectionBucket; mat
 	{ name: "Fly.io", bucket: "hosting", matches: /\.fly\.dev$|\.fly\.io$/i },
 	{ name: "Railway", bucket: "hosting", matches: /\.railway\.app$|\.up\.railway\.app$/i },
 	{
-		name: "Google Cloud Run / App Engine",
+		name: "Google Cloud Run",
 		bucket: "hosting",
 		matches: /\.appspot\.com$|\.run\.app$|\.googleapis\.com$/i,
 	},
-	{
-		name: "AWS S3",
-		bucket: "hosting",
-		matches: /\.s3\.amazonaws\.com$|\.s3-website[.-].*\.amazonaws\.com$/i,
-	},
+	{ name: "AWS S3", bucket: "hosting", matches: /\.s3\.amazonaws\.com$|\.s3-website/i },
 	{ name: "AWS CloudFront", bucket: "cdn", matches: /\.cloudfront\.net$/i },
-	{ name: "AWS Elastic Beanstalk", bucket: "hosting", matches: /\.elasticbeanstalk\.com$/i },
-	{ name: "Azure Static Web Apps", bucket: "hosting", matches: /\.azurestaticapps\.net$/i },
-	{ name: "Azure App Service", bucket: "hosting", matches: /\.azurewebsites\.net$/i },
 	{ name: "Cloudflare Pages", bucket: "hosting", matches: /\.pages\.dev$/i },
-	{ name: "Fastly", bucket: "cdn", matches: /\.fastly\.net$|\.fastlylb\.net$/i },
-	{ name: "Akamai", bucket: "cdn", matches: /\.akamaiedge\.net$|\.akamaitechnologies\.com$/i },
-	{ name: "Cloudflare", bucket: "cdn", matches: /\.cloudflare\.com$/i },
-	{ name: "BunnyCDN", bucket: "cdn", matches: /\.b-cdn\.net$/i },
-	{ name: "KeyCDN", bucket: "cdn", matches: /\.kxcdn\.com$/i },
 	{ name: "Shopify", bucket: "hosting", matches: /\.myshopify\.com$|shopify\.com$/i },
-	{ name: "Squarespace", bucket: "hosting", matches: /\.squarespace\.com$/i },
-	{ name: "Wix", bucket: "hosting", matches: /\.wixsite\.com$|\.wix\.com$/i },
 	{ name: "Webflow", bucket: "hosting", matches: /\.webflow\.io$|\.webflow\.com$/i },
 ];
 
@@ -470,7 +406,7 @@ function cnameToProvider(cname: string): { name: string; bucket: DetectionBucket
 }
 
 // ---------------------------------------------------------------------------
-// Header → CDN/server fingerprinting
+// Header fingerprints
 // ---------------------------------------------------------------------------
 
 const HEADER_FINGERPRINTS: Array<{
@@ -479,43 +415,19 @@ const HEADER_FINGERPRINTS: Array<{
 	header: string;
 	match?: RegExp;
 }> = [
-	// CDN
 	{ name: "Cloudflare", bucket: "cdn", header: "cf-ray" },
 	{ name: "Cloudflare", bucket: "cdn", header: "cf-cache-status" },
-	{ name: "Cloudflare", bucket: "cdn", header: "cf-mitigated" },
 	{ name: "AWS CloudFront", bucket: "cdn", header: "x-amz-cf-id" },
-	{ name: "AWS CloudFront", bucket: "cdn", header: "x-amz-cf-pop" },
 	{ name: "Fastly", bucket: "cdn", header: "x-served-by", match: /^cache-/i },
-	{ name: "Fastly", bucket: "cdn", header: "x-fastly-request-id" },
 	{ name: "Akamai", bucket: "cdn", header: "x-akamai-edge" },
-	{ name: "Akamai", bucket: "cdn", header: "x-akamai-transformed" },
 	{ name: "Vercel", bucket: "cdn", header: "x-vercel-id" },
-	{ name: "Vercel", bucket: "cdn", header: "x-vercel-cache" },
 	{ name: "Netlify", bucket: "cdn", header: "x-nf-request-id" },
-	{ name: "Cloudflare Workers", bucket: "hosting", header: "cf-worker" },
-	{ name: "Google Developers Pages", bucket: "hosting", header: "x-github-request-id" },
-	{ name: "Google Cloud", bucket: "hosting", header: "x-cloud-trace-context" },
-	{ name: "Google Frontend", bucket: "cdn", header: "server", match: /^Google Frontend$/i },
-	// Server
 	{ name: "nginx", bucket: "server", header: "server", match: /nginx/i },
 	{ name: "Apache", bucket: "server", header: "server", match: /apache/i },
 	{ name: "Caddy", bucket: "server", header: "server", match: /caddy/i },
-	{ name: "Microsoft IIS", bucket: "server", header: "server", match: /iis/i },
-	{ name: "LiteSpeed", bucket: "server", header: "server", match: /litespeed/i },
-	{ name: "Envoy", bucket: "server", header: "server", match: /envoy/i },
-	// Backend
 	{ name: "Next.js", bucket: "backend", header: "x-powered-by", match: /next\.js/i },
-	{ name: "Express.js", bucket: "backend", header: "x-powered-by", match: /express/i },
 	{ name: "PHP", bucket: "language", header: "x-powered-by", match: /php\//i },
-	{ name: "ASP.NET", bucket: "backend", header: "x-powered-by", match: /asp\.net/i },
-	{ name: "Ruby on Rails", bucket: "backend", header: "x-powered-by", match: /rails/i },
-	{ name: "Phusion Passenger", bucket: "backend", header: "server", match: /passenger/i },
-	{ name: "Django", bucket: "backend", header: "x-powered-by", match: /django/i },
-	{ name: "Laravel", bucket: "backend", header: "x-powered-by", match: /laravel/i },
-	{ name: "Wordpress", bucket: "cms", header: "x-powered-by", match: /wp[\s-]?engine|wordpress/i },
-	// Generic
-	{ name: "HTTP/2", bucket: "other", header: "alt-svc", match: /h2/i },
-	{ name: "HTTP/3 (QUIC)", bucket: "other", header: "alt-svc", match: /h3/i },
+	{ name: "Wordpress", bucket: "cms", header: "x-powered-by", match: /wp-engine|wordpress/i },
 ];
 
 function fingerprintHeaders(headers: Record<string, string>): DetectionEvidence[] {
@@ -535,7 +447,7 @@ function fingerprintHeaders(headers: Record<string, string>): DetectionEvidence[
 }
 
 // ---------------------------------------------------------------------------
-// HTML body signatures
+// Body signatures
 // ---------------------------------------------------------------------------
 
 const BODY_SIGNATURES: Array<{
@@ -544,7 +456,6 @@ const BODY_SIGNATURES: Array<{
 	pattern: RegExp;
 	versionPattern?: RegExp;
 }> = [
-	// Frontend frameworks
 	{
 		name: "Next.js",
 		bucket: "frontend",
@@ -553,139 +464,13 @@ const BODY_SIGNATURES: Array<{
 	},
 	{ name: "Nuxt.js", bucket: "frontend", pattern: /\/_nuxt\/|window\.__NUXT__/ },
 	{ name: "Astro", bucket: "frontend", pattern: /<astro-island|astro-slot|data-astro-/ },
-	{ name: "SvelteKit", bucket: "frontend", pattern: /\/_app\/immutable\/|sveltekit/i },
-	{ name: "Svelte", bucket: "frontend", pattern: /data-svelte-h="|svelte-/ },
-	{
-		name: "Vue.js",
-		bucket: "frontend",
-		pattern: /data-v-[a-f0-9]{8}|__VUE__|<div id="app"|window\.__INITIAL_STATE__/,
-	},
-	{
-		name: "React",
-		bucket: "frontend",
-		pattern: /__react_internal|data-reactroot|data-reactid|window\.__INITIAL_STATE__/,
-	},
-	{ name: "Remix", bucket: "frontend", pattern: /__remix-/ },
-	{ name: "Angular", bucket: "frontend", pattern: /ng-version="|ng-app|ng-controller/ },
-	{ name: "Solid.js", bucket: "frontend", pattern: /_$HY=|hk:".+":/ },
-	{ name: "Qwik", bucket: "frontend", pattern: /q:container=|q:base=/ },
-	{ name: "Gatsby", bucket: "frontend", pattern: /__gatsby|gatsby-link/ },
-	{ name: "Hugo", bucket: "frontend", pattern: /<meta name="generator" content="Hugo/i },
-	{ name: "Jekyll", bucket: "frontend", pattern: /<meta name="generator" content="Jekyll/i },
-	{ name: "Eleventy", bucket: "frontend", pattern: /<meta name="generator" content="Eleventy/i },
-	{ name: "VitePress", bucket: "frontend", pattern: /<!-- vitepress-/ },
-	{ name: "Docusaurus", bucket: "frontend", pattern: /<!-- docusaurus|docusaurus_skip/ },
-	// CMS
-	{ name: "WordPress", bucket: "cms", pattern: /\/wp-content\/|\/wp-includes\/|wp-json/ },
-	{ name: "Drupal", bucket: "cms", pattern: /\/sites\/default\/files\/|drupalSettings|drupal\.js/ },
-	{ name: "Joomla", bucket: "cms", pattern: /\/media\/jui\/|joomla!\s/i },
-	{ name: "Wagtail", bucket: "cms", pattern: /wagtail|<!-- powered by wagtail/i },
-	{ name: "Ghost", bucket: "cms", pattern: /<meta name="generator" content="Ghost/i },
-	{ name: "Strapi", bucket: "cms", pattern: /strapi-img-loader|\/api\/upload\/files/ },
-	{ name: "Sanity", bucket: "cms", pattern: /cdn\.sanity\.io|sanityClient/ },
-	{ name: "Contentful", bucket: "cms", pattern: /cdn\.contentful\.com|contentful\.management/ },
+	{ name: "WordPress", bucket: "cms", pattern: /\/wp-content\/|\/wp-includes\// },
 	{ name: "Shopify", bucket: "cms", pattern: /cdn\.shopify\.com|window\.Shopify/ },
-	// Backend signatures (rare but useful)
-	{ name: "Django", bucket: "backend", pattern: /csrfmiddlewaretoken|django-/ },
-	{ name: "Flask", bucket: "backend", pattern: /<input[^>]*name="csrf_token"/ },
-	{ name: "Laravel", bucket: "backend", pattern: /window\.Laravel/ },
-	{ name: "Phoenix LiveView", bucket: "backend", pattern: /data-phx-/ },
-	{ name: "Rails Turbo", bucket: "backend", pattern: /turbo-frame|turbo-stream/ },
-	{ name: "Webpack", bucket: "framework", pattern: /webpackChunk|webpackJsonp/ },
-	{ name: "Vite", bucket: "framework", pattern: /\/@vite\/client|@vite\/client/ },
-	{ name: "Parcel", bucket: "framework", pattern: /parcelRequire/ },
-	{ name: "Turbopack", bucket: "framework", pattern: /__turbopack/ },
-	// Tag managers / analytics
-	{
-		name: "Google Tag Manager",
-		bucket: "tag-manager",
-		pattern: /googletagmanager\.com\/gtm\.js|GTM-[A-Z0-9]+/,
-	},
-	{
-		name: "Google Analytics",
-		bucket: "analytics",
-		pattern: /googletagmanager\.com\/gtag\/js|UA-\d{6,}|G-[A-Z0-9]+/,
-	},
-	{ name: "Plausible", bucket: "analytics", pattern: /plausible\.io\/js\// },
-	{ name: "Fathom Analytics", bucket: "analytics", pattern: /usefathom\.com\/script/ },
-	{ name: "Matomo", bucket: "analytics", pattern: /matomo\.js|piwik\.js/ },
-	{ name: "Segment", bucket: "analytics", pattern: /cdn\.segment\.com\/analytics/ },
-	{ name: "Mixpanel", bucket: "analytics", pattern: /cdn\.mxpnl\.com\/libs\/mixpanel/ },
-	{ name: "PostHog", bucket: "analytics", pattern: /app\.posthog\.com\/static\/array\.js/ },
-	{ name: "Amplitude", bucket: "analytics", pattern: /cdn\.amplitude\.com/ },
-	{ name: "Hotjar", bucket: "analytics", pattern: /static\.hotjar\.com/ },
-	{ name: "Intercom", bucket: "analytics", pattern: /widget\.intercom\.io/ },
-	// Languages
-	{ name: "Lit", bucket: "library", pattern: /lit-element|lit-html|@lit\// },
-	{ name: "Stimulus", bucket: "library", pattern: /data-controller="|stimulus-/ },
-	{ name: "Alpine.js", bucket: "library", pattern: /x-data="|x-show="|x-bind:/ },
-	{ name: "HTMX", bucket: "library", pattern: /hx-get="|hx-post="|hx-target="/ },
-	{ name: "jQuery", bucket: "library", pattern: /jquery(?:\.min)?\.js|jQuery v\d/ },
-	{ name: "Lodash", bucket: "library", pattern: /lodash(?:\.min)?\.js/ },
-	{ name: "D3.js", bucket: "library", pattern: /d3\.v\d|d3-/ },
-	{ name: "Three.js", bucket: "library", pattern: /three\.module\.js|THREE\./ },
-	{
-		name: "Bootstrap",
-		bucket: "library",
-		pattern: /bootstrap(?:\.bundle)?(?:\.min)?\.js|class="[^"]*\bnavbar\b/,
-	},
 	{ name: "Tailwind CSS", bucket: "library", pattern: /tailwindcss|tw-elements/ },
 ];
 
-/**
- * Bun's native HTMLRewriter (lol-html) extracts <meta>/<script>/<link>
- * efficiently — see https://bun.com/docs/runtime/html-rewriter. Falls back
- * to regex when HTMLRewriter is not available (e.g. older Bun, non-Bun env).
- */
-function structuredHtmlScan(html: string): {
-	generator: string | null;
-	scriptSrcs: string[];
-	linkHrefs: string[];
-} {
-	let generator: string | null = null;
-	const scriptSrcs: string[] = [];
-	const linkHrefs: string[] = [];
-
-	type El = { getAttribute: (name: string) => string | null };
-	type RewriterCtor = new () => {
-		on(selector: string, handlers: { element: (el: El) => void }): unknown;
-		transform(html: string): string;
-	};
-	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor }).HTMLRewriter;
-	if (!Rewriter) {
-		const m = html.match(/<meta\s+name=["']generator["']\s+content=["']([^"']+)["']/i);
-		if (m) generator = m[1];
-		for (const x of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) scriptSrcs.push(x[1]);
-		for (const x of html.matchAll(/<link[^>]+href=["']([^"']+)["']/gi)) linkHrefs.push(x[1]);
-		return { generator, scriptSrcs, linkHrefs };
-	}
-
-	const rw = new Rewriter();
-	rw.on('meta[name="generator"]', {
-		element(el) {
-			generator = el.getAttribute("content");
-		},
-	});
-	rw.on("script[src]", {
-		element(el) {
-			const src = el.getAttribute("src");
-			if (src) scriptSrcs.push(src);
-		},
-	});
-	rw.on("link[href]", {
-		element(el) {
-			const href = el.getAttribute("href");
-			if (href) linkHrefs.push(href);
-		},
-	});
-	rw.transform(html);
-	return { generator, scriptSrcs, linkHrefs };
-}
-
 function bodySignatures(html: string): DetectionEvidence[] {
 	const out: DetectionEvidence[] = [];
-
-	// A. Inline DOM markers (window.__NUXT__, data-svelte-h, etc.)
 	for (const sig of BODY_SIGNATURES) {
 		const m = html.match(sig.pattern);
 		if (!m) continue;
@@ -701,226 +486,38 @@ function bodySignatures(html: string): DetectionEvidence[] {
 		}
 		out.push(ev);
 	}
-
-	// B. Structured tag scan via HTMLRewriter — catches script/link evidence
-	// even when inline DOM markers are absent (e.g. Next.js with hydration off).
-	const { generator, scriptSrcs, linkHrefs } = structuredHtmlScan(html);
-
-	if (generator) {
-		out.push({
-			name: generator.split(/[\s\d]/)[0] ?? generator,
-			evidence: `<meta generator="${generator.slice(0, 60)}">`,
-			source: "body",
-			confidence: 0.95,
-			version: generator.match(/(\d+\.\d+(?:\.\d+)?)/)?.[1],
-		});
-	}
-
-	const seen = new Set(out.map((e) => `${e.name}|${e.source}`));
-	for (const src of scriptSrcs) {
-		for (const sig of BODY_SIGNATURES) {
-			if (sig.pattern.test(src)) {
-				const k = `${sig.name}|body`;
-				if (!seen.has(k)) {
-					out.push({
-						name: sig.name,
-						evidence: `script:${src.slice(0, 80)}`,
-						source: "body",
-						confidence: 0.9,
-					});
-					seen.add(k);
-				}
-			}
-		}
-	}
-	for (const href of linkHrefs) {
-		for (const sig of BODY_SIGNATURES) {
-			if (sig.pattern.test(href)) {
-				const k = `${sig.name}|body`;
-				if (!seen.has(k)) {
-					out.push({
-						name: sig.name,
-						evidence: `link:${href.slice(0, 80)}`,
-						source: "body",
-						confidence: 0.85,
-					});
-					seen.add(k);
-				}
-			}
-		}
-	}
-
 	return out;
 }
 
 // ---------------------------------------------------------------------------
-// CSP-allowed hosts → backend / CMS hints
+// Main logic
 // ---------------------------------------------------------------------------
 
-const CSP_BACKEND_HINTS: Array<{ pattern: RegExp; name: string; bucket: DetectionBucket }> = [
-	{ pattern: /\.appspot\.com$/i, name: "Google App Engine", bucket: "hosting" },
-	{ pattern: /\.run\.app$/i, name: "Google Cloud Run", bucket: "hosting" },
-	{ pattern: /wagtail/i, name: "Wagtail CMS", bucket: "cms" },
-	{ pattern: /^cms-dot-.+\.appspot\.com$/i, name: "Custom CMS on App Engine", bucket: "cms" },
-	{ pattern: /\.contentful\.com$/i, name: "Contentful", bucket: "cms" },
-	{ pattern: /cdn\.sanity\.io$/i, name: "Sanity", bucket: "cms" },
-	{ pattern: /\.intercom-/i, name: "Intercom", bucket: "analytics" },
-	{ pattern: /\.googletagmanager\.com$/i, name: "Google Tag Manager", bucket: "tag-manager" },
-	{ pattern: /\.google-analytics\.com$/i, name: "Google Analytics", bucket: "analytics" },
-];
-
-function cspToHints(cspHosts: string[]): DetectionEvidence[] {
-	const out: DetectionEvidence[] = [];
-	for (const host of cspHosts) {
-		for (const h of CSP_BACKEND_HINTS) {
-			if (h.pattern.test(host)) {
-				out.push({
-					name: h.name,
-					evidence: `csp:${host}`,
-					source: "csp",
-					confidence: 0.7,
-				});
-				break;
-			}
-		}
-	}
-	return out;
-}
-
-// ---------------------------------------------------------------------------
-// Bucket assignment from wappalyzer category
-// ---------------------------------------------------------------------------
-
-const WAPP_CATEGORY_TO_BUCKET: Record<string, DetectionBucket> = {
-	"javascript frameworks": "frontend",
-	"web frameworks": "backend",
-	"static site generator": "frontend",
-	cms: "cms",
-	"javascript libraries": "library",
-	"ui frameworks": "frontend",
-	"tag managers": "tag-manager",
-	analytics: "analytics",
-	"web servers": "server",
-	caching: "cdn",
-	cdn: "cdn",
-	"reverse proxies": "server",
-	"programming languages": "language",
-	"paas / hosting": "hosting",
-	hosting: "hosting",
-	"page builders": "frontend",
-	"e-commerce": "cms",
-};
-
-function wappBucket(categories: string[] = []): DetectionBucket {
-	for (const c of categories) {
-		const lower = c.toLowerCase();
-		if (lower in WAPP_CATEGORY_TO_BUCKET) return WAPP_CATEGORY_TO_BUCKET[lower];
-	}
-	return "other";
-}
-
-// ---------------------------------------------------------------------------
-// DNS lookups (best-effort, swallows errors)
-// ---------------------------------------------------------------------------
-
-async function safeResolveNs(host: string): Promise<string[]> {
-	// Try host + parent zone (NS records typically live on the apex domain).
-	const parts = host.split(".");
-	const candidates = parts.length > 2 ? [host, parts.slice(-2).join(".")] : [host];
-	for (const c of candidates) {
-		try {
-			const ns = await nodeDns.resolveNs(c);
-			if (ns.length > 0) return ns;
-		} catch {
-			// try next candidate
-		}
-	}
-	return [];
-}
-
-/**
- * A-record lookup via Bun.dns (native, cached) when available; falls back
- * to node:dns/promises for environments where Bun.dns is unavailable.
- * Bun.dns.lookup hits the OS resolver but caches results in-process —
- * see https://bun.com/docs/runtime/networking/dns.
- */
-async function safeResolve4(host: string): Promise<string[]> {
-	const bunDns = (Bun as unknown as { dns?: { lookup: Function } }).dns;
-	if (bunDns?.lookup) {
-		try {
-			const r = (await bunDns.lookup(host, { family: 4, all: true })) as Array<{
-				address: string;
-			}>;
-			return r.map((x) => x.address);
-		} catch {
-			// fall through
-		}
-	}
-	try {
-		return await nodeDns.resolve4(host);
-	} catch {
-		return [];
-	}
-}
-
-async function safeResolveCname(host: string): Promise<string[]> {
-	try {
-		return await nodeDns.resolveCname(host);
-	} catch {
-		return [];
-	}
-}
-
-async function safeReverse(ip: string): Promise<string[]> {
-	try {
-		return await nodeDns.reverse(ip);
-	} catch {
-		return [];
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Main entry
-// ---------------------------------------------------------------------------
-
-export async function deepDetect(url: string): Promise<DeepDetectionResult> {
+export async function deepDetect(url: string, insecure = false): Promise<DeepDetectionResult> {
 	const target = new URL(url);
 	const hostname = target.hostname;
 
-	// Step 1: HTTP fetch (headers + body)
-	const r = await fetch(url, {
-		method: "GET",
-		signal: AbortSignal.timeout(20_000),
-		redirect: "follow",
-		headers: {
-			"User-Agent":
-				"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-		},
-	});
+	const r = await bxcFetch(url, { insecure, timeoutMs: 20_000 });
 	const headers: Record<string, string> = {};
 	r.headers.forEach((v, k) => {
 		headers[k.toLowerCase()] = v;
 	});
 	const body = await r.text();
 
-	// Step 2: DNS lookups in parallel
 	const [nsRecords, ips, cnames] = await Promise.all([
 		safeResolveNs(hostname),
 		safeResolve4(hostname),
 		safeResolveCname(hostname),
 	]);
 
-	// Reverse PTR for each IP (limited to first 3)
 	const reversePtr: Record<string, string[]> = {};
 	const ptrPromises = ips.slice(0, 3).map(async (ip) => {
 		reversePtr[ip] = await safeReverse(ip);
 	});
 	await Promise.all(ptrPromises);
 
-	// Step 3: Wappalyzergo enrichment
-	const wapp = await detectFrameworks({ html: body, headers: {} }).catch(() => []);
+	const wapp = await detectFrameworks({ html: body, headers: {} }, { insecure }).catch(() => []);
 
-	// Step 4: Score & assign to buckets
 	const result: DeepDetectionResult = {
 		url,
 		finalUrl: r.url,
@@ -947,76 +544,37 @@ export async function deepDetect(url: string): Promise<DeepDetectionResult> {
 
 	const push = (bucket: DetectionBucket, ev: DetectionEvidence): void => {
 		const target = bucketArray(result, bucket);
-		// Dedupe by name+source
 		if (!target.some((x) => x.name === ev.name && x.source === ev.source)) {
 			target.push(ev);
 		}
 	};
 
-	// 4.1 Headers
 	for (const ev of fingerprintHeaders(headers)) {
 		const bucket = HEADER_FINGERPRINTS.find((f) => f.name === ev.name)?.bucket ?? "other";
 		push(bucket, ev);
 	}
-
-	// 4.2 NS records → DNS provider
 	for (const ns of nsRecords) {
 		const provider = nsToProvider(ns);
-		if (provider) {
-			push("dns", { name: provider, evidence: `ns:${ns}`, source: "dns", confidence: 0.95 });
-		}
+		if (provider) push("dns", { name: provider, evidence: `ns:${ns}`, source: "dns" });
 	}
-
-	// 4.3 CNAME → hosting / CDN
 	for (const cname of cnames) {
 		const m = cnameToProvider(cname);
-		if (m) {
-			push(m.bucket, { name: m.name, evidence: `cname:${cname}`, source: "dns", confidence: 0.9 });
-		}
+		if (m) push(m.bucket, { name: m.name, evidence: `cname:${cname}`, source: "dns" });
 	}
-
-	// 4.4 Reverse PTR → CDN
-	for (const ip of Object.keys(reversePtr)) {
-		for (const ptr of reversePtr[ip]) {
-			const m = cnameToProvider(ptr);
-			if (m) {
-				push(m.bucket, { name: m.name, evidence: `ptr:${ptr}`, source: "dns", confidence: 0.85 });
-			}
-		}
-	}
-
-	// 4.5 IP ranges
 	for (const ip of ips) {
 		const cdn = ipToCdn(ip);
-		if (cdn) {
-			push("cdn", { name: cdn, evidence: `ip:${ip}`, source: "ip", confidence: 0.9 });
-		}
+		if (cdn) push("cdn", { name: cdn, evidence: `ip:${ip}`, source: "ip" });
 	}
-
-	// 4.6 CSP hosts → backend hints
-	const csp = headers["content-security-policy"] ?? "";
-	const cspHosts = extractCspHosts(csp);
-	for (const ev of cspToHints(cspHosts)) {
-		const bucket = CSP_BACKEND_HINTS.find((h) => h.name === ev.name)?.bucket ?? "other";
-		push(bucket, ev);
-	}
-
-	// 4.7 Body signatures
 	for (const ev of bodySignatures(body)) {
 		const bucket = BODY_SIGNATURES.find((s) => s.name === ev.name)?.bucket ?? "other";
 		push(bucket, ev);
 	}
-
-	// 4.8 Wappalyzergo
 	for (const w of wapp) {
-		const bucket = wappBucket(w.categories);
-		push(bucket, {
+		push(wappBucket(w.categories), {
 			name: w.name,
-			evidence: `wappalyzer:${(w.categories ?? []).join(",")}`,
+			evidence: "wappalyzer",
 			source: "wappalyzer",
-			confidence: 0.7,
 			version: w.version,
-			categories: w.categories,
 		});
 	}
 
@@ -1025,49 +583,63 @@ export async function deepDetect(url: string): Promise<DeepDetectionResult> {
 
 function bucketArray(r: DeepDetectionResult, bucket: DetectionBucket): DetectionEvidence[] {
 	switch (bucket) {
-		case "frontend":
-			return r.frontend;
-		case "backend":
-			return r.backend;
-		case "cdn":
-			return r.cdn;
-		case "dns":
-			return r.dns;
-		case "hosting":
-			return r.hosting;
-		case "server":
-			return r.server;
-		case "language":
-			return r.language;
-		case "cms":
-			return r.cms;
-		case "analytics":
-			return r.analytics;
-		case "tag-manager":
-			return r.tagManagers;
-		case "framework":
-			return r.framework;
-		case "library":
-			return r.library;
-		default:
-			return r.other;
+		case "frontend": return r.frontend;
+		case "backend": return r.backend;
+		case "cdn": return r.cdn;
+		case "dns": return r.dns;
+		case "hosting": return r.hosting;
+		case "server": return r.server;
+		case "language": return r.language;
+		case "cms": return r.cms;
+		case "analytics": return r.analytics;
+		case "tag-manager": return r.tagManagers;
+		case "framework": return r.framework;
+		case "library": return r.library;
+		default: return r.other;
 	}
 }
 
-function extractCspHosts(csp: string): string[] {
-	const out = new Set<string>();
-	for (const directive of csp.split(";")) {
-		const trimmed = directive.trim();
-		if (!trimmed) continue;
-		for (const part of trimmed.split(/\s+/).slice(1)) {
-			if (part.startsWith("http")) {
-				try {
-					out.add(new URL(part).hostname);
-				} catch {
-					// ignore
-				}
-			}
-		}
+function wappBucket(categories: string[] = []): DetectionBucket {
+	const map: Record<string, DetectionBucket> = {
+		"javascript frameworks": "frontend",
+		"web frameworks": "backend",
+		cms: "cms",
+		"javascript libraries": "library",
+		analytics: "analytics",
+		cdn: "cdn",
+	};
+	for (const c of categories) {
+		const lower = c.toLowerCase();
+		if (lower in map) return map[lower];
 	}
-	return [...out];
+	return "other";
+}
+
+async function safeResolveNs(host: string): Promise<string[]> {
+	try {
+		return await nodeDns.resolveNs(host);
+	} catch {
+		return [];
+	}
+}
+async function safeResolve4(host: string): Promise<string[]> {
+	try {
+		return await nodeDns.resolve4(host);
+	} catch {
+		return [];
+	}
+}
+async function safeResolveCname(host: string): Promise<string[]> {
+	try {
+		return await nodeDns.resolveCname(host);
+	} catch {
+		return [];
+	}
+}
+async function safeReverse(ip: string): Promise<string[]> {
+	try {
+		return await nodeDns.reverse(ip);
+	} catch {
+		return [];
+	}
 }

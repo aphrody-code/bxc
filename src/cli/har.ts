@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -17,15 +16,12 @@
 
 /**
  * `bxc har <action>` — HAR (HTTP Archive) recorder/replayer.
- *
- * Actions:
- *   record <url> <out.har>    record HTTP traffic during a navigation (fast profile)
- *   replay <file.har>         load a HAR file and emit a summary to stdout
  */
 
 import { Browser, Page } from "../api/browser.ts";
 import { HarRecorder } from "../recorder/HarRecorder.ts";
 import { HarReplayer } from "../recorder/HarReplayer.ts";
+import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
 function printUsage(): void {
 	Bun.stdout.write(
@@ -35,16 +31,11 @@ Usage:
   bxc har record <url> <out.har>   record HTTP traffic to a HAR file
   bxc har replay <file.har>        inspect a HAR file (JSON summary on stdout)
 
-Examples:
-  bxc har record https://google.com /tmp/example.har
-  bxc har replay /tmp/example.har
-
-Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
 `,
 	);
 }
 
-async function recordHar(url: string, out: string): Promise<void> {
+async function recordHar(url: string, out: string, opts: CommonOptions): Promise<void> {
 	const page = (await Browser.newPage({
 		profile: "fast",
 		spawnOpts: { logLevel: "error", readyTimeoutMs: 10_000 },
@@ -52,33 +43,28 @@ async function recordHar(url: string, out: string): Promise<void> {
 	try {
 		const recorder = new HarRecorder(page);
 		recorder.start();
-		await page.goto(url, { timeoutMs: 25_000 });
+		await page.goto(url, { timeoutMs: opts.timeoutMs });
 		await recorder.save(out);
-		Bun.stderr.write(`bxc har: recorded to ${out}\n`);
+		if (!opts.quiet) logger.log(`recorded to ${out}`);
 	} finally {
-		try {
-			await page.close();
-		} catch {}
+		try { await page.close(); } catch {}
 		await Browser.close().catch(() => {});
 	}
 }
 
 async function replayHar(file: string): Promise<void> {
 	const replayer = await HarReplayer.load(file);
-	// HarReplayer keeps two private maps; we surface basic stats via reflection.
 	const inspect = (replayer as unknown as { _inspectStats?: () => unknown })._inspectStats;
 	const stats =
 		typeof inspect === "function" ? inspect.call(replayer) : { source: file, status: "loaded" };
-	Bun.stdout.write(
-		JSON.stringify({ source: file, ...(stats as object) }, null, 2) + "\n",
-	);
+	Bun.stdout.write(JSON.stringify({ source: file, ...(stats as object) }, null, 2) + "\n");
 }
 
-export async function main(argv: readonly string[]): Promise<void> {
+export async function main(argv: readonly string[], opts: CommonOptions): Promise<void> {
 	const action = argv[0];
 	if (!action || action === "--help" || action === "-h") {
 		printUsage();
-		process.exit(action ? 0 : 2);
+		process.exit(action ? 0 : EXIT.MISUSE);
 	}
 
 	try {
@@ -87,34 +73,35 @@ export async function main(argv: readonly string[]): Promise<void> {
 				const url = argv[1];
 				const out = argv[2];
 				if (!url || !out) {
-					Bun.stderr.write("bxc har record <url> <out.har>\n");
-					process.exit(2);
+					logger.error("record <url> <out.har> — arguments missing");
+					process.exit(EXIT.MISUSE);
 				}
-				await recordHar(url, out);
+				await recordHar(url, out, opts);
 				break;
 			}
 			case "replay": {
 				const file = argv[1];
 				if (!file) {
-					Bun.stderr.write("bxc har replay <file.har>\n");
-					process.exit(2);
+					logger.error("replay <file.har> — file argument missing");
+					process.exit(EXIT.MISUSE);
 				}
 				await replayHar(file);
 				break;
 			}
 			default:
-				Bun.stderr.write(`bxc har: unknown action '${action}'\n`);
+				logger.error(`unknown action '${action}'`);
 				printUsage();
-				process.exit(2);
+				process.exit(EXIT.MISUSE);
 		}
 	} catch (err) {
-		Bun.stderr.write(`bxc har: ${err instanceof Error ? err.message : String(err)}\n`);
-		process.exit(65);
+		logger.error(err instanceof Error ? err.message : String(err));
+		process.exit(EXIT.DATA_ERR);
 	}
 }
 
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});
