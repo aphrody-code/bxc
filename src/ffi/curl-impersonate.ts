@@ -148,6 +148,8 @@ export interface FetchOptions {
 	cookies?: string;
 	/** Follow redirects for this request (overrides client default). */
 	followRedirects?: boolean;
+	/** Bypass TLS certificate validation. */
+	insecure?: boolean;
 	signal?: AbortSignal;
 }
 
@@ -654,6 +656,12 @@ export class ImpersonatedClient {
 			// POST / PUT / PATCH / DELETE / etc.
 			setoptLong(sym, handle, CURLOPT.POST, 1n);
 			alive.push(setoptStr(sym, handle, CURLOPT.CUSTOMREQUEST, method));
+		}
+
+		// TLS validation
+		if (opts.insecure) {
+			setoptLong(sym, handle, CURLOPT.SSL_VERIFYPEER, 0n);
+			setoptLong(sym, handle, CURLOPT.SSL_VERIFYHOST, 0n);
 		}
 
 		// Body

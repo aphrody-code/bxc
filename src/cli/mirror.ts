@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -18,34 +17,18 @@
 /**
  * `bxc mirror <url> <out-dir>` — download a complete site (HTML/CSS/JS/
  * fonts/images) into a relocatable directory with rewritten relative links.
- *
- * Pipeline (see src/mirror/mirror.ts) :
- *
- *   1. Fetch seed via the chosen bxc profile (default `http` =
- *      curl-impersonate Chrome 131 + cookies, passes Cloudflare when
- *      cookie jar is provided).
- *   2. Walk HTML with `Bun.HTMLRewriter` to enumerate every asset URL.
- *   3. Concurrently download via worker pool, recurse into CSS for
- *      nested url(...) and @import.
- *   4. Rewrite every URL in HTML and CSS to point at the local copy.
- *   5. Emit `manifest.json` (sha256 + bytes + content-type per asset).
- *
- * Output contract :
- *   stdout — JSON summary { totalAssets, totalBytes, failed, durationMs,
- *                            rootHtmlPath, manifestPath }
- *   exit   — 0 OK, 2 misuse, 65 fetch / IO error, 70 software error
  */
 
 import { resolve as resolvePath } from "node:path";
 import { type MirrorProfile, mirrorSite } from "../mirror/index.ts";
+import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
-interface CliOptions {
+interface CliOptions extends CommonOptions {
 	url: string;
 	outDir: string;
 	profile: MirrorProfile;
 	cookies?: string;
 	concurrency: number;
-	timeoutMs: number;
 	sameOriginOnly: boolean;
 	maxAssetBytes: number;
 	userAgent?: string;
@@ -63,40 +46,23 @@ Options:
   --profile <name>      http (default) | static | fast
   --cookies <path>      Cookie jar JSON (Playwright/CDP/Netscape)
   --concurrency <N>     parallel asset downloads (default: 6)
-  --timeout <ms>        per-request timeout (default: 15000)
-  --same-origin-only    skip cross-origin assets (default: include)
+  --same-origin-only    skip cross-origin assets
   --max-asset-bytes <N> per-asset cap, bytes (default: 50000000)
-  --user-agent <str>    override User-Agent (default: bxc-mirror/0.1)
+  --user-agent <str>    override User-Agent
   --verbose             log every step to stderr
   --help, -h            this help
 
-Examples:
-  bxc mirror https://google.com ./mirror-hn
-  bxc mirror https://challonge.com/fr/B_TS5 ./mirror-bts5 \\
-      --cookies cookies/private/challonge.json --verbose
-
-Notes:
-  - The seed page is opened via the chosen bxc profile so that TLS /
-    cookie / fingerprint behaviour matches the live browser, including
-    Cloudflare-gated sites when cookies are valid.
-  - Asset downloads use plain fetch (assets are usually public). For
-    private CDNs, pass them through the same cookie jar by host and
-    extend MirrorOptions.filter.
-  - The output is relocatable : the seed lives at <out-dir>/<host>/<path>
-    and cross-origin assets at <out-dir>/_external/<host>/<path>.
-
-Exit codes: 0 OK, 2 misuse, 65 fetch / IO error, 70 software error
 `,
 	);
 }
 
-function parseArgs(argv: readonly string[]): CliOptions | null {
+function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions | null {
 	const opts: CliOptions = {
+		...baseOpts,
 		url: "",
 		outDir: "",
 		profile: "http",
 		concurrency: 6,
-		timeoutMs: 15_000,
 		sameOriginOnly: false,
 		maxAssetBytes: 50_000_000,
 		verbose: false,
@@ -106,9 +72,9 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		const a = argv[i];
 		switch (a) {
 			case "--profile": {
-				const v = argv[++i];
+				const v = argv[++i] as any;
 				if (v !== "static" && v !== "fast" && v !== "http") {
-					Bun.stderr.write(`Invalid profile: ${v} (expected static|fast|http)\n`);
+					logger.error(`Invalid profile: ${v}`);
 					return null;
 				}
 				opts.profile = v;
@@ -119,9 +85,6 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 				break;
 			case "--concurrency":
 				opts.concurrency = parseInt(argv[++i] ?? "6", 10);
-				break;
-			case "--timeout":
-				opts.timeoutMs = parseInt(argv[++i] ?? "15000", 10);
 				break;
 			case "--same-origin-only":
 				opts.sameOriginOnly = true;
@@ -144,7 +107,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		}
 	}
 	if (positional.length < 2) {
-		Bun.stderr.write("bxc mirror: requires <url> and <out-dir>\n");
+		logger.error("requires <url> and <out-dir>");
 		return null;
 	}
 	opts.url = positional[0];
@@ -152,14 +115,14 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 	return opts;
 }
 
-export async function main(argv: readonly string[]): Promise<void> {
-	const opts = parseArgs(argv);
+export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
-		process.exit(2);
+		process.exit(EXIT.MISUSE);
 	}
 
-	const log = opts.verbose
+	const log = (opts.verbose || !opts.quiet)
 		? (msg: string): void => {
 				Bun.stderr.write(`${msg}\n`);
 			}
@@ -176,6 +139,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 			maxAssetBytes: opts.maxAssetBytes,
 			userAgent: opts.userAgent,
 			log,
+			insecure: opts.insecure,
 		});
 
 		Bun.stdout.write(
@@ -196,13 +160,14 @@ export async function main(argv: readonly string[]): Promise<void> {
 			) + "\n",
 		);
 	} catch (err) {
-		Bun.stderr.write(`bxc mirror: ${err instanceof Error ? err.message : String(err)}\n`);
-		process.exit(65);
+		logger.error(err instanceof Error ? err.message : String(err));
+		process.exit(EXIT.DATA_ERR);
 	}
 }
 
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});

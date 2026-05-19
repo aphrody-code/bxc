@@ -21,13 +21,9 @@
  */
 
 import { join } from "node:path";
+import { ROOT, type CommonOptions, logger, parseCommonArgs } from "./shared.ts";
 
-const ROOT = join(import.meta.dir, "../..");
 const CARGO_TOML = join(ROOT, "rust-bridge/Cargo.toml");
-
-function log(msg: string) {
-	Bun.stderr.write(`${msg}\n`);
-}
 
 function resolveBinPath(): string | null {
 	const ext = process.platform === "win32" ? ".exe" : "";
@@ -44,7 +40,7 @@ function resolveBinPath(): string | null {
 		try {
 			if (Bun.file(p).size > 0) return p;
 		} catch {
-			// ignore missing files
+			// ignore
 		}
 	}
 	return null;
@@ -53,16 +49,17 @@ function resolveBinPath(): string | null {
 /**
  * CLI Entry point for `bxc chrome ...`
  */
-export async function main(args: string[]): Promise<void> {
+export async function main(args: string[], _opts: CommonOptions): Promise<void> {
 	const subcommand = args[0];
 	const bin = resolveBinPath();
 
 	switch (subcommand) {
 		case "fetch": {
-			log("[chrome] fetching native Chromium...");
+			const url = args[1] ?? Bun.env["BXC_CHROME_FETCH_URL"] ?? "https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1399999/chrome-linux.zip";
+			logger.log(`[chrome] fetching native Chromium from ${url}...`);
 			const spawnArgs = bin 
-				? [bin, "fetch"]
-				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "fetch"];
+				? [bin, "fetch", url]
+				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "fetch", url];
 
 			const proc = Bun.spawn(spawnArgs, { stdout: "inherit", stderr: "inherit" });
 			const exitCode = await proc.exited;
@@ -77,12 +74,10 @@ export async function main(args: string[]): Promise<void> {
 			let chromePath = pathIdx !== -1 ? args[pathIdx + 1] : Bun.env["BXC_CHROME_BIN"];
 
 			if (!chromePath) {
-				// Fallback to legacy env var if set
 				chromePath = Bun.env["CHROME_PATH"];
 			}
 
 			if (!chromePath) {
-				// Try auto-resolve path via the binary
 				const pathArgs = bin
 					? [bin, "chrome-path"]
 					: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "chrome-path"];
@@ -92,18 +87,17 @@ export async function main(args: string[]): Promise<void> {
 			}
 
 			if (!chromePath) {
-				log("[error] chrome path not found and auto-fetch failed.");
+				logger.error("chrome path not found and auto-fetch failed.");
 				process.exit(1);
 			}
 
-			log(`[chrome] launching native Chromium from ${chromePath}...`);
+			logger.log(`[chrome] launching native Chromium from ${chromePath}...`);
 			const launchArgs = bin
 				? [bin, "launch", chromePath]
 				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "launch", chromePath];
 
 			const proc = Bun.spawn(launchArgs, { stdout: "inherit", stderr: "inherit" });
 
-			// Handle termination
 			process.on("SIGINT", () => proc.kill());
 			process.on("SIGTERM", () => proc.kill());
 
@@ -112,8 +106,15 @@ export async function main(args: string[]): Promise<void> {
 		}
 
 		default:
-			log("Usage: bxc chrome <fetch|launch>");
+			logger.log("Usage: bxc chrome <fetch|launch>");
 			process.exit(1);
 	}
 }
 
+if (import.meta.main) {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
+		console.error(err);
+		process.exit(1);
+	});
+}

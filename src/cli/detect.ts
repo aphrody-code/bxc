@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -15,30 +14,16 @@
  * limitations under the License.
  */
 
-
 /**
  * `bxc detect <url>` — multi-signal technology detection.
- *
- * Combines:
- *   - HTTP response headers (Server, X-Powered-By, CF-Ray, X-Vercel-*, ...)
- *   - DNS records (NS, A, CNAME, reverse PTR)
- *   - IP-to-CDN range matching (Cloudflare, Fastly, CloudFront, Akamai, ...)
- *   - HTML body signatures (Next.js, Nuxt, Astro, WordPress, ...)
- *   - CSP-allowed hosts (often expose backend CMS)
- *   - Wappalyzergo (JS libraries, tag managers, ...)
- *
- * Output buckets: frontend / backend / cdn / dns / hosting / server /
- * language / cms / analytics / tagManagers / framework / library / other.
- *
- * Exit codes: 0 success, 2 misuse, 65 fetch error
  */
 
 import { detectFrameworks } from "../detect.ts";
 import { type DeepDetectionResult, deepDetect } from "../detect-deep.ts";
+import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
-interface DetectCliOptions {
+interface DetectCliOptions extends CommonOptions {
 	url: string;
-	emitJson: boolean;
 	wappOnly: boolean;
 }
 
@@ -50,50 +35,19 @@ Usage:
   bxc detect <url> [options]
 
 Options:
-  --json          emit structured JSON (default: human-readable Markdown)
   --wapp-only     skip DNS / IP / body / CSP — only run wappalyzergo
+  --json          emit structured JSON (default: human-readable Markdown)
   --help, -h      this help
 
-Output buckets (in JSON / Markdown):
-  - frontend       React, Next.js, Vue, Astro, ...
-  - backend        Django, Rails, Wagtail, Express, ...
-  - cdn            Cloudflare, Fastly, CloudFront, Akamai, ...
-  - dns            Cloudflare DNS, AWS Route 53, Google Cloud DNS, ...
-  - hosting        Vercel, Netlify, GAE, Cloud Run, S3, ...
-  - server         nginx, Apache, Caddy, IIS, ...
-  - language       PHP, JS, ...
-  - cms            WordPress, Drupal, Wagtail, Strapi, Sanity, ...
-  - analytics      Google Analytics, Plausible, Matomo, PostHog, ...
-  - tagManagers    GTM, ...
-  - framework      Webpack, Vite, Turbopack, Parcel
-  - library        Tailwind, jQuery, D3, Three.js, HTMX, Alpine.js, ...
-
-Sources of evidence:
-  - header   — HTTP response header (highest confidence)
-  - dns      — NS / CNAME / reverse PTR records
-  - ip       — A record matched against published CDN ranges
-  - body     — pattern in rendered HTML / generator meta
-  - csp      — host listed in Content-Security-Policy
-  - wappalyzer — wappalyzergo binary
-
-Examples:
-  bxc detect https://design.google
-  bxc detect https://nextjs.org --json
-  bxc detect https://google.com --wapp-only
-
-Exit codes: 0 OK, 2 misuse, 65 data error
 `,
 	);
 }
 
-function parseArgs(argv: readonly string[]): DetectCliOptions | null {
-	const opts: DetectCliOptions = { url: "", emitJson: false, wappOnly: false };
+function parseArgs(argv: readonly string[], baseOpts: CommonOptions): DetectCliOptions | null {
+	const opts: DetectCliOptions = { ...baseOpts, url: "", wappOnly: false };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
-			case "--json":
-				opts.emitJson = true;
-				break;
 			case "--wapp-only":
 				opts.wappOnly = true;
 				break;
@@ -103,13 +57,13 @@ function parseArgs(argv: readonly string[]): DetectCliOptions | null {
 			default:
 				if (!opts.url && /^https?:\/\//.test(a)) opts.url = a;
 				else if (a.startsWith("-")) {
-					Bun.stderr.write(`bxc detect: unknown option ${a}\n`);
+					logger.error(`unknown option ${a}`);
 					return null;
 				}
 		}
 	}
 	if (!opts.url) {
-		Bun.stderr.write("bxc detect: URL argument required\n");
+		logger.error("URL argument required");
 		return null;
 	}
 	return opts;
@@ -163,31 +117,32 @@ function renderMarkdown(r: DeepDetectionResult): string {
 	return lines.join("\n");
 }
 
-export async function main(argv: readonly string[]): Promise<void> {
-	const opts = parseArgs(argv);
+export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
-		process.exit(opts === null ? 2 : 0);
+		process.exit(opts === null ? EXIT.MISUSE : EXIT.OK);
 	}
 
 	try {
 		if (opts.wappOnly) {
-			const result = await detectFrameworks(opts.url);
+			const result = await detectFrameworks(opts.url, { insecure: opts.insecure });
 			Bun.stdout.write(JSON.stringify(result, null, 2) + "\n");
 			return;
 		}
 
-		const result = await deepDetect(opts.url);
-		const rendered = opts.emitJson ? JSON.stringify(result, null, 2) : renderMarkdown(result);
+		const result = await deepDetect(opts.url, opts.insecure);
+		const rendered = opts.json ? JSON.stringify(result, null, 2) : renderMarkdown(result);
 		Bun.stdout.write(rendered + "\n");
 	} catch (err) {
-		Bun.stderr.write(`bxc detect: ${err instanceof Error ? err.message : String(err)}\n`);
-		process.exit(65);
+		logger.error(err instanceof Error ? err.message : String(err));
+		process.exit(EXIT.DATA_ERR);
 	}
 }
 
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});

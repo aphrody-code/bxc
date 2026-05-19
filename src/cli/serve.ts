@@ -48,6 +48,7 @@
  */
 
 import type { Server, ServerWebSocket } from "bun";
+import { type CommonOptions } from "./shared.ts";
 import type { CDPEvent } from "../transport/InProcessTransport.ts";
 // NOTE: StaticDomTransport and HttpProfileTransport are loaded lazily via
 // dynamic import inside startStatic / startHttp.  This prevents FFI libraries
@@ -847,10 +848,10 @@ function handleHttpDiscovery(pathname: string, opts: CLIOptions, _logger: Logger
 // Main
 // ---------------------------------------------------------------------------
 
-async function main(): Promise<void> {
+export async function main(argv: string[] = process.argv.slice(2), _opts?: CommonOptions): Promise<void> {
 	let opts: CLIOptions;
 	try {
-		opts = parseArgs(process.argv.slice(2));
+		opts = parseArgs(argv);
 	} catch (err) {
 		console.error(`[bxc] ${(err as Error).message}\n`);
 		printUsage();

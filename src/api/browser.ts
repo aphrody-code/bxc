@@ -105,6 +105,8 @@ export interface PageOptions {
 	 * `profile` defaults to `"chrome131"`, `timeoutMs` to `30_000`.
 	 */
 	httpOpts?: ImpersonatedClientOptions;
+	/** Bypass TLS certificate validation. */
+	insecure?: boolean;
 	/**
 	 * Pre-authenticated cookies to inject before any navigation.
 	 *
@@ -377,6 +379,10 @@ export class Page implements AnyPage {
 		await page._send("Page.enable", {});
 		await page._send("Runtime.enable", {});
 		await page._send("Network.enable", {});
+
+		if (opts.insecure) {
+			await page._send("Security.setIgnoreCertificateErrors", { ignore: true });
+		}
 
 		return page;
 	}
@@ -1106,6 +1112,7 @@ export class HttpPage implements AnyPage {
 	readonly #client: import("../ffi/curl-impersonate.ts").ImpersonatedClient;
 	readonly #cookies: Cookie[];
 	readonly #userAgent?: string;
+	readonly #insecure?: boolean;
 	#url = "about:blank";
 	#lastBody = "";
 	#closed = false;
@@ -1120,12 +1127,14 @@ export class HttpPage implements AnyPage {
 		userAgent?: string,
 		context: BrowserContext | null = null,
 		profile = "http",
+		insecure = false,
 	) {
 		this.#client = client;
 		this.#cookies = cookies;
 		this.#userAgent = userAgent;
 		this.#context = context;
 		this.#profile = profile;
+		this.#insecure = insecure;
 	}
 
 	context(): BrowserContext | null {
@@ -1177,6 +1186,7 @@ export class HttpPage implements AnyPage {
 			followRedirects: true,
 			timeoutMs: opts?.timeoutMs ?? 30_000,
 			headers: Object.keys(headers).length > 0 ? headers : undefined,
+			insecure: this.#insecure,
 		});
 		this.#url = res.effectiveUrl || url;
 		this.#lastBody = await res.text();
@@ -1421,7 +1431,7 @@ class BrowserSingleton {
 			const curlClient = new ImpersonatedClient(
 				opts.httpOpts ?? { profile: "chrome131" },
 			);
-			const page = new HttpPage(curlClient, cookies, opts.userAgent, context);
+			const page = new HttpPage(curlClient, cookies, opts.userAgent, context, "http", opts.insecure);
 			return page;
 		}
 
