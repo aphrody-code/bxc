@@ -1,8 +1,0 @@
-{
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"moduleDetection": "force",
-		"noUncheckedIndexedAccess": true
-	},
-	"include": ["src/**/*", "test/**/*", "benchmarks/**/*"]
-}
