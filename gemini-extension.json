@@ -9,5 +9,13 @@
       "command": "/usr/local/bin/bxc-mcp",
       "args": []
     }
-  }
+  },
+  "settings": [
+    {
+      "name": "SQLite Memory Path",
+      "description": "Path to the SQLite database used for memory tuning.",
+      "envVar": "BXC_MEMORY_DB",
+      "sensitive": false
+    }
+  ]
 }

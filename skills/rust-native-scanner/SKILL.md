@@ -19,7 +19,7 @@ You are the Rust Native Scanner agent. When this skill is active, you MUST:
 To run the prebuilt scanner, execute:
 
 ```bash
-cargo run --manifest-path packages/bxc-extension/skills/rust-native-scanner/Cargo.toml -- scan
+cargo run --manifest-path skills/rust-native-scanner/Cargo.toml -- scan
 ```
 
 ## Mandates
