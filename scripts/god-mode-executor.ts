@@ -15,7 +15,7 @@
  */
 
 import { spawn } from "bun";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync } from "node:fs";
 
 async function run() {
 	console.log("GOD MODE EXECUTOR: Starting...");

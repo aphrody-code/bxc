@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -18,22 +17,6 @@
 /**
  * `bxc challonge <url-or-path>` — extract a full typed snapshot
  * of a Challonge tournament page.
- *
- * Two modes :
- *
- *   - **Live URL** (`https://challonge.com/...`) : fetch via the
- *     bxc `http` profile (curl-impersonate Chrome 131) so the
- *     request matches an authentic browser. Pass `--cookies` for
- *     Cloudflare-gated tournaments.
- *
- *   - **Local path** (file or mirror dir) : read the HTML directly
- *     from disk. This is the fastest mode and the one used by the
- *     test suite : the file may be a single `B_TS5` HTML page or a
- *     mirror directory produced by `bxc mirror`.
- *
- * Output : JSON snapshot to stdout — matches `ChallongeTournamentSnapshot`.
- *
- * Exit codes : 0 OK, 2 misuse, 65 upstream / IO error, 70 software error.
  */
 
 import { isAbsolute, resolve as resolvePath } from "node:path";
@@ -43,11 +26,11 @@ import {
 	extractChallongeTournament,
 	extractChallongeTournamentFromFile,
 } from "../scrapers/challonge.ts";
+import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
-interface CliOptions {
+interface CliOptions extends CommonOptions {
 	target: string;
 	cookies?: string;
-	timeoutMs: number;
 	pretty: boolean;
 	summary: boolean;
 }
@@ -59,33 +42,20 @@ function printUsage(): void {
 Usage:
   bxc challonge <url-or-path> [options]
 
-Sources:
-  - URL          https://challonge.com/<lang>/<slug> (live)
-  - File path    /path/to/B_TS5 (HTML file from disk)
-  - Mirror dir   /path/to/mirror (auto-resolves <host>/<lang>/<slug>)
-
 Options:
   --cookies <path>     Cookie jar JSON for Cloudflare-gated tournaments
-  --timeout <ms>       fetch timeout (default: 25000)
   --summary            print a one-screen ASCII summary instead of JSON
-  --pretty             pretty-print JSON (default for tty stdout)
+  --pretty             pretty-print JSON
   --help, -h           this help
 
-Examples:
-  bxc challonge https://challonge.com/fr/B_TS5 \\
-      --cookies cookies/private/challonge.json
-  bxc challonge /tmp/mirror-bts5/challonge.com/fr/B_TS5 --summary
-  bxc challonge https://challonge.com/fr/B_TS5 | jq .standings[0]
-
-Exit codes: 0 OK, 2 misuse, 65 upstream/IO error, 70 software error
 `,
 	);
 }
 
-function parseArgs(argv: readonly string[]): CliOptions | null {
+function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions | null {
 	const opts: CliOptions = {
+		...baseOpts,
 		target: "",
-		timeoutMs: 25_000,
 		pretty: process.stdout.isTTY,
 		summary: false,
 	};
@@ -95,9 +65,6 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		switch (a) {
 			case "--cookies":
 				opts.cookies = argv[++i];
-				break;
-			case "--timeout":
-				opts.timeoutMs = parseInt(argv[++i] ?? "25000", 10);
 				break;
 			case "--summary":
 				opts.summary = true;
@@ -113,7 +80,7 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 		}
 	}
 	if (positional.length < 1) {
-		Bun.stderr.write("bxc challonge: requires <url-or-path>\n");
+		logger.error("requires <url-or-path>");
 		return null;
 	}
 	opts.target = positional[0];
@@ -121,7 +88,6 @@ function parseArgs(argv: readonly string[]): CliOptions | null {
 }
 
 async function loadFromTarget(opts: CliOptions): Promise<ChallongeTournamentSnapshot> {
-	// URL ?
 	if (/^https?:\/\//.test(opts.target)) {
 		const page = await Browser.newPage({
 			profile: "http",
@@ -133,23 +99,15 @@ async function loadFromTarget(opts: CliOptions): Promise<ChallongeTournamentSnap
 			const html = await page.content();
 			return extractChallongeTournament(html, { url: opts.target });
 		} finally {
-			try {
-				await page.close();
-			} catch {
-				/* noop */
-			}
+			try { await page.close(); } catch {}
 			await Browser.close().catch(() => undefined);
 		}
 	}
 
-	// Local path : if it's a dir, find <host>/<lang>/<slug>.
 	const path = isAbsolute(opts.target) ? opts.target : resolvePath(opts.target);
-	const stat = await Bun.file(path).exists();
-	if (stat) {
-		// Single file — assume HTML.
+	if (await Bun.file(path).exists()) {
 		return extractChallongeTournamentFromFile(path);
 	}
-	// Try as a mirror dir : path/<host>/<...>
 	const tryHosts = ["challonge.com"];
 	for (const host of tryHosts) {
 		const glob = new Bun.Glob(`${host}/**/*`);
@@ -162,7 +120,7 @@ async function loadFromTarget(opts: CliOptions): Promise<ChallongeTournamentSnap
 			}
 		}
 	}
-	throw new Error(`bxc challonge: cannot locate a Challonge HTML at ${path}`);
+	throw new Error(`cannot locate a Challonge HTML at ${path}`);
 }
 
 function printSummary(snap: ChallongeTournamentSnapshot): void {
@@ -173,37 +131,20 @@ function printSummary(snap: ChallongeTournamentSnapshot): void {
 	out.write(`Type        ${t.tournament_type}\n`);
 	out.write(`State       ${t.state} (${t.progress_meter}% complete)\n`);
 	out.write(`URL         ${t.full_url ?? "n/a"}\n`);
-	out.write(
-		`Game        ${snap.gon.targeting.game ?? "?"} (${snap.gon.targeting.category ?? "?"})\n`,
-	);
+	out.write(`Game        ${snap.gon.targeting.game ?? "?"} (${snap.gon.targeting.category ?? "?"})\n`);
 	out.write(`Participants ${snap.participants.length}\n`);
 	out.write(`Matches     ${snap.matches.length} across ${snap.rounds.length} rounds\n`);
-	out.write(`Admins      ${snap.gon.admin_ids.length} ids\n`);
 	out.write(`\n== Top 8 standings ==\n`);
 	for (const s of snap.standings.slice(0, 8)) {
-		out.write(
-			`  rank ${s.rank.toString().padStart(2)}  ${pad(s.display_name, 22)} W${s.wins} L${s.losses}\n`,
-		);
-	}
-	out.write(`\n== Last round ==\n`);
-	const lastRound = Math.max(...snap.matches.map((m) => m.round));
-	for (const m of snap.matches.filter((x) => x.round === lastRound)) {
-		const winner = [m.player1, m.player2].find((p) => p?.id === m.winner_id);
-		const score = m.scores ? m.scores.join("-") : "?";
-		out.write(
-			`  ${m.raw_identifier} ${pad(m.player1?.display_name ?? "?", 20)} ${score}  ${pad(
-				m.player2?.display_name ?? "?",
-				20,
-			)} → ${winner?.display_name ?? "?"}\n`,
-		);
+		out.write(`  rank ${s.rank.toString().padStart(2)}  ${pad(s.display_name, 22)} W${s.wins} L${s.losses}\n`);
 	}
 }
 
-export async function main(argv: readonly string[]): Promise<void> {
-	const opts = parseArgs(argv);
+export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
-		process.exit(2);
+		process.exit(EXIT.MISUSE);
 	}
 
 	try {
@@ -211,18 +152,18 @@ export async function main(argv: readonly string[]): Promise<void> {
 		if (opts.summary) {
 			printSummary(snap);
 		} else {
-			Bun.stdout.write(JSON.stringify(snap, null, opts.pretty ? 2 : 0) + "\n");
+			const output = JSON.stringify(snap, null, opts.pretty ? 2 : 0);
+			Bun.stdout.write(output + "\n");
 		}
 	} catch (err) {
-		Bun.stderr.write(
-			`bxc challonge: ${err instanceof Error ? err.message : String(err)}\n`,
-		);
-		process.exit(65);
+		logger.error(err instanceof Error ? err.message : String(err));
+		process.exit(EXIT.DATA_ERR);
 	}
 }
 
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});

@@ -154,7 +154,7 @@ export async function googleSearchRich(
 	console.log(`[google-search] Profile: ${profileUsed}, HTML size: ${html.length}, Results: ${content.organic.length}`);
 	
 	if (content.organic.length === 0) {
-		const { writeFileSync } = await import("fs");
+		const { writeFileSync } = await import("node:fs");
 		writeFileSync("debug-serp.html", html);
 		console.log("[google-search] Saved debug-serp.html for inspection.");
 	}

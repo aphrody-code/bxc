@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -17,14 +16,10 @@
 
 /**
  * `bxc cookies <action>` — cookie jar tools.
- *
- * Actions:
- *   load <jar.json>    parse + summarize a cookie jar
- *
- * Stdout: JSON summary { total, fresh, masked[] }
  */
 
 import { filterExpired, loadCookieJar, maskCookiesForLog } from "../cookies/cookie-loader.ts";
+import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
 function printUsage(): void {
 	Bun.stdout.write(
@@ -37,24 +32,23 @@ Output (stdout): JSON { total, fresh, masked[] }
 
 Supports formats: Playwright, CDP, Netscape, EditThisCookie.
 
-Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
 `,
 	);
 }
 
-export async function main(argv: readonly string[]): Promise<void> {
+export async function main(argv: readonly string[], _opts: CommonOptions): Promise<void> {
 	const action = argv[0];
 	if (!action || action === "--help" || action === "-h") {
 		printUsage();
-		process.exit(action ? 0 : 2);
+		process.exit(action ? 0 : EXIT.MISUSE);
 	}
 
 	switch (action) {
 		case "load": {
 			const file = argv[1];
 			if (!file) {
-				Bun.stderr.write("bxc cookies load <jar.json> — file argument missing\n");
-				process.exit(2);
+				logger.error("load <jar.json> — file argument missing");
+				process.exit(EXIT.MISUSE);
 			}
 			try {
 				const cookies = await loadCookieJar(file);
@@ -64,22 +58,21 @@ export async function main(argv: readonly string[]): Promise<void> {
 					JSON.stringify({ total: cookies.length, fresh: fresh.length, masked }, null, 2) + "\n",
 				);
 			} catch (err) {
-				Bun.stderr.write(
-					`bxc cookies: ${err instanceof Error ? err.message : String(err)}\n`,
-				);
-				process.exit(65);
+				logger.error(err instanceof Error ? err.message : String(err));
+				process.exit(EXIT.DATA_ERR);
 			}
 			break;
 		}
 		default:
-			Bun.stderr.write(`bxc cookies: unknown action '${action}'\n`);
+			logger.error(`unknown action '${action}'`);
 			printUsage();
-			process.exit(2);
+			process.exit(EXIT.MISUSE);
 	}
 }
 
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});

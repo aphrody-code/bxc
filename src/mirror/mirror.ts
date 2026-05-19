@@ -90,6 +90,8 @@ export interface MirrorOptions {
 	userAgent?: string;
 	/** Verbose logger (default: silent). */
 	log?: (msg: string) => void;
+	/** Bypass TLS certificate validation. */
+	insecure?: boolean;
 }
 
 export interface MirrorAssetRecord {
@@ -431,17 +433,23 @@ async function downloadAsset(
 		timeoutMs: number;
 		cookieJar?: Cookie[];
 		maxBytes: number;
+		insecure?: boolean;
 	},
 ): Promise<DownloadedAsset> {
 	try {
 		const headers: Record<string, string> = { "User-Agent": options.ua };
 		const cookieHeader = cookieHeaderForHost(options.cookieJar, new URL(url).hostname);
 		if (cookieHeader) headers["Cookie"] = cookieHeader;
-		const r = await fetch(url, {
+
+		const fetchOpts: any = {
 			signal: AbortSignal.timeout(options.timeoutMs),
 			headers,
 			redirect: "follow",
-		});
+		};
+		if (options.insecure) {
+			fetchOpts.tls = { rejectUnauthorized: false };
+		}
+		const r = await fetch(url, fetchOpts);
 		let finalUrl = r.url;
 		if (finalUrl.startsWith("/")) {
 			finalUrl = new URL(finalUrl, url).href;
@@ -581,7 +589,14 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 	while (queue.length > 0) {
 		const batch = queue.splice(0, queue.length); // drain current
 		const results = await workerPool(batch, concurrency, (t) =>
-			downloadAsset(t.url, { ua, timeoutMs, cookieJar, maxBytes: maxAssetBytes }),
+			downloadAsset(t.url, {
+				ua,
+				timeoutMs,
+				cookieJar,
+				maxBytes: maxAssetBytes,
+				insecure: options.insecure,
+			}),
+
 		);
 		for (let i = 0; i < batch.length; i++) {
 			const t = batch[i];

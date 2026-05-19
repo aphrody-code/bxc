@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -17,22 +16,18 @@
 
 /**
  * `bxc scrape <url> <css-selector>` — extract textContent of matched elements.
- *
- * Output contract:
- *   - stdout = JSON array of { index, text }
- *   - exit 0 success, 2 misuse, 65 fetch error, 70 software error
  */
 
 import { Browser } from "../api/browser.ts";
+import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
 type ScrapeProfile = "static" | "fast" | "http";
 
-interface ScrapeOptions {
+interface ScrapeOptions extends CommonOptions {
 	url: string;
 	selector: string;
 	profile: ScrapeProfile;
 	max: number;
-	timeoutMs: number;
 }
 
 function printUsage(): void {
@@ -45,34 +40,28 @@ Usage:
 Options:
   --profile <name>   static (default) | fast | http
   --max <N>          max elements returned (default: 50)
-  --timeout <ms>     navigation timeout (default: 25000)
   --help, -h         this help
 
-Examples:
-  bxc scrape https://google.com "td.title > span.titleline > a"
-  bxc scrape https://google.com h1 --profile fast
-
-Exit codes: 0 OK, 2 misuse, 65 data error, 70 software
 `,
 	);
 }
 
-function parseArgs(argv: readonly string[]): ScrapeOptions | null {
+function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOptions | null {
 	const opts: ScrapeOptions = {
+		...baseOpts,
 		url: "",
 		selector: "",
 		profile: "static",
 		max: 50,
-		timeoutMs: 25_000,
 	};
 	const positional: string[] = [];
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
 			case "--profile": {
-				const v = argv[++i];
+				const v = argv[++i] as any;
 				if (v !== "static" && v !== "fast" && v !== "http") {
-					Bun.stderr.write(`Invalid profile: ${v}\n`);
+					logger.error(`Invalid profile: ${v}`);
 					return null;
 				}
 				opts.profile = v;
@@ -80,9 +69,6 @@ function parseArgs(argv: readonly string[]): ScrapeOptions | null {
 			}
 			case "--max":
 				opts.max = parseInt(argv[++i], 10);
-				break;
-			case "--timeout":
-				opts.timeoutMs = parseInt(argv[++i], 10);
 				break;
 			case "--help":
 			case "-h":
@@ -92,7 +78,7 @@ function parseArgs(argv: readonly string[]): ScrapeOptions | null {
 		}
 	}
 	if (positional.length < 2) {
-		Bun.stderr.write("bxc scrape: requires <url> and <selector>\n");
+		logger.error("requires <url> and <selector>");
 		return null;
 	}
 	opts.url = positional[0];
@@ -100,11 +86,11 @@ function parseArgs(argv: readonly string[]): ScrapeOptions | null {
 	return opts;
 }
 
-export async function main(argv: readonly string[]): Promise<void> {
-	const opts = parseArgs(argv);
+export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
-		process.exit(2);
+		process.exit(EXIT.MISUSE);
 	}
 
 	let page: Awaited<ReturnType<typeof Browser.newPage>> | undefined;
@@ -124,8 +110,8 @@ export async function main(argv: readonly string[]): Promise<void> {
 		}
 		Bun.stdout.write(JSON.stringify(out, null, 2) + "\n");
 	} catch (err) {
-		Bun.stderr.write(`bxc scrape: ${err instanceof Error ? err.message : String(err)}\n`);
-		process.exit(65);
+		logger.error(err instanceof Error ? err.message : String(err));
+		process.exit(EXIT.DATA_ERR);
 	} finally {
 		try {
 			await page?.close();
@@ -135,7 +121,8 @@ export async function main(argv: readonly string[]): Promise<void> {
 }
 
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});

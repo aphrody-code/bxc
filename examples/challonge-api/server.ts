@@ -349,10 +349,11 @@ async function getRecon(slug: string): Promise<unknown> {
 		url: `${CHALLONGE_ORIGIN}/${slug}`,
 		profile: "http",
 		screenshot: false,
-		emitJson: true,
+		json: true,
 		timeoutMs: 25_000,
 		quiet: true,
 		plain: false,
+		insecure: false,
 	});
 }
 

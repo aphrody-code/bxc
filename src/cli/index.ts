@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -21,25 +20,15 @@
  * Dispatches subcommands to the appropriate module via dynamic import so
  * that FFI libraries (zigquery, curl-impersonate) are not loaded unless
  * actually needed.
- *
- * Subcommands:
- *   serve    — start a CDP server (delegated to ./serve.ts)
- *   install  — download required browser binaries (delegated to ./install.ts)
- *
- * Flags:
- *   --version, -V   print version from package.json
- *   --help, -h      print usage
  */
 
 import { join } from "node:path";
+import { ROOT, parseCommonArgs, logger, EXIT } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Version resolution
 // ---------------------------------------------------------------------------
 
-// Build-time identifier injected via `bun build --define __BXC_VERSION__='"x.y.z"'`.
-// In dev (no define), `typeof` on an undefined identifier returns "undefined" without
-// throwing — so this is safe across both standalone executables and dev workflows.
 declare const __BXC_VERSION__: string;
 declare const __BXC_BUILD_TIME__: string;
 
@@ -58,48 +47,30 @@ Usage:
 
 Subcommands:
   serve     Start a CDP server for browser automation
-            bxc serve --cdp-port <N> [--profile static|fast|http|stealth|max]
-
   install   Download engine binaries (Lightpanda + native Chromium)
-            bxc install [--dry-run]
-
   chrome    Native Chromium management
-            bxc chrome fetch
-            bxc chrome launch [--path path/to/chrome]
-
   recon     One-shot URL → recon doc (Markdown by default)
-            bxc recon <url> [--profile static|fast|http|stealth|max] [--screenshot]
-                                 [--output path.md] [--snapshot-dir dir/] [--json]
-  docs      Alias of recon
-
-  detect    Framework / CMS / library detection via wappalyzergo
-            bxc detect <url>
-
+  detect    Framework / CMS / library detection via multi-signal
   scrape    Extract textContent from CSS-matched elements
-            bxc scrape <url> <css> [--profile name] [--max N]
-
+  api       Run Bxc as an HTTP JSON API
   cookies   Cookie jar tools
-            bxc cookies load <jar.json>
-
   har       HAR (HTTP Archive) recorder/replayer
-            bxc har record <url> <out.har>
-            bxc har replay <file.har>
+  mirror    Download a full site (HTML+CSS+JS+assets)
+  challonge Extract snapshot from a Challonge tournament page
 
-  mirror    Download a full site (HTML+CSS+JS+assets) with rewritten links
-            bxc mirror <url> <out-dir> [--profile http|static|fast|stealth]
-                                            [--cookies jar.json] [--verbose]
-
-  challonge Extract typed snapshot from a Challonge tournament page
-            bxc challonge <url-or-path> [--cookies jar.json] [--summary]
-
-Flags:
-  --version, -V   print version
-  --help, -h      print this help
+Global Options:
+  --insecure, -k  Bypass TLS certificate validation
+  --proxy <url>   Use HTTP/SOCKS5 proxy
+  --quiet, -q     Suppress non-essential output
+  --json          Emit JSON output where applicable
+  --timeout <ms>  Global timeout (default 30000ms)
+  --version, -V   Print version
+  --help, -h      Print this help
 
 Examples:
-  bxc serve --cdp-port 9222 --profile stealth
-  bxc install
-  bxc detect https://www.google.com
+  bxc serve --cdp-port 9222
+  bxc recon https://google.com --insecure
+  bxc detect https://design.google --json
 
 bxc is a high-performance browser engine optimized for VPS
 and Google-grade stealth. It combines In-Process FFI (Zig/V8)
@@ -114,11 +85,9 @@ with a native Rust-driven Chromium core.
 // ---------------------------------------------------------------------------
 
 async function main() {
-	// In dev mode, read the actual version from package.json (file system available).
-	// In standalone executables, the define above wins and this block is dead-code-eliminated.
 	if (_pkgVersion === "0.0.0-dev") {
 		try {
-			const pkgPath = join(import.meta.dir, "../../package.json");
+			const pkgPath = join(ROOT, "package.json");
 			const text = await Bun.file(pkgPath).text();
 			const pkg = JSON.parse(text) as { version?: string };
 			if (typeof pkg.version === "string") {
@@ -129,76 +98,79 @@ async function main() {
 		}
 	}
 
-	const _buildTime =
-		typeof __BXC_BUILD_TIME__ !== "undefined" ? __BXC_BUILD_TIME__ : "dev";
-	void _buildTime;
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	const subcommand = remaining[0];
+	const args = remaining.slice(1);
 
-	const subcommand = process.argv[2];
+	if (opts.json) {
+		// Might want to suppress logger if JSON is requested
+	}
 
 	switch (subcommand) {
 		case "serve": {
-			await import("./serve.ts");
+			const mod = await import("./serve.ts");
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "install": {
 			const mod = await import("./install.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "chrome": {
 			const mod = await import("./chrome.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "recon":
 		case "docs": {
 			const mod = await import("./recon.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "detect": {
 			const mod = await import("./detect.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "scrape": {
 			const mod = await import("./scrape.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "cookies": {
 			const mod = await import("./cookies.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "har": {
 			const mod = await import("./har.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "mirror": {
 			const mod = await import("./mirror.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "challonge": {
 			const mod = await import("./challonge.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
 		case "api": {
 			const mod = await import("./api.ts");
-			await mod.main(process.argv.slice(3));
+			await mod.main(args, opts);
 			break;
 		}
 
@@ -210,19 +182,24 @@ async function main() {
 
 		case "--help":
 		case "-h":
-		default: {
+		case undefined: {
 			printUsage();
 			if (subcommand !== undefined && subcommand !== "--help" && subcommand !== "-h") {
-				Bun.stderr.write(`Unknown subcommand: ${subcommand}\n`);
-				process.exit(1);
+				logger.error(`Unknown subcommand: ${subcommand}`);
+				process.exit(EXIT.MISUSE);
 			}
 			break;
+		}
+
+		default: {
+			printUsage();
+			logger.error(`Unknown subcommand: ${subcommand}`);
+			process.exit(EXIT.MISUSE);
 		}
 	}
 }
 
 main().catch((err) => {
-	console.error(`[bxc] ${err instanceof Error ? err.stack : String(err)}`);
-	process.exit(1);
+	logger.error(err instanceof Error ? err.stack ?? err.message : String(err));
+	process.exit(EXIT.SOFTWARE);
 });
-

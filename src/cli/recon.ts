@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * Copyright 2026 aphrody-code
  *
@@ -18,29 +17,12 @@
 /**
  * `bxc recon <url>` — one-shot URL → docs.
  *
- * Probes a target URL and produces a Markdown reconnaissance report covering:
- *   - HTTP response headers (server / X-Powered-By / cache / CSP)
- *   - CDN fingerprint (Google Frontend / Cloudflare / Fastly / CloudFront / Akamai / Vercel / nginx)
- *   - Backend frameworks via wappalyzergo (Next.js, Wagtail, Django, Rails, ...)
- *   - All asset URLs grouped by type (stylesheet / script / image / font / iframe)
- *   - CSS selectors extracted from inline <style> + linked stylesheets
- *   - PNG screenshot when --screenshot is passed (uses fast profile)
- *
- * Usage:
- *   bxc recon <url>
- *   bxc recon <url> --profile fast
- *   bxc recon <url> --output report.md --snapshot-dir ./snapshot
- *   bxc recon <url> --screenshot
- *   bxc recon <url> --json                    (emit JSON instead of Markdown)
- *
- * Exit codes:
- *   0 success
- *   1 navigation/extraction failed
- *   2 invalid CLI arguments
+ * Probes a target URL and produces a Markdown reconnaissance report.
  */
 
 import { Browser, type Page } from "../api/browser.ts";
 import { detectFrameworks } from "../detect.ts";
+import { EXIT, type CommonOptions, bxcFetch, logger, parseCommonArgs } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,11 +47,6 @@ export interface ReconHeaders {
 	contentType?: string;
 }
 
-/**
- * Stable JSON output schema. Agents should branch on this — when we change
- * field semantics, we bump the version (`bxc-recon-v2`) and keep v1
- * available behind a flag.
- */
 export const RECON_SCHEMA = "bxc-recon-v1";
 
 export interface ReconResult {
@@ -88,15 +65,12 @@ export interface ReconResult {
 	screenshotBytes?: number;
 }
 
-interface ReconCliOptions {
+interface ReconCliOptions extends CommonOptions {
 	url: string;
 	profile: ReconProfile;
 	outputPath?: string;
 	snapshotDir?: string;
 	screenshot: boolean;
-	emitJson: boolean;
-	timeoutMs: number;
-	quiet: boolean;
 	plain: boolean;
 }
 
@@ -145,22 +119,14 @@ function extractCspHosts(csp: string): string[] {
 
 async function fetchFull(
 	url: string,
-	timeoutMs: number,
+	opts: Partial<ReconCliOptions>,
 ): Promise<{
 	headers: Record<string, string>;
 	status: number;
 	finalUrl: string;
 	body: string;
 }> {
-	const r = await fetch(url, {
-		method: "GET",
-		signal: AbortSignal.timeout(timeoutMs),
-		redirect: "follow",
-		headers: {
-			"User-Agent":
-				"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-		},
-	});
+	const r = await bxcFetch(url, opts);
 	const headers: Record<string, string> = {};
 	r.headers.forEach((v, k) => {
 		headers[k.toLowerCase()] = v;
@@ -214,27 +180,22 @@ function extractAssets(html: string, base: string): ReconAsset[] {
 		}
 	};
 
-	// <link rel="stylesheet"|"preload" ...>
 	for (const m of html.matchAll(
 		/<link[^>]+rel=["']?(?:stylesheet|preload)["']?[^>]*href=["']([^"']+)["'][^>]*>/gi,
 	)) {
 		push("stylesheet", m[1]);
 	}
-	// <script src=...>
-	for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
+	for (const m of html.matchAll(/<script[^+]+src=["']([^"']+)["']/gi)) {
 		push("script", m[1]);
 	}
-	// <img src=...>
 	for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) {
 		push("image", m[1]);
 	}
-	// <link as="font"> + <link rel="font">
 	for (const m of html.matchAll(
 		/<link[^>]+(?:as=["']?font["']?|rel=["']?font["']?)[^>]+href=["']([^"']+)["'][^>]*>/gi,
 	)) {
 		push("font", m[1]);
 	}
-	// <iframe src=...>
 	for (const m of html.matchAll(/<iframe[^>]+src=["']([^"']+)["']/gi)) {
 		push("iframe", m[1]);
 	}
@@ -249,8 +210,8 @@ function extractAssets(html: string, base: string): ReconAsset[] {
 async function extractCssSelectors(
 	html: string,
 	base: string,
+	opts: Partial<ReconCliOptions>,
 	maxStylesheets = 5,
-	timeoutMs = 10_000,
 ): Promise<string[]> {
 	const allCss: string[] = [];
 
@@ -276,7 +237,7 @@ async function extractCssSelectors(
 	for (const cssUrl of cssUrls) {
 		if (fetched >= maxStylesheets) break;
 		try {
-			const r = await fetch(cssUrl, { signal: AbortSignal.timeout(timeoutMs) });
+			const r = await bxcFetch(cssUrl, opts);
 			if (r.ok) {
 				allCss.push(await r.text());
 				fetched++;
@@ -314,11 +275,8 @@ async function extractCssSelectors(
 // ---------------------------------------------------------------------------
 
 export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
-	// Fast path: a single fetch() returns headers + body in one round-trip.
-	// Bun's native HTTP client is HTTP/2-capable and respects Accept-Encoding,
-	// so this is ~250ms cold vs ~30s for Browser.newPage().
 	const t0 = Bun.nanoseconds();
-	const fetched = await fetchFull(opts.url, opts.timeoutMs);
+	const fetched = await fetchFull(opts.url, opts);
 	const headers = reconHeaders(fetched.headers);
 	let body = fetched.body;
 	let finalUrl = fetched.finalUrl;
@@ -326,8 +284,6 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	let screenshotBytes: number | undefined;
 	let screenshotPath: string | undefined;
 
-	// Browser stack only when we need rendering (screenshot, JS-heavy pages).
-	// Default profile=http stays in fast path.
 	const needsBrowser = opts.screenshot || opts.profile === "fast" || opts.profile === "static";
 	let browserError: string | null = null;
 	if (needsBrowser) {
@@ -358,39 +314,30 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 					await Bun.write(screenshotPath, png);
 					screenshotBytes = png.byteLength;
 				} catch {
-					// screenshot failed — continue without
+					// screenshot failed
 				}
 			}
 		} catch (err) {
 			browserError = err instanceof Error ? err.message : String(err);
-			// Graceful fallback: continue with the body we already fetched.
-			// The recon doc will lack the rendered DOM (and screenshot), but the
-			// HTTP/CDN/asset/CSS analysis is intact.
 		} finally {
 			try {
 				await page?.close();
 			} catch {
-				// ignore close errors
+				// ignore
 			}
 		}
 	}
 
-	// Surface browser failures in stderr for debugging without breaking the doc.
-	// Suppressed by --quiet so machine pipelines stay clean.
 	if (browserError && !opts.quiet) {
-		Bun.stderr.write(
-			`bxc recon: browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.\n`,
-		);
+		logger.warn(`browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.`);
 	}
 
-	// Step 3: extraction (assets / selectors / frameworks) in parallel
 	const [assets, cssSelectors, frameworks] = await Promise.all([
 		Promise.resolve(extractAssets(body, opts.url)),
-		extractCssSelectors(body, opts.url),
-		detectFrameworks({ html: body, headers: {} }).catch(() => []),
+		extractCssSelectors(body, opts.url, opts),
+		detectFrameworks({ html: body, headers: {} }, { insecure: opts.insecure, timeoutMs: 10_000 }).catch(() => []),
 	]);
 
-	// Optionally persist HTML snapshot
 	if (opts.snapshotDir) {
 		await Bun.write(`${opts.snapshotDir}/${opts.profile}.html`, body).catch(() => {});
 		await Bun.write(
@@ -424,14 +371,9 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 }
 
 // ---------------------------------------------------------------------------
-// Markdown rendering
+// Rendering
 // ---------------------------------------------------------------------------
 
-/**
- * Plain text rendering — line-oriented, grep/awk friendly, no Markdown tables.
- * Each line is `key: value` or `bullet`-prefixed lists. Stable across versions
- * for shell pipelines.
- */
 export function renderPlain(r: ReconResult): string {
 	const lines: string[] = [];
 	lines.push(`schema: ${RECON_SCHEMA}`);
@@ -467,7 +409,6 @@ export function renderMarkdown(r: ReconResult): string {
 	lines.push(`Profile used: \`${r.profile}\``);
 	lines.push("");
 
-	// HTTP / CDN
 	lines.push(`## HTTP & CDN`);
 	lines.push("");
 	lines.push(`- **HTTP status**: ${r.httpStatus}`);
@@ -488,7 +429,6 @@ export function renderMarkdown(r: ReconResult): string {
 		lines.push("");
 	}
 
-	// Frameworks
 	lines.push(`## Frameworks (wappalyzergo)`);
 	lines.push("");
 	if (r.frameworks.length === 0) {
@@ -504,7 +444,6 @@ export function renderMarkdown(r: ReconResult): string {
 	}
 	lines.push("");
 
-	// Assets
 	const byHost = new Map<string, number>();
 	for (const a of r.assets) byHost.set(a.host, (byHost.get(a.host) ?? 0) + 1);
 	lines.push(`## Asset hosts (${r.assets.length} total)`);
@@ -532,7 +471,6 @@ export function renderMarkdown(r: ReconResult): string {
 		lines.push("");
 	}
 
-	// CSS selectors
 	lines.push(`## CSS selectors (${r.cssSelectors.length} total) — sample top 50`);
 	lines.push("");
 	lines.push("```css");
@@ -545,7 +483,6 @@ export function renderMarkdown(r: ReconResult): string {
 	lines.push("```");
 	lines.push("");
 
-	// Screenshot
 	if (r.screenshotPath) {
 		lines.push(`## Screenshot`);
 		lines.push("");
@@ -559,12 +496,12 @@ export function renderMarkdown(r: ReconResult): string {
 }
 
 // ---------------------------------------------------------------------------
-// CLI parsing
+// CLI
 // ---------------------------------------------------------------------------
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bxc recon — one-shot URL → docs (schema ${RECON_SCHEMA})
+		`bxc recon — one-shot URL → docs
 
 Usage:
   bxc recon <url> [options]
@@ -574,42 +511,19 @@ Options:
   --output <path>       write to file (default: stdout)
   --snapshot-dir <dir>  also persist HTML, headers.json, css-selectors.txt
   --screenshot          capture PNG (forces profile=fast)
-  --json                emit JSON instead of Markdown (machine-readable)
-  --plain               line-oriented Markdown without tables (grep/awk-friendly)
-  --quiet               suppress stderr progress and warnings
-  --timeout <ms>        navigation timeout in ms (default: 30000)
+  --plain               line-oriented Markdown without tables
   --help, -h            print this help
 
-Exit codes (UNIX sysexits-friendly):
-  0   success
-  2   misuse (invalid CLI args)
-  65  data error (fetch returned non-2xx)
-  70  software error (extraction or rendering failed)
-  130 SIGINT (user cancelled)
-
-Output contract:
-  - stdout = data (Markdown or JSON, depending on flags)
-  - stderr = progress / warnings / errors
-  - JSON output starts with {"$schema":"${RECON_SCHEMA}"}
-  - NO_COLOR=1 honored (plain ASCII output regardless)
-
-Examples:
-  bxc recon https://design.google
-  bxc recon https://nextjs.org --profile fast --screenshot --snapshot-dir ./report
-  bxc recon https://m3.material.io --json > m3.json
-  bxc recon https://m3.material.io --plain --quiet | grep -i framework
 `,
 	);
 }
 
-function parseArgs(argv: readonly string[]): ReconCliOptions | null {
+function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ReconCliOptions | null {
 	const opts: ReconCliOptions = {
+		...baseOpts,
 		url: "",
 		profile: "http",
 		screenshot: false,
-		emitJson: false,
-		timeoutMs: 30_000,
-		quiet: Bun.env.BXC_QUIET === "1",
 		plain: Bun.env.NO_COLOR === "1",
 	};
 
@@ -617,9 +531,9 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 		const a = argv[i];
 		switch (a) {
 			case "--profile": {
-				const v = argv[++i];
+				const v = argv[++i] as any;
 				if (v !== "static" && v !== "fast" && v !== "http") {
-					Bun.stderr.write(`Invalid profile: ${v} (expected static|fast|http)\n`);
+					logger.error(`Invalid profile: ${v}`);
 					return null;
 				}
 				opts.profile = v;
@@ -633,20 +547,10 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 				break;
 			case "--screenshot":
 				opts.screenshot = true;
-				opts.profile = "fast"; // screenshot requires rendering engine
-				break;
-			case "--json":
-				opts.emitJson = true;
+				opts.profile = "fast";
 				break;
 			case "--plain":
 				opts.plain = true;
-				break;
-			case "--quiet":
-			case "-q":
-				opts.quiet = true;
-				break;
-			case "--timeout":
-				opts.timeoutMs = parseInt(argv[++i], 10);
 				break;
 			case "--help":
 			case "-h":
@@ -656,46 +560,24 @@ function parseArgs(argv: readonly string[]): ReconCliOptions | null {
 				if (!opts.url && /^https?:\/\//.test(a)) {
 					opts.url = a;
 				} else if (a.startsWith("-")) {
-					Bun.stderr.write(`Unknown option: ${a}\n`);
+					logger.error(`Unknown option: ${a}`);
 					return null;
 				}
 		}
 	}
 
 	if (!opts.url) {
-		Bun.stderr.write(`Missing URL argument\n`);
+		logger.error(`Missing URL argument`);
 		printUsage();
 		return null;
 	}
 	return opts;
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
-/**
- * Exit codes follow the BSD `sysexits.h` convention so AI agents can branch
- * on `$?` without parsing stderr. Document changes in --help output too.
- */
-const EXIT = {
-	OK: 0,
-	USAGE: 2,
-	DATA_ERR: 65,
-	SOFTWARE: 70,
-	SIGINT: 130,
-} as const;
-
-function logProgress(opts: ReconCliOptions, msg: string): void {
-	if (!opts.quiet) {
-		Bun.stderr.write(`bxc recon: ${msg}\n`);
-	}
-}
-
-export async function main(argv: readonly string[]): Promise<void> {
-	const opts = parseArgs(argv);
+export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
-		process.exit(EXIT.USAGE);
+		process.exit(EXIT.MISUSE);
 	}
 
 	if (opts.snapshotDir) {
@@ -707,32 +589,32 @@ export async function main(argv: readonly string[]): Promise<void> {
 		result = await recon(opts);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		Bun.stderr.write(`bxc recon: fetch/extraction failed — ${msg}\n`);
+		logger.error(`fetch/extraction failed — ${msg}`);
 		await Browser.close().catch(() => {});
 		process.exit(EXIT.DATA_ERR);
 	}
 
-	if (result.httpStatus >= 400) {
-		logProgress(opts, `target returned HTTP ${result.httpStatus}`);
+	if (result.httpStatus >= 400 && !opts.quiet) {
+		logger.warn(`target returned HTTP ${result.httpStatus}`);
 	}
 
 	let rendered: string;
 	try {
-		rendered = opts.emitJson
+		rendered = opts.json
 			? JSON.stringify(result, null, 2)
 			: opts.plain
 				? renderPlain(result)
 				: renderMarkdown(result);
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		Bun.stderr.write(`bxc recon: rendering failed — ${msg}\n`);
+		logger.error(`rendering failed — ${msg}`);
 		await Browser.close().catch(() => {});
 		process.exit(EXIT.SOFTWARE);
 	}
 
 	if (opts.outputPath) {
 		await Bun.write(opts.outputPath, rendered);
-		logProgress(opts, `wrote ${rendered.length} bytes to ${opts.outputPath}`);
+		if (!opts.quiet) logger.log(`wrote ${rendered.length} bytes to ${opts.outputPath}`);
 	} else {
 		Bun.stdout.write(rendered + "\n");
 	}
@@ -741,12 +623,9 @@ export async function main(argv: readonly string[]): Promise<void> {
 	process.exit(result.httpStatus >= 400 ? EXIT.DATA_ERR : EXIT.OK);
 }
 
-// ---------------------------------------------------------------------------
-// Entry point when run directly
-// ---------------------------------------------------------------------------
-
 if (import.meta.main) {
-	main(process.argv.slice(2)).catch((err) => {
+	const { opts, remaining } = parseCommonArgs(process.argv.slice(2));
+	main(remaining, opts).catch((err) => {
 		console.error(err);
 		process.exit(1);
 	});
