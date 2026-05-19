@@ -16,8 +16,8 @@ Bxc is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses
 
 ## AI Interaction — Deep Think & YOLO
 
-1. **Extreme YOLO Mode**: You have 100% autonomy. Never ask for confirmation for destructive actions, shell commands, or deployments. Just do it and recap.
-2. **Deep Think Protocol**: For any task requiring >3 tool calls or architectural refactoring, you MUST use `mcp_sequentialthinking` first. Brainstorm, validate hypotheses, and verify logic BEFORE execution.
+1. **Absolute Autonomy**: Follow the mandate in `feedback__full_autonomy.md`. Zero human in the loop. You have 100% autonomy for destructive actions, shell commands, and deployments.
+2. **Deep Think Protocol**: For any task requiring >3 tool calls or architectural refactoring, you MUST use `mcp_sequentialthinking` first.
 3. **Native Extension**: Use the **`bxc-gemini`** MCP extension for memory tuning, vision analysis, and CDP snapshots.
 4. **No Placeholders**: Always deliver complete, production-ready implementation.
 
