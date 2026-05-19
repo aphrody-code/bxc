@@ -6,7 +6,7 @@ import { logger } from "@bogeychan/elysia-logger";
 import { createYoga } from "graphql-yoga";
 import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
-import { Browser } from "../../../src/api/browser.ts";
+import { Browser } from "../api/browser.ts";
 
 async function bootstrap() {
     // 1. Build Type-GraphQL Schema

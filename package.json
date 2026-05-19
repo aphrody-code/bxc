@@ -49,6 +49,10 @@
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
 		"build:mcp": "bun build ./src/mcp/server.ts --compile --target=bun-linux-x64 --outfile ./dist/standalone/bxc-mcp",
+		"server:dev": "bun --watch src/server/index.ts",
+		"server:start": "bun src/server/index.ts",
+		"extract:bench": "bun src/ai/llm-extract/benchmarks/extract.bench.ts",
+		"db:push": "drizzle-kit push",
 		"clean": "bun scripts/cleanup.ts",
 		"bench": "bun benchmarks/run-all.ts"
 	},
@@ -67,7 +71,9 @@
 		"@types/jsdom": "^28.0.3",
 		"babel-plugin-react-compiler": "^1.0.0",
 		"cheerio": "^1.2.0",
+		"drizzle-kit": "^0.31.10",
 		"jsdom": "^29.1.1",
+		"openapi-typescript": "^7.13.0",
 		"oxlint": "^1.65.0",
 		"patchright": "^1.59.4",
 		"playwright": "^1.60.0",
@@ -75,6 +81,17 @@
 		"typescript": "^6.0.3"
 	},
 	"dependencies": {
+		"@bogeychan/elysia-logger": "^0.1.10",
+		"@elysiajs/cors": "^1.4.2",
+		"@elysiajs/swagger": "^1.3.1",
+		"@libsql/client": "^0.17.3",
+		"class-validator": "^0.15.1",
+		"drizzle-orm": "^0.45.2",
+		"elysia": "^1.4.28",
+		"graphql": "^16.14.0",
+		"graphql-yoga": "^5.21.0",
+		"reflect-metadata": "^0.2.2",
+		"type-graphql": "^2.0.0-rc.3",
 		"zod": "^4.4.3"
 	}
 }
