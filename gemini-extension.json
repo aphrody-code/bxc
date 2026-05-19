@@ -1,0 +1,13 @@
+{
+  "name": "bxc-gemini",
+  "version": "0.3.0",
+  "description": "Bxc Native Extension: Zero-Spawn Browser Engine for AI Agents.",
+  "author": "aphrody-code",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "bxc": {
+      "command": "/usr/local/bin/bxc-mcp",
+      "args": []
+    }
+  }
+}
