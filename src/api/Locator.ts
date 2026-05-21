@@ -147,19 +147,7 @@ export class Locator {
 	 * Returns the number of elements matching the locator.
 	 */
 	async count(): Promise<number> {
-		let resolvedSelector = this.#selector;
-		if (this.#selector.startsWith("@semantic:")) {
-			const query = this.#selector.slice(10).trim();
-			const html = await this.#page.content();
-			const { resolveSemantic } = await import("../ai/extractor.ts");
-			const output = await resolveSemantic(query, html);
-			if (output.status === "success" && output.selector)
-				resolvedSelector = output.selector;
-			else
-				throw new Error(
-					`Failed to resolve semantic selector: ${output.message}`,
-				);
-		}
+		const resolvedSelector = this.#selector;
 
 		const doc = (await this.#page._send("DOM.getDocument", { depth: 0 })) as {
 			root: { nodeId: number };
@@ -210,24 +198,7 @@ export class Locator {
 		let lastPos: { x: number; y: number } | null = null;
 		let stableCount = 0;
 
-		let resolvedSelector = this.#selector;
-
-		// Phase 4: Semantic Selectors
-		if (this.#selector.startsWith("@semantic:")) {
-			const query = this.#selector.slice(10).trim();
-			const html = await this.#page.content();
-
-			const { resolveSemantic } = await import("../ai/extractor.ts");
-			const output = await resolveSemantic(query, html);
-
-			if (output.status === "success" && output.selector) {
-				resolvedSelector = output.selector;
-			} else {
-				throw new Error(
-					`Failed to resolve semantic selector: ${output.message}`,
-				);
-			}
-		}
+		const resolvedSelector = this.#selector;
 		const parts = resolvedSelector.split(" >> ");
 		const baseSelector = parts[0];
 		const internalFilters = parts.slice(1);
