@@ -11,7 +11,6 @@ Bxc is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses
   - **Build System:** Turborepo
   - **Memory:** Native SQLite Tuning (`tune_memory_sqlite`)
   - **Extension:** `bxc-gemini` (Native MCP Server)
-  - **Local AI:** Gemma 4 E2B via llama.cpp (`vendor/gemma/`)
   - **Linting/Formatting:** Oxlint (performance) & Biome (consistency)
 
 ## AI Interaction — Deep Think & YOLO

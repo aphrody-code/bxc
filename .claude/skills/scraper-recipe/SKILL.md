@@ -23,7 +23,6 @@ Quand invoquée via `/scraper-recipe`, cette skill produit un fichier scraper co
 
 2. **Décide static-first vs LLM-extract** :
    - Si selectors CSS suffisent (HTML structuré) → cheerio + Zod parse
-   - Si le HTML est sémantique mais variable (fiches produit, articles) → `extractStructured` via Gemma 4
 
 3. **Génère le fichier** avec ce template :
 
@@ -81,4 +80,3 @@ for (const url of urls) {
 
 - **Parallélisme naïf** sur `stealth` / `max` : 1 process Chromium par worker = OOM. Utiliser `PagePool` de `src/pool/` à la place.
 - **Pas de Zod** : output non typé → bug downstream. Toujours `Schema.parse()`.
-- **LLM pour HTML structuré** : si cheerio gagne, ne pas brûler des tokens Gemma.

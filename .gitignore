@@ -31,7 +31,6 @@ target
 
 vendor/*
 !vendor/
-!vendor/gemma/
 !vendor/chrome-devtools-mcp/
 !vendor/mcp-sdk-typescript/
 !vendor/mcp-sdk-typescript/**
@@ -45,15 +44,6 @@ vendor/chromiumoxide
 !vendor/gemini-cli/
 !vendor/gemini-cli/**
 
-# vendor/gemma : whitelist code (scripts + config) — large artifacts stay ignored
-!vendor/gemma/
-!vendor/gemma/**
-vendor/gemma/.venv/
-vendor/gemma/models/
-vendor/gemma/build/
-vendor/gemma/logs/
-vendor/gemma/bench/
-vendor/gemma/uv.lock
 *.gguf
 *.safetensors
 *.bin

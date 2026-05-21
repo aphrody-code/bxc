@@ -11,13 +11,11 @@ bindings + historique Zig DOM. Publié sur GitHub Packages comme
 ## Rappels critiques
 
 - **Test scope** : `bun test test/ packages/ src/` — **jamais sans path**, sinon
-  bun walk `vendor/` (llama.cpp, gemma) et meurt.
+  bun walk `vendor/` (mcp-sdk) et meurt.
 - **Nommage** : tout identifiant/ref code/docs/binaires doit être `bxc*`. Le
   rebrand est terminé — ne réintroduire aucun ancien nommage de projet.
 - **`packages/api`** : entry réel = `src/index.ts` (Elysia `.listen()`), PAS
   le `index.ts` racine (stub `bun init`). Cf. `packages/api/CLAUDE.md`.
-- **`packages/llm-extract`** : single-stream queue obligatoire (Gemma CPU =
-  memory-bandwidth bound). Cf. `packages/llm-extract/CLAUDE.md`.
 - **`packages/bxc-extension`** : MCP server stdio (`bxc-gemini`), 7 tools sur
   le moteur bxc. Cf. `packages/bxc-extension/CLAUDE.md`.
 
@@ -44,10 +42,9 @@ bxc/
 ├── packages/
 │   ├── api/                      # Elysia server (GraphQL + REST)
 │   ├── bxc-extension/            # MCP stdio (bxc-gemini)
-│   ├── llm-extract/              # Gemma 4 wrapper (single-stream queue)
 │   └── ...
 ├── rust-bridge/                  # FFI Rust ↔ Bun (lol_html, V8 bindings)
-├── vendor/                       # gemma, llama.cpp, mcp-sdk-typescript (NE PAS TOUCHER)
+├── vendor/                       # mcp-sdk-typescript (NE PAS TOUCHER)
 ├── test/                         # tests root level
 ├── GEMINI.md                     # operating guide partagé
 ├── CLAUDE.md                     # ce fichier
@@ -85,8 +82,7 @@ cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.X.0"
 
 ## Pièges
 
-- **Vendor immuables** : `vendor/gemma/`, `vendor/gemma/sources/llama.cpp/`,
-  `vendor/mcp-sdk-typescript/`. Lecture seule. Leur CLAUDE.md est externe.
+- **Vendor immuables** : `vendor/mcp-sdk-typescript/`. Lecture seule. Leur CLAUDE.md est externe.
 - **Google search instable** : `googleWebSearch` peut renvoyer 0 résultat sur
   des requêtes nouvelles (ex `'bxc'`). Pour les tests d'intégration, utiliser
   une requête stable (ex `'bun runtime'`).

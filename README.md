@@ -34,7 +34,7 @@ All commands support `--json` for structured output and `--insecure` for bypassi
 | `bxc recon` | `bxc recon <url>` | Full reconnaissance (tech stack, assets, Markdown). |
 | `bxc detect` | `bxc detect <url>` | Deep detection of CMS, WAF, and frameworks. |
 | `bxc scrape` | `bxc scrape <url> --markdown` | Instant HTML-to-Markdown conversion. |
-| `bxc install` | `bxc install` | Downloads native dependencies (Lightpanda/Gemma). |
+| `bxc install` | `bxc install` | Downloads native dependencies (Lightpanda). |
 
 ---
 
@@ -87,7 +87,6 @@ const { page } = await google.open("https://www.google.com/search?q=bxc+engine")
 - **Runtime**: Bun (JSC engine)
 - **DOM**: Native Zig core (`liblightpanda_dom`)
 - **Networking**: Rust + `curl-impersonate` (FFI)
-- **Local AI**: Gemma 4 E2B via llama.cpp (embedded)
 - **Type Safety**: Strict TypeScript (no `any`, no `unknown` casts)
 
 ---
