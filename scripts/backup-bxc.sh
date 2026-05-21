@@ -36,8 +36,6 @@ readonly TAR_EXCLUDES=(
   "${REPO_NAME}/.bxc"
   "${REPO_NAME}/.tsbuildinfo"
   "${REPO_NAME}/bxc-memory.sqlite"
-  "${REPO_NAME}/vendor/gemma/models"
-  "${REPO_NAME}/vendor/gemma/sources/llama.cpp/build"
 )
 
 usage() {

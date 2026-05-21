@@ -138,7 +138,6 @@ git diff HEAD~1 -- '**/CLAUDE.md' | wc -l
 - Ne JAMAIS ajouter une section "Best Practices" générique
 - Ne JAMAIS dupliquer info entre CLAUDE.md parent et enfant
 - Ne JAMAIS commenter "what" (le code le dit) — seulement "why" non-obvious
-- Ne JAMAIS toucher aux CLAUDE.md vendored (`vendor/mcp-sdk-typescript/CLAUDE.md`,
-  `vendor/gemma/sources/llama.cpp/CLAUDE.md`) — out of scope
+- Ne JAMAIS toucher aux CLAUDE.md vendored (`vendor/mcp-sdk-typescript/CLAUDE.md`) — out of scope
 - Ne JAMAIS gonfler un fichier > 80 lignes. Si plus de contenu nécessaire,
   splitter via références (`refs/X.md`) ou pointer vers DEVELOPMENT.md
