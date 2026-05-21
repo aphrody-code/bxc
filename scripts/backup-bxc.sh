@@ -4,9 +4,9 @@
 # any destructive operation (rebrand, force-push, repo rename).
 #
 # Produces 3 artifacts under "${HOME}/bxc-backup-<UTC>/" :
-#   1. bunlight-<UTC>.tar.zst   — entire worktree, excluding node_modules
+#   1. bxc-<UTC>.tar.zst   — entire worktree, excluding node_modules
 #                                  and rust-bridge/target (huge, regenerable).
-#   2. bunlight-<UTC>.gitbundle — full git history (re-clonable offline).
+#   2. bxc-<UTC>.gitbundle — full git history (re-clonable offline).
 #   3. SHA256SUMS                — checksums of the two above + this script.
 #
 # Best practices applied:
@@ -33,9 +33,9 @@ readonly TAR_EXCLUDES=(
   "${REPO_NAME}/rust-bridge/target"
   "${REPO_NAME}/dist"
   "${REPO_NAME}/.turbo"
-  "${REPO_NAME}/.bunlight"
+  "${REPO_NAME}/.bxc"
   "${REPO_NAME}/.tsbuildinfo"
-  "${REPO_NAME}/bunlight-memory.sqlite"
+  "${REPO_NAME}/bxc-memory.sqlite"
   "${REPO_NAME}/vendor/gemma/models"
   "${REPO_NAME}/vendor/gemma/sources/llama.cpp/build"
 )
@@ -175,7 +175,7 @@ main() {
   printf '  %s\n' "${backup_dir}"
   printf '  to restore later:\n'
   printf '    zstd -d %s -c | tar -xf - -C /restore/target\n' "${tar_path}"
-  printf '    git clone %s ./bunlight-restored\n' "${bundle_path}"
+  printf '    git clone %s ./bxc-restored\n' "${bundle_path}"
 }
 
 main "$@"

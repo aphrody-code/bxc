@@ -4,18 +4,16 @@
 > Ce fichier liste ce qui est **spécifique à Claude Code** ou ce qu'il faut
 > rappeler systématiquement.
 
-bxc (ex-bunlight, rebrand 7 axes / 257 fichiers le 2026-05-16) — moteur de
-navigation "Zero-Spawn" pour agents IA. Bun runtime + Rust V8 bindings +
-historique Zig DOM. Packagé en submodule `vps/packages/bxc` (repo
-`aphrody-code/bxc` v0.1.0).
+bxc — moteur de navigation "Zero-Spawn" pour agents IA. Bun runtime + Rust V8
+bindings + historique Zig DOM. Publié sur GitHub Packages comme
+`@aphrody-code/bxc` (repo `aphrody-code/bxc`), consommé par `rpb-challonge` (vps).
 
 ## Rappels critiques
 
 - **Test scope** : `bun test test/ packages/ src/` — **jamais sans path**, sinon
   bun walk `vendor/` (llama.cpp, gemma) et meurt.
-- **Pas de réintroduction de `bunlight*`** dans le code/docs/binaires. Toute
-  ref doit être `bxc*`. Le script de rebrand est `rename-radical-bxc.sh`
-  (tmux-safe) si jamais une nouvelle source à migrer apparaît.
+- **Nommage** : tout identifiant/ref code/docs/binaires doit être `bxc*`. Le
+  rebrand est terminé — ne réintroduire aucun ancien nommage de projet.
 - **`packages/api`** : entry réel = `src/index.ts` (Elysia `.listen()`), PAS
   le `index.ts` racine (stub `bun init`). Cf. `packages/api/CLAUDE.md`.
 - **`packages/llm-extract`** : single-stream queue obligatoire (Gemma CPU =
@@ -35,7 +33,7 @@ bun run lint                                 # oxlint .
 
 # Stack binaire
 cargo build -p bxc-engine --release          # moteur Rust
-ls rust-bridge/target/release/               # vérifier qu'aucun `bunlight*` n'y traîne
+ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_bridge.*)
 ```
 
 ## Layout
