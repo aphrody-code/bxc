@@ -1,6 +1,6 @@
 {
 	"name": "@aphrody-code/bxc",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Bxc: High-performance browser automation engine (Bun + Lightpanda fusion)",
 	"packageManager": "bun@1.3.14",
 	"type": "module",
@@ -33,6 +33,8 @@
 		"./google": "./src/google/index.ts",
 		"./serverless": "./src/serverless/handler.ts",
 		"./ffi/rust-bridge": "./src/rust/bridge.ts",
+		"./ffi/curl-impersonate": "./src/ffi/curl-impersonate.ts",
+		"./scrapers/challonge": "./src/scrapers/challonge.ts",
 		"./types/ConnectionTransport": "./types/ConnectionTransport.ts"
 	},
 	"scripts": {
