@@ -1,7 +1,7 @@
 # gemma — runtime inference Gemma 4 E2B (CPU AVX2)
 
-Runtime local de **gemma-4-E2B-it** via llama.cpp natif, sous `bunlight/vendor/gemma/`.
-Consommé par `packages/llm-extract/` (scraping intensif Bunlight) et par n'importe quel
+Runtime local de **gemma-4-E2B-it** via llama.cpp natif, sous `bxc/vendor/gemma/`.
+Consommé par `packages/llm-extract/` (scraping intensif Bxc) et par n'importe quel
 client OpenAI-compat pointant sur `127.0.0.1:8080`.
 
 > **Hôte** : VPS KVM `vps-203bea89` · 12 vCPU Haswell · 46 GiB RAM · AVX2 / pas d'AVX-512 / pas de GPU.
@@ -18,7 +18,7 @@ journalctl --user -u gemma -f                          # logs live
 ## Layout
 
 ```
-bunlight/vendor/gemma/
+bxc/vendor/gemma/
 ├── CLAUDE.md                  ← ce fichier
 ├── pyproject.toml             ← env Python uv (transformers + torch CPU + gemma JAX)
 ├── uv.lock                    (gitignored, lock du venv)
@@ -65,7 +65,7 @@ Environment=CONTEXT=8192      # 32K en E2B reste possible, mais 8K = KV cache ch
 Environment=PARALLEL=1
 Environment=PORT=8080
 Environment=HOST=127.0.0.1
-ExecStart=%h/bunlight/vendor/gemma/scripts/start-server.sh
+ExecStart=%h/bxc/vendor/gemma/scripts/start-server.sh
 MemoryHigh=8G  MemoryMax=12G  CPUQuota=800%  Nice=5
 ```
 
@@ -187,7 +187,7 @@ hf download ggml-org/gemma-4-E2B-it-GGUF --include "*Q8_0*" --local-dir models
 ## Env Python uv (exploration)
 
 ```bash
-cd bunlight/vendor/gemma
+cd bxc/vendor/gemma
 uv sync
 uv run python -c "import gemma; print(gemma.__version__)"   # → 4.0.0
 ```
@@ -214,12 +214,12 @@ Toujours bench avec `sources/llama.cpp/build/bin/llama-bench` avant de switcher 
 
 ```bash
 # llama.cpp
-cd ~/bunlight/vendor/gemma/sources/llama.cpp && git pull
+cd ~/bxc/vendor/gemma/sources/llama.cpp && git pull
 cmake --build build -j 12 --config Release
 systemctl --user restart gemma
 
 # Gemma JAX lib (exploration)
-cd ~/bunlight/vendor/gemma/sources/upstream && git pull
+cd ~/bxc/vendor/gemma/sources/upstream && git pull
 uv sync
 
 # Modèle (rare)
