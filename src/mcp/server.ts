@@ -12,7 +12,6 @@ import { Database } from "bun:sqlite";
 // Bxc Native Imports
 import { Browser } from "../api/browser.ts";
 import { detectFrameworks } from "../detect.ts";
-import { extractStructured } from "../ai/llm-extract/index.ts";
 
 const server = new McpServer({
 	name: "bxc-native-mcp",
@@ -22,7 +21,8 @@ const server = new McpServer({
 /**
  * 1. SQLite Memory System Tuning
  */
-const dbPath = process.env.BXC_MEMORY_DB || `${process.cwd()}/bxc-memory.sqlite`;
+const dbPath =
+	process.env.BXC_MEMORY_DB || `${process.cwd()}/bxc-memory.sqlite`;
 const db = new Database(dbPath);
 db.run(`
   CREATE TABLE IF NOT EXISTS memories (
@@ -36,7 +36,8 @@ db.run(`
 server.registerTool(
 	"tune_memory_sqlite",
 	{
-		description: "Stores or retrieves a fine-tuned memory fact in the high-performance SQLite database.",
+		description:
+			"Stores or retrieves a fine-tuned memory fact in the high-performance SQLite database.",
 		inputSchema: z.object({
 			action: z.enum(["get", "set"]),
 			key: z.string(),
@@ -45,11 +46,31 @@ server.registerTool(
 	},
 	async (args) => {
 		if (args.action === "set" && args.value) {
-			db.prepare("INSERT OR REPLACE INTO memories (key, value) VALUES (?, ?)").run(args.key, args.value);
-			return { content: [{ type: "text", text: `Memory '${args.key}' tuned and saved to SQLite.` }] };
+			db.prepare(
+				"INSERT OR REPLACE INTO memories (key, value) VALUES (?, ?)",
+			).run(args.key, args.value);
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Memory '${args.key}' tuned and saved to SQLite.`,
+					},
+				],
+			};
 		} else {
-			const result = db.prepare("SELECT value FROM memories WHERE key = ?").get(args.key) as { value: string } | undefined;
-			return { content: [{ type: "text", text: result ? result.value : `No memory found for key '${args.key}'.` }] };
+			const result = db
+				.prepare("SELECT value FROM memories WHERE key = ?")
+				.get(args.key) as { value: string } | undefined;
+			return {
+				content: [
+					{
+						type: "text",
+						text: result
+							? result.value
+							: `No memory found for key '${args.key}'.`,
+					},
+				],
+			};
 		}
 	},
 );
@@ -79,38 +100,7 @@ server.registerTool(
 );
 
 /**
- * 3. Structured AI Extraction
- */
-server.registerTool(
-	"bxc_extract_structured",
-	{
-		description: "Extracts structured JSON from a URL using local AI (Gemma 4).",
-		inputSchema: z.object({
-			url: z.string().url(),
-			schema: z.string().describe("A Zod-like description of the object to extract."),
-			profile: z.enum(["static", "fast", "http", "stealth"]).default("static"),
-		}),
-	},
-	async (args) => {
-		const page = await Browser.newPage({ profile: args.profile });
-		try {
-			await page.goto(args.url);
-			const html = await page.content();
-			// Note: This assumes the user provided a prompt-like description that we map to a Zod schema.
-			// For simplicity in MCP, we use a dynamic object schema.
-			const result = await extractStructured(html, {
-				url: args.url,
-				schema: z.record(z.any()), // Fallback to record if schema string is complex
-			});
-			return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-		} finally {
-			await page.close();
-		}
-	},
-);
-
-/**
- * 4. Detect Frameworks
+ * 3. Detect Frameworks
  */
 server.registerTool(
 	"bxc_detect_frameworks",
@@ -126,7 +116,9 @@ server.registerTool(
 			await page.goto(args.url);
 			const html = await page.content();
 			const frameworks = await detectFrameworks({ html, headers: {} });
-			return { content: [{ type: "text", text: JSON.stringify(frameworks, null, 2) }] };
+			return {
+				content: [{ type: "text", text: JSON.stringify(frameworks, null, 2) }],
+			};
 		} finally {
 			await page.close();
 		}
@@ -151,7 +143,9 @@ server.registerTool(
 		try {
 			await page.goto(args.url);
 			const result = await page.evaluate(args.script);
-			return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
 		} finally {
 			await page.close();
 		}

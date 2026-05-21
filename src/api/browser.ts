@@ -486,6 +486,16 @@ export class Page implements AnyPage {
 	}
 
 	/**
+	 * Returns the page content as clean GFM Markdown.
+	 */
+	async markdown(): Promise<string> {
+		this.#assertOpen();
+		const html = await this.content();
+		const { htmlToMarkdown } = await import("../rust/bridge.ts");
+		return htmlToMarkdown(html);
+	}
+
+	/**
 	 * Replaces the current page document with the provided HTML.
 	 */
 	async setContent(html: string): Promise<void> {
@@ -692,25 +702,6 @@ export class Page implements AnyPage {
 			selector: sel,
 		})) as { nodeIds: number[] };
 		return nodeIds.map((id) => this.#makeHandle<E>(id));
-	}
-
-	/**
-	 * Extracts data from the page using natural language instructions via an LLM.
-	 * Requires the `ANTHROPIC_API_KEY` environment variable.
-	 *
-	 * @example
-	 * ```ts
-	 * const result = await page.aiExtract("product titles, prices and ratings");
-	 * console.log(result.data, result.selectors);
-	 * ```
-	 */
-	async aiExtract(instruction: string): Promise<{
-		data: Record<string, string | string[]>;
-		selectors: Record<string, string>;
-	}> {
-		this.#assertOpen();
-		const { aiExtractDOM } = await import("../ai/extractor.ts");
-		return aiExtractDOM(this, instruction);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -1204,6 +1195,14 @@ export class HttpPage implements AnyPage {
 		return this.#lastBody;
 	}
 
+	/** Returns the page content as clean GFM Markdown. */
+	async markdown(): Promise<string> {
+		this.#assertOpen();
+		const html = await this.content();
+		const { htmlToMarkdown } = await import("../rust/bridge.ts");
+		return htmlToMarkdown(html);
+	}
+
 	/**
 	 * Attempts to extract `<title>` from the last response body.
 	 * Returns an empty string if not parseable.
@@ -1431,7 +1430,14 @@ class BrowserSingleton {
 			const curlClient = new ImpersonatedClient(
 				opts.httpOpts ?? { profile: "chrome131" },
 			);
-			const page = new HttpPage(curlClient, cookies, opts.userAgent, context, "http", opts.insecure);
+			const page = new HttpPage(
+				curlClient,
+				cookies,
+				opts.userAgent,
+				context,
+				"http",
+				opts.insecure,
+			);
 			return page;
 		}
 
