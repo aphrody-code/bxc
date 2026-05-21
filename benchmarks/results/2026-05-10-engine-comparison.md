@@ -1,6 +1,6 @@
 # Engine Comparison Benchmark — 2026-05-10
 
-Compares `chrome`, `lightpanda`, and `bunlight` engines via the
+Compares `chrome`, `lightpanda`, and `bxc` engines via the
 `agent-browser` CLI for cold-start time, per-command latency, and peak RSS.
 
 ## Environment
@@ -10,8 +10,8 @@ Compares `chrome`, `lightpanda`, and `bunlight` engines via the
 | Platform | linux x64 |
 | Bun version | 1.3.14 |
 | Iterations | 20 per engine per scenario |
-| agent-browser | /home/ubuntu/vps/packages/bunlight/benchmarks/../../agent-browser/cli/target/release/agent-browser |
-| bunlight serve | /home/ubuntu/vps/packages/bunlight/benchmarks/../src/cli/serve.ts |
+| agent-browser | /home/ubuntu/vps/packages/bxc/benchmarks/../../agent-browser/cli/target/release/agent-browser |
+| bxc serve | /home/ubuntu/vps/packages/bxc/benchmarks/../src/cli/serve.ts |
 
 ## Engine Availability
 
@@ -19,7 +19,7 @@ Compares `chrome`, `lightpanda`, and `bunlight` engines via the
 |--------|--------|-------|
 | chrome | available | ran |
 | lightpanda | skipped | Lightpanda binary (installed: interactive REPL mode) does not expose a CDP server. Requires lightpanda v0.2+ with `lightpanda serve --port <N>` support. |
-| bunlight | available | ran |
+| bxc | available | ran |
 
 ## Scenario: open-snapshot-close
 
@@ -31,7 +31,7 @@ URL: https://news.ycombinator.com
 |--------|----------|----------|-----------|--------|-----|-----|
 | chrome | 1282 | 1425 | 1294 | 54 | 1235 | 1461 |
 | lightpanda | SKIP | SKIP | SKIP | — | — | — |
-| bunlight | 1032 | 1195 | 1069 | 67 | 1002 | 1245 |
+| bxc | 1032 | 1195 | 1069 | 67 | 1002 | 1245 |
 
 ### Per-Command Latency
 
@@ -39,8 +39,8 @@ URL: https://news.ycombinator.com
 |--------|---------|----------|----------|-----------|
 | chrome | `snapshot` | 1565 | 1618 | 1578 |
 | chrome | `close --all` | 3 | 3 | 3 |
-| bunlight | `snapshot` | 187 | 206 | 194 |
-| bunlight | `close --all` | 10 | 15 | 11 |
+| bxc | `snapshot` | 187 | 206 | 194 |
+| bxc | `close --all` | 10 | 15 | 11 |
 
 ### Peak RSS
 
@@ -48,7 +48,7 @@ URL: https://news.ycombinator.com
 |--------|----------|----------|-----------|
 | chrome | 0 | 0 | 0 |
 | lightpanda | SKIP | SKIP | SKIP |
-| bunlight | 0 | 0 | 0 |
+| bxc | 0 | 0 | 0 |
 
 ### Success Rate
 
@@ -56,7 +56,7 @@ URL: https://news.ycombinator.com
 |--------|-----------|-------|------|
 | chrome | 20 | 20 | 100% |
 | lightpanda | — | — | SKIP |
-| bunlight | 20 | 20 | 100% |
+| bxc | 20 | 20 | 100% |
 
 ## Scenario: open-screenshot
 
@@ -68,7 +68,7 @@ URL: https://example.com
 |--------|----------|----------|-----------|--------|-----|-----|
 | chrome | 535 | 684 | 561 | 57 | 485 | 694 |
 | lightpanda | SKIP | SKIP | SKIP | — | — | — |
-| bunlight | 259 | 352 | 285 | 70 | 248 | 568 |
+| bxc | 259 | 352 | 285 | 70 | 248 | 568 |
 
 ### Per-Command Latency
 
@@ -76,8 +76,8 @@ URL: https://example.com
 |--------|---------|----------|----------|-----------|
 | chrome | `screenshot /tmp/bench-shot.png` | 1569 | 1622 | 1588 |
 | chrome | `close --all` | 3 | 3 | 3 |
-| bunlight | `screenshot /tmp/bench-shot.png` | 156 | 157 | 156 |
-| bunlight | `close --all` | 9 | 18 | 11 |
+| bxc | `screenshot /tmp/bench-shot.png` | 156 | 157 | 156 |
+| bxc | `close --all` | 9 | 18 | 11 |
 
 ### Peak RSS
 
@@ -85,7 +85,7 @@ URL: https://example.com
 |--------|----------|----------|-----------|
 | chrome | 0 | 0 | 0 |
 | lightpanda | SKIP | SKIP | SKIP |
-| bunlight | 0 | 0 | 0 |
+| bxc | 0 | 0 | 0 |
 
 ### Success Rate
 
@@ -93,7 +93,7 @@ URL: https://example.com
 |--------|-----------|-------|------|
 | chrome | 20 | 20 | 100% |
 | lightpanda | — | — | SKIP |
-| bunlight | 20 | 20 | 100% |
+| bxc | 20 | 20 | 100% |
 
 ## Scenario: open-click-snapshot
 
@@ -105,7 +105,7 @@ URL: https://example.com
 |--------|----------|----------|-----------|--------|-----|-----|
 | chrome | 548 | 747 | 580 | 83 | 498 | 814 |
 | lightpanda | SKIP | SKIP | SKIP | — | — | — |
-| bunlight | 252 | 259 | 253 | 6 | 246 | 276 |
+| bxc | 252 | 259 | 253 | 6 | 246 | 276 |
 
 ### Per-Command Latency
 
@@ -114,9 +114,9 @@ URL: https://example.com
 | chrome | `click @e2` | 1567 | 1740 | 1603 |
 | chrome | `snapshot` | 1464 | 1564 | 1481 |
 | chrome | `close --all` | 3 | 4 | 3 |
-| bunlight | `click @e2` | 154 | 155 | 154 |
-| bunlight | `snapshot` | 157 | 160 | 158 |
-| bunlight | `close --all` | 8 | 11 | 8 |
+| bxc | `click @e2` | 154 | 155 | 154 |
+| bxc | `snapshot` | 157 | 160 | 158 |
+| bxc | `close --all` | 8 | 11 | 8 |
 
 ### Peak RSS
 
@@ -124,7 +124,7 @@ URL: https://example.com
 |--------|----------|----------|-----------|
 | chrome | 0 | 0 | 0 |
 | lightpanda | SKIP | SKIP | SKIP |
-| bunlight | 0 | 0 | 0 |
+| bxc | 0 | 0 | 0 |
 
 ### Success Rate
 
@@ -132,23 +132,23 @@ URL: https://example.com
 |--------|-----------|-------|------|
 | chrome | 20 | 20 | 100% |
 | lightpanda | — | — | SKIP |
-| bunlight | 20 | 20 | 100% |
+| bxc | 20 | 20 | 100% |
 
 ## Summary — Cold Start p50 Comparison
 
 Lower is better. Shows cold-start p50 in ms for each engine x scenario combination.
 
-| Scenario | chrome | bunlight |
+| Scenario | chrome | bxc |
 |----------|----------|----------|
 | open-snapshot-close | 1282 ms | 1032 ms |
 | open-screenshot | 535 ms | 259 ms |
 | open-click-snapshot | 548 ms | 252 ms |
 
-## Bunlight vs Chrome Analysis
+## Bxc vs Chrome Analysis
 
-**open-snapshot-close**: bunlight p50=1032ms, chrome p50=1282ms — bunlight is faster by 250ms (124% of Chrome time).
-**open-screenshot**: bunlight p50=259ms, chrome p50=535ms — bunlight is faster by 276ms (207% of Chrome time).
-**open-click-snapshot**: bunlight p50=252ms, chrome p50=548ms — bunlight is faster by 296ms (217% of Chrome time).
+**open-snapshot-close**: bxc p50=1032ms, chrome p50=1282ms — bxc is faster by 250ms (124% of Chrome time).
+**open-screenshot**: bxc p50=259ms, chrome p50=535ms — bxc is faster by 276ms (207% of Chrome time).
+**open-click-snapshot**: bxc p50=252ms, chrome p50=548ms — bxc is faster by 296ms (217% of Chrome time).
 
 ---
 *Generated by `benchmarks/agent-browser-engine.bench.ts` on 2026-05-10.*

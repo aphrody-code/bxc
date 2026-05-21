@@ -11,11 +11,11 @@
   "scenarios": [
     {
       "scenario": "static-simple",
-      "runner": "bunlight-static",
+      "runner": "bxc-static",
       "startedAt": "2026-05-10T05:29:34.756Z",
       "runs": [
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/1",
           "success": true,
           "latencyMs": 22,
@@ -24,7 +24,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/1",
           "success": true,
           "latencyMs": 2,
@@ -33,7 +33,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/1",
           "success": true,
           "latencyMs": 2,
@@ -42,7 +42,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/1",
           "success": true,
           "latencyMs": 2,
@@ -51,7 +51,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/1",
           "success": true,
           "latencyMs": 2,
@@ -60,7 +60,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/2",
           "success": true,
           "latencyMs": 2,
@@ -69,7 +69,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/2",
           "success": true,
           "latencyMs": 2,
@@ -78,7 +78,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/2",
           "success": true,
           "latencyMs": 2,
@@ -87,7 +87,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/2",
           "success": true,
           "latencyMs": 2,
@@ -96,7 +96,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/2",
           "success": true,
           "latencyMs": 2,
@@ -105,7 +105,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/3",
           "success": true,
           "latencyMs": 2,
@@ -114,7 +114,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/3",
           "success": true,
           "latencyMs": 1,
@@ -123,7 +123,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/3",
           "success": true,
           "latencyMs": 1,
@@ -132,7 +132,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/3",
           "success": true,
           "latencyMs": 1,
@@ -141,7 +141,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/3",
           "success": true,
           "latencyMs": 2,
@@ -150,7 +150,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/4",
           "success": true,
           "latencyMs": 1,
@@ -159,7 +159,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/4",
           "success": true,
           "latencyMs": 2,
@@ -168,7 +168,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/4",
           "success": true,
           "latencyMs": 2,
@@ -177,7 +177,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/4",
           "success": true,
           "latencyMs": 2,
@@ -186,7 +186,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/4",
           "success": true,
           "latencyMs": 1,
@@ -195,7 +195,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/5",
           "success": true,
           "latencyMs": 2,
@@ -204,7 +204,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/5",
           "success": true,
           "latencyMs": 2,
@@ -213,7 +213,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/5",
           "success": true,
           "latencyMs": 2,
@@ -222,7 +222,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/5",
           "success": true,
           "latencyMs": 2,
@@ -231,7 +231,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/5",
           "success": true,
           "latencyMs": 2,
@@ -240,7 +240,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/6",
           "success": true,
           "latencyMs": 2,
@@ -249,7 +249,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/6",
           "success": true,
           "latencyMs": 2,
@@ -258,7 +258,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/6",
           "success": true,
           "latencyMs": 3,
@@ -267,7 +267,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/6",
           "success": true,
           "latencyMs": 2,
@@ -276,7 +276,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/6",
           "success": true,
           "latencyMs": 2,
@@ -285,7 +285,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/7",
           "success": true,
           "latencyMs": 2,
@@ -294,7 +294,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/7",
           "success": true,
           "latencyMs": 2,
@@ -303,7 +303,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/7",
           "success": true,
           "latencyMs": 2,
@@ -312,7 +312,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/7",
           "success": true,
           "latencyMs": 2,
@@ -321,7 +321,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/7",
           "success": true,
           "latencyMs": 2,
@@ -330,7 +330,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/8",
           "success": true,
           "latencyMs": 2,
@@ -339,7 +339,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/8",
           "success": true,
           "latencyMs": 2,
@@ -348,7 +348,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/8",
           "success": true,
           "latencyMs": 2,
@@ -357,7 +357,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/8",
           "success": true,
           "latencyMs": 1,
@@ -366,7 +366,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/8",
           "success": true,
           "latencyMs": 2,
@@ -375,7 +375,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/9",
           "success": true,
           "latencyMs": 2,
@@ -384,7 +384,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/9",
           "success": true,
           "latencyMs": 2,
@@ -393,7 +393,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/9",
           "success": true,
           "latencyMs": 2,
@@ -402,7 +402,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/9",
           "success": true,
           "latencyMs": 2,
@@ -411,7 +411,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/9",
           "success": true,
           "latencyMs": 2,
@@ -420,7 +420,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/10",
           "success": true,
           "latencyMs": 2,
@@ -429,7 +429,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/10",
           "success": true,
           "latencyMs": 2,
@@ -438,7 +438,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/10",
           "success": true,
           "latencyMs": 2,
@@ -447,7 +447,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/10",
           "success": true,
           "latencyMs": 2,
@@ -456,7 +456,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:17721/static/10",
           "success": true,
           "latencyMs": 2,
@@ -1963,11 +1963,11 @@
     },
     {
       "scenario": "spa-react",
-      "runner": "bunlight-static",
+      "runner": "bxc-static",
       "startedAt": "2026-05-10T05:29:44.445Z",
       "runs": [
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/1",
           "success": true,
           "latencyMs": 1,
@@ -1977,7 +1977,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/1",
           "success": true,
           "latencyMs": 1,
@@ -1987,7 +1987,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/1",
           "success": true,
           "latencyMs": 1,
@@ -1997,7 +1997,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/2",
           "success": true,
           "latencyMs": 1,
@@ -2007,7 +2007,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/2",
           "success": true,
           "latencyMs": 1,
@@ -2017,7 +2017,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/2",
           "success": true,
           "latencyMs": 2,
@@ -2027,7 +2027,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/3",
           "success": true,
           "latencyMs": 2,
@@ -2037,7 +2037,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/3",
           "success": true,
           "latencyMs": 1,
@@ -2047,7 +2047,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/3",
           "success": true,
           "latencyMs": 1,
@@ -2057,7 +2057,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/4",
           "success": true,
           "latencyMs": 1,
@@ -2067,7 +2067,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/4",
           "success": true,
           "latencyMs": 1,
@@ -2077,7 +2077,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/4",
           "success": true,
           "latencyMs": 1,
@@ -2087,7 +2087,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/5",
           "success": true,
           "latencyMs": 1,
@@ -2097,7 +2097,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/5",
           "success": true,
           "latencyMs": 1,
@@ -2107,7 +2107,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:24881/spa/5",
           "success": true,
           "latencyMs": 1,
@@ -2126,11 +2126,11 @@
     },
     {
       "scenario": "spa-react",
-      "runner": "bunlight-fast",
+      "runner": "bxc-fast",
       "startedAt": "2026-05-10T05:29:47.511Z",
       "runs": [
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/1",
           "success": true,
           "latencyMs": 75,
@@ -2140,7 +2140,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/1",
           "success": true,
           "latencyMs": 64,
@@ -2150,7 +2150,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/1",
           "success": true,
           "latencyMs": 66,
@@ -2160,7 +2160,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/2",
           "success": true,
           "latencyMs": 64,
@@ -2170,7 +2170,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/2",
           "success": true,
           "latencyMs": 64,
@@ -2180,7 +2180,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/2",
           "success": true,
           "latencyMs": 64,
@@ -2190,7 +2190,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/3",
           "success": true,
           "latencyMs": 62,
@@ -2200,7 +2200,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/3",
           "success": true,
           "latencyMs": 63,
@@ -2210,7 +2210,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/3",
           "success": true,
           "latencyMs": 63,
@@ -2220,7 +2220,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/4",
           "success": true,
           "latencyMs": 63,
@@ -2230,7 +2230,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/4",
           "success": true,
           "latencyMs": 68,
@@ -2240,7 +2240,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/4",
           "success": true,
           "latencyMs": 62,
@@ -2250,7 +2250,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/5",
           "success": true,
           "latencyMs": 64,
@@ -2260,7 +2260,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/5",
           "success": true,
           "latencyMs": 66,
@@ -2270,7 +2270,7 @@
           "jsRendered": true
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:24881/spa/5",
           "success": true,
           "latencyMs": 64,
@@ -2452,11 +2452,11 @@
     },
     {
       "scenario": "cloudflare-basic",
-      "runner": "bunlight-static",
+      "runner": "bxc-static",
       "startedAt": "2026-05-10T05:29:51.606Z",
       "runs": [
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/1",
           "success": true,
           "latencyMs": 1,
@@ -2466,7 +2466,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/1",
           "success": true,
           "latencyMs": 1,
@@ -2476,7 +2476,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/2",
           "success": true,
           "latencyMs": 1,
@@ -2486,7 +2486,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/2",
           "success": true,
           "latencyMs": 1,
@@ -2496,7 +2496,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/3",
           "success": true,
           "latencyMs": 1,
@@ -2506,7 +2506,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/3",
           "success": true,
           "latencyMs": 1,
@@ -2516,7 +2516,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/4",
           "success": true,
           "latencyMs": 1,
@@ -2526,7 +2526,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/4",
           "success": true,
           "latencyMs": 1,
@@ -2536,7 +2536,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/5",
           "success": true,
           "latencyMs": 1,
@@ -2546,7 +2546,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/5",
           "success": true,
           "latencyMs": 1,
@@ -2556,7 +2556,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/6",
           "success": true,
           "latencyMs": 1,
@@ -2566,7 +2566,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/6",
           "success": true,
           "latencyMs": 1,
@@ -2576,7 +2576,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/7",
           "success": true,
           "latencyMs": 1,
@@ -2586,7 +2586,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/7",
           "success": true,
           "latencyMs": 3,
@@ -2596,7 +2596,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/8",
           "success": true,
           "latencyMs": 1,
@@ -2606,7 +2606,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/8",
           "success": true,
           "latencyMs": 1,
@@ -2616,7 +2616,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/9",
           "success": true,
           "latencyMs": 1,
@@ -2626,7 +2626,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/9",
           "success": true,
           "latencyMs": 1,
@@ -2636,7 +2636,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/10",
           "success": true,
           "latencyMs": 1,
@@ -2646,7 +2646,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:16567/cf/10",
           "success": true,
           "latencyMs": 1,
@@ -2665,11 +2665,11 @@
     },
     {
       "scenario": "cloudflare-basic",
-      "runner": "bunlight-fast",
+      "runner": "bxc-fast",
       "startedAt": "2026-05-10T05:29:55.622Z",
       "runs": [
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/1",
           "success": true,
           "latencyMs": 64,
@@ -2679,7 +2679,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/1",
           "success": true,
           "latencyMs": 64,
@@ -2689,7 +2689,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/2",
           "success": true,
           "latencyMs": 63,
@@ -2699,7 +2699,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/2",
           "success": true,
           "latencyMs": 65,
@@ -2709,7 +2709,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/3",
           "success": true,
           "latencyMs": 63,
@@ -2719,7 +2719,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/3",
           "success": true,
           "latencyMs": 63,
@@ -2729,7 +2729,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/4",
           "success": true,
           "latencyMs": 64,
@@ -2739,7 +2739,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/4",
           "success": true,
           "latencyMs": 63,
@@ -2749,7 +2749,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/5",
           "success": true,
           "latencyMs": 63,
@@ -2759,7 +2759,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/5",
           "success": true,
           "latencyMs": 65,
@@ -2769,7 +2769,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/6",
           "success": true,
           "latencyMs": 63,
@@ -2779,7 +2779,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/6",
           "success": true,
           "latencyMs": 63,
@@ -2789,7 +2789,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/7",
           "success": true,
           "latencyMs": 63,
@@ -2799,7 +2799,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/7",
           "success": true,
           "latencyMs": 65,
@@ -2809,7 +2809,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/8",
           "success": true,
           "latencyMs": 64,
@@ -2819,7 +2819,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/8",
           "success": true,
           "latencyMs": 62,
@@ -2829,7 +2829,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/9",
           "success": true,
           "latencyMs": 63,
@@ -2839,7 +2839,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/9",
           "success": true,
           "latencyMs": 63,
@@ -2849,7 +2849,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/10",
           "success": true,
           "latencyMs": 64,
@@ -2859,7 +2859,7 @@
           "bypassedChallenge": false
         },
         {
-          "runner": "bunlight-fast",
+          "runner": "bxc-fast",
           "url": "http://localhost:16567/cf/10",
           "success": true,
           "latencyMs": 63,
@@ -3111,11 +3111,11 @@
     },
     {
       "scenario": "parallel-100 (sequential-20)",
-      "runner": "bunlight-static",
+      "runner": "bxc-static",
       "startedAt": "2026-05-10T05:29:58.220Z",
       "runs": [
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/1",
           "success": true,
           "latencyMs": 2,
@@ -3124,7 +3124,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/2",
           "success": true,
           "latencyMs": 1,
@@ -3133,7 +3133,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/3",
           "success": true,
           "latencyMs": 1,
@@ -3142,7 +3142,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/4",
           "success": true,
           "latencyMs": 1,
@@ -3151,7 +3151,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/5",
           "success": true,
           "latencyMs": 1,
@@ -3160,7 +3160,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/6",
           "success": true,
           "latencyMs": 1,
@@ -3169,7 +3169,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/7",
           "success": true,
           "latencyMs": 1,
@@ -3178,7 +3178,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/8",
           "success": true,
           "latencyMs": 1,
@@ -3187,7 +3187,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/9",
           "success": true,
           "latencyMs": 1,
@@ -3196,7 +3196,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/10",
           "success": true,
           "latencyMs": 2,
@@ -3205,7 +3205,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/11",
           "success": true,
           "latencyMs": 1,
@@ -3214,7 +3214,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/12",
           "success": true,
           "latencyMs": 1,
@@ -3223,7 +3223,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/13",
           "success": true,
           "latencyMs": 1,
@@ -3232,7 +3232,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/14",
           "success": true,
           "latencyMs": 1,
@@ -3241,7 +3241,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/15",
           "success": true,
           "latencyMs": 1,
@@ -3250,7 +3250,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/16",
           "success": true,
           "latencyMs": 1,
@@ -3259,7 +3259,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/17",
           "success": true,
           "latencyMs": 1,
@@ -3268,7 +3268,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/18",
           "success": true,
           "latencyMs": 1,
@@ -3277,7 +3277,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/19",
           "success": true,
           "latencyMs": 1,
@@ -3286,7 +3286,7 @@
           "statusCode": 200
         },
         {
-          "runner": "bunlight-static",
+          "runner": "bxc-static",
           "url": "http://localhost:14235/static/20",
           "success": true,
           "latencyMs": 1,
