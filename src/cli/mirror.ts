@@ -33,6 +33,10 @@ interface CliOptions extends CommonOptions {
 	maxAssetBytes: number;
 	userAgent?: string;
 	verbose: boolean;
+	/** auto = pick the fastest installed external tool, else built-in. */
+	engine: "auto" | "spider" | "monolith" | "aria2" | "native";
+	/** full-site crawl (favours spider) vs single-page archive (favours monolith). */
+	site: boolean;
 }
 
 function printUsage(): void {
@@ -49,6 +53,9 @@ Options:
   --same-origin-only    skip cross-origin assets
   --max-asset-bytes <N> per-asset cap, bytes (default: 50000000)
   --user-agent <str>    override User-Agent
+  --engine <name>       auto | spider | monolith | aria2 | native (default: native)
+                        external engines used only if installed; fall back to native
+  --site                full-site crawl (auto → spider); else single-page (auto → monolith)
   --verbose             log every step to stderr
   --help, -h            this help
 
@@ -66,6 +73,8 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions
 		sameOriginOnly: false,
 		maxAssetBytes: 50_000_000,
 		verbose: false,
+		engine: "native",
+		site: false,
 	};
 	const positional: string[] = [];
 	for (let i = 0; i < argv.length; i++) {
@@ -94,6 +103,18 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions
 				break;
 			case "--user-agent":
 				opts.userAgent = argv[++i];
+				break;
+			case "--engine": {
+				const v = argv[++i] as CliOptions["engine"];
+				if (!["auto", "spider", "monolith", "aria2", "native"].includes(v)) {
+					logger.error(`Invalid engine: ${v}`);
+					return null;
+				}
+				opts.engine = v;
+				break;
+			}
+			case "--site":
+				opts.site = true;
 				break;
 			case "--verbose":
 			case "-v":
@@ -127,6 +148,29 @@ export async function main(argv: readonly string[], baseOpts: CommonOptions): Pr
 				Bun.stderr.write(`${msg}\n`);
 			}
 		: undefined;
+
+	// External engine path (spider / monolith / aria2), used only when chosen
+	// and installed. Feeds the corpus; falls back to the built-in mirror.
+	if (opts.engine !== "native") {
+		const { bestEngine, runExternalMirror } = await import(
+			"../mirror/external-tools.ts"
+		);
+		const chosen =
+			opts.engine === "auto" ? await bestEngine(opts.site) : opts.engine;
+		if (chosen !== "native") {
+			const out = resolvePath(opts.outDir);
+			await Bun.write(`${out}/.keep`, "").catch(() => undefined);
+			const res = await runExternalMirror(chosen, opts.url, out, {
+				depth: opts.site ? 1 : 0,
+				concurrency: opts.concurrency,
+			});
+			if (res) {
+				Bun.stdout.write(JSON.stringify(res, null, 2) + "\n");
+				return;
+			}
+			log?.(`[mirror] ${chosen} not installed — falling back to native`);
+		}
+	}
 
 	try {
 		const manifest = await mirrorSite(opts.url, {
