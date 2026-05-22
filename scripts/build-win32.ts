@@ -78,28 +78,40 @@ async function compile(entry: string, outfile: string): Promise<void> {
 async function main(): Promise<void> {
 	await mkdir(BIN, { recursive: true });
 
-	// 1. Rust cdylib + engine (release). Assumes `cargo build --release` already
-	//    ran (build:win invokes it); copy the artifacts into bin/.
-	const rel = join(RB, "target", "release");
-	const dll = join(rel, "bxc_rust_bridge.dll");
-	const engine = join(rel, "bxc-engine.exe");
+	// 1. Rust cdylib + engine (release). The MSVC toolchain (.cargo/config.toml)
+	//    emits into target/<triple>/release; fall back to plain target/release.
+	const triple = join(RB, "target", "x86_64-pc-windows-msvc", "release");
+	const plain = join(RB, "target", "release");
+	const relBase = (await exists(join(triple, "bxc_rust_bridge.dll"))) ? triple : plain;
 
-	if (await exists(dll)) {
-		await copyFile(dll, join(BIN, "bxc_rust_bridge.dll"));
-		console.error("[build-win32] bin/bxc_rust_bridge.dll");
-	} else {
-		console.error("[build-win32] WARN cdylib missing — run `cargo build --release` in rust-bridge");
-	}
-	if (await exists(engine)) {
-		await copyFile(engine, join(BIN, "bxc-engine.exe"));
-		console.error("[build-win32] bin/bxc-engine.exe");
-	} else {
-		console.error("[build-win32] WARN bxc-engine.exe missing");
+	const artifacts: Array<[string, string]> = [
+		["bxc_rust_bridge.dll", "bxc_rust_bridge.dll"],
+		["bxc-engine.exe", "bxc-engine.exe"],
+		["obscura-worker.exe", "obscura-worker.exe"],
+	];
+	for (const [src, dst] of artifacts) {
+		const from = join(relBase, src);
+		if (await exists(from)) {
+			await copyFile(from, join(BIN, dst));
+			console.error(`[build-win32] bin/${dst}`);
+		} else {
+			console.error(`[build-win32] WARN ${src} missing (run cargo build --release)`);
+		}
 	}
 
-	// 2. Standalone CLI + MCP server (no --smol).
+	// 2. Standalone CLI (the core deliverable — must succeed).
 	await compile("src/cli/index.ts", join(BIN, "bxc.exe"));
-	await compile("src/mcp/server.ts", join(BIN, "bxc-mcp.exe"));
+
+	// 3. MCP stdio server — best-effort. The vendored @modelcontextprotocol SDK
+	//    references an unbuilt internal `@modelcontextprotocol/core`; if that's
+	//    unresolved the standalone compile fails. Don't abort the deploy.
+	try {
+		await compile("src/mcp/server.ts", join(BIN, "bxc-mcp.exe"));
+	} catch (err) {
+		console.error(
+			`[build-win32] WARN bxc-mcp.exe skipped (${err instanceof Error ? err.message.split("\n")[0] : err}); run via \`bun src/mcp/server.ts\``,
+		);
+	}
 
 	console.error(`[build-win32] done → ${BIN}`);
 }
