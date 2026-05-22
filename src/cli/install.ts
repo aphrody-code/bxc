@@ -210,11 +210,23 @@ export async function main(args: string[], _opts: CommonOptions): Promise<void> 
 	const dryRun = args.includes("--dry-run");
 	logger.log(`Installing binaries into ${VENDOR_DIR}${dryRun ? " [dry-run]" : ""}`);
 	const lightpanda = await installLightpanda(dryRun, VENDOR_DIR);
-	if (lightpanda.status === "failed") {
-		logger.warn("Lightpanda install failed.");
-		process.exit(1);
-	} else {
-		logger.log("Lightpanda installed successfully.");
+	switch (lightpanda.status) {
+		case "failed":
+			logger.warn("Lightpanda install failed.");
+			process.exit(1);
+			break;
+		case "unsupported":
+			// Lightpanda ships no binary for this platform (e.g. Windows): the
+			// `static` (HTTP + Rust DOM) profile and the native Chromium core
+			// (`bxc chrome`) remain available; only the Lightpanda engine is absent.
+			logger.warn(
+				`Lightpanda is not available for ${process.platform}/${process.arch}; ` +
+					"use the `static` profile or the native Chromium core (`bxc chrome`).",
+			);
+			process.exit(1);
+			break;
+		default:
+			logger.log("Lightpanda installed successfully.");
 	}
 }
 

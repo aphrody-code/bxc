@@ -15,22 +15,72 @@
  */
 
 import { CString, dlopen, FFIType, ptr, suffix } from "bun:ffi";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 /**
- * Resolves the rust-bridge cdylib path.
+ * Platform-correct cdylib filename for the rust-bridge.
+ *   Windows : bxc_rust_bridge.dll   (no `lib` prefix)
+ *   Linux   : libbxc_rust_bridge.so
+ *   macOS   : libbxc_rust_bridge.dylib
+ */
+function bridgeFileName(): string {
+	return process.platform === "win32"
+		? `bxc_rust_bridge.${suffix}`
+		: `libbxc_rust_bridge.${suffix}`;
+}
+
+/**
+ * Resolves the rust-bridge cdylib path in a portable way.
+ *
+ * Resolution order (first hit wins):
+ *   1. BXC_RUST_BRIDGE_LIB / BXC_RUST_BRIDGE env override (explicit path).
+ *   2. Next to the running executable — this is the production layout for a
+ *      `bun build --compile` standalone binary, where the .dll/.so/.dylib ships
+ *      alongside the exe (NOT a hardcoded /home/... dev path).
+ *   3. The dev tree: <repoRoot>/rust-bridge/target/release/<lib>.
+ *
+ * Only paths that actually exist on disk are returned early; the dev path is
+ * the final fallback so error messages point at the canonical build location.
  */
 function resolveRustBridgePath(): string {
-	const envOverride = Bun.env["BXC_RUST_BRIDGE_LIB"];
+	const envOverride =
+		Bun.env["BXC_RUST_BRIDGE_LIB"] ?? Bun.env["BXC_RUST_BRIDGE"];
 	if (envOverride) return envOverride;
 
+	const name = bridgeFileName();
+
+	// 2. Alongside the executable (compiled standalone) and common neighbours.
+	const exeDir = dirname(process.execPath);
+	const candidates = [
+		join(exeDir, name),
+		// `bin/bxc.exe` with the lib one level up (repo `bin/` + root layout).
+		join(exeDir, "..", name),
+	];
+	for (const c of candidates) {
+		if (existsSync(c)) return c;
+	}
+
+	// 3. Dev tree fallback (cargo build --release output), resolved relative to
+	//    this source file — never an absolute machine-specific path.
 	const repoRoot = join(import.meta.dir, "..", "..");
-	const targetDir = join(repoRoot, "rust-bridge", "target", "release");
-	const name =
-		process.platform === "win32"
-			? `bxc_rust_bridge.${suffix}`
-			: `libbxc_rust_bridge.${suffix}`;
-	return join(targetDir, name);
+	const devPath = join(repoRoot, "rust-bridge", "target", "release", name);
+	if (existsSync(devPath)) return devPath;
+
+	// 4. MSVC cross/native target dir used by build-windows.ts.
+	const msvcPath = join(
+		repoRoot,
+		"rust-bridge",
+		"target",
+		"x86_64-pc-windows-msvc",
+		"release",
+		name,
+	);
+	if (existsSync(msvcPath)) return msvcPath;
+
+	// Nothing found — return the exe-adjacent path so the dlopen error is
+	// actionable (points at the portable install location, not /home/ubuntu).
+	return candidates[0];
 }
 
 const libPath = resolveRustBridgePath();
