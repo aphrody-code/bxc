@@ -124,6 +124,9 @@ function summarize(p: GoogleProfile): string {
 		`globals (${p.globals.length}): ${top(p.globals)}`,
 		`css (${p.css.length}) · js (${p.js.length}) · fonts (${p.fonts.length})`,
 		`apis (${p.apis.length}): ${top(p.apis, 12)}`,
+		`recognized: ${p.recognized.tags.join(", ") || "—"}` +
+			(p.recognized.models.length ? ` · models: ${p.recognized.models.join(", ")}` : "") +
+			(p.recognized.fonts.length ? ` · fonts: ${p.recognized.fonts.join(", ")}` : ""),
 	];
 	const known = p.knowledge;
 	lines.push(
