@@ -56,3 +56,6 @@ mapping-and-atlas.log
 packages/bxc-extension/bxc-mcp
 **/bxc-memory.sqlite
 bxc-memory.sqlite
+
+# Self-reinforcing Google profiler corpus (runtime "memory")
+storage/google-profiles/
