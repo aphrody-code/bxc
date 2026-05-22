@@ -43,7 +43,10 @@ thiserror = "2.0"
 anyhow = "1.0"
 base64 = "0.22"
 deno_error = "0.7.1"
-v8 = "147.4.0"
+# NB: the V8 engine is pulled (and version-locked) transitively via deno_core
+# 0.400 → v8 147.4.0, and used through `deno_core::v8`. Do NOT add a direct
+# `v8` dependency: a second, separately-versioned v8 would double-link the
+# engine. obscura-js owns all V8 access (runtime/v8_flags/v8_lock).
 
 [package]
 name = "bxc-rust-bridge"
@@ -58,7 +61,8 @@ serde_json = { workspace = true }
 obscura-dom = { workspace = true }
 # V8 and browser engine REMOVED from cdylib to fix linker errors
 # Dynamic features are now provided by the 'bxc' binary
-html2md = "0.2.15"
+# HTML→Markdown uses obscura-dom's native tree (dropped html2md, which pulled a
+# second html5ever 0.27 / markup5ever 0.12 / phf 0.11 / xml5ever parser stack).
 
 [profile.release]
 opt-level = 3

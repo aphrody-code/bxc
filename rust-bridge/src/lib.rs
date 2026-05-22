@@ -1,6 +1,6 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use obscura_dom::{DomTree, NodeId};
+use obscura_dom::DomTree;
 
 #[no_mangle]
 pub extern "C" fn bxc_parse_html(html_ptr: *const c_char) -> *mut DomTree {
@@ -155,7 +155,7 @@ pub extern "C" fn bxc_html_to_markdown(html_ptr: *const c_char) -> *mut c_char {
         Err(_) => return std::ptr::null_mut(),
     };
     
-    let markdown = html2md::parse_html(html_payload);
+    let markdown = obscura_dom::html_to_markdown(html_payload);
     let c_string = CString::new(markdown).unwrap_or_default();
     c_string.into_raw()
 }

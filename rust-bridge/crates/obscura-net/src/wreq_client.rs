@@ -17,9 +17,39 @@ use crate::cookies::CookieJar;
 #[cfg(feature = "stealth")]
 use crate::client::{Response, ObscuraNetError};
 
-#[cfg(feature = "stealth")]
+// Max-bypass principle: the network fingerprint (TLS/JA3 + HTTP2 + User-Agent)
+// must be coherent with the *host* OS and with the JS-layer Client Hints set by
+// the ghost stealth patches. A Linux JA3 paired with a Windows `navigator`
+// is itself a detection signal, so we pick UA + emulation OS per `target_os`.
+
+#[cfg(all(feature = "stealth", target_os = "windows"))]
+pub const STEALTH_USER_AGENT: &str =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36";
+
+#[cfg(all(feature = "stealth", target_os = "macos"))]
+pub const STEALTH_USER_AGENT: &str =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36";
+
+#[cfg(all(feature = "stealth", not(any(target_os = "windows", target_os = "macos"))))]
 pub const STEALTH_USER_AGENT: &str =
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36";
+
+/// Emulation OS coherent with the host (matches [`STEALTH_USER_AGENT`]).
+#[cfg(feature = "stealth")]
+fn host_emulation_os() -> wreq_util::EmulationOS {
+    #[cfg(target_os = "windows")]
+    {
+        wreq_util::EmulationOS::Windows
+    }
+    #[cfg(target_os = "macos")]
+    {
+        wreq_util::EmulationOS::MacOS
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        wreq_util::EmulationOS::Linux
+    }
+}
 
 #[cfg(feature = "stealth")]
 pub struct StealthHttpClient {
@@ -43,7 +73,7 @@ impl StealthHttpClient {
 
         let emulation_opts = wreq_util::EmulationOption::builder()
             .emulation(wreq_util::Emulation::Chrome145)
-            .emulation_os(wreq_util::EmulationOS::Linux)
+            .emulation_os(host_emulation_os())
             .build();
 
         let mut builder = wreq::Client::builder()
