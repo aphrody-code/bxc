@@ -16,6 +16,7 @@
 
 import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
 import { drainStream } from "../internal/stream-drain.ts";
+import { chromeGpuFlags, chromeJsFlags } from "../config/hardware.ts";
 import { join } from "node:path";
 
 export interface WebSocketTransportOptions {
@@ -27,7 +28,19 @@ export interface WebSocketTransportOptions {
 	stderrLogger?: (chunk: string) => void;
 	/** Force headless mode. */
 	headless?: boolean;
-	
+	/**
+	 * Real-Chrome user-data directory to launch against (the user's installed
+	 * Chrome profile root). Defaults to `%LOCALAPPDATA%\Google\Chrome\User Data`
+	 * on Windows / `$BXC_USER_DATA_DIR`. Combine with `profileDirectory` to
+	 * drive a logged-in profile (e.g. for SPA-crash fallback scraping).
+	 */
+	userDataDir?: string;
+	/**
+	 * Chrome `--profile-directory` (e.g. `"Default"`, `"Profile 5"`). Resolution
+	 * order: this option → `$BXC_CHROME_PROFILE` → `"Default"`.
+	 */
+	profileDirectory?: string;
+
 	// --- Legacy Lightpanda Options (SocketPairTransport compatibility) ---
 	binaryPath?: string;
 	logLevel?: "debug" | "info" | "warn" | "error" | "fatal" | string;
@@ -104,7 +117,12 @@ export class WebSocketTransport implements ConnectionTransport {
 			}
 
 			let chromePath = Bun.env["BXC_CHROME_BIN"] ?? Bun.env["CHROME_PATH"];
-			let userDataDir = Bun.env["BXC_USER_DATA_DIR"];
+			let userDataDir = opts.userDataDir ?? Bun.env["BXC_USER_DATA_DIR"];
+			// `--profile-directory`: option → env → "Default". This is what lets
+			// the SPA-crash fallback reuse the user's logged-in profile (e.g.
+			// "Profile 5") instead of a throwaway Default profile.
+			const profileDirectory =
+				opts.profileDirectory ?? Bun.env["BXC_CHROME_PROFILE"] ?? "Default";
 			const isWin = process.platform === "win32";
 
 			if (isWin) {
@@ -161,12 +179,15 @@ export class WebSocketTransport implements ConnectionTransport {
 			} else {
 				const launchArgs = [
 					`--remote-debugging-port=${port}`,
-					"--remote-allow-origins=*" // Required for CDP connections
+					"--remote-allow-origins=*", // Required for CDP connections
+					// Size the V8 heap to the host RAM (16 GB → 4 GB old-space).
+					`--js-flags=${chromeJsFlags()}`,
 				];
+				// Hardware-aware GPU acceleration (NVIDIA via ANGLE/D3D11 on
+				// Windows; `--disable-gpu` on headless Linux). See config/hardware.
+				launchArgs.push(...chromeGpuFlags());
 
 				if (isWin) {
-					// Windows Optimized Flags
-					launchArgs.push("--enable-gpu");
 					launchArgs.push("--no-sandbox");
 					if (headless) {
 						launchArgs.push("--headless=new");
@@ -175,16 +196,20 @@ export class WebSocketTransport implements ConnectionTransport {
 					}
 					if (userDataDir) {
 						launchArgs.push("--user-data-dir=" + userDataDir);
-						launchArgs.push("--profile-directory=Default");
+						launchArgs.push("--profile-directory=" + profileDirectory);
 					}
 				} else {
 					// Linux Server Optimized Flags (Headless Dominance)
 					if (headless) {
 						launchArgs.push("--headless=new");
 					}
-					launchArgs.push("--disable-gpu");
 					launchArgs.push("--disable-dev-shm-usage");
 					launchArgs.push("--no-sandbox");
+					// Honour an explicit real-profile request on Linux/macOS too.
+					if (userDataDir) {
+						launchArgs.push("--user-data-dir=" + userDataDir);
+						launchArgs.push("--profile-directory=" + profileDirectory);
+					}
 				}
 				args = [chromePath, ...launchArgs];
 			}
@@ -235,7 +260,15 @@ export class WebSocketTransport implements ConnectionTransport {
 							if (!done) {
 								readLoop();
 							} else {
-								reject(new Error("Process exited before emitting ws url. Output: " + output));
+								// Most common cause when launching against the user's
+								// real user-data-dir: a Chrome instance is ALREADY
+								// running on that profile, so the new process just
+								// opens a tab in it and exits without ever opening the
+								// debug port. Surface an actionable hint.
+								const hint = userDataDir
+									? ` — a Chrome instance is likely already running on profile "${profileDirectory}" (${userDataDir}). Close it first, or attach to it via browserWSEndpoint / BXC_BROWSER_WS_ENDPOINT.`
+									: "";
+								reject(new Error("Process exited before emitting ws url." + hint + " Output: " + output));
 							}
 						} catch (e) {
 							reject(e);

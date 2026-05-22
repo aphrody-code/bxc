@@ -21,13 +21,17 @@
 import { Browser } from "../api/browser.ts";
 import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
-type ScrapeProfile = "static" | "fast" | "http";
+type ScrapeProfile = "static" | "fast" | "http" | "max";
 
 interface ScrapeOptions extends CommonOptions {
 	url: string;
 	selector: string;
 	profile: ScrapeProfile;
 	max: number;
+	/** Fall back to the real local Chrome profile if the primary render fails. */
+	fallbackChrome: boolean;
+	/** `--profile-directory` for the Chrome fallback (e.g. "Profile 5"). */
+	chromeProfile: string;
 }
 
 function printUsage(): void {
@@ -38,9 +42,15 @@ Usage:
   bxc scrape <url> <css-selector> [options]
 
 Options:
-  --profile <name>   static (default) | fast | http
-  --max <N>          max elements returned (default: 50)
-  --help, -h         this help
+  --profile <name>      static (default) | fast | http | max
+  --max <N>             max elements returned (default: 50)
+  --chrome-profile <p>  Chrome profile dir for the fallback (default: $BXC_CHROME_PROFILE or "Profile 5")
+  --no-fallback         disable the real-Chrome fallback on SPA render failure
+  --help, -h            this help
+
+On an SPA that the lightweight engine can't render (engine crash, empty result),
+bxc automatically retries on your installed Chrome using the chosen profile, so
+logged-in sessions and full JS execution are available. Disable with --no-fallback.
 
 `,
 	);
@@ -53,6 +63,8 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOpti
 		selector: "",
 		profile: "static",
 		max: 50,
+		fallbackChrome: true,
+		chromeProfile: Bun.env["BXC_CHROME_PROFILE"] ?? "Profile 5",
 	};
 	const positional: string[] = [];
 	for (let i = 0; i < argv.length; i++) {
@@ -60,7 +72,7 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOpti
 		switch (a) {
 			case "--profile": {
 				const v = argv[++i] as any;
-				if (v !== "static" && v !== "fast" && v !== "http") {
+				if (v !== "static" && v !== "fast" && v !== "http" && v !== "max") {
 					logger.error(`Invalid profile: ${v}`);
 					return null;
 				}
@@ -69,6 +81,12 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOpti
 			}
 			case "--max":
 				opts.max = parseInt(argv[++i], 10);
+				break;
+			case "--chrome-profile":
+				opts.chromeProfile = argv[++i];
+				break;
+			case "--no-fallback":
+				opts.fallbackChrome = false;
 				break;
 			case "--help":
 			case "-h":
@@ -86,6 +104,45 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOpti
 	return opts;
 }
 
+interface Extracted {
+	index: number;
+	text: string;
+}
+
+/** Render `url`, query `selector`, return up to `max` textContents. */
+async function extractWith(
+	profile: ScrapeProfile,
+	chromeProfile: string,
+	opts: ScrapeOptions,
+): Promise<Extracted[]> {
+	let page: Awaited<ReturnType<typeof Browser.newPage>> | undefined;
+	try {
+		page = await Browser.newPage({
+			profile,
+			// "max" drives the user's real Chrome with their logged-in profile.
+			profileDirectory: profile === "max" ? chromeProfile : undefined,
+			spawnOpts:
+				profile === "fast"
+					? { logLevel: "error", readyTimeoutMs: 10_000 }
+					: undefined,
+		});
+		await page.goto(opts.url, { timeoutMs: opts.timeoutMs });
+		const els = await page.$$(opts.selector);
+		const out: Extracted[] = [];
+		for (let i = 0; i < els.length && i < opts.max; i++) {
+			const el = els[i] as unknown as { textContent?: () => Promise<string> };
+			const text = (await el.textContent?.()) ?? "";
+			out.push({ index: i, text: text.trim().slice(0, 500) });
+		}
+		return out;
+	} finally {
+		try {
+			await page?.close();
+		} catch {}
+		await Browser.close().catch(() => {});
+	}
+}
+
 export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
@@ -93,31 +150,40 @@ export async function main(argv: readonly string[], baseOpts: CommonOptions): Pr
 		process.exit(EXIT.MISUSE);
 	}
 
-	let page: Awaited<ReturnType<typeof Browser.newPage>> | undefined;
+	// Whether the SPA-crash fallback is worth attempting: only when the primary
+	// profile is a lightweight one and the user left the fallback enabled.
+	const canFallback = opts.fallbackChrome && opts.profile !== "max";
+
+	let out: Extracted[];
 	try {
-		page = await Browser.newPage({
-			profile: opts.profile,
-			spawnOpts:
-				opts.profile === "fast" ? { logLevel: "error", readyTimeoutMs: 10_000 } : undefined,
-		});
-		await page.goto(opts.url, { timeoutMs: opts.timeoutMs });
-		const els = await page.$$(opts.selector);
-		const out: Array<{ index: number; text: string }> = [];
-		for (let i = 0; i < els.length && i < opts.max; i++) {
-			const el = els[i] as unknown as { textContent?: () => Promise<string> };
-			const text = (await el.textContent?.()) ?? "";
-			out.push({ index: i, text: text.trim().slice(0, 500) });
+		out = await extractWith(opts.profile, opts.chromeProfile, opts);
+		// An SPA rendered by the static/http path often yields zero matches even
+		// without throwing — treat an empty result as a render miss worth a
+		// real-Chrome retry.
+		if (out.length === 0 && canFallback) {
+			logger.error(
+				`[scrape] no matches via "${opts.profile}" — retrying on your Chrome (profile "${opts.chromeProfile}")`,
+			);
+			out = await extractWith("max", opts.chromeProfile, opts);
 		}
-		Bun.stdout.write(JSON.stringify(out, null, 2) + "\n");
 	} catch (err) {
-		logger.error(err instanceof Error ? err.message : String(err));
-		process.exit(EXIT.DATA_ERR);
-	} finally {
+		const msg = err instanceof Error ? err.message : String(err);
+		if (!canFallback) {
+			logger.error(msg);
+			process.exit(EXIT.DATA_ERR);
+		}
+		logger.error(
+			`[scrape] "${opts.profile}" failed (${msg}) — falling back to your Chrome (profile "${opts.chromeProfile}")`,
+		);
 		try {
-			await page?.close();
-		} catch {}
-		await Browser.close().catch(() => {});
+			out = await extractWith("max", opts.chromeProfile, opts);
+		} catch (err2) {
+			logger.error(err2 instanceof Error ? err2.message : String(err2));
+			process.exit(EXIT.DATA_ERR);
+		}
 	}
+
+	Bun.stdout.write(JSON.stringify(out, null, 2) + "\n");
 }
 
 if (import.meta.main) {

@@ -101,6 +101,17 @@ export interface PageOptions {
 	/** Options forwarded to `WebSocketTransport` in full mode. */
 	spawnOpts?: WebSocketTransportOptions;
 	/**
+	 * Real-Chrome user-data directory (the user's installed Chrome profile
+	 * root). Only used by Chrome-backed profiles (`fast`/`stealth`/`max`).
+	 */
+	userDataDir?: string;
+	/**
+	 * Chrome `--profile-directory` for Chrome-backed profiles, e.g. `"Profile 5"`.
+	 * Resolution: this → `spawnOpts.profileDirectory` → `$BXC_CHROME_PROFILE` →
+	 * `"Default"`. Lets the SPA-crash fallback reuse a logged-in profile.
+	 */
+	profileDirectory?: string;
+	/**
 	 * Options for the `"http"` profile (curl-impersonate).
 	 * `profile` defaults to `"chrome131"`, `timeoutMs` to `30_000`.
 	 */
@@ -1446,7 +1457,13 @@ class BrowserSingleton {
 				"../transport/WebSocketTransport.ts"
 			);
 			const fullTransport = await WebSocketTransport.create({
-				headless: opts.headless,
+				...opts.spawnOpts,
+				headless: opts.headless ?? opts.spawnOpts?.headless,
+				// Allow driving the user's real Chrome profile (e.g. "Profile 5")
+				// for SPA-crash fallback scraping.
+				userDataDir: opts.userDataDir ?? opts.spawnOpts?.userDataDir,
+				profileDirectory:
+					opts.profileDirectory ?? opts.spawnOpts?.profileDirectory,
 			});
 			const page = await Page.create(fullTransport, opts, context);
 			this.#pages.push(page);
