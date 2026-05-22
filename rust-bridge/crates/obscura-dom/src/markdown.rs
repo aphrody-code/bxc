@@ -43,24 +43,42 @@ impl DomTree {
     }
 
     fn md_node(&self, id: NodeId, out: &mut String, ctx: &mut MdCtx) {
-        let node = match self.get_node(id) {
-            Some(n) => n,
+        // Use `with_node` (zero-clone borrow) instead of `get_node` (full Node
+        // clone) to extract only the discriminant + minimum owned data before
+        // releasing the `Ref<DomTreeInner>`. This avoids cloning the entire
+        // `Node` struct (which owns a `Vec<Attribute>` and `String` fields for
+        // every element) on every step of the markdown walk.
+        enum Dispatch {
+            Text(String),
+            Element { tag: String, attrs: Vec<crate::tree::Attribute> },
+            Document,
+            Skip,
+        }
+        let dispatch = match self.with_node(id, |n| match &n.data {
+            NodeData::Text { contents } => Dispatch::Text(contents.clone()),
+            NodeData::Element { name, attrs, .. } => Dispatch::Element {
+                tag: name.local.as_ref().to_owned(),
+                attrs: attrs.clone(),
+            },
+            NodeData::Document => Dispatch::Document,
+            _ => Dispatch::Skip,
+        }) {
+            Some(d) => d,
             None => return,
         };
-        match &node.data {
-            NodeData::Text { contents } => {
+        match dispatch {
+            Dispatch::Text(contents) => {
                 if ctx.in_pre {
-                    out.push_str(contents);
+                    out.push_str(&contents);
                 } else {
-                    push_inline_text(out, contents);
+                    push_inline_text(out, &contents);
                 }
             }
-            NodeData::Element { name, attrs, .. } => {
-                let tag = name.local.as_ref();
-                self.md_element(id, tag, attrs, out, ctx);
+            Dispatch::Element { tag, attrs } => {
+                self.md_element(id, &tag, &attrs, out, ctx);
             }
-            NodeData::Document => self.md_children(id, out, ctx),
-            _ => {}
+            Dispatch::Document => self.md_children(id, out, ctx),
+            Dispatch::Skip => {}
         }
     }
 
@@ -257,6 +275,9 @@ fn ensure_block(out: &mut String) {
 }
 
 /// Collapse 3+ consecutive newlines to 2 and trim leading/trailing blanks.
+///
+/// Avoids a second allocation: builds into `out`, then trims in-place by
+/// truncating trailing whitespace and draining leading whitespace bytes.
 fn normalize_blank_lines(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut newlines = 0usize;
@@ -271,5 +292,13 @@ fn normalize_blank_lines(s: &str) -> String {
             out.push(ch);
         }
     }
-    out.trim().to_string()
+    // Trim trailing whitespace in-place (no realloc).
+    let trimmed_end = out.trim_end().len();
+    out.truncate(trimmed_end);
+    // Trim leading whitespace: find byte offset of first non-WS char.
+    let start = out.find(|c: char| !c.is_whitespace()).unwrap_or(out.len());
+    if start > 0 {
+        out.drain(..start);
+    }
+    out
 }

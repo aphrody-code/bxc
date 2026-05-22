@@ -128,12 +128,19 @@ async function extractWith(
 		});
 		await page.goto(opts.url, { timeoutMs: opts.timeoutMs });
 		const els = await page.$$(opts.selector);
-		const out: Extracted[] = [];
-		for (let i = 0; i < els.length && i < opts.max; i++) {
-			const el = els[i] as unknown as { textContent?: () => Promise<string> };
-			const text = (await el.textContent?.()) ?? "";
-			out.push({ index: i, text: text.trim().slice(0, 500) });
-		}
+		const limit = Math.min(els.length, opts.max);
+		// Fetch all textContent values in parallel — each is an independent CDP
+		// roundtrip so serial awaiting multiplies latency by `limit`.
+		const texts = await Promise.all(
+			Array.from({ length: limit }, (_, i) => {
+				const el = els[i] as unknown as { textContent?: () => Promise<string> };
+				return el.textContent?.() ?? Promise.resolve("");
+			}),
+		);
+		const out: Extracted[] = texts.map((text, i) => ({
+			index: i,
+			text: text.trim().slice(0, 500),
+		}));
 		return out;
 	} finally {
 		try {

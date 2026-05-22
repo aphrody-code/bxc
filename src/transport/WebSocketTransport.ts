@@ -18,6 +18,7 @@ import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
 import { drainStream } from "../internal/stream-drain.ts";
 import { chromeGpuFlags, chromeJsFlags } from "../config/hardware.ts";
 import { join } from "node:path";
+import { createServer } from "node:net";
 
 export interface WebSocketTransportOptions {
 	/** URL to the chromium websocket endpoint (if already running) */
@@ -47,21 +48,22 @@ export interface WebSocketTransportOptions {
 	readyTimeoutMs?: number;
 }
 
+/**
+ * Find a free TCP port by binding a raw `net.createServer` socket.
+ * This is orders of magnitude cheaper than spinning up a full HTTP server
+ * (Bun.serve) just to check availability — no HTTP parser, no routing, no
+ * TLS scaffolding.  The socket is immediately closed after the bind succeeds,
+ * leaving the port free for the caller (Chrome / Lightpanda) to claim.
+ */
 async function findFreePort(host: string): Promise<number> {
 	for (let attempt = 0; attempt < 32; attempt++) {
 		const port = 49152 + Math.floor(Math.random() * (65535 - 49152));
 		const free = await new Promise<boolean>((resolve) => {
-			try {
-				const server = Bun.serve({
-					hostname: host,
-					port,
-					fetch: () => new Response(null),
-				});
-				server.stop(true);
-				resolve(true);
-			} catch {
-				resolve(false);
-			}
+			const srv = createServer();
+			srv.listen(port, host, () => {
+				srv.close(() => resolve(true));
+			});
+			srv.on("error", () => resolve(false));
 		});
 		if (free) return port;
 	}
@@ -236,25 +238,41 @@ export class WebSocketTransport implements ConnectionTransport {
 				await Bun.sleep(50);
 			} else {
 				wsUrl = await new Promise<string>((resolve, reject) => {
-					let output = "";
-					// Chromium typically logs the WebSocket URL to stderr
+					// Chromium typically logs the WebSocket URL to stderr.
+					// We keep only the last incomplete line across chunks so the
+					// accumulated buffer never grows beyond one line (~200 B),
+					// making the scan O(chunk) instead of O(total_output).
 					const reader = (proc!.stderr as ReadableStream<Uint8Array>).getReader();
-					
+					const decoder = new TextDecoder();
+					let tail = ""; // incomplete line carried from the previous chunk
+
 					const readLoop = async () => {
 						try {
 							const { done, value } = await reader.read();
 							if (value) {
-								const text = new TextDecoder().decode(value);
-								output += text;
+								const text = decoder.decode(value, { stream: true });
 								if (opts.stderrLogger) opts.stderrLogger(text);
-								
-								const lines = output.split("\n");
-								for (const line of lines) {
+
+								// Split on newlines; `tail` holds an incomplete last line.
+								const combined = tail + text;
+								const nl = combined.lastIndexOf("\n");
+								// Lines that are complete (terminated by \n)
+								const complete = nl >= 0 ? combined.slice(0, nl) : "";
+								tail = nl >= 0 ? combined.slice(nl + 1) : combined;
+
+								for (const line of complete.split("\n")) {
 									const match = line.match(/ws:\/\/[^\s]+/);
 									if (match) {
 										resolve(match[0].trim());
 										return;
 									}
+								}
+								// Also scan the current tail in case the URL arrived
+								// without a trailing newline yet.
+								const tailMatch = tail.match(/ws:\/\/[^\s]+/);
+								if (tailMatch) {
+									resolve(tailMatch[0].trim());
+									return;
 								}
 							}
 							if (!done) {
@@ -268,7 +286,7 @@ export class WebSocketTransport implements ConnectionTransport {
 								const hint = userDataDir
 									? ` — a Chrome instance is likely already running on profile "${profileDirectory}" (${userDataDir}). Close it first, or attach to it via browserWSEndpoint / BXC_BROWSER_WS_ENDPOINT.`
 									: "";
-								reject(new Error("Process exited before emitting ws url." + hint + " Output: " + output));
+								reject(new Error("Process exited before emitting ws url." + hint));
 							}
 						} catch (e) {
 							reject(e);
