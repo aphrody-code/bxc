@@ -54,6 +54,7 @@ Subcommands:
   cookies   Cookie jar tools
   har       HAR (HTTP Archive) recorder/replayer
   mirror    Download a full site (HTML+CSS+JS+assets) + manifest
+  profile   Profile the Google web stack (HTML/CSS/JS/API/frameworks), self-reinforcing
 
 Global Options:
   --insecure, -k  Bypass TLS certificate validation
@@ -149,6 +150,12 @@ async function main() {
 
 		case "mirror": {
 			const mod = await import("./mirror.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "profile": {
+			const mod = await import("./profile.ts");
 			await mod.main(args, opts);
 			break;
 		}

@@ -32,3 +32,5 @@ export * from "./serp-parser.ts";
 export * from "./strategy.ts";
 export * from "./style.ts";
 export * from "./verticals.ts";
+export * from "./profiler.ts";
+export * from "./corpus.ts";
