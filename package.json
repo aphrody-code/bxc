@@ -41,6 +41,7 @@
 		"build:linux": "cd rust-bridge && cargo build --release && cd .. && bun scripts/build-standalone.ts",
 		"build:win": "bun scripts/build-windows.ts",
 		"build:win:aggressive": "bun scripts/build-windows.ts --baseline",
+		"build:win32": "cd rust-bridge && cargo build --release -p bxc-rust-bridge -p bxc-engine && cd .. && bun scripts/build-win32.ts",
 		"test": "bun test test/ src/",
 		"test:google": "bun test test/google-power.test.ts",
 		"test:rust": "bun test test/rust-bridge.test.ts",

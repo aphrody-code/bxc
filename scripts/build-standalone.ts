@@ -186,7 +186,8 @@ async function buildOne(
 		`--outfile=${out}`,
 		"--minify",
 		"--sourcemap=linked",
-		"--compile-exec-argv=--smol",
+		// NB: do NOT inject `--smol` — it segfaults the Bun standalone runtime
+		// (the original bxc Windows crash; see CLAUDE.md pitfalls).
 		"--no-compile-autoload-tsconfig",
 		"--no-compile-autoload-package-json",
 		...defineArgs,
