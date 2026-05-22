@@ -393,7 +393,7 @@ function rewriteCssLinks(
 		const v = a ?? b ?? c;
 		return `url("${remap(v)}")`;
 	});
-	out = out.replace(/@import\s+(?:url\()?\s*(?:"([^"]+)"|'([^']+)')\s*\)?\s*;?/g, (full, a, b) => {
+	out = out.replace(/@import\s+(?:url\()?\s*(?:"([^"]+)"|'([^']+)')\s*\)?\s*;?/g, (_full, a, b) => {
 		const v = a ?? b;
 		const r = remap(v);
 		return `@import "${r}";`;

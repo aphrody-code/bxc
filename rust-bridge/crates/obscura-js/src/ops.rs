@@ -8,7 +8,6 @@ use deno_core::OpState;
 use deno_core::Extension;
 use deno_error::JsError;
 use deno_core::url::Url;
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use ::obscura_dom::{DomTree, NodeData, NodeId};
 use obscura_net::{CookieJar, ObscuraHttpClient};
 use tokio::sync::Mutex;
