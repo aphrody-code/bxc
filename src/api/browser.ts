@@ -1056,7 +1056,13 @@ function matchesPattern(url: string, pattern: string | RegExp): boolean {
 	return re.test(url);
 }
 
+// Cache compiled glob→RegExp instances so the same pattern string is never
+// compiled more than once, even across thousands of intercepted requests.
+const _globCache = new Map<string, RegExp>();
+
 function globToRegExp(glob: string): RegExp {
+	const cached = _globCache.get(glob);
+	if (cached) return cached;
 	let out = "^";
 	for (let i = 0; i < glob.length; i++) {
 		const c = glob[i] ?? "";
@@ -1074,7 +1080,9 @@ function globToRegExp(glob: string): RegExp {
 		}
 	}
 	out += "$";
-	return new RegExp(out);
+	const re = new RegExp(out);
+	_globCache.set(glob, re);
+	return re;
 }
 
 // ---------------------------------------------------------------------------

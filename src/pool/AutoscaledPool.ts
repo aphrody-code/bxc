@@ -59,6 +59,11 @@
 import { cpus, freemem, totalmem, loadavg } from "node:os";
 import { defaultConcurrency } from "../config/hardware.ts";
 
+// These values are constant for the lifetime of the process — cache them once
+// to avoid the syscall overhead on every autoscale tick.
+const TOTAL_MEM_BYTES = totalmem();
+const NUM_CPUS = Math.max(1, cpus().length || 1);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -247,14 +252,14 @@ export class AutoscaledPool {
 	// ---------------------------------------------------------------------------
 
 	#evaluateAutoscale(): void {
-		const totalMem = totalmem();
-		const usedMem = totalMem - freemem();
-		const memRatio = usedMem / totalMem;
+		// Use process-level constants for totalmem / cpu count — these never change
+		// at runtime and were being re-queried (syscall) on every 10-second tick.
+		const usedMem = TOTAL_MEM_BYTES - freemem();
+		const memRatio = usedMem / TOTAL_MEM_BYTES;
 
 		// Load average is 1-min average per CPU core
 		const [load1] = loadavg() ?? [0];
-		const numCpus = cpus().length || 1;
-		const loadRatio = load1 / numCpus;
+		const loadRatio = load1 / NUM_CPUS;
 
 		const overloaded = memRatio > this.#maxMemoryRatio || loadRatio > this.#maxLoadRatio;
 

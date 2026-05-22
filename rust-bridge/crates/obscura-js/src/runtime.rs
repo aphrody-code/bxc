@@ -249,7 +249,9 @@ impl ObscuraJsRuntime {
     }
 
     pub fn evaluate(&mut self, source: &str) -> Result<Value, String> {
-        let result = self.runtime.execute_script("<eval>".to_string(), source.to_string())
+        // Pass `"<eval>"` as `&'static str` — deno_core accepts it directly
+        // via `IntoModuleName for &'static str`, avoiding an allocation.
+        let result = self.runtime.execute_script("<eval>", source.to_string())
             .map_err(|e| e.to_string())?;
         self.v8_to_json(result)
     }
