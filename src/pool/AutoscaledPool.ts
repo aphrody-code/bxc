@@ -57,6 +57,7 @@
  */
 
 import { cpus, freemem, totalmem, loadavg } from "node:os";
+import { defaultConcurrency } from "../config/hardware.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -174,8 +175,11 @@ export class AutoscaledPool {
 		this.#autoscaleIntervalMs = opts.autoscaleIntervalMs ?? 10_000;
 		this.#maybeRunIntervalMs = opts.maybeRunIntervalMs ?? 500;
 		this.#taskTimeoutMs = opts.taskTimeoutMs ?? 0;
+		// Start at the hardware-aware default (CPU core count) rather than the
+		// floor, so an 8-core box exploits its cores immediately instead of
+		// ramping up from 1. Still autoscales within [min, max] from load/RSS.
 		this.#desiredConcurrency = clamp(
-			opts.desiredConcurrency ?? this.#minConcurrency,
+			opts.desiredConcurrency ?? defaultConcurrency(),
 			this.#minConcurrency,
 			this.#maxConcurrency,
 		);
