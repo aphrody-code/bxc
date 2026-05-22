@@ -7,7 +7,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { Database } from "bun:sqlite";
 
 // Bxc Native Imports
 import { Browser } from "../api/browser.ts";
@@ -19,64 +18,7 @@ const server = new McpServer({
 });
 
 /**
- * 1. SQLite Memory System Tuning
- */
-const dbPath =
-	process.env.BXC_MEMORY_DB || `${process.cwd()}/bxc-memory.sqlite`;
-const db = new Database(dbPath);
-db.run(`
-  CREATE TABLE IF NOT EXISTS memories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    key TEXT UNIQUE,
-    value TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-
-server.registerTool(
-	"tune_memory_sqlite",
-	{
-		description:
-			"Stores or retrieves a fine-tuned memory fact in the high-performance SQLite database.",
-		inputSchema: z.object({
-			action: z.enum(["get", "set"]),
-			key: z.string(),
-			value: z.string().optional(),
-		}),
-	},
-	async (args) => {
-		if (args.action === "set" && args.value) {
-			db.prepare(
-				"INSERT OR REPLACE INTO memories (key, value) VALUES (?, ?)",
-			).run(args.key, args.value);
-			return {
-				content: [
-					{
-						type: "text",
-						text: `Memory '${args.key}' tuned and saved to SQLite.`,
-					},
-				],
-			};
-		} else {
-			const result = db
-				.prepare("SELECT value FROM memories WHERE key = ?")
-				.get(args.key) as { value: string } | undefined;
-			return {
-				content: [
-					{
-						type: "text",
-						text: result
-							? result.value
-							: `No memory found for key '${args.key}'.`,
-					},
-				],
-			};
-		}
-	},
-);
-
-/**
- * 2. Scrape to Markdown
+ * 1. Scrape to Markdown
  */
 server.registerTool(
 	"bxc_scrape_markdown",

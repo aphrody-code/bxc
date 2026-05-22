@@ -1,7 +1,7 @@
 {
 	"name": "@aphrody-code/bxc",
 	"version": "0.3.1",
-	"description": "Bxc: High-performance browser automation engine (Bun + Lightpanda fusion)",
+	"description": "Bxc: High-performance browser automation & scraping engine (Bun + Rust/Zig + native Chromium)",
 	"packageManager": "bun@1.3.14",
 	"type": "module",
 	"workspaces": [
@@ -31,31 +31,25 @@
 		"./browser": "./src/api/browser.ts",
 		"./detect": "./src/detect.ts",
 		"./google": "./src/google/index.ts",
-		"./serverless": "./src/serverless/handler.ts",
+		"./mirror": "./src/mirror/index.ts",
 		"./ffi/rust-bridge": "./src/rust/bridge.ts",
 		"./ffi/curl-impersonate": "./src/ffi/curl-impersonate.ts",
-		"./scrapers/challonge": "./src/scrapers/challonge.ts",
 		"./types/ConnectionTransport": "./types/ConnectionTransport.ts"
 	},
 	"scripts": {
-		"dev": "bun --watch src/serverless/standalone.ts",
 		"build": "bun run build:linux && bun run build:win",
 		"build:linux": "cd rust-bridge && cargo build --release && cd .. && bun scripts/build-standalone.ts",
 		"build:win": "bun scripts/build-windows.ts",
 		"build:win:aggressive": "bun scripts/build-windows.ts --baseline",
-		"test": "bun test test/ packages/ src/",
-		"test:google": "bun test test/integration/google-atlas.test.ts",
+		"test": "bun test test/ src/",
+		"test:google": "bun test test/google-power.test.ts",
 		"test:rust": "bun test test/rust-bridge.test.ts",
-		"lint": "oxlint src test examples scripts",
-		"lint:fix": "oxlint --fix src test examples scripts",
+		"lint": "oxlint src test scripts",
+		"lint:fix": "oxlint --fix src test scripts",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
-		"build:mcp": "bun build ./src/mcp/server.ts --compile --target=bun-linux-x64 --outfile ./dist/standalone/bxc-mcp",
-		"server:dev": "bun --watch src/server/index.ts",
-		"server:start": "bun src/server/index.ts",
-		"db:push": "drizzle-kit push",
-		"clean": "bun scripts/cleanup.ts",
-		"bench": "bun benchmarks/run-all.ts"
+		"build:mcp": "bun build ./src/mcp/server.ts --compile --target=bun-windows-x64 --outfile ./dist/standalone/bxc-mcp",
+		"clean": "bun scripts/cleanup.ts"
 	},
 	"engines": {
 		"bun": ">=1.3.14"
@@ -72,7 +66,6 @@
 		"@types/jsdom": "^28.0.3",
 		"babel-plugin-react-compiler": "^1.0.0",
 		"cheerio": "^1.2.0",
-		"drizzle-kit": "^0.31.10",
 		"jsdom": "^29.1.1",
 		"openapi-typescript": "^7.13.0",
 		"oxlint": "^1.65.0",
@@ -82,17 +75,6 @@
 		"typescript": "^6.0.3"
 	},
 	"dependencies": {
-		"@bogeychan/elysia-logger": "^0.1.10",
-		"@elysiajs/cors": "^1.4.2",
-		"@elysiajs/swagger": "^1.3.1",
-		"@libsql/client": "^0.17.3",
-		"class-validator": "^0.15.1",
-		"drizzle-orm": "^0.45.2",
-		"elysia": "^1.4.28",
-		"graphql": "^16.14.0",
-		"graphql-yoga": "^5.21.0",
-		"reflect-metadata": "^0.2.2",
-		"type-graphql": "^2.0.0-rc.3",
 		"zod": "^4.4.3"
 	}
 }
