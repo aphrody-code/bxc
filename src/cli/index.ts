@@ -46,17 +46,14 @@ Usage:
   bxc <subcommand> [options]
 
 Subcommands:
-  serve     Start a CDP server for browser automation
-  install   Download engine binaries (Lightpanda + native Chromium)
+  install   Download engine binaries (native Chromium)
   chrome    Native Chromium management
   recon     One-shot URL → recon doc (Markdown by default)
   detect    Framework / CMS / library detection via multi-signal
   scrape    Extract textContent from CSS-matched elements
-  api       Run Bxc as an HTTP JSON API
   cookies   Cookie jar tools
   har       HAR (HTTP Archive) recorder/replayer
-  mirror    Download a full site (HTML+CSS+JS+assets)
-  challonge Extract snapshot from a Challonge tournament page
+  mirror    Download a full site (HTML+CSS+JS+assets) + manifest
 
 Global Options:
   --insecure, -k  Bypass TLS certificate validation
@@ -68,9 +65,9 @@ Global Options:
   --help, -h      Print this help
 
 Examples:
-  bxc serve --cdp-port 9222
   bxc recon https://google.com --insecure
   bxc detect https://design.google --json
+  bxc scrape https://app.spa.example "div.result" --chrome-profile "Profile 5"
 
 bxc is a high-performance browser engine optimized for VPS
 and Google-grade stealth. It combines In-Process FFI (Zig/V8)
@@ -107,12 +104,6 @@ async function main() {
 	}
 
 	switch (subcommand) {
-		case "serve": {
-			const mod = await import("./serve.ts");
-			await mod.main(args, opts);
-			break;
-		}
-
 		case "install": {
 			const mod = await import("./install.ts");
 			await mod.main(args, opts);
@@ -158,18 +149,6 @@ async function main() {
 
 		case "mirror": {
 			const mod = await import("./mirror.ts");
-			await mod.main(args, opts);
-			break;
-		}
-
-		case "challonge": {
-			const mod = await import("./challonge.ts");
-			await mod.main(args, opts);
-			break;
-		}
-
-		case "api": {
-			const mod = await import("./api.ts");
 			await mod.main(args, opts);
 			break;
 		}
