@@ -34,3 +34,4 @@ export * from "./style.ts";
 export * from "./verticals.ts";
 export * from "./profiler.ts";
 export * from "./corpus.ts";
+export * from "./signatures.ts";

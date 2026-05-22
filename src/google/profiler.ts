@@ -33,6 +33,7 @@
 import { Browser } from "../api/browser.ts";
 import { detectFrameworks } from "../detect.ts";
 import { corpusHints, reinforce, type HostKnowledge } from "./corpus.ts";
+import { recognizeStack, type StackRecognition } from "./signatures.ts";
 
 /** Canonical Google properties bxc knows how to profile by alias. */
 export const GOOGLE_TARGETS: Record<string, string> = {
@@ -74,6 +75,8 @@ export interface GoogleProfile {
 	/** Network/API endpoints (deduped, query-stripped patterns). */
 	apis: string[];
 	headers: Record<string, string>;
+	/** High-confidence Google-stack recognition (Gemini app, M3, Boq, models…). */
+	recognized: StackRecognition;
 	/** What bxc already knew about this host before this run. */
 	priorHints: { apis: string[]; frameworks: string[]; globals: string[] };
 	/** The host knowledge after reinforcing with this run. */
@@ -261,6 +264,10 @@ export async function profileSite(
 		}
 	}
 
+	// High-confidence Google-stack recognition from aphrody's RE corpus
+	// (Gemini app CSS vars, M3 tokens, Boq endpoints, model ids, Google Sans).
+	const recognized = recognizeStack({ html, apis, globals });
+
 	const counts = {
 		css: css.length,
 		js: js.length,
@@ -268,9 +275,16 @@ export async function profileSite(
 		htmlBytes: html.length,
 	};
 
+	// Reinforce with both detected frameworks and the recognised stack tags, so
+	// the corpus learns e.g. "gemini-app" / "material-3" / "gemini-model:<id>".
+	const learnedFrameworks = uniq([
+		...frameworks,
+		...recognized.tags,
+		...recognized.models.map((m) => `gemini-model:${m}`),
+	]);
 	const knowledge = await reinforce({
 		host,
-		frameworks,
+		frameworks: learnedFrameworks,
 		apis: uniq(apis),
 		globals,
 		headers,
@@ -293,6 +307,7 @@ export async function profileSite(
 		fonts: uniq(fonts),
 		apis: uniq(apis),
 		headers,
+		recognized,
 		priorHints,
 		knowledge,
 	};
