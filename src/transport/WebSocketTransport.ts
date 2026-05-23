@@ -19,6 +19,7 @@ import { drainStream } from "../internal/stream-drain.ts";
 import { chromeGpuFlags, chromeJsFlags } from "../config/hardware.ts";
 import { join } from "node:path";
 import { createServer } from "node:net";
+import { existsSync } from "node:fs";
 
 export interface WebSocketTransportOptions {
 	/** URL to the chromium websocket endpoint (if already running) */
@@ -41,6 +42,13 @@ export interface WebSocketTransportOptions {
 	 * order: this option → `$BXC_CHROME_PROFILE` → `"Default"`.
 	 */
 	profileDirectory?: string;
+	/**
+	 * Snapshot the session-bearing files of the requested real profile into a
+	 * throwaway user-data-dir and launch against the copy. Lets a debug Chrome
+	 * drive a logged-in profile even while the user's own Chrome holds the
+	 * singleton lock on the live user-data-dir. See {@link module:bxc/transport/profile-snapshot}.
+	 */
+	copyProfile?: boolean;
 
 	// --- Legacy Lightpanda Options (SocketPairTransport compatibility) ---
 	binaryPath?: string;
@@ -164,6 +172,26 @@ export class WebSocketTransport implements ConnectionTransport {
 				}
 			}
 
+			// Snapshot fallback: when asked to drive a real logged-in profile, a
+			// live Chrome holds the singleton lock on its user-data-dir, so a debug
+			// launch against it can never open the port. Copy the session-bearing
+			// files into a throwaway user-data-dir and launch there instead — works
+			// whether or not the user's Chrome is open, and never disturbs it.
+			if (opts.copyProfile && userDataDir && existsSync(userDataDir)) {
+				try {
+					const { snapshotChromeProfile } = await import("./profile-snapshot.ts");
+					const snap = await snapshotChromeProfile(userDataDir, profileDirectory);
+					opts.stderrLogger?.(
+						`[bxc] snapshot profile "${profileDirectory}" → ${snap.userDataDir} (${snap.copied.length} artefacts)\n`,
+					);
+					userDataDir = snap.userDataDir;
+				} catch (e) {
+					opts.stderrLogger?.(
+						`[bxc] profile snapshot failed (${e instanceof Error ? e.message : e}); using live dir\n`,
+					);
+				}
+			}
+
 			const isLightpanda = chromePath.includes("lightpanda");
 			const headless = opts.headless ?? (isWin ? false : true);
 			const port = await findFreePort("127.0.0.1");
@@ -237,6 +265,17 @@ export class WebSocketTransport implements ConnectionTransport {
 				// Lightpanda starts extremely fast, but wait a small fraction just in case
 				await Bun.sleep(50);
 			} else {
+				// Actionable hint reused by both the EOF and the timeout paths: the
+				// dominant failure when targeting the user's real user-data-dir is a
+				// Chrome instance already running on that profile.
+				const busyHint = userDataDir
+					? ` — a Chrome instance is likely already running on profile "${profileDirectory}" (${userDataDir}). Close it first, or attach to it via browserWSEndpoint / BXC_BROWSER_WS_ENDPOINT.`
+					: "";
+				// Bound the launch. When Chrome hands a navigation off to an existing
+				// instance it may stay alive yet never open the debug port nor close
+				// its stderr — `reader.read()` would then await forever (observed as a
+				// 180 s outer-timeout kill on `max`). Kill the child and fail fast.
+				const launchTimeoutMs = opts.readyTimeoutMs ?? 20_000;
 				wsUrl = await new Promise<string>((resolve, reject) => {
 					// Chromium typically logs the WebSocket URL to stderr.
 					// We keep only the last incomplete line across chunks so the
@@ -245,10 +284,41 @@ export class WebSocketTransport implements ConnectionTransport {
 					const reader = (proc!.stderr as ReadableStream<Uint8Array>).getReader();
 					const decoder = new TextDecoder();
 					let tail = ""; // incomplete line carried from the previous chunk
+					let settled = false;
+
+					const timer = setTimeout(() => {
+						if (settled) return;
+						settled = true;
+						reader.cancel().catch(() => undefined);
+						try {
+							proc?.kill();
+						} catch {
+							/* already gone */
+						}
+						reject(
+							new Error(
+								`Timed out after ${launchTimeoutMs} ms waiting for the Chrome debug port.${busyHint}`,
+							),
+						);
+					}, launchTimeoutMs);
+
+					const settleResolve = (v: string) => {
+						if (settled) return;
+						settled = true;
+						clearTimeout(timer);
+						resolve(v);
+					};
+					const settleReject = (e: Error) => {
+						if (settled) return;
+						settled = true;
+						clearTimeout(timer);
+						reject(e);
+					};
 
 					const readLoop = async () => {
 						try {
 							const { done, value } = await reader.read();
+							if (settled) return;
 							if (value) {
 								const text = decoder.decode(value, { stream: true });
 								if (opts.stderrLogger) opts.stderrLogger(text);
@@ -263,7 +333,7 @@ export class WebSocketTransport implements ConnectionTransport {
 								for (const line of complete.split("\n")) {
 									const match = line.match(/ws:\/\/[^\s]+/);
 									if (match) {
-										resolve(match[0].trim());
+										settleResolve(match[0].trim());
 										return;
 									}
 								}
@@ -271,25 +341,21 @@ export class WebSocketTransport implements ConnectionTransport {
 								// without a trailing newline yet.
 								const tailMatch = tail.match(/ws:\/\/[^\s]+/);
 								if (tailMatch) {
-									resolve(tailMatch[0].trim());
+									settleResolve(tailMatch[0].trim());
 									return;
 								}
 							}
 							if (!done) {
 								readLoop();
 							} else {
-								// Most common cause when launching against the user's
-								// real user-data-dir: a Chrome instance is ALREADY
-								// running on that profile, so the new process just
-								// opens a tab in it and exits without ever opening the
-								// debug port. Surface an actionable hint.
-								const hint = userDataDir
-									? ` — a Chrome instance is likely already running on profile "${profileDirectory}" (${userDataDir}). Close it first, or attach to it via browserWSEndpoint / BXC_BROWSER_WS_ENDPOINT.`
-									: "";
-								reject(new Error("Process exited before emitting ws url." + hint));
+								// Chrome exited without opening the debug port — almost
+								// always the already-running-profile case.
+								settleReject(
+									new Error("Process exited before emitting ws url." + busyHint),
+								);
 							}
 						} catch (e) {
-							reject(e);
+							settleReject(e instanceof Error ? e : new Error(String(e)));
 						}
 					};
 					readLoop();

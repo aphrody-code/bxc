@@ -67,6 +67,7 @@ interface Args {
 	targets: string[];
 	out: string;
 	insecure: boolean;
+	chromeProfile: string;
 }
 
 function parseArgs(argv: readonly string[]): Args {
@@ -75,6 +76,7 @@ function parseArgs(argv: readonly string[]): Args {
 		targets: [...DESIGN_TARGETS],
 		out: join(ROOT, "var", "google-design"),
 		insecure: false,
+		chromeProfile: process.env["BXC_CHROME_PROFILE"] ?? "Profile 5",
 	};
 	for (let i = 0; i < argv.length; i++) {
 		switch (argv[i]) {
@@ -86,6 +88,9 @@ function parseArgs(argv: readonly string[]): Args {
 				break;
 			case "--out":
 				out.out = argv[++i];
+				break;
+			case "--chrome-profile":
+				out.chromeProfile = argv[++i];
 				break;
 			case "--insecure":
 			case "-k":
@@ -184,6 +189,9 @@ async function main(): Promise<void> {
 			const p = await profileSite(target, {
 				profile: args.profile,
 				insecure: args.insecure,
+				// Drive the logged-in profile on the `max` path; profileSite
+				// snapshots it so capture works while the user's Chrome is open.
+				chromeProfile: args.chromeProfile,
 			});
 			profiles.push(p);
 			console.error(
@@ -193,6 +201,10 @@ async function main(): Promise<void> {
 		} catch (err) {
 			console.error(`[recon]   ${target} FAILED: ${err instanceof Error ? err.message : String(err)}`);
 		}
+		// Let Chrome + the snapshot temp dir tear down before the next launch.
+		// Sequential real-Chrome launches in one process are resource-heavy; a
+		// brief pause keeps long multi-target runs stable.
+		await new Promise((r) => setTimeout(r, 750));
 	}
 
 	if (profiles.length === 0) {
@@ -200,18 +212,32 @@ async function main(): Promise<void> {
 		process.exit(1);
 	}
 
-	// Persist the dossier + the merged corpus snapshot.
+	// Persist the dossier. Merge with any prior run by target (current wins) so
+	// short, reliable batches accumulate into one complete dossier instead of
+	// overwriting it — sequential real-Chrome launches are flaky past ~3 per
+	// process, so batching + merge is the robust path.
 	const jsonPath = join(args.out, "dossier.json");
 	const mdPath = join(args.out, "DOSSIER.md");
-	await Bun.write(jsonPath, JSON.stringify(profiles, null, 2));
-	await Bun.write(mdPath, dossierMarkdown(profiles));
+	const byTarget = new Map<string, GoogleProfile>();
+	const prior = (await Bun.file(jsonPath)
+		.json()
+		.catch(() => [])) as GoogleProfile[];
+	for (const p of Array.isArray(prior) ? prior : []) byTarget.set(p.target, p);
+	for (const p of profiles) byTarget.set(p.target, p);
+	const order = DESIGN_TARGETS as readonly string[];
+	const merged = [...byTarget.values()].sort(
+		(a, b) =>
+			(order.indexOf(a.target) + 1 || 99) - (order.indexOf(b.target) + 1 || 99),
+	);
+	await Bun.write(jsonPath, JSON.stringify(merged, null, 2));
+	await Bun.write(mdPath, dossierMarkdown(merged));
 	await Bun.write(
 		join(args.out, "corpus-snapshot.json"),
 		JSON.stringify(await loadCorpus(), null, 2),
 	);
 
-	console.error(`[recon] dossier → ${mdPath}`);
-	Bun.stdout.write(dossierMarkdown(profiles) + "\n");
+	console.error(`[recon] dossier → ${mdPath} (${merged.length} targets)`);
+	Bun.stdout.write(dossierMarkdown(merged) + "\n");
 }
 
 main().catch((err) => {

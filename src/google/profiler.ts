@@ -91,6 +91,19 @@ interface ProfileOptions {
 	insecure?: boolean;
 	/** Reuse a logged-in Chrome profile for the `max` path (e.g. "Profile 5"). */
 	chromeProfile?: string;
+	/**
+	 * Snapshot the logged-in profile into a throwaway user-data-dir for the `max`
+	 * path so capture works even while the user's Chrome is open. Defaults to
+	 * `true` whenever a `chromeProfile` is given. Set `false` to attach to the
+	 * real dir (requires the user's Chrome to be closed).
+	 */
+	copyProfile?: boolean;
+	/**
+	 * Milliseconds to let the resource graph settle after navigation on
+	 * browser-backed profiles before probing (default 3000). Larger values
+	 * capture more lazily-loaded CSS/JS/XHR.
+	 */
+	settleMs?: number;
 }
 
 /** In-page probe: serialized to a string and run via `page.evaluate`. */
@@ -185,6 +198,12 @@ export async function profileSite(
 	const page = await Browser.newPage({
 		profile,
 		profileDirectory: profile === "max" ? opts.chromeProfile : undefined,
+		// For the real-Chrome path, snapshot the logged-in profile by default so
+		// capture works even while the user's Chrome holds the user-data-dir lock.
+		copyProfile:
+			profile === "max" && opts.chromeProfile
+				? (opts.copyProfile ?? true)
+				: undefined,
 		insecure: opts.insecure,
 	});
 
@@ -209,6 +228,14 @@ export async function profileSite(
 		finalUrl = resp?.url ?? url;
 		if (resp?.headers) {
 			for (const [k, v] of Object.entries(resp.headers)) headers[k.toLowerCase()] = v;
+		}
+		// Browser-backed profiles commit `Page.navigate` before the SPA fetches
+		// its CSS/JS bundles and Boq/XHR endpoints. Let the resource graph settle
+		// so `performance.getEntriesByType("resource")` is populated; static/http
+		// have no JS runtime, so the wait is pointless there.
+		if (profile === "max" || profile === "fast" || profile === "stealth") {
+			const settleMs = opts.settleMs ?? 3_000;
+			await new Promise((r) => setTimeout(r, settleMs));
 		}
 		html = await page.content();
 		try {
