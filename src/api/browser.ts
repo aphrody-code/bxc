@@ -112,6 +112,12 @@ export interface PageOptions {
 	 */
 	profileDirectory?: string;
 	/**
+	 * Snapshot the requested real profile into a throwaway user-data-dir and
+	 * launch the Chrome-backed profile against the copy. Drives a logged-in
+	 * session without fighting the singleton lock the user's live Chrome holds.
+	 */
+	copyProfile?: boolean;
+	/**
 	 * Options for the `"http"` profile (curl-impersonate).
 	 * `profile` defaults to `"chrome131"`, `timeoutMs` to `30_000`.
 	 */
@@ -454,10 +460,14 @@ export class Page implements AnyPage {
 
 	 * parses the HTML body.  Returns a minimal `NavigationResponse`.
 	 */
-	async goto(url: string, _opts?: GotoOptions): Promise<NavigationResponse> {
+	async goto(url: string, opts?: GotoOptions): Promise<NavigationResponse> {
 		this.#assertOpen();
 		this._traceRecorder?.recordAction({ type: "goto", target: url });
-		const result = (await this._send("Page.navigate", { url })) as {
+		const result = (await this._send(
+			"Page.navigate",
+			{ url },
+			opts?.timeoutMs ?? 30_000,
+		)) as {
 			frameId: string;
 			status?: number;
 		};
@@ -889,10 +899,31 @@ export class Page implements AnyPage {
 	// ---------------------------------------------------------------------------
 
 	/** Send a CDP command on this page's session and await the response. */
-	_send(method: string, params: Record<string, unknown>): Promise<unknown> {
+	_send(
+		method: string,
+		params: Record<string, unknown>,
+		timeoutMs = 30_000,
+	): Promise<unknown> {
 		return new Promise<unknown>((resolve, reject) => {
 			const id = this.#nextCdpId++;
-			this.#pending.set(id, { resolve, reject });
+			// Bound every CDP round-trip: a real Chrome attached to a busy/reused
+			// profile may never answer Page.navigate, which would otherwise hang the
+			// caller forever (observed as a 180 s outer-timeout kill on `max`).
+			const timer = setTimeout(() => {
+				if (this.#pending.delete(id)) {
+					reject(new Error(`CDP ${method} timed out after ${timeoutMs} ms`));
+				}
+			}, timeoutMs);
+			this.#pending.set(id, {
+				resolve: (v) => {
+					clearTimeout(timer);
+					resolve(v);
+				},
+				reject: (e) => {
+					clearTimeout(timer);
+					reject(e);
+				},
+			});
 			this.#transport.send(
 				JSON.stringify({ id, method, params, sessionId: this.#sessionId }),
 			);
@@ -1472,6 +1503,9 @@ class BrowserSingleton {
 				userDataDir: opts.userDataDir ?? opts.spawnOpts?.userDataDir,
 				profileDirectory:
 					opts.profileDirectory ?? opts.spawnOpts?.profileDirectory,
+				// Snapshot the profile into a throwaway dir so we can drive a
+				// logged-in session even while the user's Chrome holds the lock.
+				copyProfile: opts.copyProfile ?? opts.spawnOpts?.copyProfile,
 			});
 			const page = await Page.create(fullTransport, opts, context);
 			this.#pages.push(page);
