@@ -81,26 +81,52 @@ export async function parseSerp(html: string, query: string = ""): Promise<SerpC
 			jsonLd: [],
 		};
 
-		// 1. Organic Results
-		const gBlocks = await doc.querySelectorAll("div.g");
+		// 1. Organic Results — layout-agnostic.
+		//
+		// Google ships at least two markups: the legacy `div.g` blocks and the
+		// modern `div.MjjYud` containers used by the `udm=14` ("Web") view, the
+		// AI-Overview layout, and most current desktop SERPs. We iterate both,
+		// extract via tolerant selector chains, decode `/url?q=` redirects, drop
+		// Google-internal links, and dedupe by URL so a result that appears in
+		// both block types is only emitted once.
+		const seen = new Set<string>();
 		let pos = 1;
-		for (const block of gBlocks) {
-			const titleEl = await block.querySelector("h3");
-			const linkEl = await block.querySelector("a[href]");
-			const snippetEl = await block.querySelector("div.VwiC3b, div.kb0Bf, .st");
-			
-			const title = titleEl?.textContent().trim();
-			const url = linkEl?.getAttribute("href");
-			const snippet = snippetEl?.textContent().trim() || "";
+		for (const blockSel of ["div.MjjYud", "div.g"]) {
+			const blocks = await doc.querySelectorAll(blockSel);
+			for (const block of blocks) {
+				const titleEl = await block.querySelector("h3");
+				const title = titleEl?.textContent().trim();
+				if (!title) continue;
 
-			if (title && url && !url.startsWith("/")) {
+				const linkEl =
+					(await block.querySelector("div.yuRUbf a[href]")) ??
+					(await block.querySelector("a[jsname][href]")) ??
+					(await block.querySelector("a[href]"));
+				const url = cleanResultUrl(linkEl?.getAttribute("href") ?? "");
+				if (!url) continue;
+
+				const dedupeKey = url.replace(/[#?].*$/, "").replace(/\/$/, "");
+				if (seen.has(dedupeKey)) continue;
+				seen.add(dedupeKey);
+
+				const snippetEl = await block.querySelector(
+					"div.VwiC3b, div[data-sncf], div.kb0Bf, .st",
+				);
+
+				let displayedUrl = url;
+				try {
+					displayedUrl = new URL(url).hostname.replace(/^www\./, "");
+				} catch {
+					/* keep full url */
+				}
+
 				out.organic.push({
 					position: pos++,
-					title,
+					title: cleanText(title),
 					url,
-					displayedUrl: url,
-					snippet,
-					isSponsored: false,
+					displayedUrl,
+					snippet: cleanText(snippetEl?.textContent() ?? ""),
+					isSponsored: block.outerHTML().includes("data-text-ad"),
 				});
 			}
 		}
@@ -183,6 +209,70 @@ export async function parseSerp(html: string, query: string = ""): Promise<SerpC
 		return out;
 	} finally {
 		doc.destroy();
+	}
+}
+
+const ENTITY_MAP: Record<string, string> = {
+	amp: "&",
+	lt: "<",
+	gt: ">",
+	quot: '"',
+	apos: "'",
+	nbsp: " ",
+	"#39": "'",
+};
+
+/**
+ * Cleans extracted SERP text for AI consumption: decodes the common HTML
+ * entities that survive tag-stripping, removes Google's trailing UI affordances
+ * ("Read more", "More results"), and collapses whitespace.
+ */
+function cleanText(text: string): string {
+	return text
+		.replace(/&(amp|lt|gt|quot|apos|nbsp|#39);/g, (_m, e) => ENTITY_MAP[e] ?? _m)
+		.replace(/&#(\d+);/g, (_m, d) => String.fromCodePoint(parseInt(d, 10)))
+		.replace(/\s*(Read more|More results|More|En savoir plus|Plus de résultats)\s*$/i, "")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+/**
+ * Normalises a raw SERP anchor `href` into a clean external result URL.
+ *
+ * - Decodes Google redirect wrappers (`/url?q=` / `/url?url=`).
+ * - Rejects relative links and Google-internal navigation
+ *   (`/search`, `/url`, `accounts.google.com`, etc.).
+ * - Returns `null` when the href is not a usable external result.
+ */
+function cleanResultUrl(rawHref: string): string | null {
+	let href = rawHref.trim();
+	if (!href) return null;
+
+	if (href.startsWith("/url?") || href.startsWith("/url%3F")) {
+		try {
+			const u = new URL(href, "https://www.google.com");
+			href = u.searchParams.get("q") ?? u.searchParams.get("url") ?? "";
+		} catch {
+			return null;
+		}
+	}
+
+	if (!/^https?:\/\//i.test(href)) return null;
+
+	try {
+		const u = new URL(href);
+		const host = u.hostname.toLowerCase();
+		const isGoogleNav =
+			(host === "google.com" || host.endsWith(".google.com")) &&
+			(u.pathname === "/search" ||
+				u.pathname.startsWith("/url") ||
+				host === "accounts.google.com" ||
+				host === "policies.google.com" ||
+				host === "support.google.com");
+		if (isGoogleNav) return null;
+		return u.toString();
+	} catch {
+		return null;
 	}
 }
 
