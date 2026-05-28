@@ -29,8 +29,10 @@
 
 import {
 	extractTitle as nativeExtractTitle,
+	htmlToMarkdown as nativeHtmlToMarkdown,
 	stripTags as nativeStripTags,
 } from "../rust/bridge.ts";
+import { htmlToMarkdownJS } from "./html-to-markdown.ts";
 
 const ATTR_RE = /([a-zA-Z_:][^\s=]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
 
@@ -55,6 +57,31 @@ export function stripTags(html: string): string {
 		const STRIP_TAGS_RE = /<[^>]+>/g;
 		return html.replace(STRIP_TAGS_RE, "");
 	}
+}
+
+/**
+ * Converts `html` to GFM Markdown via the native Rust bridge, falling back to
+ * the dependency-free JS converter when the cdylib is unavailable. This keeps
+ * the most common AI scraping primitive working on hosts without the Rust
+ * toolchain (portability) instead of hard-failing.
+ */
+export function htmlToMarkdown(html: string): string {
+	// Drop subtrees that are pure noise for an AI reader before conversion. The
+	// native converter does not strip these, so doing it here keeps CSS/JS out
+	// of the Markdown on both the native and JS paths.
+	const cleaned = html.replace(
+		/<(script|style|noscript|template|svg|head)\b[^>]*>[\s\S]*?<\/\1>/gi,
+		"",
+	);
+	try {
+		const md = nativeHtmlToMarkdown(cleaned);
+		// An empty result on non-empty input means the native path silently
+		// produced nothing — prefer the JS converter over returning "".
+		if (md.trim().length > 0 || cleaned.trim().length === 0) return md;
+	} catch {
+		// cdylib missing/unloadable — degrade to the portable JS converter.
+	}
+	return htmlToMarkdownJS(cleaned);
 }
 
 /**
