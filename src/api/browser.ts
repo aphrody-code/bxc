@@ -491,7 +491,7 @@ export class Page implements AnyPage {
 	async markdown(): Promise<string> {
 		this.#assertOpen();
 		const html = await this.content();
-		const { htmlToMarkdown } = await import("../rust/bridge.ts");
+		const { htmlToMarkdown } = await import("../internal/html-utils.ts");
 		return htmlToMarkdown(html);
 	}
 
@@ -1199,7 +1199,7 @@ export class HttpPage implements AnyPage {
 	async markdown(): Promise<string> {
 		this.#assertOpen();
 		const html = await this.content();
-		const { htmlToMarkdown } = await import("../rust/bridge.ts");
+		const { htmlToMarkdown } = await import("../internal/html-utils.ts");
 		return htmlToMarkdown(html);
 	}
 
