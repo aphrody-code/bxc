@@ -88,3 +88,14 @@ cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.X.0"
   une requête stable (ex `'bun runtime'`).
 - **`bxc-engine` binaire absent** : reconstruire via
   `cargo build -p bxc-engine --release` (≈2-3 min cold cache).
+- **cdylib `libbxc_rust_bridge` absent** : la lib FFI du DOM/markdown
+  (`rust-bridge/target/release/libbxc_rust_bridge.{so,dylib,dll}`) doit être
+  compilée (`cargo build -p bxc-rust-bridge --release` ou `bun run build:linux`).
+  Elle est `dlopen`-ée **paresseusement** (premier appel) : son absence ne crash
+  plus à l'import — les chemins texte (extractTitle/stripTags/markdown) retombent
+  sur un fallback JS pur (`src/internal/html-to-markdown.ts`), seules les requêtes
+  CSS natives lèvent une erreur actionnable. Override : `BXC_RUST_BRIDGE_LIB`.
+- **Test scope walk vendor** : `bun test test/ src/` discover quand même
+  `vendor/mcp-sdk-typescript/**` → ~60-140 échecs préexistants (Zod v4, Task
+  pagination, capabilities, CF-workers qui exige `pnpm`). Ce ne sont PAS des
+  régressions bxc — filtrer le bruit MCP-SDK avant de conclure.
