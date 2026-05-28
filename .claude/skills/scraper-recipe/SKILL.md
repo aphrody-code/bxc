@@ -1,6 +1,6 @@
 ---
 name: scraper-recipe
-description: Génère un scraper Bxc complet (profile choisi + extraction Zod typée + Dataset JSONL append). À utiliser quand l'utilisateur demande "scrape X", "extract Y from URL Z", ou veut un nouveau scraper one-shot dans `examples/` ou `src/scrapers/`.
+description: Génère un scraper Bxc complet (profil choisi + extraction typée Zod + sortie JSONL). À utiliser quand l'utilisateur demande "scrape X", "extract Y from URL Z", ou veut un nouveau scraper one-shot dans `examples/` ou `src/scrapers/`.
 disable-model-invocation: true
 ---
 
@@ -11,72 +11,92 @@ Quand invoquée via `/scraper-recipe`, cette skill produit un fichier scraper co
 - **URL ou pattern d'URL** (obligatoire)
 - **Schéma cible** (description naturelle, ex : "titre + prix EUR + stock")
 - **Profil souhaité** (optionnel, défaut = `static`)
-- **Mode** (one-shot example dans `examples/<name>.ts`, ou production scraper dans `src/scrapers/<name>.ts`)
+- **Mode** (one-shot dans `examples/<name>.ts`, ou production dans `src/scrapers/<name>.ts`)
+
+## API réelle (0.4.0)
+
+L'API publique est `Browser.newPage()` → `page.*` → `page.close()`. **Il n'existe
+pas de `Browser.fetch()` ni `Browser.scrape()`.** La feature LLM-extract a été
+supprimée — l'extraction se fait par sélecteurs CSS (`page.$$`) ou Markdown
+(`page.markdown()`), puis `Zod.parse()`.
+
+```ts
+import { Browser } from "@aphrody-code/bxc";          // singleton
+import { googleSearchRich } from "@aphrody-code/bxc/google"; // si recherche
+```
+
+Surface `page` utile : `goto(url,{timeoutMs})`, `content()` (HTML), `markdown()`
+(GFM, fallback JS si cdylib absente), `$(sel)`/`$$(sel)` (handles → `.textContent()`
+/`.getAttribute(name)`), `title()`, `screenshot()`, `evaluate(fn)` (profils JS),
+`close()`.
 
 ## Workflow
 
 1. **Lis le contexte** :
-   - `src/api/browser.ts` — API `Browser.fetch()` / `Browser.scrape()`
-   - `src/profiles/*.ts` — profil cible (vérifier qu'il existe)
-   - `src/storage/Dataset.ts` — API JSONL append
-   - `packages/llm-extract/src/index.ts` — `extractStructured` quand le schéma est ambigu
+   - `src/api/browser.ts` — `Browser.newPage(opts)` + classe `Page` (API ci-dessus)
+   - `src/api/browser.ts` (PageOptions) — profils valides : `static | http | fast | stealth | max`
+   - `src/storage/Dataset.ts` — store JSONL interne (`Dataset` non exporté du package : import relatif ou JSONL manuel)
 
-2. **Décide static-first vs LLM-extract** :
-   - Si selectors CSS suffisent (HTML structuré) → cheerio + Zod parse
+2. **Décide l'extraction** :
+   - HTML structuré + sélecteurs CSS suffisent → `page.$$()` + `Zod.parse()`
+   - Contenu prose / page entière → `page.markdown()`
 
 3. **Génère le fichier** avec ce template :
 
 ```typescript
 import { z } from "zod";
 import { Browser } from "@aphrody-code/bxc";
-import { Dataset } from "@aphrody-code/bxc";
-// Choisis UNE des deux lignes suivantes selon le mode :
-// import { extractStructured } from "@aphrody-code/llm-extract";
-// import * as cheerio from "cheerio";
 
 const Schema = z.object({
   // ... champs selon la demande utilisateur
+  title: z.string(),
 });
 type Item = z.infer<typeof Schema>;
 
-const dataset = new Dataset<Item>({ name: "<scraper-name>" });
-
 async function scrape(url: string): Promise<Item> {
-  const browser = new Browser({ profile: "<profile>" });
+  const page = await Browser.newPage({ profile: "static" }); // static|http|fast|stealth|max
   try {
-    const html = await browser.fetch(url);
-    // Mode A (rule-based) :
-    //   const $ = cheerio.load(html);
-    //   const raw = { title: $("h1").text(), ... };
-    //   return Schema.parse(raw);
-    // Mode B (LLM-extract) :
-    //   return await extractStructured(html, { schema: Schema });
+    await page.goto(url, { timeoutMs: 30_000 });
+    const titleEl = await page.$("h1");
+    const raw = {
+      title: (await titleEl?.textContent()) ?? "",
+      // ... autres champs via page.$$/$ ou page.markdown()
+    };
+    return Schema.parse(raw);
   } finally {
-    await browser.close();
+    await page.close();
   }
 }
 
 const urls = [/* ... */];
-for (const url of urls) {
-  try {
-    const item = await scrape(url);
-    await dataset.push(item);
-    console.log(`OK ${url}`);
-  } catch (err) {
-    console.error(`FAIL ${url}`, err);
+const out = Bun.file("dataset.jsonl").writer();
+try {
+  for (const url of urls) {
+    try {
+      const item = await scrape(url);
+      out.write(JSON.stringify(item) + "\n");
+      console.log(`OK ${url}`);
+    } catch (err) {
+      console.error(`FAIL ${url}`, err);
+    }
   }
+} finally {
+  await out.end();
+  await Browser.close();
 }
 ```
 
 4. **Conventions** :
    - Pas d'emoji, pas de commentaire "what" — seulement "why" si non-obvious
-   - `Browser` toujours dans `try / finally` avec `close()`
+   - `page` toujours dans `try / finally` avec `close()` ; `Browser.close()` à la fin
    - Errors per-URL non-fatales : continue la boucle
-   - Profil le moins coûteux d'abord (`static` < `fast` < `http` < `stealth` < `max`)
+   - Profil le moins coûteux d'abord (`static` < `http` < `fast` < `stealth` < `max`)
+   - Auth Google : `Browser.newPage({ profile, cookies: "~/.bxc/cookies/google.json" })`
 
-5. **Verify** : après génération, lance `bun typecheck` et propose `bun <fichier> <url-de-test>` pour smoke-test.
+5. **Verify** : après génération, lance `bun run typecheck` et propose `bun <fichier>` pour smoke-test.
 
 ## Anti-patterns à refuser
 
-- **Parallélisme naïf** sur `stealth` / `max` : 1 process Chromium par worker = OOM. Utiliser `PagePool` de `src/pool/` à la place.
+- **Parallélisme naïf** sur `fast` / `stealth` / `max` : 1 process Lightpanda par worker = OOM. Utiliser `PagePool` / `AutoscaledPool` de `src/pool/`.
 - **Pas de Zod** : output non typé → bug downstream. Toujours `Schema.parse()`.
+- **`Browser.fetch()` / `extractStructured` / `@aphrody-code/llm-extract`** : n'existent plus. Ne pas les générer.
