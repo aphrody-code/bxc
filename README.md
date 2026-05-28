@@ -36,6 +36,7 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 | `bxc detect` | `bxc detect <url>` | Deep detection of CMS, WAF, and frameworks. |
 | `bxc scrape` | `bxc scrape <url> <css-selector>` | Extract `textContent` of matched elements (`--max N`). |
 | `bxc scrape` | `bxc scrape <url> --markdown` | Convert the whole page to clean GFM Markdown. |
+| `bxc search` | `bxc search <query> [--json\|--markdown]` | Google Web Search → clean organic results. |
 | `bxc mirror` | `bxc mirror <url>` | Download a full site (HTML + CSS + JS + assets). |
 | `bxc challonge` | `bxc challonge <url>` | Snapshot a Challonge tournament page. |
 | `bxc api` | `bxc api` | Run Bxc as an HTTP JSON API. |
@@ -47,6 +48,28 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 **Exit codes** (stable for agent control flow): `0` success · `1` bad usage ·
 `65` data/runtime error · `70` internal error · `130` interrupted. Errors are
 written to `stderr` as `[error] <message>`; data to `stdout`.
+
+### 🔍 `bxc search` — Google Web Search
+
+Returns clean organic results (title, URL, snippet) parsed from the stable
+`udm=14` "Web" view. Renders as text (default), `--json`, or `--markdown`.
+
+```bash
+bxc search "bun runtime" --num 5
+bxc search rust async --json
+bxc search "actualité ia" --hl fr --gl FR --markdown
+bxc search "who invented javascript" --rich   # + featured snippet / PAA / related
+```
+
+Options: `--num <N>`, `--page <N>` / `--start <N>`, `--hl <lang>`, `--gl <region>`,
+`--domain <host>`, `--safe`, `--rich`, `--transport auto|fetch|ghost|http`.
+
+**Authentication**: when `~/.bxc/cookies/google.json` exists (a Google cookie
+jar in Playwright/CDP JSON format), `bxc search` uses it automatically for
+logged-in results and fewer challenges. Override with `--cookies <path>`, or
+force anonymous with `--no-auth`. The default transport is a native `fetch`
+(no extra binaries); `ghost` (Lightpanda) and `http` (curl-impersonate) are
+used as fallbacks if a response looks blocked.
 
 ---
 

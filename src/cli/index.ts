@@ -52,6 +52,7 @@ Subcommands:
   recon     One-shot URL → recon doc (Markdown by default)
   detect    Framework / CMS / library detection via multi-signal
   scrape    Extract textContent from CSS-matched elements
+  search    Google Web Search → clean results (text/JSON/Markdown)
   api       Run Bxc as an HTTP JSON API
   cookies   Cookie jar tools
   har       HAR (HTTP Archive) recorder/replayer
@@ -140,6 +141,12 @@ async function main() {
 
 		case "scrape": {
 			const mod = await import("./scrape.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "search": {
+			const mod = await import("./search.ts");
 			await mod.main(args, opts);
 			break;
 		}
