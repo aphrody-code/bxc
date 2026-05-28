@@ -1,0 +1,569 @@
+{
+  "source": "https://voir-anime.to",
+  "franchise": "Dragon Ball",
+  "generatedAt": "2026-05-28T10:17:37.693Z",
+  "seriesCount": 56,
+  "episodeCount": 1712,
+  "series": [
+    {
+      "slug": "dragon-ball",
+      "title": "Dragon Ball",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 153,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-daima",
+      "title": "Dragon Ball DAIMA",
+      "kind": "series",
+      "type": "TV",
+      "status": "EN COURS",
+      "isVF": false,
+      "episodeCount": 20,
+      "rating": 4.7
+    },
+    {
+      "slug": "dragon-ball-episode-of-bardock",
+      "title": "Dragon Ball: Episode of Bardock",
+      "kind": "film",
+      "type": "SPECIAL",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-film-02-majinjou-no-nemuri-hime",
+      "title": "Dragon Ball Film 02: Majinjou no Nemuri Hime",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 3.7
+    },
+    {
+      "slug": "dragon-ball-film-02-majinjou-no-nemuri-hime-vf",
+      "title": "Dragon Ball Film 02: Majinjou no Nemuri Hime (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-gt",
+      "title": "Dragon Ball GT",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 64,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-gt-100-years-after-tv-special",
+      "title": "Dragon Ball GT: 100 Years After – TV Special",
+      "kind": "film",
+      "type": "SPECIAL",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4
+    },
+    {
+      "slug": "dragon-ball-gt-100-years-after-tv-special-vf",
+      "title": "Dragon Ball GT: 100 Years After – TV Special (VF)",
+      "kind": "film",
+      "type": "SPECIAL",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-gt-vf",
+      "title": "Dragon Ball GT (VF)",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 64,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-kai",
+      "title": "Dragon Ball Kai",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 159,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-kai-vf",
+      "title": "Dragon Ball Kai (VF)",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 167,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-movie-1-shen-long-no-densetsu",
+      "title": "Dragon Ball Movie 1: Shen Long no Densetsu",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-movie-1-shen-long-no-densetsu-vf",
+      "title": "Dragon Ball Movie 1: Shen Long no Densetsu (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-movie-3-makafushigi-daibouken",
+      "title": "Dragon Ball Movie 3: Makafushigi Daibouken",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 3.6
+    },
+    {
+      "slug": "dragon-ball-movie-3-makafushigi-daibouken-vf",
+      "title": "Dragon Ball Movie 3: Makafushigi Daibouken (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 3.8
+    },
+    {
+      "slug": "dragon-ball-movie-4-saikyou-e-no-michi",
+      "title": "Dragon Ball Movie 4: Saikyou e no Michi",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-movie-4-saikyou-e-no-michi-vf",
+      "title": "Dragon Ball Movie 4: Saikyou e no Michi (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-super",
+      "title": "Dragon Ball Super",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 131,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-super-broly",
+      "title": "Dragon Ball Super: Broly",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-super-broly-vf",
+      "title": "Dragon Ball Super: Broly (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-super-super-hero",
+      "title": "Dragon Ball Super: Super Hero",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "EN COURS",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-super-vf",
+      "title": "Dragon Ball Super (VF)",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 131,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-vf",
+      "title": "Dragon Ball (VF)",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 153,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z",
+      "title": "Dragon Ball Z",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 291,
+      "rating": 4.5
+    },
+    {
+      "slug": "dragon-ball-z-kiken-na-futari-super-senshi-wa-nemurenai",
+      "title": "Dragon Ball Z Movie 10: Kiken na Futari! Super Senshi wa Nemurenai",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-z-movie-01-ora-no-gohan-wo-kaese-vf",
+      "title": "Dragon Ball Z Movie 01: Ora no Gohan wo Kaese!! (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z-movie-02-konoyo-de-ichiban-tsuyoi-yatsu-vf",
+      "title": "Dragon Ball Z Movie 02: Konoyo de Ichiban Tsuyoi Yatsu (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.5
+    },
+    {
+      "slug": "dragon-ball-z-movie-03-chikyuu-marugoto-chou-kessen-vf",
+      "title": "Dragon Ball Z Movie 03: Chikyuu Marugoto Chou Kessen (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z-movie-04-super-saiyajin-da-son-goku-vf",
+      "title": "Dragon Ball Z Movie 04: Super Saiyajin da Son Goku (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z-movie-05-tobikkiri-no-saikyou-tai-saikyou-vf",
+      "title": "Dragon Ball Z Movie 05: Tobikkiri no Saikyou Tai Saikyou (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-z-movie-06-gekitotsu-100-oku-power-no-senshi-tachi-vf",
+      "title": "Dragon Ball Z Movie 06: Gekitotsu!! 100-oku Power no Senshi-tachi (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-z-movie-07-kyokugen-battle-sandai-super-saiyajin-vf",
+      "title": "Dragon Ball Z Movie 07: Kyokugen Battle!! Sandai Super Saiyajin (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4
+    },
+    {
+      "slug": "dragon-ball-z-movie-08-moetsukiro-nessen-ressen-chou-gekisen-vf",
+      "title": "Dragon Ball Z Movie 08: Moetsukiro!! Nessen – Ressen – Chou Gekisen (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z-movie-09-ginga-girigiri-bucchigiri-no-sugoi-yatsu-vf",
+      "title": "Dragon Ball Z Movie 09: Ginga Girigiri!! Bucchigiri no Sugoi Yatsu (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-z-movie-10-kiken-na-futari-super-senshi-wa-nemurenai-vf",
+      "title": "Dragon Ball Z Movie 10: Kiken na Futari! Super Senshi wa Nemurenai (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.2
+    },
+    {
+      "slug": "dragon-ball-z-movie-11-super-senshi-gekiha-katsu-no-wa-ore-da-vf",
+      "title": "Dragon Ball Z Movie 11: Super Senshi Gekiha!! Katsu no wa Ore da (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-z-movie-12-fukkatsu-no-fusion-goku-to-vegeta-vf",
+      "title": "Dragon Ball Z Movie 12: Fukkatsu no Fusion!! Goku to Vegeta (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-z-movie-13-ryuuken-bakuhatsu-goku-ga-yaraneba-dare-ga-yaru-vf",
+      "title": "Dragon Ball Z Movie 13: Ryuuken Bakuhatsu!! Goku ga Yaraneba Dare ga Yaru (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z-movie-14-kami-to-kami-vf",
+      "title": "Dragon Ball Z Movie 14: Kami to Kami (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 4.3
+    },
+    {
+      "slug": "dragon-ball-z-movie-15-fukkatsu-no-f-vf",
+      "title": "Dragon Ball Z Movie 15: Fukkatsu no “F” (VF)",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 1,
+      "rating": 3.9
+    },
+    {
+      "slug": "dragon-ball-z-movie-chikyuu-marugoto-chou-kessen",
+      "title": "Dragon Ball Z Movie 03: Chikyuu Marugoto Chou Kessen",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-z-movie-fukkatsu-no-f",
+      "title": "Dragon Ball Z Movie 15: Fukkatsu no “F”",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 3.8
+    },
+    {
+      "slug": "dragon-ball-z-movie-fukkatsu-no-fusion-goku-to-vegeta",
+      "title": "Dragon Ball Z Movie 12: Fukkatsu no Fusion!! Goku to Vegeta",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.5
+    },
+    {
+      "slug": "dragon-ball-z-movie-gekitotsu-100-oku-power-no-senshi-tachi",
+      "title": "Dragon Ball Z Movie 06: Gekitotsu!! 100-oku Power no Senshi-tachi",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.5
+    },
+    {
+      "slug": "dragon-ball-z-movie-ginga-girigiri-bucchigiri-no-sugoi-yatsu",
+      "title": "Dragon Ball Z Movie 09: Ginga Girigiri!! Bucchigiri no Sugoi Yatsu",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-z-movie-kami-to-kami",
+      "title": "Dragon Ball Z Movie 14: Kami to Kami",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-z-movie-konoyo-de-ichiban-tsuyoi-yatsu",
+      "title": "Dragon Ball Z Movie 02: Konoyo de Ichiban Tsuyoi Yatsu",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4
+    },
+    {
+      "slug": "dragon-ball-z-movie-kyokugen-battle-sandai-super-saiyajin",
+      "title": "Dragon Ball Z Movie 07: Kyokugen Battle!! Sandai Super Saiyajin",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-z-movie-moetsukiro-nessen-ressen-chou-gekisen",
+      "title": "Dragon Ball Z Movie 08: Moetsukiro!! Nessen – Ressen – Chou Gekisen",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-z-movie-ora-no-gohan-wo-kaese",
+      "title": "Dragon Ball Z Movie 01: Ora no Gohan wo Kaese!!",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-z-movie-ryuuken-bakuhatsu-goku-ga-yaraneba-dare-ga-yaru",
+      "title": "Dragon Ball Z Movie 13: Ryuuken Bakuhatsu!! Goku ga Yaraneba Dare ga Yaru",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.5
+    },
+    {
+      "slug": "dragon-ball-z-movie-super-saiyajin-da-son-goku",
+      "title": "Dragon Ball Z Movie 04: Super Saiyajin da Son Goku",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.1
+    },
+    {
+      "slug": "dragon-ball-z-movie-super-senshi-gekiha-katsu-no-wa-ore-da",
+      "title": "Dragon Ball Z Movie 11: Super Senshi Gekiha!! Katsu no wa Ore da",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4
+    },
+    {
+      "slug": "dragon-ball-z-movie-tobikkiri-no-saikyou-tai-saikyou",
+      "title": "Dragon Ball Z Movie 05: Tobikkiri no Saikyou Tai Saikyou",
+      "kind": "film",
+      "type": "MOVIE",
+      "status": "TERMINÉ",
+      "isVF": false,
+      "episodeCount": 1,
+      "rating": 4.4
+    },
+    {
+      "slug": "dragon-ball-z-vf",
+      "title": "Dragon Ball Z (VF)",
+      "kind": "series",
+      "type": "TV",
+      "status": "TERMINÉ",
+      "isVF": true,
+      "episodeCount": 291,
+      "rating": 4.3
+    },
+    {
+      "slug": "super-dragon-ball-heroes",
+      "title": "Super Dragon Ball Heroes",
+      "kind": "series",
+      "type": "ONA",
+      "status": "EN COURS",
+      "isVF": false,
+      "episodeCount": 44,
+      "rating": 3.8
+    }
+  ]
+}
