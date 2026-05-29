@@ -1,6 +1,6 @@
 {
 	"name": "@aphrody-code/bxc",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "Bxc: High-performance browser automation engine (Bun + Lightpanda fusion)",
 	"packageManager": "bun@1.3.14",
 	"type": "module",
