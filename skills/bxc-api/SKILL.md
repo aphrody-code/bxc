@@ -1,3 +1,8 @@
+---
+name: bxc-api
+description: Manage the Bxc REST and GraphQL API server (Elysia + Yoga).
+---
+
 # Skill: Bxc API Management (`bxc-api`)
 
 Use this skill to manage the Bxc REST/GraphQL API server (Elysia + Yoga).

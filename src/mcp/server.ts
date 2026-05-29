@@ -173,10 +173,19 @@ server.registerTool(
 			"Powerful Google Web Search. Returns ranked organic results (title, URL, snippet) and, with `rich`, the featured snippet / knowledge panel / People-Also-Ask / related searches. Authenticates automatically from ~/.bxc/cookies/google.json when present. Prefer this over manual scraping for any web lookup, fact-finding, current-events, or research task. Supports verticals (web/images/news/videos/books).",
 		inputSchema: z.object({
 			query: z.string().describe("The search query."),
-			num: z.number().int().min(1).max(20).optional().describe("Number of results to request."),
+			num: z
+				.number()
+				.int()
+				.min(1)
+				.max(20)
+				.optional()
+				.describe("Number of results to request."),
 			hl: z.string().optional().describe("UI language, e.g. 'en', 'fr'."),
 			gl: z.string().optional().describe("Region bias, e.g. 'US', 'FR'."),
-			domain: z.string().optional().describe("Google domain, e.g. 'google.fr'."),
+			domain: z
+				.string()
+				.optional()
+				.describe("Google domain, e.g. 'google.fr'."),
 			vertical: z
 				.enum(["web", "images", "news", "videos", "books"])
 				.default("web")
@@ -184,7 +193,9 @@ server.registerTool(
 			rich: z
 				.boolean()
 				.default(false)
-				.describe("Include featured snippet / knowledge panel / PAA / related searches."),
+				.describe(
+					"Include featured snippet / knowledge panel / PAA / related searches.",
+				),
 		}),
 	},
 	async (args) => {
@@ -217,7 +228,9 @@ server.registerTool(
 					}
 				: {}),
 		};
-		return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+		return {
+			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+		};
 	},
 );
 
@@ -245,13 +258,207 @@ server.registerTool(
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify({ url: args.url, structured, markdown }, null, 2),
+						text: JSON.stringify(
+							{ url: args.url, structured, markdown },
+							null,
+							2,
+						),
 					},
 				],
 			};
 		} finally {
 			await page.close();
 		}
+	},
+);
+
+/**
+ * 8. WBO Leaderboard Standings
+ */
+server.registerTool(
+	"bxc_wbo_rankings",
+	{
+		description: "Retrieves the parsed WBO player rankings leaderboard.",
+		inputSchema: z.object({
+			category: z
+				.enum(["General/Top", "Burst", "Metal"])
+				.default("General/Top")
+				.describe("Leaderboard format/category"),
+			search: z
+				.string()
+				.optional()
+				.describe("Search/filter by player username"),
+		}),
+	},
+	async (args) => {
+		const filePath = `${process.cwd()}/data/wbo_rankings_parsed.json`;
+		const file = Bun.file(filePath);
+		if (!(await file.exists())) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: "WBO rankings parsed database not found. Run parse_rankings_all script first.",
+					},
+				],
+			};
+		}
+
+		let list = (await file.json()) as any[];
+		list = list.filter((player) => player.category === args.category);
+		if (args.search) {
+			const query = args.search.toLowerCase();
+			list = list.filter((player) =>
+				player.username.toLowerCase().includes(query),
+			);
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(list.slice(0, 50), null, 2),
+				},
+			],
+		};
+	},
+);
+
+/**
+ * 9. WBO Metagame Part Ratings & Synergies
+ */
+server.registerTool(
+	"bxc_wbo_metagame",
+	{
+		description:
+			"Retrieves WBO competitive metagame part rankings and top synergies.",
+		inputSchema: z.object({
+			type: z
+				.enum(["all", "blade", "ratchet", "bit", "synergies"])
+				.default("all")
+				.describe("Focus area: part type or combo synergies"),
+		}),
+	},
+	async (args) => {
+		const filePath = `${process.cwd()}/data/bbx_metagame_data.json`;
+		const file = Bun.file(filePath);
+		if (!(await file.exists())) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: "WBO metagame database not found. Run bbx_metagame_analyst script first.",
+					},
+				],
+			};
+		}
+
+		const data = (await file.json()) as any;
+
+		// Helper functions to identify part types
+		const isBlade = (part: string) => {
+			const blades = [
+				"Phoenix Wing",
+				"Hells Scythe",
+				"Shark Edge",
+				"Dran Sword",
+				"Unicorn Sting",
+				"Knight Shield",
+				"Hells Chain",
+				"Wizard Arrow",
+				"Vipertail",
+				"Leon Claw",
+				"Knight Lance",
+				"Wyvern Gale",
+				"Rhinohorn",
+				"Dran Dagger",
+				"Dranzer S",
+				"Phoenix Feather",
+			];
+			return (
+				blades.includes(part) ||
+				part.toLowerCase().includes("wing") ||
+				part.toLowerCase().includes("scythe") ||
+				part.toLowerCase().includes("edge") ||
+				part.toLowerCase().includes("sword") ||
+				part.toLowerCase().includes("sting") ||
+				part.toLowerCase().includes("shield") ||
+				part.toLowerCase().includes("chain") ||
+				part.toLowerCase().includes("arrow") ||
+				part.toLowerCase().includes("tail") ||
+				part.toLowerCase().includes("claw") ||
+				part.toLowerCase().includes("lance") ||
+				part.toLowerCase().includes("gale") ||
+				part.toLowerCase().includes("horn") ||
+				part.toLowerCase().includes("dagger") ||
+				part.toLowerCase().includes("feather")
+			);
+		};
+		const isRatchet = (part: string) => /^\d-\d+$/.test(part);
+		const getPartType = (part: string) => {
+			if (isRatchet(part)) return "ratchet";
+			if (
+				[
+					"Ball",
+					"Point",
+					"Taper",
+					"Flat",
+					"Rush",
+					"Gear Flat",
+					"Spike",
+					"Needle",
+					"High Needle",
+					"Orb",
+					"Low Flat",
+					"Gear Ball",
+				].includes(part) ||
+				part.toLowerCase().includes("needle") ||
+				part.toLowerCase().includes("flat") ||
+				part.toLowerCase().includes("ball") ||
+				part.toLowerCase().includes("point") ||
+				part.toLowerCase().includes("taper") ||
+				part.toLowerCase().includes("orb") ||
+				part.toLowerCase().includes("spike") ||
+				part.toLowerCase().includes("rush")
+			) {
+				return "bit";
+			}
+			return "blade";
+		};
+
+		if (args.type === "synergies") {
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(data.combo_synergy.slice(0, 30), null, 2),
+					},
+				],
+			};
+		}
+
+		let partRankings = data.part_rankings as any[];
+		if (args.type !== "all") {
+			partRankings = partRankings.filter(
+				(p) => getPartType(p.part) === args.type,
+			);
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(
+						{
+							metadata: data.metadata,
+							part_rankings: partRankings.slice(0, 30),
+						},
+						null,
+						2,
+					),
+				},
+			],
+		};
 	},
 );
 
