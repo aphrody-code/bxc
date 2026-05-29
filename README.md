@@ -13,6 +13,24 @@
 
 ---
 
+## 📋 Table of Contents
+- [🤖 AI Agent Intelligence](#-ai-agent-intelligence)
+  - [🧩 MCP Server Capabilities](#-mcp-server-capabilities)
+- [🚀 CLI Reference (Agent-Friendly)](#-cli-reference-agent-friendly)
+  - [🔍 bxc search — Google Web Search](#-bxc-search--google-web-search)
+- [📦 Installation](#-installation)
+- [⚙️ Native Engine & Portability](#-native-engine--portability)
+- [🛠️ API Reference](#-api-reference)
+  - [Library Usage](#library-usage)
+  - [Google Atlas Integration](#google-atlas-integration)
+- [🏆 WBO Metagame Tracker & Standings Dashboard](#-wbo-metagame-tracker--standings-dashboard)
+- [📊 Benchmarks](#-benchmarks)
+- [🏗️ Architecture Summary (for LLMs)](#-architecture-summary-for-llms)
+- [🧩 Gemini CLI Extension](#-gemini-cli-extension)
+- [🤝 Contributing & Community](#-contributing--community)
+
+---
+
 ## 🤖 AI Agent Intelligence
 Bxc is designed for high-concurrency agentic workflows. It solves the "Heavy Browser" problem by moving the DOM and network layers directly into the Bun runtime memory space.
 
@@ -200,9 +218,19 @@ Defined in `commands/bxc/`:
 - `/bxc:sync-gemini`: Sync the extension into the Gemini CLI workspace.
 
 ---
-- **License**: Apache-2.0
-- **Style**: Google TypeScript Style Guide
-- **Provenance**: SLSA Level 3 signed releases
+
+## 🤝 Contributing & Community
+We welcome contributions to Bxc! Feel free to report issues, suggest new features, or submit pull requests.
+
+- 📖 **Documentation Portal**: [GitHub Pages Website](https://aphrody-code.github.io/bxc/)
+- 💻 **Contributing Guidelines**: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- 📝 **License**: [Apache-2.0](./LICENSE)
+- 🎨 **Code Style**: Google TypeScript Style Guide
+- 🔒 **Provenance**: SLSA Level 3 signed releases
+
+* **Star this repository** to show your support!
+* **Submit issues** for bug reports or feature requests.
+* **Join the discussion** to help shape the future of Zero-Spawn browser automation.
 
 ---
 <div align="center">
