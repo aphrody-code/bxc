@@ -18,26 +18,8 @@
  * @module bxc/scrapers/worldbeyblade
  *
  * Dedicated scraper and automation module for **worldbeyblade.org** (MyBB forum engine).
- * Supports profile extraction, thread/post scraping, PM (private messages) listing,
+ * Supports profile extraction, thread/post scraping, forum lists, search, PM listing,
  * and sending private messages using Bxc's Ghost/HTTP transports.
- *
- * @example
- * ```ts
- * import { WorldBeybladeScraper } from "bxc/scrapers/worldbeyblade";
- *
- * const wb = new WorldBeybladeScraper();
- * await wb.init({
- *   cookies: "./data/worldbeyblade_cookies.json"
- * });
- *
- * const isLoggedIn = await wb.checkLoginStatus();
- * console.log("Logged in:", isLoggedIn);
- *
- * const profile = await wb.getProfileByUsername("aphrody");
- * console.log("Profile joined date:", profile.joinedDate);
- *
- * await wb.close();
- * ```
  */
 
 import {
@@ -74,6 +56,26 @@ export interface WorldBeybladeThread {
 	title: string;
 	forumCategory: string[];
 	posts: WorldBeybladePost[];
+	currentPage: number;
+	totalPages: number;
+}
+
+export interface WorldBeybladeForumThread {
+	tid: number;
+	title: string;
+	slug: string | null;
+	authorName: string;
+	authorUid: number | null;
+	replies: number;
+	views: number;
+	lastPostDate: string | null;
+	lastPostAuthor: string | null;
+}
+
+export interface WorldBeybladeForum {
+	fid: number;
+	title: string;
+	threads: WorldBeybladeForumThread[];
 	currentPage: number;
 	totalPages: number;
 }
@@ -197,6 +199,29 @@ export class WorldBeybladeScraper {
 	}
 
 	/**
+	 * General profile scraper supporting UID, Username, or friendly URL.
+	 */
+	async getProfile(identifier: string | number): Promise<WorldBeybladeProfile> {
+		if (typeof identifier === "number") {
+			return this.getProfileByUid(identifier);
+		}
+		if (identifier.startsWith("http://") || identifier.startsWith("https://")) {
+			await this.page.goto(identifier, { timeoutMs: 30_000 });
+			if (this.ghost) await randomWait(1000, 2000);
+			const html = await this.page.content();
+			return this.parseProfileHtml(html);
+		}
+		if (identifier.includes("User-")) {
+			const url = `https://worldbeyblade.org/${identifier}`;
+			await this.page.goto(url, { timeoutMs: 30_000 });
+			if (this.ghost) await randomWait(1000, 2000);
+			const html = await this.page.content();
+			return this.parseProfileHtml(html);
+		}
+		return this.getProfileByUsername(identifier);
+	}
+
+	/**
 	 * Parses MyBB profile page HTML.
 	 */
 	private parseProfileHtml(
@@ -284,15 +309,50 @@ export class WorldBeybladeScraper {
 	}
 
 	/**
-	 * Scrapes a forum thread.
+	 * Scrapes a forum thread. Supports numeric tid, friendly URL slug, or full URL.
 	 */
-	async getThread(tid: number, pageNum = 1): Promise<WorldBeybladeThread> {
-		this.log(`Fetching thread tid: ${tid}, page: ${pageNum}`);
-		const url = `https://worldbeyblade.org/showthread.php?tid=${tid}&page=${pageNum}`;
+	async getThread(
+		threadIdentifier: number | string,
+		pageNum = 1,
+	): Promise<WorldBeybladeThread> {
+		let url = "";
+		if (typeof threadIdentifier === "number") {
+			url = `https://worldbeyblade.org/showthread.php?tid=${threadIdentifier}&page=${pageNum}`;
+		} else if (
+			threadIdentifier.startsWith("http://") ||
+			threadIdentifier.startsWith("https://")
+		) {
+			url = threadIdentifier;
+			if (pageNum > 1) {
+				url += url.includes("?") ? `&page=${pageNum}` : `?page=${pageNum}`;
+			}
+		} else {
+			const slug = threadIdentifier.startsWith("Thread-")
+				? threadIdentifier
+				: `Thread-${threadIdentifier}`;
+			url = `https://worldbeyblade.org/${slug}`;
+			if (pageNum > 1) {
+				url += `?page=${pageNum}`;
+			}
+		}
+
+		this.log(`Fetching thread from URL: ${url}`);
 		await this.page.goto(url, { timeoutMs: 30_000 });
 		if (this.ghost) await randomWait(1500, 2500);
 
 		const html = await this.page.content();
+
+		// Extract tid
+		let tid = typeof threadIdentifier === "number" ? threadIdentifier : 0;
+		if (tid === 0) {
+			const tidMatch =
+				html.match(/var\s+tid\s*=\s*(\d+);/i) ??
+				html.match(/tid=(\d+)/i) ??
+				html.match(/thread_(\d+)/i);
+			if (tidMatch?.[1]) {
+				tid = parseInt(tidMatch[1], 10);
+			}
+		}
 
 		// Extract title
 		const titleMatch =
@@ -328,14 +388,11 @@ export class WorldBeybladeScraper {
 		}
 
 		// Extract posts
-		// In MyBB, each post has a container like id="post_12345"
 		const posts: WorldBeybladePost[] = [];
 		const postBlocks = html.split(/<table[^>]+id="post_\d+"[^>]*>/i);
 		if (postBlocks.length > 1) {
-			// Skip first segment since it's prior to the first post table block
 			for (let i = 1; i < postBlocks.length; i++) {
 				const block = postBlocks[i];
-				// Wait, let's extract post details using regex on this block segment
 				const pidMatch = block.match(/id="pid_(\d+)"/i);
 				if (!pidMatch) continue;
 				const pid = parseInt(pidMatch[1], 10);
@@ -358,7 +415,6 @@ export class WorldBeybladeScraper {
 					: null;
 
 				// Post Body
-				// Find body content between id="pid_XXXX" ... </div>
 				const bodyMatch =
 					block.match(
 						/<div class="post_body[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<!--/i,
@@ -388,6 +444,289 @@ export class WorldBeybladeScraper {
 			currentPage: pageNum,
 			totalPages,
 		};
+	}
+
+	/**
+	 * Scrapes a forum page (list of threads). Supports numeric fid, friendly slug or full URL.
+	 */
+	async getForum(
+		forumIdentifier: number | string,
+		pageNum = 1,
+	): Promise<WorldBeybladeForum> {
+		let url = "";
+		if (typeof forumIdentifier === "number") {
+			url = `https://worldbeyblade.org/forumdisplay.php?fid=${forumIdentifier}&page=${pageNum}`;
+		} else if (
+			forumIdentifier.startsWith("http://") ||
+			forumIdentifier.startsWith("https://")
+		) {
+			url = forumIdentifier;
+			if (pageNum > 1) {
+				url += url.includes("?") ? `&page=${pageNum}` : `?page=${pageNum}`;
+			}
+		} else {
+			const slug = forumIdentifier.startsWith("Forum-")
+				? forumIdentifier
+				: `Forum-${forumIdentifier}`;
+			url = `https://worldbeyblade.org/${slug}`;
+			if (pageNum > 1) {
+				url += `?page=${pageNum}`;
+			}
+		}
+
+		this.log(`Fetching forum from URL: ${url}`);
+		await this.page.goto(url, { timeoutMs: 30_000 });
+		if (this.ghost) await randomWait(1500, 2500);
+
+		const html = await this.page.content();
+
+		// Extract fid
+		let fid = typeof forumIdentifier === "number" ? forumIdentifier : 0;
+		if (fid === 0) {
+			const fidMatch =
+				html.match(/var\s+fid\s*=\s*(\d+);/i) ??
+				html.match(/fid=(\d+)/i) ??
+				html.match(/forum_(\d+)/i);
+			if (fidMatch?.[1]) {
+				fid = parseInt(fidMatch[1], 10);
+			}
+		}
+
+		// Extract title
+		const titleMatch =
+			html.match(/<h1>([^<]+)<\/h1>/i) ??
+			html.match(/<title>([^<]+)<\/title>/i);
+		let title = titleMatch?.[1] ? titleMatch[1].trim() : "Unknown Forum";
+		if (title.endsWith(" - worldbeyblade.org")) {
+			title = title.slice(0, -" - worldbeyblade.org".length);
+		}
+
+		// Extract threads
+		const threads: WorldBeybladeForumThread[] = [];
+		const threadBlocks = html.split(/id="thread_/i);
+		if (threadBlocks.length > 1) {
+			for (let i = 1; i < threadBlocks.length; i++) {
+				const block = threadBlocks[i];
+				const idMatch = block.match(/^(\d+)/);
+				if (!idMatch) continue;
+				const tid = parseInt(idMatch[1], 10);
+
+				const cells = block.split(/<\/td>/i);
+
+				// Find subject cell containing thread link
+				let subIdx = -1;
+				for (let c = 0; c < cells.length; c++) {
+					if (
+						cells[c].includes("Thread-") ||
+						cells[c].includes("showthread.php")
+					) {
+						subIdx = c;
+						break;
+					}
+				}
+
+				if (subIdx === -1) continue;
+
+				// Title & Slug
+				const titleMatch = cells[subIdx].match(
+					/href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
+				);
+				const threadUrl = titleMatch?.[1] ? titleMatch[1].trim() : "";
+				const threadTitle = titleMatch?.[2]
+					? titleMatch[2].replace(/<[^>]+>/g, "").trim()
+					: "Unknown Title";
+
+				let slug = null;
+				if (threadUrl.includes("Thread-")) {
+					slug = threadUrl.split("/").pop() ?? null;
+				}
+
+				// Find author index (usually the first cell after subject containing profile uid)
+				let authorIdx = -1;
+				for (let c = subIdx + 1; c < cells.length; c++) {
+					if (
+						cells[c].includes("member.php?action=profile") ||
+						cells[c].includes("uid=")
+					) {
+						authorIdx = c;
+						break;
+					}
+				}
+
+				let authorUid: number | null = null;
+				let authorName = "Guest";
+
+				if (authorIdx !== -1) {
+					const authorMatch = cells[authorIdx].match(
+						/href="member\.php\?action=profile&amp;uid=(\d+)"[^>]*>([^<]+)<\/a>/i,
+					);
+					authorUid = authorMatch?.[1] ? parseInt(authorMatch[1], 10) : null;
+					authorName = authorMatch?.[2]
+						? authorMatch[2].replace(/<[^>]+>/g, "").trim()
+						: "Guest";
+				}
+
+				// Replies and Views (the columns immediately following author)
+				let replies = 0;
+				let views = 0;
+
+				const repliesCell = cells[authorIdx + 1];
+				if (repliesCell) {
+					const cleanVal = repliesCell.replace(/<[^>]+>/g, "").trim();
+					replies = parseInt(cleanVal.replace(/,/g, ""), 10) || 0;
+				}
+
+				const viewsCell = cells[authorIdx + 2];
+				if (viewsCell) {
+					const cleanVal = viewsCell.replace(/<[^>]+>/g, "").trim();
+					views = parseInt(cleanVal.replace(/,/g, ""), 10) || 0;
+				}
+
+				// Last post details
+				const lastPostCell = cells[authorIdx + 3];
+				let lastPostDate = null;
+				let lastPostAuthor = null;
+				if (lastPostCell) {
+					const lastPostMatch =
+						lastPostCell.match(/<span class="lastpost">([\s\S]*?)<\/span>/i) ??
+						lastPostCell.match(/<td[^>]*>([\s\S]*?)<\/td>/i);
+					if (lastPostMatch) {
+						const lpText = lastPostMatch[1].trim();
+						const lpParts = lpText.split(/\s+by\s+/i);
+						if (lpParts[0]) {
+							lastPostDate = lpParts[0].replace(/<[^>]+>/g, "").trim();
+						}
+						if (lpParts[1]) {
+							lastPostAuthor = lpParts[1].replace(/<[^>]+>/g, "").trim();
+						}
+					}
+				}
+
+				threads.push({
+					tid,
+					title: threadTitle,
+					slug,
+					authorName,
+					authorUid,
+					replies,
+					views,
+					lastPostDate,
+					lastPostAuthor,
+				});
+			}
+		}
+
+		// Total pages
+		let totalPages = 1;
+		const pagesMatch = html.match(/Pages \((\d+)\)/i);
+		if (pagesMatch?.[1]) {
+			totalPages = parseInt(pagesMatch[1], 10);
+		}
+
+		return {
+			fid,
+			title,
+			threads,
+			currentPage: pageNum,
+			totalPages,
+		};
+	}
+
+	/**
+	 * Performs a search query on the forum.
+	 */
+	async search(query: string): Promise<WorldBeybladeSearchResult[]> {
+		this.log(`Searching for query: "${query}"...`);
+		if (!this.ghost) {
+			throw new Error(
+				"search requires the 'ghost' profile (full browser automation) to submit forms.",
+			);
+		}
+
+		const fullPage = this.ghost.page;
+		await fullPage.goto("https://worldbeyblade.org/search.php", {
+			timeoutMs: 30_000,
+		});
+		await randomWait(1500, 2500);
+
+		// Fill keywords
+		await fullPage.waitForSelector("input[name='keywords']");
+		await typeNatural(fullPage, "input[name='keywords']", query);
+
+		// Submit
+		await fullPage.click("input[name='submit']");
+		await randomWait(4000, 6000);
+
+		// Get content of results page
+		const html = await fullPage.content();
+		return this.parseSearchResultsHtml(html);
+	}
+
+	private parseSearchResultsHtml(html: string): WorldBeybladeSearchResult[] {
+		const results: WorldBeybladeSearchResult[] = [];
+		const rows = html.split(/<tr[^>]*class="[^"]*inline_row[^"]*"/gi);
+		if (rows.length > 1) {
+			for (let i = 1; i < rows.length; i++) {
+				const block = rows[i];
+				const tidMatch =
+					block.match(/showthread\.php\?tid=(\d+)/i) ??
+					block.match(/Thread-([a-zA-Z0-9_-]+)/i);
+				if (!tidMatch) continue;
+				let tid = 0;
+				if (tidMatch[1].match(/^\d+$/)) {
+					tid = parseInt(tidMatch[1], 10);
+				}
+
+				// Title
+				const titleMatch =
+					block.match(
+						/<a[^>]+class="[^"]*subject[^"]*"[^>]*>([\s\S]*?)<\/a>/i,
+					) ??
+					block.match(
+						/href="[^"]*showthread\.php\?tid=\d+"[^>]*>([\s\S]*?)<\/a>/i,
+					);
+				const title = titleMatch?.[1]
+					? titleMatch[1].replace(/<[^>]+>/g, "").trim()
+					: "Unknown";
+
+				// Author
+				const authorMatch = block.match(
+					/member\.php\?action=profile&amp;uid=(\d+)"[^>]*>([^<]+)<\/a>/i,
+				);
+				const authorName = authorMatch?.[2] ? authorMatch[2].trim() : "Guest";
+
+				// Forum
+				const forumMatch = block.match(
+					/forumdisplay\.php\?fid=(\d+)"[^>]*>([^<]+)<\/a>/i,
+				);
+				const forumName = forumMatch?.[2]
+					? forumMatch[2].trim()
+					: "Unknown Forum";
+
+				// Replies & Views
+				const repliesMatch =
+					block.match(/replies[^>]*>([\d,]+)/i) ??
+					block.match(/MyBB\.whoPosted\(\d+\);"[^>]*>([\d,]+)/i);
+				const replies = repliesMatch?.[1]
+					? parseInt(repliesMatch[1].replace(/,/g, ""), 10)
+					: 0;
+
+				const viewsMatch = block.match(/views[^>]*>([\d,]+)/i);
+				const views = viewsMatch?.[1]
+					? parseInt(viewsMatch[1].replace(/,/g, ""), 10)
+					: 0;
+
+				results.push({
+					tid,
+					title,
+					authorName,
+					forumName,
+					replies,
+					views,
+				});
+			}
+		}
+		return results;
 	}
 
 	/**
