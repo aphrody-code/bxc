@@ -12,6 +12,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - Module `depot_tools` (`src/depot_tools/`, `python-bridge/depot_manager.py`, sous-module `vendor/depot_tools`) — depot_tools extrait en installation standalone hors du paquet
 
+## [0.5.3] - 2026-05-29
+
+### Refactored
+
+- Restructuration, unification et modularisation complète du scraper et de l'analyseur métagame de **WorldBeyblade** sous le module unifié [worldbeyblade](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/).
+- Décomposition de la logique monolithique en sous-modules spécialisés :
+  - [types.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/types.ts) : interfaces et typages stricts (sans `any`).
+  - [scraper.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/scraper.ts) : client d'automatisation de forum MyBB (profiles, threads, MPs).
+  - [rankings.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/rankings.ts) : synchronisation et parsing hors-ligne des classements via Wayback CDX.
+  - [analytics.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/analytics.ts) : normalisation des pièces (Blades, Bits) et calculs mathématiques (Podium Score, Combo Synergy).
+  - [index.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/index.ts) : export "barrel" propre.
+- Simplification du script d'analyse [bbx_metagame_analyst.ts](file:///home/ubuntu/bxc/scripts/bbx_metagame_analyst.ts) (-500 lignes de code dupliqué) en important les fonctions analytiques partagées du module principal.
+- Mise en conformité stricte `oxlint` et formatage `biome` de tous les fichiers modifiés.
+- Ajout de tests unitaires hors-ligne complets pour l'analyse métagame dans [worldbeyblade.test.ts](file:///home/ubuntu/bxc/test/scrapers/worldbeyblade.test.ts).
+
+### Documentation
+
+- Alignement du [README.md](file:///home/ubuntu/bxc/README.md) et de la landing page GitHub Pages [index.html](file:///home/ubuntu/bxc/docs/index.html) avec les meilleures pratiques (Table des matières, balises meta de SEO, liens vers les guides développeurs de Google Atlas et Playwright Killer Plan, versioning).
+
+## [0.5.2] - 2026-05-29
+
+### Added
+
+- Outils MCP natifs WBO:
+  - `bxc_wbo_rankings` : recherche filtrée des classements des joueurs WBO.
+  - `bxc_wbo_metagame` : requêtes sur les statistiques métagames des pièces de Beyblade X.
+- Découverte automatique des compétences IA : ajout de métadonnées YAML frontmatter conformes aux spécifications Gemini CLI.
+- Documentation IA-Optimisée : création de `docs/llms.txt` pour indexer le contexte des agents.
+
+## [0.5.1] - 2026-05-29
+
+### Added
+
+- Dashboard interactif WBO : interface utilisateur haut de gamme (glassmorphism, mode sombre, polices Inter) tournant localement sur Elysia.
+- Analyseur métagame Beyblade X : calcul des performances pondérées des pièces (Weighted Podium Score) et des synergies de combos (Combo Synergy Score).
+
+## [0.5.0] - 2026-05-29
+
+### Added
+
+- Scraper Voiranime : moteur d'extraction des animés, saisons, épisodes et lecteurs vidéos avec résolveur de flux HLS natif.
+- Base de données Dragon Ball : mapping structuré des épisodes et sagas.
+
+## [0.4.0] - 2026-05-29
+
+### Added
+
+- Recherche Web Google (`bxc search`) : intégration de la recherche web via le paramètre stable `udm=14` avec support de cookies playwrigth, proxy et fallback automatique vers `ghost` (Lightpanda) ou `http` (curl-impersonate).
+- Routage intelligent Google Atlas.
+
+## [0.3.1] - 2026-05-29
+
+### Added
+
+- Rétablissement des profils `http` (curl-impersonate) et exportations des parseurs de tournois Challonge.
+
 ## [0.1.0-alpha.1] - 2026-05-12
 
 ### Added
@@ -133,6 +189,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
-[Unreleased]: https://github.com/aphrody-code/bxc/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/aphrody-code/bxc/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/aphrody-code/bxc/releases/tag/v0.5.3
+[0.5.2]: https://github.com/aphrody-code/bxc/releases/tag/v0.5.2
+[0.5.1]: https://github.com/aphrody-code/bxc/releases/tag/v0.5.1
+[0.5.0]: https://github.com/aphrody-code/bxc/releases/tag/v0.5.0
+[0.4.0]: https://github.com/aphrody-code/bxc/releases/tag/v0.4.0
+[0.3.1]: https://github.com/aphrody-code/bxc/releases/tag/v0.3.1
 [0.2.0]: https://github.com/aphrody-code/bxc/releases/tag/v0.2.0
 [0.1.0-alpha.0]: https://github.com/aphrody-code/bxc/releases/tag/v0.1.0-alpha.0
