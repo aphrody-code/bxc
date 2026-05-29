@@ -38,19 +38,22 @@ async function main() {
 	console.log("🚀 Starting Bxc AI Extractor...");
 
 	// Open a new page in static mode (fastest, no binary required)
-	const page = await Browser.newPage({ profile: "static" }) as import("../src/api/browser.ts").Page;
+	const page = (await Browser.newPage({
+		profile: "static",
+	})) as import("../src/api/browser.ts").Page;
 
 	const targetUrl = "https://google.com/";
 	console.log(`\n🌐 Navigating to ${targetUrl}...`);
 	await page.goto(targetUrl);
 
-	const instruction = "Extract the top 5 article titles and their corresponding scores or points.";
+	const instruction =
+		"Extract the top 5 article titles and their corresponding scores or points.";
 
 	console.log(`\n🧠 Sending instruction to Claude: "${instruction}"`);
 	const startTime = Bun.nanoseconds();
 
 	try {
-		const { data, selectors } = await page.aiExtract(instruction);
+		const { data, selectors } = await (page as any).aiExtract(instruction);
 
 		const elapsed = ((Bun.nanoseconds() - startTime) / 1e6).toFixed(0);
 		console.log(`\n✅ Extraction completed in ${elapsed}ms!\n`);

@@ -53,11 +53,14 @@ describe("Stagehand-style AI Extractor", () => {
 			</html>
 		`;
 
-		const page = await Browser.newPage({ profile: "static" }) as import("../../src/api/browser.ts").Page;
+		const page = (await Browser.newPage({
+			profile: "static",
+		})) as import("../../src/api/browser.ts").Page;
 		await page.setContent(html);
 
-		const instruction = "product title, exact price (number only), and rating out of 5";
-		const { data, selectors } = await page.aiExtract(instruction);
+		const instruction =
+			"product title, exact price (number only), and rating out of 5";
+		const { data, selectors } = await (page as any).aiExtract(instruction);
 
 		// Assertions on the generated selectors
 		expect(Object.keys(selectors).length).toBeGreaterThanOrEqual(3);
