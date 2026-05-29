@@ -22,7 +22,14 @@ import { WorldBeybladeScraper } from "../scrapers/worldbeyblade.ts";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {
-	action: "status" | "profile" | "thread" | "inbox" | "sendpm";
+	action:
+		| "status"
+		| "profile"
+		| "thread"
+		| "forum"
+		| "search"
+		| "inbox"
+		| "sendpm";
 	target: string;
 	page: number;
 	cookies?: string;
@@ -41,23 +48,27 @@ Usage:
   bxc worldbeyblade <action> [options]
 
 Actions:
-  status                   Check if logged in
-  profile <username|uid>   Get user profile information
-  thread <tid>             Get thread details and posts
-  inbox                    List PMs in inbox
-  sendpm <to> <subj> <body> Send a Private Message (requires ghost profile)
+  status                        Check if logged in
+  profile <username|uid|url>    Get user profile information
+  thread <tid|slug|url>         Get thread details and posts
+  forum <fid|slug|url>          List threads in a subforum
+  search <query>                Search the forums (requires ghost profile)
+  inbox                         List PMs in inbox
+  sendpm <to> <subj> <body>      Send a Private Message (requires ghost profile)
 
 Options:
-  --cookies <path>         Path to cookies JSON file (default: data/worldbeyblade_cookies.json)
-  --user-agent <string>    Override User-Agent header or fingerprint
-  --page <number>          Page number to fetch (for threads, default: 1)
-  --pretty                 Pretty print JSON outputs
-  --help, -h               Show this help
+  --cookies <path>              Path to cookies JSON file (default: data/worldbeyblade_cookies.json)
+  --user-agent <string>         Override User-Agent header or fingerprint
+  --page <number>               Page number to fetch (for threads/forums, default: 1)
+  --pretty                      Pretty print JSON outputs
+  --help, -h                    Show this help
 
 Examples:
   bxc worldbeyblade status --cookies data/worldbeyblade_cookies.json
   bxc worldbeyblade profile aphrody --pretty
-  bxc worldbeyblade thread 115799 --page 1 --pretty
+  bxc worldbeyblade thread Thread-Beyblade-X-Rules --pretty
+  bxc worldbeyblade forum Forum-Beyblade-X-Community --pretty
+  bxc worldbeyblade search "Beyblade X" --pretty
   bxc worldbeyblade sendpm "aphrody" "Test Subject" "Hello from bxc CLI!"
 `,
 	);
@@ -74,6 +85,8 @@ function parseArgs(
 	if (actionStr === "status") action = "status";
 	else if (actionStr === "profile") action = "profile";
 	else if (actionStr === "thread") action = "thread";
+	else if (actionStr === "forum") action = "forum";
+	else if (actionStr === "search") action = "search";
 	else if (actionStr === "inbox") action = "inbox";
 	else if (actionStr === "sendpm") action = "sendpm";
 	else return null;
@@ -113,9 +126,16 @@ function parseArgs(
 		}
 	}
 
-	if (action === "profile" || action === "thread") {
+	if (
+		action === "profile" ||
+		action === "thread" ||
+		action === "forum" ||
+		action === "search"
+	) {
 		if (positional.length < 1) {
-			logger.error(`action "${action}" requires target (username/uid or tid)`);
+			logger.error(
+				`action "${action}" requires target (query, username, ID, or URL)`,
+			);
 			return null;
 		}
 		opts.target = positional[0];
@@ -145,9 +165,9 @@ export async function main(
 	const scraper = new WorldBeybladeScraper();
 
 	try {
-		// Initialize the scraper. For read actions, use the fast/http profile to bypass Turnstile.
-		// For sendpm, we must use the ghost browser.
-		const useGhost = opts.action === "sendpm";
+		// Initialize the scraper.
+		// For sendpm and search actions, we must use the ghost browser.
+		const useGhost = opts.action === "sendpm" || opts.action === "search";
 
 		await scraper.init({
 			profile: useGhost ? "ghost" : "http",
@@ -168,23 +188,33 @@ export async function main(
 			}
 			case "profile": {
 				const targetNum = parseInt(opts.target, 10);
-				let profile;
-				if (!isNaN(targetNum)) {
-					profile = await scraper.getProfileByUid(targetNum);
-				} else {
-					profile = await scraper.getProfileByUsername(opts.target);
-				}
+				const profile = await scraper.getProfile(
+					!isNaN(targetNum) ? targetNum : opts.target,
+				);
 				console.log(JSON.stringify(profile, null, opts.pretty ? 2 : 0));
 				break;
 			}
 			case "thread": {
-				const tid = parseInt(opts.target, 10);
-				if (isNaN(tid)) {
-					logger.error("Thread ID must be a number");
-					process.exit(EXIT.MISUSE);
-				}
-				const thread = await scraper.getThread(tid, opts.page);
+				const targetNum = parseInt(opts.target, 10);
+				const thread = await scraper.getThread(
+					!isNaN(targetNum) ? targetNum : opts.target,
+					opts.page,
+				);
 				console.log(JSON.stringify(thread, null, opts.pretty ? 2 : 0));
+				break;
+			}
+			case "forum": {
+				const targetNum = parseInt(opts.target, 10);
+				const forum = await scraper.getForum(
+					!isNaN(targetNum) ? targetNum : opts.target,
+					opts.page,
+				);
+				console.log(JSON.stringify(forum, null, opts.pretty ? 2 : 0));
+				break;
+			}
+			case "search": {
+				const results = await scraper.search(opts.target);
+				console.log(JSON.stringify(results, null, opts.pretty ? 2 : 0));
 				break;
 			}
 			case "inbox": {
