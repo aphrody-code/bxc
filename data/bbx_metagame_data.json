@@ -1,0 +1,1722 @@
+{
+	"metadata": {
+		"total_tournaments": 23,
+		"scraped_at": "2026-05-29T08:36:53.579Z"
+	},
+	"part_rankings": [
+		{
+			"part": "Spike",
+			"average_score": 3,
+			"placements": 2,
+			"total_score": 6
+		},
+		{
+			"part": "Knight Lance",
+			"average_score": 2.75,
+			"placements": 4,
+			"total_score": 11
+		},
+		{
+			"part": "Unicorn Sting",
+			"average_score": 2.4,
+			"placements": 10,
+			"total_score": 24
+		},
+		{
+			"part": "Wyvern Gale",
+			"average_score": 2.4,
+			"placements": 5,
+			"total_score": 12
+		},
+		{
+			"part": "Leon Claw",
+			"average_score": 2.333,
+			"placements": 3,
+			"total_score": 7
+		},
+		{
+			"part": "Rhinohorn",
+			"average_score": 2.25,
+			"placements": 4,
+			"total_score": 9
+		},
+		{
+			"part": "Dran Dagger",
+			"average_score": 2.25,
+			"placements": 4,
+			"total_score": 9
+		},
+		{
+			"part": "3-80",
+			"average_score": 2.238,
+			"placements": 21,
+			"total_score": 47
+		},
+		{
+			"part": "High Needle",
+			"average_score": 2.2,
+			"placements": 10,
+			"total_score": 22
+		},
+		{
+			"part": "Needle",
+			"average_score": 2.167,
+			"placements": 6,
+			"total_score": 13
+		},
+		{
+			"part": "3-60",
+			"average_score": 2,
+			"placements": 52,
+			"total_score": 104
+		},
+		{
+			"part": "Hells Scythe",
+			"average_score": 2,
+			"placements": 35,
+			"total_score": 70
+		},
+		{
+			"part": "Knight Shield",
+			"average_score": 2,
+			"placements": 12,
+			"total_score": 24
+		},
+		{
+			"part": "Hells Chain",
+			"average_score": 2,
+			"placements": 10,
+			"total_score": 20
+		},
+		{
+			"part": "Gear Flat",
+			"average_score": 2,
+			"placements": 9,
+			"total_score": 18
+		},
+		{
+			"part": "Dranzer S",
+			"average_score": 2,
+			"placements": 7,
+			"total_score": 14
+		},
+		{
+			"part": "High Taper",
+			"average_score": 2,
+			"placements": 3,
+			"total_score": 6
+		},
+		{
+			"part": "Orbit",
+			"average_score": 2,
+			"placements": 2,
+			"total_score": 4
+		},
+		{
+			"part": "Phoenix Feather",
+			"average_score": 2,
+			"placements": 1,
+			"total_score": 2
+		},
+		{
+			"part": "Gear Point",
+			"average_score": 2,
+			"placements": 1,
+			"total_score": 2
+		},
+		{
+			"part": "Ball",
+			"average_score": 1.977,
+			"placements": 44,
+			"total_score": 87
+		},
+		{
+			"part": "5-60",
+			"average_score": 1.948,
+			"placements": 58,
+			"total_score": 113
+		},
+		{
+			"part": "Orb",
+			"average_score": 1.923,
+			"placements": 13,
+			"total_score": 25
+		},
+		{
+			"part": "Taper",
+			"average_score": 1.906,
+			"placements": 32,
+			"total_score": 61
+		},
+		{
+			"part": "Dran Sword",
+			"average_score": 1.905,
+			"placements": 21,
+			"total_score": 40
+		},
+		{
+			"part": "Phoenix Wing",
+			"average_score": 1.898,
+			"placements": 49,
+			"total_score": 93
+		},
+		{
+			"part": "9-60",
+			"average_score": 1.894,
+			"placements": 47,
+			"total_score": 89
+		},
+		{
+			"part": "Point",
+			"average_score": 1.881,
+			"placements": 42,
+			"total_score": 79
+		},
+		{
+			"part": "Flat",
+			"average_score": 1.85,
+			"placements": 20,
+			"total_score": 37
+		},
+		{
+			"part": "Rush",
+			"average_score": 1.81,
+			"placements": 21,
+			"total_score": 38
+		},
+		{
+			"part": "4-60",
+			"average_score": 1.808,
+			"placements": 26,
+			"total_score": 47
+		},
+		{
+			"part": "Viper Tail",
+			"average_score": 1.778,
+			"placements": 9,
+			"total_score": 16
+		},
+		{
+			"part": "Shark Edge",
+			"average_score": 1.75,
+			"placements": 28,
+			"total_score": 49
+		},
+		{
+			"part": "Low Flat",
+			"average_score": 1.75,
+			"placements": 8,
+			"total_score": 14
+		},
+		{
+			"part": "Gear Ball",
+			"average_score": 1.75,
+			"placements": 8,
+			"total_score": 14
+		},
+		{
+			"part": "4-80",
+			"average_score": 1.727,
+			"placements": 11,
+			"total_score": 19
+		},
+		{
+			"part": "Cobalt Drake",
+			"average_score": 1.444,
+			"placements": 9,
+			"total_score": 13
+		},
+		{
+			"part": "Wizard Arrow",
+			"average_score": 1.3,
+			"placements": 10,
+			"total_score": 13
+		},
+		{
+			"part": "5-80",
+			"average_score": 1.167,
+			"placements": 6,
+			"total_score": 7
+		}
+	],
+	"combo_synergy": [
+		{
+			"part_a": "9-60",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 6,
+			"average_success": 2.833,
+			"synergy_score": 2.429
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 13,
+			"average_success": 2.538,
+			"synergy_score": 2.357
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 4,
+			"average_success": 2.75,
+			"synergy_score": 2.2
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Taper",
+			"co_occurrences": 5,
+			"average_success": 2.6,
+			"synergy_score": 2.167
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Ball",
+			"co_occurrences": 12,
+			"average_success": 2.333,
+			"synergy_score": 2.154
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Point",
+			"co_occurrences": 20,
+			"average_success": 2.25,
+			"synergy_score": 2.143
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Dran Sword",
+			"co_occurrences": 7,
+			"average_success": 2.429,
+			"synergy_score": 2.125
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "Flat",
+			"co_occurrences": 7,
+			"average_success": 2.286,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Knight Shield",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Ball",
+			"co_occurrences": 3,
+			"average_success": 2.667,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Wyvern Gale",
+			"co_occurrences": 3,
+			"average_success": 2.667,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "Phoenix Wing",
+			"part_b": "Rush",
+			"co_occurrences": 4,
+			"average_success": 2.5,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Rush",
+			"co_occurrences": 6,
+			"average_success": 2.333,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Knight Shield",
+			"co_occurrences": 3,
+			"average_success": 2.667,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Gear Flat",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Hells Chain",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Hells Chain",
+			"co_occurrences": 6,
+			"average_success": 2.333,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Knight Lance",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "Knight Lance",
+			"part_b": "Taper",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "Taper",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 3,
+			"average_success": 2.667,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "High Needle",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "High Needle",
+			"co_occurrences": 2,
+			"average_success": 3,
+			"synergy_score": 2
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 10,
+			"average_success": 2.1,
+			"synergy_score": 1.909
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 9,
+			"average_success": 2.111,
+			"synergy_score": 1.9
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 18,
+			"average_success": 2,
+			"synergy_score": 1.895
+		},
+		{
+			"part_a": "Phoenix Wing",
+			"part_b": "Point",
+			"co_occurrences": 26,
+			"average_success": 1.962,
+			"synergy_score": 1.889
+		},
+		{
+			"part_a": "Hells Scythe",
+			"part_b": "Orb",
+			"co_occurrences": 6,
+			"average_success": 2.167,
+			"synergy_score": 1.857
+		},
+		{
+			"part_a": "Phoenix Wing",
+			"part_b": "Taper",
+			"co_occurrences": 5,
+			"average_success": 2.2,
+			"synergy_score": 1.833
+		},
+		{
+			"part_a": "Hells Scythe",
+			"part_b": "Taper",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Viper Tail",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Wyvern Gale",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Orb",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "Gear Flat",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Flat",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "Hells Scythe",
+			"part_b": "High Needle",
+			"co_occurrences": 4,
+			"average_success": 2.25,
+			"synergy_score": 1.8
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Shark Edge",
+			"co_occurrences": 12,
+			"average_success": 1.917,
+			"synergy_score": 1.769
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 7,
+			"average_success": 2,
+			"synergy_score": 1.75
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Gear Ball",
+			"co_occurrences": 3,
+			"average_success": 2.333,
+			"synergy_score": 1.75
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "High Needle",
+			"co_occurrences": 3,
+			"average_success": 2.333,
+			"synergy_score": 1.75
+		},
+		{
+			"part_a": "Dran Dagger",
+			"part_b": "Rush",
+			"co_occurrences": 3,
+			"average_success": 2.333,
+			"synergy_score": 1.75
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Leon Claw",
+			"co_occurrences": 3,
+			"average_success": 2.333,
+			"synergy_score": 1.75
+		},
+		{
+			"part_a": "Dranzer S",
+			"part_b": "Flat",
+			"co_occurrences": 3,
+			"average_success": 2.333,
+			"synergy_score": 1.75
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Flat",
+			"co_occurrences": 6,
+			"average_success": 2,
+			"synergy_score": 1.714
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 9,
+			"average_success": 1.889,
+			"synergy_score": 1.7
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Taper",
+			"co_occurrences": 12,
+			"average_success": 1.833,
+			"synergy_score": 1.692
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Dran Sword",
+			"co_occurrences": 8,
+			"average_success": 1.875,
+			"synergy_score": 1.667
+		},
+		{
+			"part_a": "Gear Flat",
+			"part_b": "Shark Edge",
+			"co_occurrences": 2,
+			"average_success": 2.5,
+			"synergy_score": 1.667
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Knight Shield",
+			"co_occurrences": 2,
+			"average_success": 2.5,
+			"synergy_score": 1.667
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Gear Flat",
+			"co_occurrences": 2,
+			"average_success": 2.5,
+			"synergy_score": 1.667
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Rhinohorn",
+			"co_occurrences": 2,
+			"average_success": 2.5,
+			"synergy_score": 1.667
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Taper",
+			"co_occurrences": 2,
+			"average_success": 2.5,
+			"synergy_score": 1.667
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Flat",
+			"co_occurrences": 7,
+			"average_success": 1.857,
+			"synergy_score": 1.625
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Ball",
+			"co_occurrences": 9,
+			"average_success": 1.778,
+			"synergy_score": 1.6
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Ball",
+			"co_occurrences": 6,
+			"average_success": 1.833,
+			"synergy_score": 1.571
+		},
+		{
+			"part_a": "Taper",
+			"part_b": "Viper Tail",
+			"co_occurrences": 6,
+			"average_success": 1.833,
+			"synergy_score": 1.571
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Ball",
+			"co_occurrences": 10,
+			"average_success": 1.7,
+			"synergy_score": 1.545
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Knight Shield",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Taper",
+			"co_occurrences": 5,
+			"average_success": 1.8,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Needle",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Rhinohorn",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Rhinohorn",
+			"part_b": "Spike",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Spike",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Shark Edge",
+			"co_occurrences": 5,
+			"average_success": 1.8,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Point",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Knight Shield",
+			"part_b": "Orbit",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Taper",
+			"co_occurrences": 5,
+			"average_success": 1.8,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Dran Sword",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "High Needle",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Wyvern Gale",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "High Taper",
+			"part_b": "Shark Edge",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Cobalt Drake",
+			"part_b": "Point",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Needle",
+			"part_b": "Shark Edge",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Needle",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Rhinohorn",
+			"part_b": "Rush",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Needle",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Dranzer S",
+			"part_b": "Point",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Leon Claw",
+			"part_b": "Point",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Hells Chain",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Shark Edge",
+			"part_b": "Spike",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Spike",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Orb",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 3,
+			"average_success": 2,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Dran Dagger",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Rush",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Knight Lance",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "Knight Lance",
+			"part_b": "Needle",
+			"co_occurrences": 1,
+			"average_success": 3,
+			"synergy_score": 1.5
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 25,
+			"average_success": 1.52,
+			"synergy_score": 1.462
+		},
+		{
+			"part_a": "Point",
+			"part_b": "Shark Edge",
+			"co_occurrences": 6,
+			"average_success": 1.667,
+			"synergy_score": 1.429
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Ball",
+			"co_occurrences": 4,
+			"average_success": 1.75,
+			"synergy_score": 1.4
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Orb",
+			"co_occurrences": 4,
+			"average_success": 1.75,
+			"synergy_score": 1.4
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Shark Edge",
+			"co_occurrences": 7,
+			"average_success": 1.571,
+			"synergy_score": 1.375
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Cobalt Drake",
+			"co_occurrences": 7,
+			"average_success": 1.571,
+			"synergy_score": 1.375
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Point",
+			"co_occurrences": 16,
+			"average_success": 1.438,
+			"synergy_score": 1.353
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Orbit",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Hells Chain",
+			"co_occurrences": 5,
+			"average_success": 1.6,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Dranzer S",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Rush",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "High Taper",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Needle",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "Low Flat",
+			"part_b": "Shark Edge",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Low Flat",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Dranzer S",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Dranzer S",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "Orb",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "Rush",
+			"co_occurrences": 2,
+			"average_success": 2,
+			"synergy_score": 1.333
+		},
+		{
+			"part_a": "Flat",
+			"part_b": "Viper Tail",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "Gear Ball",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "Low Flat",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Viper Tail",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "Flat",
+			"part_b": "Shark Edge",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "Knight Shield",
+			"part_b": "Taper",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 3,
+			"average_success": 1.667,
+			"synergy_score": 1.25
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 4,
+			"average_success": 1.5,
+			"synergy_score": 1.2
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Rush",
+			"co_occurrences": 9,
+			"average_success": 1.333,
+			"synergy_score": 1.2
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 5,
+			"average_success": 1.4,
+			"synergy_score": 1.167
+		},
+		{
+			"part_a": "Rush",
+			"part_b": "Shark Edge",
+			"co_occurrences": 6,
+			"average_success": 1.333,
+			"synergy_score": 1.143
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Phoenix Feather",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Low Flat",
+			"part_b": "Phoenix Feather",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Shark Edge",
+			"part_b": "Taper",
+			"co_occurrences": 4,
+			"average_success": 1.25,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 4,
+			"average_success": 1.25,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Gear Ball",
+			"part_b": "Wyvern Gale",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Gear Ball",
+			"co_occurrences": 3,
+			"average_success": 1.333,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Point",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Gear Flat",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Gear Flat",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Gear Flat",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Point",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Hells Chain",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Hells Chain",
+			"part_b": "High Taper",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "High Taper",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Shark Edge",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Rush",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Dran Dagger",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Dran Dagger",
+			"part_b": "Needle",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 3,
+			"average_success": 1.333,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "High Needle",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Knight Shield",
+			"part_b": "Rush",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Gear Ball",
+			"part_b": "Hells Chain",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Orb",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Knight Shield",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "High Needle",
+			"part_b": "Knight Shield",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Knight Lance",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Knight Lance",
+			"part_b": "Orb",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Orb",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Dran Dagger",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Rush",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "High Needle",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Leon Claw",
+			"part_b": "Taper",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Gear Ball",
+			"part_b": "Rhinohorn",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Gear Ball",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Dran Dagger",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Shark Edge",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "High Needle",
+			"co_occurrences": 2,
+			"average_success": 1.5,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Shark Edge",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Cobalt Drake",
+			"part_b": "Gear Ball",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Orb",
+			"part_b": "Wyvern Gale",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Dranzer S",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Knight Shield",
+			"part_b": "Orb",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Unicorn Sting",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Gear Point",
+			"part_b": "Leon Claw",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Gear Point",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Knight Shield",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 2,
+			"synergy_score": 1
+		},
+		{
+			"part_a": "Cobalt Drake",
+			"part_b": "Rush",
+			"co_occurrences": 3,
+			"average_success": 1,
+			"synergy_score": 0.75
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Dran Sword",
+			"co_occurrences": 3,
+			"average_success": 1,
+			"synergy_score": 0.75
+		},
+		{
+			"part_a": "3-60",
+			"part_b": "Knight Shield",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Taper",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Dran Sword",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "Taper",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "Hells Scythe",
+			"part_b": "Point",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "Ball",
+			"part_b": "Dran Sword",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Cobalt Drake",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "Cobalt Drake",
+			"part_b": "Flat",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "9-60",
+			"part_b": "Flat",
+			"co_occurrences": 2,
+			"average_success": 1,
+			"synergy_score": 0.667
+		},
+		{
+			"part_a": "Knight Shield",
+			"part_b": "Needle",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Point",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Shark Edge",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Viper Tail",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Hells Chain",
+			"part_b": "Orbit",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Dranzer S",
+			"part_b": "Gear Flat",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Orb",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Taper",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Flat",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Gear Flat",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "Taper",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Hells Scythe",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Hells Scythe",
+			"part_b": "Needle",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Flat",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "4-60",
+			"part_b": "Knight Shield",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Rhinohorn",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Low Flat",
+			"part_b": "Rhinohorn",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Hells Chain",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Hells Chain",
+			"part_b": "Taper",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "High Taper",
+			"part_b": "Phoenix Wing",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-80",
+			"part_b": "Orb",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Viper Tail",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "5-60",
+			"part_b": "Flat",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "High Needle",
+			"part_b": "Shark Edge",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Gear Ball",
+			"part_b": "Wizard Arrow",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "4-80",
+			"part_b": "Gear Ball",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "Dran Sword",
+			"part_b": "Orb",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		},
+		{
+			"part_a": "3-80",
+			"part_b": "Low Flat",
+			"co_occurrences": 1,
+			"average_success": 1,
+			"synergy_score": 0.5
+		}
+	],
+	"anomalies": []
+}
