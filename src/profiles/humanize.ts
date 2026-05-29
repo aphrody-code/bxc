@@ -23,7 +23,7 @@
  * Inspired by botasaurus + Scrapling patterns (2026 anti-bot research).
  */
 
-import type { Page } from "patchright";
+type Page = any;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,14 +49,28 @@ interface Point {
  * Computes points along a cubic Bezier curve.
  * Used to generate a natural mouse path from source to destination.
  */
-function bezierPoints(p0: Point, p1: Point, p2: Point, p3: Point, steps: number): Point[] {
+function bezierPoints(
+	p0: Point,
+	p1: Point,
+	p2: Point,
+	p3: Point,
+	steps: number,
+): Point[] {
 	const pts: Point[] = [];
 	for (let i = 0; i <= steps; i++) {
 		const t = i / steps;
 		const mt = 1 - t;
 		pts.push({
-			x: mt * mt * mt * p0.x + 3 * mt * mt * t * p1.x + 3 * mt * t * t * p2.x + t * t * t * p3.x,
-			y: mt * mt * mt * p0.y + 3 * mt * mt * t * p1.y + 3 * mt * t * t * p2.y + t * t * t * p3.y,
+			x:
+				mt * mt * mt * p0.x +
+				3 * mt * mt * t * p1.x +
+				3 * mt * t * t * p2.x +
+				t * t * t * p3.x,
+			y:
+				mt * mt * mt * p0.y +
+				3 * mt * mt * t * p1.y +
+				3 * mt * t * t * p2.y +
+				t * t * t * p3.y,
 		});
 	}
 	return pts;
@@ -66,7 +80,11 @@ function bezierPoints(p0: Point, p1: Point, p2: Point, p3: Point, steps: number)
  * Moves the mouse from (fromX, fromY) to (toX, toY) using a Bezier curve
  * with random control points to simulate human trajectory.
  */
-export async function moveMouse(page: Page, toX: number, toY: number): Promise<void> {
+export async function moveMouse(
+	page: Page,
+	toX: number,
+	toY: number,
+): Promise<void> {
 	// Random control points offset from the midpoint
 	const midX = toX / 2;
 	const midY = toY / 2;
@@ -92,12 +110,29 @@ export async function moveMouse(page: Page, toX: number, toY: number): Promise<v
 // ---------------------------------------------------------------------------
 
 /** Characters that typically cause longer pauses (shift key, etc.). */
-const SLOW_CHARS = new Set([" ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*"]);
+const SLOW_CHARS = new Set([
+	" ",
+	".",
+	",",
+	"!",
+	"?",
+	"@",
+	"#",
+	"$",
+	"%",
+	"^",
+	"&",
+	"*",
+]);
 
 /**
  * Types text with natural inter-keystroke delays and occasional "think" pauses.
  */
-export async function typeNatural(page: any, selector: string, text: string): Promise<void> {
+export async function typeNatural(
+	page: any,
+	selector: string,
+	text: string,
+): Promise<void> {
 	await page.click(selector);
 	await sleep(randomDelay(200, 500));
 
@@ -108,7 +143,9 @@ export async function typeNatural(page: any, selector: string, text: string): Pr
 		} else {
 			await page.type(selector, char);
 		}
-		const base = SLOW_CHARS.has(char) ? randomDelay(80, 180) : randomDelay(40, 120);
+		const base = SLOW_CHARS.has(char)
+			? randomDelay(80, 180)
+			: randomDelay(40, 120);
 		// Occasional longer pause (0.5% chance) simulating "thinking"
 		const pause = Math.random() < 0.005 ? randomDelay(400, 1200) : base;
 		await sleep(pause);
@@ -128,7 +165,10 @@ export async function scrollHuman(page: Page, pixels: number): Promise<void> {
 
 	for (let i = 0; i < steps; i++) {
 		const jitter = (Math.random() - 0.5) * 20;
-		await page.evaluate((delta: number) => window.scrollBy(0, delta), stepSize + jitter);
+		await page.evaluate(
+			(delta: number) => window.scrollBy(0, delta),
+			stepSize + jitter,
+		);
 		await sleep(randomDelay(20, 60));
 	}
 }
@@ -166,7 +206,10 @@ export interface SerializedCookie {
  * Loads cookies from a JSON file into the page context.
  * Silently ignores missing files (first-run scenario).
  */
-export async function loadCookies(page: Page, cookieJarPath: string): Promise<SerializedCookie[]> {
+export async function loadCookies(
+	page: Page,
+	cookieJarPath: string,
+): Promise<SerializedCookie[]> {
 	try {
 		const file = Bun.file(cookieJarPath);
 		if (!(await file.exists())) return [];
@@ -182,7 +225,10 @@ export async function loadCookies(page: Page, cookieJarPath: string): Promise<Se
  * Saves current page cookies to a JSON file for future reuse.
  * This enables `cf_clearance` token reuse, saving 80% of challenge rounds.
  */
-export async function saveCookies(page: Page, cookieJarPath: string): Promise<void> {
+export async function saveCookies(
+	page: Page,
+	cookieJarPath: string,
+): Promise<void> {
 	try {
 		const cookies = await page.context().cookies();
 		await Bun.write(cookieJarPath, JSON.stringify(cookies, null, 2));
