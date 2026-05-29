@@ -1,0 +1,66 @@
+# Bxc: Zero-Spawn Browser Engine for AI Agents
+
+Bxc (Browser-X) is a native, zero-spawn, high-performance web browser automation engine designed for the Bun runtime. By combining a Rust-compiled FFI bridge, native Zig DOM bindings, and stealth browser profiles, Bxc achieves sub-millisecond execution times for AI agents.
+
+## Core Capabilities
+- **Zero-Spawn**: Native, in-process Chromium CDP and Static DOM transports. No heavy Puppeteer/Playwright headless processes.
+- **Stealth Profiles**: Automated Cloudflare and Turnstile bot bypass using Ghost browsers and automated click models.
+- **Google Atlas**: Deep scanning of Google domains, routing, and vertical parameters.
+- **WBO Metagame Tracking**: Automated parsing of tournament podium finishes and player standings from World Beyblade Organization forums.
+
+---
+
+## Quick Start (Bun FFI)
+
+```typescript
+import { Browser } from "@aphrody-code/bxc";
+
+// Initialize stealth browser
+const page = await Browser.newPage({ profile: "stealth" });
+
+// Sub-millisecond navigation
+await page.goto("https://example.com");
+
+// Extract clean markdown for LLM context
+const markdown = await page.markdown();
+console.log(markdown);
+
+await page.close();
+```
+
+---
+
+## 🛠️ CLI Interface
+
+```bash
+# Get user profile information
+bxc worldbeyblade profile aphrody --pretty
+
+# Start Elysia dashboard & API server
+bxc api
+# or
+bun run server:start
+```
+
+---
+
+## 🤖 Native MCP Tools Reference
+
+Bxc registers these stdio MCP tools under the `bxc-native-mcp` server:
+
+- **`tune_memory_sqlite`**: Store/retrieve memory facts in the local SQLite db.
+- **`bxc_scrape_markdown`**: Convert any target page to GFM markdown.
+- **`bxc_detect_frameworks`**: Identify site frameworks and bot protections.
+- **`bxc_cdp_evaluate`**: Run raw JS inside the V8 context.
+- **`bxc_search`**: High-performance rich Google searches.
+- **`bxc_google_fetch`**: Fetch markdown and JSON-LD/meta tags in one pass.
+- **`bxc_wbo_rankings`**: Query WBO player standings & leaderboards.
+- **`bxc_wbo_metagame`**: Query WBO Beyblade X competitive metagame stats.
+
+---
+
+## 📖 Key Documentation Links
+- [WBO Metagame Tracking](WBO-METAGAME-TRACKING.md) — Detailed manual on Beyblade X WBO standings parsing.
+- [Serverless Deployments](SERVERLESS.md) — Deploying Bxc on Vercel or AWS Lambda.
+- [Windows Cross-Compiling](BUILD-WINDOWS.md) — MSVC standalone building guides.
+- [Lightpanda Integration](LIGHTPANDA-WINDOWS.md) — FFI-based WebAssembly browser engine hooks.
