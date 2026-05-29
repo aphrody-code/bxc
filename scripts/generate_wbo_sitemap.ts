@@ -15,7 +15,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { WorldBeybladeScraper } from "../src/scrapers/worldbeyblade.ts";
+import { WorldBeybladeScraper } from "../src/scrapers/worldbeyblade/index.ts";
 
 const COOKIES_PATH = "/home/ubuntu/.bxc/cookies/worldbeyblade.json";
 
@@ -31,10 +31,14 @@ async function main() {
 		} else {
 			const fallbackPath = "/home/ubuntu/bxc/data/worldbeyblade_cookies.json";
 			if (existsSync(fallbackPath)) {
-				console.log(`Primary cookies path not found, using fallback: ${fallbackPath}`);
+				console.log(
+					`Primary cookies path not found, using fallback: ${fallbackPath}`,
+				);
 				cookiesOption = fallbackPath;
 			} else {
-				console.warn(`Warning: Cookie file not found at ${COOKIES_PATH} or ${fallbackPath}. Running without cookies.`);
+				console.warn(
+					`Warning: Cookie file not found at ${COOKIES_PATH} or ${fallbackPath}. Running without cookies.`,
+				);
 			}
 		}
 
