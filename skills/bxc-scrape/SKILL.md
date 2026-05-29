@@ -1,3 +1,8 @@
+---
+name: bxc-scrape
+description: Converts any webpage into clean, LLM-optimized GitHub Flavored Markdown.
+---
+
 # Skill: Bxc Markdown Scraping (`bxc-scrape`)
 
 Use this skill to instantly convert any webpage into clean, LLM-optimized GFM Markdown.

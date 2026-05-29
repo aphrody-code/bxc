@@ -1,3 +1,8 @@
+---
+name: bxc-detect
+description: Identifies anti-bot protections (Cloudflare, DataDome) and web frameworks (Wiz, Angular, React).
+---
+
 # Skill: Bxc Block & Framework Detection (`bxc-detect`)
 
 Use this skill to identify anti-bot protections (Cloudflare, DataDome) and underlying web frameworks (Wiz, Angular, React).

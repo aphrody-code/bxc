@@ -1,3 +1,8 @@
+---
+name: bxc-recon
+description: Comprehensive analysis of a website, including its tech stack, architecture, and content.
+---
+
 # Skill: Bxc Reconnaissance (`bxc-recon`)
 
 Use this skill when you need a comprehensive analysis of a website, including its tech stack, architecture, and a markdown summary of its content.

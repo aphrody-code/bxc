@@ -136,6 +136,29 @@ const { page } = await google.open("https://www.google.com/search?q=bxc+engine")
 
 ---
 
+## 🏆 WBO Metagame Tracker & Standings Dashboard
+
+Bxc comes integrated with a dedicated, Wayback-backed scraping and analytics framework for the **World Beyblade Organization (WBO)**. It bypasses Cloudflare bot protection, parses player standings, evaluates parts metagame metrics (Average Weighted Podium Scores), and serves a premium, glassmorphic dashboard locally.
+
+```bash
+# 1. Fetch snapshot listings
+bun run scripts/fetch_rankings_cdx.ts
+
+# 2. Download the HTML archives
+bun run scripts/fetch_all_rankings.ts
+
+# 3. Parse standings and metagame rankings
+bun run scripts/parse_rankings_all.ts
+
+# 4. Start the interactive dashboard
+bun run server:start
+```
+
+* Navigate to the **interactive dashboard** at `http://localhost:3000/` to explore the rankings, top synergies, and competitive decks dynamically.
+* Leverage native MCP tools like `bxc_wbo_rankings` and `bxc_wbo_metagame` directly in your AI agent workflows.
+
+---
+
 ## 📊 Benchmarks
 
 | Metric | Playwright (Node) | **Bxc (L1 Fusion)** | Agent Benefit |

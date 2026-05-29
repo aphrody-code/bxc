@@ -40,6 +40,7 @@ export class SkillDiscoverer {
 		const searchPaths = [
 			join(workspacePath, ".gemini", "skills"),
 			join(workspacePath, "packages", "bxc-extension", "skills"),
+			join(workspacePath, "skills"),
 		];
 
 		for (const path of searchPaths) {
@@ -81,8 +82,9 @@ export class SkillDiscoverer {
 			xml += `  </skill>\n`;
 		}
 		xml += "</available_skills>\n";
-		
-		xml += "\nTo activate a skill and read its detailed instructions, use the `activate_skill` tool and provide the name of the skill.\n";
+
+		xml +=
+			"\nTo activate a skill and read its detailed instructions, use the `activate_skill` tool and provide the name of the skill.\n";
 
 		return xml;
 	}
@@ -90,7 +92,9 @@ export class SkillDiscoverer {
 	/**
 	 * Extremely basic frontmatter parser for SKILL.md.
 	 */
-	private static parseSkillFrontmatter(filePath: string): { name: string; description: string } | null {
+	private static parseSkillFrontmatter(
+		filePath: string,
+	): { name: string; description: string } | null {
 		try {
 			const content = readFileSync(filePath, "utf-8");
 			const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
