@@ -39,6 +39,8 @@ ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_brid
 ```
 bxc/
 ├── src/                          # API browser TS
+│   └── scrapers/
+│       └── worldbeyblade/        # Scraper & metagame sub-package
 ├── packages/
 │   ├── api/                      # Elysia server (GraphQL + REST)
 │   ├── bxc-extension/            # MCP stdio (bxc-gemini)
@@ -59,18 +61,18 @@ d'emoji, pas de `Co-Authored-By`, pas de `Generated with…`.
 
 ## Intégration vps
 
-Submodule `vps/packages/bxc` → tag `v0.1.0`. Workflow update :
+Submodule `vps/packages/bxc` → tag `v0.5.3`. Workflow update :
 
 ```bash
 cd ~/bxc
 # ... commit + push ...
-git tag -a v0.X.0 -m "v0.X.0 — …"
-git push origin v0.X.0
-gh release create v0.X.0 --repo aphrody-code/bxc --title "bxc v0.X.0" --notes "…"
+git tag -a v0.5.3 -m "v0.5.3 — modularization of worldbeyblade scraper"
+git push origin v0.5.3
+gh release create v0.5.3 --repo aphrody-code/bxc --title "bxc v0.5.3" --notes "Restructure worldbeyblade scraper, ranking syncing, and metagame analytics logic into a unified sub-module"
 
 cd ~/vps/packages/bxc
-git fetch --tags origin && git checkout v0.X.0
-cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.X.0" && git push
+git fetch --tags origin && git checkout v0.5.3
+cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.5.3" && git push
 ```
 
 ## Skills Claude Code à consulter

@@ -30,11 +30,14 @@ Bxc is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses
 | `bun run dev` | Run standalone serverless handler in watch mode |
 | `bun run bench` | Execute performance benchmarks (p50/p95 latency) |
 | `bun run clean` | Wipe all caches, logs, and build artifacts |
+| `bxc-wbo-sync` | Alias to download and sync Wayback WBO standings |
+| `bxc-wbo-analyst` | Alias to update WBO metagame metrics / synergies |
+| `bxc-wbo-dashboard` | Alias to start the interactive Elysia server |
 
 ## Testing and Quality
 
 - **Commands:**
-  - `bun run test` — Executes all workspace tests (58+ files).
+  - `bun test test/` — Executes all core engine unit & integration tests.
   - `bun run test:google` — Validates Google Atlas and Smart Routing.
   - `bun run test:rust` — Validates Rust FFI bridge stability.
   - `/test-mcp` — **Native MCP Health Check** (Verification of native tool integrity).
