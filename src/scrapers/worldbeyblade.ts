@@ -147,10 +147,53 @@ export class WorldBeybladeScraper {
 		}
 	}
 
-	private get page(): AnyPage {
+	get page(): AnyPage {
 		if (this.ghost) return this.ghost.page;
 		if (this.httpPage) return this.httpPage;
 		throw new Error("Scraper not initialized. Call init() first.");
+	}
+
+	private extractMatchingDiv(block: string, pid: number): string {
+		const pidStr = `id="pid_${pid}"`;
+		const pidIdx = block.indexOf(pidStr);
+		if (pidIdx === -1) return "";
+		const startIdx = block.indexOf(">", pidIdx);
+		if (startIdx === -1) return "";
+
+		let depth = 1;
+		let currentIdx = startIdx + 1;
+		const len = block.length;
+
+		while (currentIdx < len) {
+			const nextOpen = block.indexOf("<div", currentIdx);
+			const nextClose = block.indexOf("</div", currentIdx);
+
+			if (nextClose === -1) {
+				return block.slice(startIdx + 1).trim();
+			}
+
+			if (nextOpen !== -1 && nextOpen < nextClose) {
+				const charAfter = block[nextOpen + 4];
+				if (
+					charAfter === " " ||
+					charAfter === ">" ||
+					charAfter === "\r" ||
+					charAfter === "\n" ||
+					charAfter === "\t"
+				) {
+					depth++;
+				}
+				currentIdx = nextOpen + 4;
+			} else {
+				depth--;
+				if (depth === 0) {
+					return block.slice(startIdx + 1, nextClose).trim();
+				}
+				currentIdx = nextClose + 5;
+			}
+		}
+
+		return block.slice(startIdx + 1).trim();
 	}
 
 	/**
@@ -242,10 +285,10 @@ export class WorldBeybladeScraper {
 		// Typically inside <span class="largetext"><strong>Username</strong></span> or <h2>Username</h2>
 		let username = fallbackUsername;
 		const nameMatch =
-			html.match(/<span class="largetext"><strong>([^<]+)<\/strong>/i) ??
-			html.match(/<h2>([^<]+)<\/h2>/i);
+			html.match(/<span class="largetext"><strong>([\s\S]*?)<\/strong>/i) ??
+			html.match(/<h2>([\s\S]*?)<\/h2>/i);
 		if (nameMatch?.[1]) {
-			username = clean(nameMatch[1]);
+			username = clean(nameMatch[1].replace(/<[^>]+>/g, ""));
 		}
 
 		// Extract Uid
@@ -261,9 +304,11 @@ export class WorldBeybladeScraper {
 
 		// Extract user details
 		const userGroupMatch = html.match(
-			/User Group:<\/td>\s*<td[^>]*>([^<]+)<\/td>/i,
+			/User Group:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i,
 		);
-		const userGroup = userGroupMatch?.[1] ? clean(userGroupMatch[1]) : null;
+		const userGroup = userGroupMatch?.[1]
+			? clean(userGroupMatch[1].replace(/<[^>]+>/g, ""))
+			: null;
 
 		const postCountMatch = html.match(
 			/Total Posts:<\/td>\s*<td[^>]*>([\d,]+)/i,
@@ -281,10 +326,10 @@ export class WorldBeybladeScraper {
 		const lastVisit = lastVisitMatch?.[1] ? clean(lastVisitMatch[1]) : null;
 
 		const reputationMatch = html.match(
-			/Reputation:<\/td>\s*<td[^>]*>[^<]*<a[^>]*>([\d,+-]+)<\/a>/i,
+			/Reputation:<\/td>\s*<td[^>]*>[^<]*<a[^>]*>([\s\S]*?)<\/a>/i,
 		);
 		const reputation = reputationMatch?.[1]
-			? parseInt(reputationMatch[1].replace(/,/g, ""), 10)
+			? parseInt(reputationMatch[1].replace(/<[^>]+>/g, "").replace(/,/g, ""), 10)
 			: null;
 
 		// Extract avatar URL
@@ -365,17 +410,17 @@ export class WorldBeybladeScraper {
 		}
 
 		// Extract categories navigation path
-		const categoryMatches = [
-			...html.matchAll(/<div class="navigation">([\s\S]*?)<\/div>/gi),
-		];
 		const forumCategory: string[] = [];
-		if (categoryMatches.length > 0) {
-			const catList = [
-				...categoryMatches[0][1].matchAll(/<a[^>]*>([^<]+)<\/a>/g),
-			];
-			for (const m of catList) {
-				if (m[1] && m[1] !== "worldbeyblade.org") {
-					forumCategory.push(m[1].trim());
+		const navStart = html.indexOf('<div class="navigation">');
+		if (navStart !== -1) {
+			const navEnd = html.indexOf('</div>', navStart);
+			if (navEnd !== -1) {
+				const navContent = html.slice(navStart + '<div class="navigation">'.length, navEnd);
+				const catList = [...navContent.matchAll(/<a[^>]*>([^<]+)<\/a>/g)];
+				for (const m of catList) {
+					if (m[1] && m[1] !== "worldbeyblade.org") {
+						forumCategory.push(m[1].trim());
+					}
 				}
 			}
 		}
@@ -415,11 +460,7 @@ export class WorldBeybladeScraper {
 					: null;
 
 				// Post Body
-				const bodyMatch =
-					block.match(
-						/<div class="post_body[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<!--/i,
-					) ?? block.match(/id="pid_\d+"[^>]*>([\s\S]*?)<\/div>/i);
-				const contentHtml = bodyMatch?.[1] ? bodyMatch[1].trim() : "";
+				const contentHtml = this.extractMatchingDiv(block, pid);
 
 				// Standard Markdown conversion
 				const { htmlToMarkdown } = await import("../internal/html-utils.ts");
@@ -506,7 +547,9 @@ export class WorldBeybladeScraper {
 		const threadBlocks = html.split(/id="thread_/i);
 		if (threadBlocks.length > 1) {
 			for (let i = 1; i < threadBlocks.length; i++) {
-				const block = threadBlocks[i];
+				const fullBlock = threadBlocks[i];
+				const trEnd = fullBlock.search(/<\/tr>/i);
+				const block = trEnd !== -1 ? fullBlock.slice(0, trEnd) : fullBlock;
 				const idMatch = block.match(/^(\d+)/);
 				if (!idMatch) continue;
 				const tid = parseInt(idMatch[1], 10);
@@ -667,7 +710,9 @@ export class WorldBeybladeScraper {
 		const rows = html.split(/<tr[^>]*class="[^"]*inline_row[^"]*"/gi);
 		if (rows.length > 1) {
 			for (let i = 1; i < rows.length; i++) {
-				const block = rows[i];
+				const fullBlock = rows[i];
+				const trEnd = fullBlock.search(/<\/tr>/i);
+				const block = trEnd !== -1 ? fullBlock.slice(0, trEnd) : fullBlock;
 				const tidMatch =
 					block.match(/showthread\.php\?tid=(\d+)/i) ??
 					block.match(/Thread-([a-zA-Z0-9_-]+)/i);
@@ -744,7 +789,9 @@ export class WorldBeybladeScraper {
 
 		// Match rows in PM table by splitting on tr tags
 		const rows = html.split(/<tr[^>]*>/gi);
-		for (const rowHtml of rows) {
+		for (const fullRowHtml of rows) {
+			const trEnd = fullRowHtml.search(/<\/tr>/i);
+			const rowHtml = trEnd !== -1 ? fullRowHtml.slice(0, trEnd) : fullRowHtml;
 			const pmidMatch = rowHtml.match(
 				/private\.php\?action=read&amp;pmid=(\d+)/i,
 			);
