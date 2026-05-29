@@ -32,7 +32,8 @@ import { ROOT, parseCommonArgs, logger, EXIT } from "./shared.ts";
 declare const __BXC_VERSION__: string;
 declare const __BXC_BUILD_TIME__: string;
 
-let _pkgVersion = typeof __BXC_VERSION__ !== "undefined" ? __BXC_VERSION__ : "0.0.0-dev";
+let _pkgVersion =
+	typeof __BXC_VERSION__ !== "undefined" ? __BXC_VERSION__ : "0.0.0-dev";
 
 // ---------------------------------------------------------------------------
 // Usage
@@ -58,6 +59,7 @@ Subcommands:
   har       HAR (HTTP Archive) recorder/replayer
   mirror    Download a full site (HTML+CSS+JS+assets)
   challonge Extract snapshot from a Challonge tournament page
+  worldbeyblade worldbeyblade.org automation tools (profile, thread, PMs)
 
 Global Options:
   --insecure, -k  Bypass TLS certificate validation
@@ -175,6 +177,12 @@ async function main() {
 			break;
 		}
 
+		case "worldbeyblade": {
+			const mod = await import("./worldbeyblade.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
 		case "api": {
 			const mod = await import("./api.ts");
 			await mod.main(args, opts);
@@ -191,7 +199,11 @@ async function main() {
 		case "-h":
 		case undefined: {
 			printUsage();
-			if (subcommand !== undefined && subcommand !== "--help" && subcommand !== "-h") {
+			if (
+				subcommand !== undefined &&
+				subcommand !== "--help" &&
+				subcommand !== "-h"
+			) {
 				logger.error(`Unknown subcommand: ${subcommand}`);
 				process.exit(EXIT.MISUSE);
 			}
@@ -207,6 +219,6 @@ async function main() {
 }
 
 main().catch((err) => {
-	logger.error(err instanceof Error ? err.stack ?? err.message : String(err));
+	logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
 	process.exit(EXIT.SOFTWARE);
 });
