@@ -14,100 +14,24 @@
  * limitations under the License.
  */
 
-/**
- * @module bxc/scrapers/worldbeyblade
- *
- * Dedicated scraper and automation module for **worldbeyblade.org** (MyBB forum engine).
- * Supports profile extraction, thread/post scraping, forum lists, search, PM listing,
- * and sending private messages using Bxc's Ghost/HTTP transports.
- */
-
 import {
 	launchGhostBrowser,
 	type GhostBrowser,
-} from "../profiles/ghost/index.ts";
-import { Browser } from "../api/browser.ts";
-import { randomWait, typeNatural } from "../profiles/humanize.ts";
-import type { Cookie } from "../cookies/cookie-loader.ts";
-import type { AnyPage } from "../api/types.ts";
-
-export interface WorldBeybladeProfile {
-	uid: number | null;
-	username: string;
-	userGroup: string | null;
-	postCount: number | null;
-	joinedDate: string | null;
-	lastVisit: string | null;
-	reputation: number | null;
-	avatarUrl: string | null;
-}
-
-export interface WorldBeybladePost {
-	pid: number;
-	authorName: string;
-	authorUid: number | null;
-	postDate: string | null;
-	contentMarkdown: string;
-	contentHtml: string;
-}
-
-export interface WorldBeybladeThread {
-	tid: number;
-	title: string;
-	forumCategory: string[];
-	posts: WorldBeybladePost[];
-	currentPage: number;
-	totalPages: number;
-}
-
-export interface WorldBeybladeForumThread {
-	tid: number;
-	title: string;
-	slug: string | null;
-	authorName: string;
-	authorUid: number | null;
-	replies: number;
-	views: number;
-	lastPostDate: string | null;
-	lastPostAuthor: string | null;
-}
-
-export interface WorldBeybladeForum {
-	fid: number;
-	title: string;
-	threads: WorldBeybladeForumThread[];
-	currentPage: number;
-	totalPages: number;
-}
-
-export interface WorldBeybladePM {
-	pmid: number;
-	title: string;
-	senderName: string;
-	senderUid: number | null;
-	date: string | null;
-	isRead: boolean;
-}
-
-export interface WorldBeybladeSearchResult {
-	tid: number;
-	title: string;
-	authorName: string;
-	forumName: string;
-	replies: number;
-	views: number;
-}
-
-export interface WorldBeybladeScraperOptions {
-	/** bxCs transport profile. `ghost` (default) is stealth browser. `http` is pure HTTP/FFI. */
-	profile?: "ghost" | "http";
-	/** Custom User-Agent to override generated fingerprint. Useful for matching imported cookies. */
-	userAgent?: string;
-	/** Pre-validated cookie jar path or `Cookie[]` array. */
-	cookies?: string | Cookie[];
-	/** Logger callback. */
-	log?: (msg: string) => void;
-}
+} from "../../profiles/ghost/index.ts";
+import { Browser } from "../../api/browser.ts";
+import { randomWait, typeNatural } from "../../profiles/humanize.ts";
+import type { Cookie } from "../../cookies/cookie-loader.ts";
+import type { AnyPage } from "../../api/types.ts";
+import type {
+	WorldBeybladeProfile,
+	WorldBeybladePost,
+	WorldBeybladeThread,
+	WorldBeybladeForumThread,
+	WorldBeybladeForum,
+	WorldBeybladePM,
+	WorldBeybladeSearchResult,
+	WorldBeybladeScraperOptions,
+} from "./types.ts";
 
 export class WorldBeybladeScraper {
 	private ghost: GhostBrowser | null = null;
@@ -272,7 +196,6 @@ export class WorldBeybladeScraper {
 		fallbackUsername = "",
 		expectedUid?: number,
 	): WorldBeybladeProfile {
-		// Clean entities
 		const clean = (s: string) =>
 			s
 				.replace(/&amp;/g, "&")
@@ -281,8 +204,6 @@ export class WorldBeybladeScraper {
 				.replace(/&gt;/g, ">")
 				.trim();
 
-		// Extract Username
-		// Typically inside <span class="largetext"><strong>Username</strong></span> or <h2>Username</h2>
 		let username = fallbackUsername;
 		const nameMatch =
 			html.match(/<span class="largetext"><strong>([\s\S]*?)<\/strong>/i) ??
@@ -291,7 +212,6 @@ export class WorldBeybladeScraper {
 			username = clean(nameMatch[1].replace(/<[^>]+>/g, ""));
 		}
 
-		// Extract Uid
 		let uid = expectedUid ?? null;
 		if (!uid) {
 			const uidMatch =
@@ -302,7 +222,6 @@ export class WorldBeybladeScraper {
 			}
 		}
 
-		// Extract user details
 		const userGroupMatch = html.match(
 			/User Group:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i,
 		);
@@ -329,10 +248,12 @@ export class WorldBeybladeScraper {
 			/Reputation:<\/td>\s*<td[^>]*>[^<]*<a[^>]*>([\s\S]*?)<\/a>/i,
 		);
 		const reputation = reputationMatch?.[1]
-			? parseInt(reputationMatch[1].replace(/<[^>]+>/g, "").replace(/,/g, ""), 10)
+			? parseInt(
+					reputationMatch[1].replace(/<[^>]+>/g, "").replace(/,/g, ""),
+					10,
+				)
 			: null;
 
-		// Extract avatar URL
 		const avatarMatch =
 			html.match(/<img[^>]+src="([^"]+)"[^>]+alt="[^"]*Avatar/i) ??
 			html.match(/class="avatar"[^>]+src="([^"]+)"/i);
@@ -387,7 +308,6 @@ export class WorldBeybladeScraper {
 
 		const html = await this.page.content();
 
-		// Extract tid
 		let tid = typeof threadIdentifier === "number" ? threadIdentifier : 0;
 		if (tid === 0) {
 			const tidMatch =
@@ -399,7 +319,6 @@ export class WorldBeybladeScraper {
 			}
 		}
 
-		// Extract title
 		const titleMatch =
 			html.match(/<span class="thread_title">([^<]+)<\/span>/i) ??
 			html.match(/<h1>([^<]+)<\/h1>/i) ??
@@ -409,13 +328,15 @@ export class WorldBeybladeScraper {
 			title = title.slice(0, -" - worldbeyblade.org".length);
 		}
 
-		// Extract categories navigation path
 		const forumCategory: string[] = [];
 		const navStart = html.indexOf('<div class="navigation">');
 		if (navStart !== -1) {
-			const navEnd = html.indexOf('</div>', navStart);
+			const navEnd = html.indexOf("</div>", navStart);
 			if (navEnd !== -1) {
-				const navContent = html.slice(navStart + '<div class="navigation">'.length, navEnd);
+				const navContent = html.slice(
+					navStart + '<div class="navigation">'.length,
+					navEnd,
+				);
 				const catList = [...navContent.matchAll(/<a[^>]*>([^<]+)<\/a>/g)];
 				for (const m of catList) {
 					if (m[1] && m[1] !== "worldbeyblade.org") {
@@ -425,14 +346,12 @@ export class WorldBeybladeScraper {
 			}
 		}
 
-		// Pagination extraction
 		let totalPages = 1;
 		const pagesMatch = html.match(/Pages \((\d+)\)/i);
 		if (pagesMatch?.[1]) {
 			totalPages = parseInt(pagesMatch[1], 10);
 		}
 
-		// Extract posts
 		const posts: WorldBeybladePost[] = [];
 		const postBlocks = html.split(/<table[^>]+id="post_\d+"[^>]*>/i);
 		if (postBlocks.length > 1) {
@@ -442,7 +361,6 @@ export class WorldBeybladeScraper {
 				if (!pidMatch) continue;
 				const pid = parseInt(pidMatch[1], 10);
 
-				// Author details
 				const authorMatch = block.match(
 					/<a[^>]+href="member\.php\?action=profile&amp;uid=(\d+)"[^>]*>([^<]+)<\/a>/i,
 				);
@@ -451,7 +369,6 @@ export class WorldBeybladeScraper {
 					: null;
 				const authorName = authorMatch?.[2] ? authorMatch[2].trim() : "Guest";
 
-				// Post Date
 				const dateMatch =
 					block.match(/<span class="post_date">([^<]+)<\/span>/i) ??
 					block.match(/class="smalltext"[^>]*>([^<]+)<\/span>/i);
@@ -459,11 +376,8 @@ export class WorldBeybladeScraper {
 					? dateMatch[1].replace(/&nbsp;/g, " ").trim()
 					: null;
 
-				// Post Body
 				const contentHtml = this.extractMatchingDiv(block, pid);
-
-				// Standard Markdown conversion
-				const { htmlToMarkdown } = await import("../internal/html-utils.ts");
+				const { htmlToMarkdown } = await import("../../internal/html-utils.ts");
 				const contentMarkdown = htmlToMarkdown(contentHtml);
 
 				posts.push({
@@ -521,7 +435,6 @@ export class WorldBeybladeScraper {
 
 		const html = await this.page.content();
 
-		// Extract fid
 		let fid = typeof forumIdentifier === "number" ? forumIdentifier : 0;
 		if (fid === 0) {
 			const fidMatch =
@@ -533,7 +446,6 @@ export class WorldBeybladeScraper {
 			}
 		}
 
-		// Extract title
 		const titleMatch =
 			html.match(/<h1>([^<]+)<\/h1>/i) ??
 			html.match(/<title>([^<]+)<\/title>/i);
@@ -542,7 +454,6 @@ export class WorldBeybladeScraper {
 			title = title.slice(0, -" - worldbeyblade.org".length);
 		}
 
-		// Extract threads
 		const threads: WorldBeybladeForumThread[] = [];
 		const threadBlocks = html.split(/id="thread_/i);
 		if (threadBlocks.length > 1) {
@@ -556,7 +467,6 @@ export class WorldBeybladeScraper {
 
 				const cells = block.split(/<\/td>/i);
 
-				// Find subject cell containing thread link
 				let subIdx = -1;
 				for (let c = 0; c < cells.length; c++) {
 					if (
@@ -570,7 +480,6 @@ export class WorldBeybladeScraper {
 
 				if (subIdx === -1) continue;
 
-				// Title & Slug
 				const titleMatch = cells[subIdx].match(
 					/href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
 				);
@@ -584,7 +493,6 @@ export class WorldBeybladeScraper {
 					slug = threadUrl.split("/").pop() ?? null;
 				}
 
-				// Find author index (usually the first cell after subject containing profile uid)
 				let authorIdx = -1;
 				for (let c = subIdx + 1; c < cells.length; c++) {
 					if (
@@ -609,7 +517,6 @@ export class WorldBeybladeScraper {
 						: "Guest";
 				}
 
-				// Replies and Views (the columns immediately following author)
 				let replies = 0;
 				let views = 0;
 
@@ -625,7 +532,6 @@ export class WorldBeybladeScraper {
 					views = parseInt(cleanVal.replace(/,/g, ""), 10) || 0;
 				}
 
-				// Last post details
 				const lastPostCell = cells[authorIdx + 3];
 				let lastPostDate = null;
 				let lastPostAuthor = null;
@@ -659,7 +565,6 @@ export class WorldBeybladeScraper {
 			}
 		}
 
-		// Total pages
 		let totalPages = 1;
 		const pagesMatch = html.match(/Pages \((\d+)\)/i);
 		if (pagesMatch?.[1]) {
@@ -680,9 +585,14 @@ export class WorldBeybladeScraper {
 	 */
 	async search(query: string): Promise<WorldBeybladeSearchResult[]> {
 		this.log(`Searching for query: "${query}"...`);
+		const profile = this.options.profile ?? "ghost";
+		if (profile === "http") {
+			return this.searchHeadless(query);
+		}
+
 		if (!this.ghost) {
 			throw new Error(
-				"search requires the 'ghost' profile (full browser automation) to submit forms.",
+				"search requires the 'ghost' profile (full browser automation) or 'http' profile.",
 			);
 		}
 
@@ -692,17 +602,66 @@ export class WorldBeybladeScraper {
 		});
 		await randomWait(1500, 2500);
 
-		// Fill keywords
 		await fullPage.waitForSelector("input[name='keywords']");
 		await typeNatural(fullPage, "input[name='keywords']", query);
 
-		// Submit
 		await fullPage.click("input[name='submit']");
 		await randomWait(4000, 6000);
 
-		// Get content of results page
 		const html = await fullPage.content();
 		return this.parseSearchResultsHtml(html);
+	}
+
+	/**
+	 * Headless search version using direct HTTP POST.
+	 */
+	async searchHeadless(query: string): Promise<WorldBeybladeSearchResult[]> {
+		this.log(`Performing headless search for query: "${query}"...`);
+		const { ImpersonatedClient } = await import(
+			"../../ffi/curl-impersonate.ts"
+		);
+		const { buildCookieHeader } = await import(
+			"../../cookies/cookie-injector.ts"
+		);
+
+		const client = new ImpersonatedClient({ profile: "chrome131" });
+		const url = "https://worldbeyblade.org/search.php";
+		const body = `action=do_search&keywords=${encodeURIComponent(query)}&postthread=1&matchusername=1&postdate=0&pddir=1&findthreadst=1&numwords=&forums%5B%5D=all&submit=Search`;
+
+		const headers: Record<string, string> = {
+			"content-type": "application/x-www-form-urlencoded",
+			"user-agent":
+				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+		};
+
+		let cookiesArray: Cookie[] = [];
+		if (typeof this.options.cookies === "string") {
+			const { loadCookieJar } = await import("../../cookies/cookie-loader.ts");
+			cookiesArray = await loadCookieJar(this.options.cookies);
+		} else if (Array.isArray(this.options.cookies)) {
+			cookiesArray = this.options.cookies;
+		}
+
+		const cookieHeader = buildCookieHeader(cookiesArray, url);
+		if (cookieHeader) {
+			headers.cookie = cookieHeader;
+		}
+
+		try {
+			const res = await client.fetch(url, {
+				method: "POST",
+				headers,
+				body,
+				followRedirects: true,
+			});
+			if (!res.ok) {
+				throw new Error(`Headless search failed: HTTP ${res.status}`);
+			}
+			const html = await res.text();
+			return this.parseSearchResultsHtml(html);
+		} finally {
+			client.close();
+		}
 	}
 
 	private parseSearchResultsHtml(html: string): WorldBeybladeSearchResult[] {
@@ -722,7 +681,6 @@ export class WorldBeybladeScraper {
 					tid = parseInt(tidMatch[1], 10);
 				}
 
-				// Title
 				const titleMatch =
 					block.match(
 						/<a[^>]+class="[^"]*subject[^"]*"[^>]*>([\s\S]*?)<\/a>/i,
@@ -734,13 +692,11 @@ export class WorldBeybladeScraper {
 					? titleMatch[1].replace(/<[^>]+>/g, "").trim()
 					: "Unknown";
 
-				// Author
 				const authorMatch = block.match(
 					/member\.php\?action=profile&amp;uid=(\d+)"[^>]*>([^<]+)<\/a>/i,
 				);
 				const authorName = authorMatch?.[2] ? authorMatch[2].trim() : "Guest";
 
-				// Forum
 				const forumMatch = block.match(
 					/forumdisplay\.php\?fid=(\d+)"[^>]*>([^<]+)<\/a>/i,
 				);
@@ -748,7 +704,6 @@ export class WorldBeybladeScraper {
 					? forumMatch[2].trim()
 					: "Unknown Forum";
 
-				// Replies & Views
 				const repliesMatch =
 					block.match(/replies[^>]*>([\d,]+)/i) ??
 					block.match(/MyBB\.whoPosted\(\d+\);"[^>]*>([\d,]+)/i);
@@ -787,7 +742,6 @@ export class WorldBeybladeScraper {
 		const html = await this.page.content();
 		const pms: WorldBeybladePM[] = [];
 
-		// Match rows in PM table by splitting on tr tags
 		const rows = html.split(/<tr[^>]*>/gi);
 		for (const fullRowHtml of rows) {
 			const trEnd = fullRowHtml.search(/<\/tr>/i);
@@ -798,7 +752,6 @@ export class WorldBeybladeScraper {
 			if (!pmidMatch) continue;
 			const pmid = parseInt(pmidMatch[1], 10);
 
-			// Subject / Title
 			const titleMatch = rowHtml.match(
 				/private\.php\?action=read&amp;pmid=\d+"[^>]*>([\s\S]*?)<\/a>/i,
 			);
@@ -806,7 +759,6 @@ export class WorldBeybladeScraper {
 				? titleMatch[1].replace(/<[^>]+>/g, "").trim()
 				: "No Subject";
 
-			// Sender
 			const senderMatch = rowHtml.match(
 				/member\.php\?action=profile&amp;uid=(\d+)"[^>]*>([^<]+)<\/a>/i,
 			);
@@ -815,14 +767,11 @@ export class WorldBeybladeScraper {
 				? senderMatch[2].replace(/<[^>]+>/g, "").trim()
 				: "System";
 
-			// Date
 			const dateMatch = rowHtml.match(
 				/<span class="smalltext">([^<]+)<\/span>/i,
 			);
 			const date = dateMatch?.[1] ? dateMatch[1].trim() : null;
 
-			// Is Read?
-			// Check if the icon contains 'unread' or if the text is bolded
 			const isRead =
 				!rowHtml.includes("unread") && !rowHtml.includes("<strong>");
 
@@ -861,25 +810,20 @@ export class WorldBeybladeScraper {
 		});
 		await randomWait(2000, 3000);
 
-		// Fill to field
 		this.log("Filling recipient field...");
 		await fullPage.waitForSelector("#to");
 		await typeNatural(fullPage, "#to", toUsername);
 
-		// Fill subject
 		this.log("Filling subject field...");
 		await typeNatural(fullPage, "input[name='subject']", subject);
 
-		// Fill message body
 		this.log("Filling message body...");
 		await typeNatural(fullPage, "textarea[name='message']", message);
 
-		// Click send button
 		this.log("Submitting the message...");
 		await fullPage.click("input[name='submit']");
 		await randomWait(4000, 6000);
 
-		// Verify success by checking if page redirected or shows a success alert
 		const afterHtml = await fullPage.content();
 		const isSuccess =
 			afterHtml.includes("The private message has been sent successfully") ||

@@ -18,7 +18,7 @@
  * `bxc worldbeyblade` — Command-line interface for worldbeyblade.org
  */
 
-import { WorldBeybladeScraper } from "../scrapers/worldbeyblade.ts";
+import { WorldBeybladeScraper } from "../scrapers/worldbeyblade/index.ts";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {

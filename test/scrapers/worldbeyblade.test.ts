@@ -15,7 +15,11 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { WorldBeybladeScraper } from "../../src/scrapers/worldbeyblade.ts";
+import {
+	WorldBeybladeScraper,
+	parseTournamentsFromHtml,
+	calculateMetagameAnalytics,
+} from "../../src/scrapers/worldbeyblade/index.ts";
 
 // Mock MyBB Profile HTML
 const MOCK_PROFILE_HTML = `
@@ -221,7 +225,9 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 			"This is the **first post** content.",
 		);
 		expect(thread.posts[1].contentMarkdown).toContain("nested quote");
-		expect(thread.posts[1].contentMarkdown).toContain("more text after the quote");
+		expect(thread.posts[1].contentMarkdown).toContain(
+			"more text after the quote",
+		);
 	});
 
 	test("PM inbox parsing", async () => {
@@ -280,5 +286,46 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 		expect(forum.threads[1].views).toBe(120);
 		expect(forum.threads[1].lastPostAuthor).toBe("BladerTwo");
 		expect(forum.threads[1].lastPostDate).toBe("2026-05-29, 07:15 AM");
+	});
+
+	test("metagame analytics parsing", () => {
+		const mockThreadHtml = `
+<html>
+<body>
+<div class="post_body" id="pid_1001">
+  <div class="post_date">May 29, 2026</div>
+  1st Place<br>
+  Phoenix Wing 3-60 Flat<br>
+  2nd Place<br>
+  Dran Sword 5-80 Rush<br>
+  3rd Place<br>
+  Hells Scythe 9-60 Ball
+</div>
+<div class="post_body" id="pid_1002">
+  <div class="post_date">May 29, 2026</div>
+  1st Place<br>
+  Phoenix Wing 5-60 Flat<br>
+  2nd Place<br>
+  Cobalt Drake 3-60 Ball<br>
+  3rd Place<br>
+  Dran Dagger 4-80 Point
+</div>
+</body>
+</html>
+		`;
+
+		const { tournaments } = parseTournamentsFromHtml(mockThreadHtml);
+		expect(tournaments.length).toBe(2);
+		expect(tournaments[0].tournament_id).toBe("pid_1001");
+		expect(tournaments[0].podium.first_place[0].blade).toBe("Phoenix Wing");
+		expect(tournaments[0].podium.first_place[0].ratchet).toBe("3-60");
+		expect(tournaments[0].podium.first_place[0].bit).toBe("Flat");
+
+		const { partRankings } =
+			calculateMetagameAnalytics(tournaments);
+		const wingRanking = partRankings.find((r) => r.part === "Phoenix Wing");
+		expect(wingRanking).toBeDefined();
+		expect(wingRanking?.average_score).toBe(3);
+		expect(wingRanking?.placements).toBe(2);
 	});
 });
