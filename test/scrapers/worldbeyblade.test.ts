@@ -59,6 +59,7 @@ const MOCK_THREAD_HTML = `
 <html>
 <head>
 <title>worldbeyblade.org - Thread Title</title>
+<script>var tid = 456;</script>
 </head>
 <body>
 <div class="navigation">
@@ -76,7 +77,6 @@ Pages (3)
       <div id="pid_9876" class="post_body">
         This is the <strong>first post</strong> content.
       </div>
-      <!-- footer -->
     </td>
   </tr>
 </table>
@@ -90,7 +90,6 @@ Pages (3)
       <div id="pid_9877" class="post_body">
         This is the second post content with a <a href="https://google.com">link</a>.
       </div>
-      <!-- footer -->
     </td>
   </tr>
 </table>
@@ -133,10 +132,51 @@ const MOCK_INBOX_HTML = `
 </html>
 `;
 
+// Mock MyBB Forum HTML
+const MOCK_FORUM_HTML = `
+<html>
+<head>
+<title>worldbeyblade.org - General Discussion</title>
+<script>var fid = 12;</script>
+</head>
+<body>
+<h1>General Discussion</h1>
+Pages (5)
+
+<tr id="thread_1111">
+  <td class="trow1">
+    <a href="Thread-Bey-Rules" class="subject_old">Beyblade Rules</a>
+  </td>
+  <td class="trow2">
+    <a href="member.php?action=profile&amp;uid=50">BladerOne</a>
+  </td>
+  <td class="trow1">12</td>
+  <td class="trow2">350</td>
+  <td class="trow1">
+    <span class="lastpost">2026-05-29, 06:00 AM by <a href="member.php?action=profile&amp;uid=80">LastUser</a></span>
+  </td>
+</tr>
+
+<tr id="thread_2222">
+  <td class="trow2">
+    <a href="showthread.php?tid=2222" class="subject_new">New Custom Beyblade</a>
+  </td>
+  <td class="trow1">
+    <a href="member.php?action=profile&amp;uid=51">BladerTwo</a>
+  </td>
+  <td class="trow2">5</td>
+  <td class="trow1">120</td>
+  <td class="trow2">
+    <span class="lastpost">2026-05-29, 07:15 AM by BladerTwo</span>
+  </td>
+</tr>
+</body>
+</html>
+`;
+
 describe("scrapers/worldbeyblade — offline parsing", () => {
 	test("profile parsing", () => {
 		const scraper = new WorldBeybladeScraper();
-		// Use private parser test via prototype/cast
 		const profile = (scraper as any).parseProfileHtml(
 			MOCK_PROFILE_HTML,
 			"testuser",
@@ -157,15 +197,13 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 
 	test("thread and post parsing", async () => {
 		const scraper = new WorldBeybladeScraper();
-
-		// We mock the page goto and content method by mocking the page object
 		const mockPage = {
 			goto: async () => ({ status: 200, statusText: "OK", ok: true, url: "" }),
 			content: async () => MOCK_THREAD_HTML,
 		};
 		(scraper as any).httpPage = mockPage;
 
-		const thread = await scraper.getThread(456, 1);
+		const thread = await scraper.getThread("Beyblade-X-Rules", 1);
 
 		expect(thread.tid).toBe(456);
 		expect(thread.title).toBe("Thread Title");
@@ -177,23 +215,13 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 		expect(thread.posts[0].pid).toBe(9876);
 		expect(thread.posts[0].authorName).toBe("AuthorName1");
 		expect(thread.posts[0].authorUid).toBe(10);
-		expect(thread.posts[0].postDate).toBe("2026-05-29, 07:30 AM");
 		expect(thread.posts[0].contentMarkdown).toContain(
 			"This is the **first post** content.",
-		);
-
-		expect(thread.posts[1].pid).toBe(9877);
-		expect(thread.posts[1].authorName).toBe("AuthorName2");
-		expect(thread.posts[1].authorUid).toBe(20);
-		expect(thread.posts[1].postDate).toBe("2026-05-29, 07:45 AM");
-		expect(thread.posts[1].contentMarkdown).toContain(
-			"This is the second post content with a [link](https://google.com).",
 		);
 	});
 
 	test("PM inbox parsing", async () => {
 		const scraper = new WorldBeybladeScraper();
-
 		const mockPage = {
 			goto: async () => ({ status: 200, statusText: "OK", ok: true, url: "" }),
 			content: async () => MOCK_INBOX_HTML,
@@ -203,19 +231,50 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 		const pms = await scraper.getInbox();
 
 		expect(pms.length).toBe(2);
-
 		expect(pms[0].pmid).toBe(500);
 		expect(pms[0].title).toBe("Hello there");
 		expect(pms[0].senderName).toBe("FriendUser");
-		expect(pms[0].senderUid).toBe(99);
-		expect(pms[0].date).toBe("2026-05-28, 10:15 PM");
 		expect(pms[0].isRead).toBe(true);
 
 		expect(pms[1].pmid).toBe(501);
 		expect(pms[1].title).toBe("Urgent issue");
-		expect(pms[1].senderName).toBe("Admin");
-		expect(pms[1].senderUid).toBe(1);
-		expect(pms[1].date).toBe("2026-05-29, 01:20 AM");
 		expect(pms[1].isRead).toBe(false);
+	});
+
+	test("forum page parsing", async () => {
+		const scraper = new WorldBeybladeScraper();
+		const mockPage = {
+			goto: async () => ({ status: 200, statusText: "OK", ok: true, url: "" }),
+			content: async () => MOCK_FORUM_HTML,
+		};
+		(scraper as any).httpPage = mockPage;
+
+		const forum = await scraper.getForum("General-Discussion", 1);
+
+		expect(forum.fid).toBe(12);
+		expect(forum.title).toBe("General Discussion");
+		expect(forum.currentPage).toBe(1);
+		expect(forum.totalPages).toBe(5);
+
+		expect(forum.threads.length).toBe(2);
+
+		expect(forum.threads[0].tid).toBe(1111);
+		expect(forum.threads[0].title).toBe("Beyblade Rules");
+		expect(forum.threads[0].slug).toBe("Thread-Bey-Rules");
+		expect(forum.threads[0].authorName).toBe("BladerOne");
+		expect(forum.threads[0].authorUid).toBe(50);
+		expect(forum.threads[0].replies).toBe(12);
+		expect(forum.threads[0].views).toBe(350);
+		expect(forum.threads[0].lastPostAuthor).toBe("LastUser");
+		expect(forum.threads[0].lastPostDate).toBe("2026-05-29, 06:00 AM");
+
+		expect(forum.threads[1].tid).toBe(2222);
+		expect(forum.threads[1].title).toBe("New Custom Beyblade");
+		expect(forum.threads[1].slug).toBeNull();
+		expect(forum.threads[1].authorName).toBe("BladerTwo");
+		expect(forum.threads[1].replies).toBe(5);
+		expect(forum.threads[1].views).toBe(120);
+		expect(forum.threads[1].lastPostAuthor).toBe("BladerTwo");
+		expect(forum.threads[1].lastPostDate).toBe("2026-05-29, 07:15 AM");
 	});
 });

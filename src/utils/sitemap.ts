@@ -126,7 +126,10 @@ function* tokenizeXml(text: string): Generator<XmlToken> {
 		if (tag.startsWith("?") || tag.startsWith("!")) continue; // PI / comments / CDATA skip
 
 		if (tag.startsWith("/")) {
-			yield { type: "close", name: tag.slice(1).split(/[\s/]/)[0].toLowerCase() };
+			yield {
+				type: "close",
+				name: tag.slice(1).split(/[\s/]/)[0].toLowerCase(),
+			};
 		} else if (tag.endsWith("/")) {
 			// Self-closing
 			const name = tag.slice(0, -1).trim().split(/\s/)[0].toLowerCase();
@@ -151,19 +154,30 @@ function decodeXmlEntities(s: string): string {
 // HTTP fetch with gzip support (Bun-native)
 // ---------------------------------------------------------------------------
 
-async function fetchText(url: string, userAgent: string, signal?: AbortSignal): Promise<string> {
+async function fetchText(
+	url: string,
+	userAgent: string,
+	signal?: AbortSignal,
+): Promise<string> {
 	const res = await fetch(url, {
-		headers: { "User-Agent": userAgent, Accept: "text/xml,application/xml,text/plain,*/*" },
+		headers: {
+			"User-Agent": userAgent,
+			Accept: "text/xml,application/xml,text/plain,*/*",
+		},
 		signal,
 	});
 
 	if (!res.ok) {
-		throw new Error(`sitemap fetch failed: ${res.status} ${res.statusText} — ${url}`);
+		throw new Error(
+			`sitemap fetch failed: ${res.status} ${res.statusText} — ${url}`,
+		);
 	}
 
 	// Bun automatically handles `Content-Encoding: gzip` in fetch, but for
 	// explicit .gz URLs we decompress manually if the content-type doesn't hint.
-	const isGzip = url.endsWith(".gz") && !res.headers.get("content-encoding")?.includes("gzip");
+	const isGzip =
+		url.endsWith(".gz") &&
+		!res.headers.get("content-encoding")?.includes("gzip");
 
 	if (isGzip) {
 		const buf = await res.arrayBuffer();
@@ -254,7 +268,11 @@ export async function* parseSitemap(
 				current.changefreq = undefined;
 			}
 
-			if (rootTag === "sitemapindex" && name === "sitemap" && current._sitemapIndexLoc) {
+			if (
+				rootTag === "sitemapindex" &&
+				name === "sitemap" &&
+				current._sitemapIndexLoc
+			) {
 				// Recurse into nested sitemap
 				const nestedUrl = current._sitemapIndexLoc;
 				current._sitemapIndexLoc = undefined;
@@ -279,7 +297,17 @@ export async function* parseSitemap(
 				if (!Number.isNaN(p)) current.priority = p;
 			} else if (currentTag === "changefreq") {
 				const freq = val as SitemapChangefreq;
-				if (["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"].includes(freq)) {
+				if (
+					[
+						"always",
+						"hourly",
+						"daily",
+						"weekly",
+						"monthly",
+						"yearly",
+						"never",
+					].includes(freq)
+				) {
 					current.changefreq = freq;
 				}
 			}
