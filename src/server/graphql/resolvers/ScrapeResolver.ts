@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { Resolver, Query, Mutation, Arg, ObjectType, Field, ID, Int } from "type-graphql";
-import { Browser } from "../../../../api/browser.ts";
+import { Browser } from "../../../api/browser.ts";
 import { BxcDB } from "../../db/BxcDB.ts";
 
 const db = new BxcDB();
