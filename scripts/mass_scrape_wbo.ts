@@ -30,12 +30,15 @@
  *
  * Usage:
  *   bun scripts/mass_scrape_wbo.ts --target=wiki --concurrency=5
- *   bun scripts/mass_scrape_wbo.ts --target=forum --cookies=data/worldbeyblade_cookies.json
+ *   bun scripts/mass_scrape_wbo.ts --target=forum --cookies=data/worldbeyblade_cookies.json --profile=http
  */
 
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { WorldBeybladeScraper } from "../src/scrapers/worldbeyblade.ts";
+import {
+	WorldBeybladeScraper,
+	type WorldBeybladePost,
+} from "../src/scrapers/worldbeyblade.ts";
 
 const ARGS = new Set(Bun.argv.slice(2));
 const TARGET = [...ARGS].find((a) => a.startsWith("--target="))?.split("=")[1] ?? "wiki";
@@ -45,6 +48,8 @@ const CONCURRENCY = Number(
 const COOKIES_PATH =
 	[...ARGS].find((a) => a.startsWith("--cookies="))?.split("=")[1] ??
 	"/home/ubuntu/.bxc/cookies/worldbeyblade.json";
+const PROFILE =
+	[...ARGS].find((a) => a.startsWith("--profile="))?.split("=")[1] ?? "ghost";
 
 const OUT_DIR = "/home/ubuntu/bxc/data/wbo_scraped";
 const WIKI_DIR = join(OUT_DIR, "wiki");
@@ -234,10 +239,23 @@ async function runForumScraper() {
 	const scraper = new WorldBeybladeScraper();
 	
 	try {
-		// Initialize session using ghost transport
+		let cookiesOption: string | undefined = undefined;
+		if (existsSync(COOKIES_PATH)) {
+			cookiesOption = COOKIES_PATH;
+		} else {
+			const fallbackPath = "/home/ubuntu/bxc/data/worldbeyblade_cookies.json";
+			if (existsSync(fallbackPath)) {
+				console.log(`[forum-scraper] Primary cookies path not found, using fallback: ${fallbackPath}`);
+				cookiesOption = fallbackPath;
+			} else {
+				console.warn(`[forum-scraper] Warning: Cookie file not found at ${COOKIES_PATH} or ${fallbackPath}. Running without cookies.`);
+			}
+		}
+
+		// Initialize session using specified transport (defaults to ghost)
 		await scraper.init({
-			profile: "ghost",
-			cookies: COOKIES_PATH,
+			profile: PROFILE as "ghost" | "http",
+			cookies: cookiesOption,
 		});
 		
 		const isLoggedIn = await scraper.checkLoginStatus();
@@ -280,40 +298,44 @@ async function runForumScraper() {
 						
 						console.log(`    Scraping thread [${thread.tid}] "${thread.title}"...`);
 						
-						// Fetch all posts in the thread
-						let threadPage = 1;
-						let threadTotalPages = 1;
-						const allPosts: any[] = [];
-						
-						do {
-							const threadData = await scraper.getThread(thread.tid, threadPage);
-							threadTotalPages = threadData.totalPages;
-							allPosts.push(...threadData.posts);
-							threadPage++;
-							await delay(500 + Math.floor(Math.random() * 500));
-						} while (threadPage <= threadTotalPages && threadPage <= 5); // Limit to top 5 pages per thread to avoid huge scans
+						try {
+							// Fetch all posts in the thread
+							let threadPage = 1;
+							let threadTotalPages = 1;
+							const allPosts: WorldBeybladePost[] = [];
+							
+							do {
+								const threadData = await scraper.getThread(thread.tid, threadPage);
+								threadTotalPages = threadData.totalPages;
+								allPosts.push(...threadData.posts);
+								threadPage++;
+								await delay(500 + Math.floor(Math.random() * 500));
+							} while (threadPage <= threadTotalPages && threadPage <= 5); // Limit to top 5 pages per thread to avoid huge scans
 
-						const threadDoc = {
-							tid: thread.tid,
-							title: thread.title,
-							slug: thread.slug,
-							authorName: thread.authorName,
-							authorUid: thread.authorUid,
-							replies: thread.replies,
-							views: thread.views,
-							posts: allPosts,
-							scrapedAt: new Date().toISOString(),
-						};
+							const threadDoc = {
+								tid: thread.tid,
+								title: thread.title,
+								slug: thread.slug,
+								authorName: thread.authorName,
+								authorUid: thread.authorUid,
+								replies: thread.replies,
+								views: thread.views,
+								posts: allPosts,
+								scrapedAt: new Date().toISOString(),
+							};
 
-						// Save to file
-						const threadFilePath = join(FORUM_DIR, `thread_${thread.tid}.json`);
-						await Bun.write(threadFilePath, JSON.stringify(threadDoc, null, 2));
-						
-						processedThreadIds.add(thread.tid);
-						checkpoint.processedThreadIds = [...processedThreadIds];
-						await Bun.write(checkpointPath, JSON.stringify(checkpoint, null, 2));
-						
-						console.log(`      Saved thread ${thread.tid}. Total: ${processedThreadIds.size} threads.`);
+							// Save to file
+							const threadFilePath = join(FORUM_DIR, `thread_${thread.tid}.json`);
+							await Bun.write(threadFilePath, JSON.stringify(threadDoc, null, 2));
+							
+							processedThreadIds.add(thread.tid);
+							checkpoint.processedThreadIds = [...processedThreadIds];
+							await Bun.write(checkpointPath, JSON.stringify(checkpoint, null, 2));
+							
+							console.log(`      Saved thread ${thread.tid}. Total: ${processedThreadIds.size} threads.`);
+						} catch (threadErr) {
+							console.error(`      [forum-scraper] Failed to scrape thread ${thread.tid}:`, threadErr);
+						}
 						await delay(1000 + Math.floor(Math.random() * 1500));
 					}
 					

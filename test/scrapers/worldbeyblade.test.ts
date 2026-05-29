@@ -88,7 +88,9 @@ Pages (3)
       <a href="member.php?action=profile&amp;uid=20">AuthorName2</a>
       <span class="post_date">2026-05-29, 07:45 AM</span>
       <div id="pid_9877" class="post_body">
-        This is the second post content with a <a href="https://google.com">link</a>.
+        This is a quote:
+        <div class="blockquote">nested quote</div>
+        And this is more text after the quote.
       </div>
     </td>
   </tr>
@@ -218,6 +220,8 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 		expect(thread.posts[0].contentMarkdown).toContain(
 			"This is the **first post** content.",
 		);
+		expect(thread.posts[1].contentMarkdown).toContain("nested quote");
+		expect(thread.posts[1].contentMarkdown).toContain("more text after the quote");
 	});
 
 	test("PM inbox parsing", async () => {

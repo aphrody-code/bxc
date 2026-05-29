@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { existsSync } from "node:fs";
 import { WorldBeybladeScraper } from "../src/scrapers/worldbeyblade.ts";
 
 const COOKIES_PATH = "/home/ubuntu/.bxc/cookies/worldbeyblade.json";
@@ -24,15 +25,28 @@ async function main() {
 	const scraper = new WorldBeybladeScraper();
 
 	try {
+		let cookiesOption: string | undefined = undefined;
+		if (existsSync(COOKIES_PATH)) {
+			cookiesOption = COOKIES_PATH;
+		} else {
+			const fallbackPath = "/home/ubuntu/bxc/data/worldbeyblade_cookies.json";
+			if (existsSync(fallbackPath)) {
+				console.log(`Primary cookies path not found, using fallback: ${fallbackPath}`);
+				cookiesOption = fallbackPath;
+			} else {
+				console.warn(`Warning: Cookie file not found at ${COOKIES_PATH} or ${fallbackPath}. Running without cookies.`);
+			}
+		}
+
 		await scraper.init({
 			profile: "http",
-			cookies: COOKIES_PATH,
+			cookies: cookiesOption,
 		});
 
 		console.log("Fetching index page to discover forums...");
 		await scraper.checkLoginStatus(); // Gotos index.php
 
-		const indexHtml = await (scraper as any).page.content();
+		const indexHtml = await scraper.page.content();
 
 		// Find all Forum-XXX or forumdisplay.php links
 		const forumLinks = [
@@ -68,6 +82,8 @@ async function main() {
 						);
 					}
 				}
+				// Polite delay to prevent rate limits
+				await Bun.sleep(1000 + Math.floor(Math.random() * 1500));
 			} catch (err) {
 				console.warn(
 					`Could not crawl forum ${forum}:`,
