@@ -31,37 +31,84 @@ if (!slug || !Number.isFinite(number)) {
 }
 
 const doc = (await Bun.file(FULL).json()) as {
-	series: { slug: string; episodes: { number: number | null; url: string }[] }[];
+	series: {
+		slug: string;
+		episodes: { number: number | null; url: string }[];
+	}[];
 };
 const ser = doc.series.find((s) => s.slug === slug);
 const ep = ser?.episodes.find((e) => e.number === number);
 if (!ep) {
-	console.log(JSON.stringify({ error: `episode introuvable: ${series} ${number}` }));
+	console.log(
+		JSON.stringify({ error: `episode introuvable: ${series} ${number}` }),
+	);
 	process.exit(0);
 }
 
 const va = new VoiranimeScraper();
 try {
 	const info = await va.getEpisode(ep.url);
+	const candidates: Array<{
+		type: "hls" | "mp4";
+		url: string;
+		headers: Record<string, string>;
+		provider: string;
+	}> = [];
+
 	for (const p of info.players) {
+		console.error(`[RESOLVER] Scrape/Test du lecteur : ${p.name} (${p.provider})...`);
 		try {
 			const s = await va.resolveSource(p);
 			if ((s.type === "hls" || s.type === "mp4") && s.url) {
-				console.log(
-					JSON.stringify({
+				// Test the stream URL by fetching the first few bytes
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), 5000);
+				let testOk = false;
+				let testStatus = 0;
+				try {
+					const testHeaders: Record<string, string> = {
+						Range: "bytes=0-1024",
+						...(s.headers ?? {}),
+					};
+					const testRes = await fetch(s.url, {
+						headers: testHeaders,
+						signal: controller.signal,
+					});
+					testOk = testRes.ok;
+					testStatus = testRes.status;
+				} catch (err) {
+					console.error(`[RESOLVER] Erreur fetch pour ${p.name} :`, err);
+				} finally {
+					clearTimeout(timeoutId);
+				}
+
+				if (testOk) {
+					console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : VALIDE (${s.type}, HTTP ${testStatus})`);
+					candidates.push({
 						type: s.type,
 						url: s.url,
 						headers: s.headers ?? {},
 						provider: p.provider,
-					}),
-				);
-				process.exit(0);
+					});
+				} else {
+					console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : INVALIDE ou INJOIGNABLE (HTTP ${testStatus})`);
+				}
+			} else {
+				console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : ECHEC (Résolution: ${s.error ?? "format non supporté"})`);
 			}
-		} catch {
-			/* lecteur suivant */
+		} catch (err) {
+			console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : ERREUR :`, err);
 		}
 	}
-	console.log(JSON.stringify({ error: "aucun lecteur résolu en hls/mp4" }));
+
+	if (candidates.length > 0) {
+		// Prefer HLS over MP4 if any exists
+		const chosen = candidates.find(c => c.type === "hls") ?? candidates[0];
+		console.error(`[RESOLVER] Succès : lecteur retenu = ${chosen.provider} (${chosen.type})`);
+		console.log(JSON.stringify(chosen));
+		process.exit(0);
+	}
+	console.log(JSON.stringify({ error: "aucun lecteur fonctionnel résolu en HLS/MP4" }));
 } catch (e) {
 	console.log(JSON.stringify({ error: String(e).slice(0, 200) }));
 } finally {
