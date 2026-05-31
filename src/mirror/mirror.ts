@@ -17,42 +17,28 @@
 /**
  * @module bxc/mirror
  *
- * Site mirror — downloads the full HTML/CSS/JS/asset graph of a single
- * page, rewrites URLs to local relative paths, and produces a
- * self-contained directory that opens in a browser via `file://`.
+ * Site mirror — downloads the full HTML/CSS/JS/asset graph of a site,
+ * rewrites URLs to local relative paths, and produces a self-contained
+ * directory that opens in a browser via `file://`.
  *
  * Pipeline :
  *
- *   1. Fetch the seed URL via the user-selected bxc profile
- *      (default: `http` + curl-impersonate Chrome 131 + cookie jar).
- *      This bypasses Cloudflare Managed Challenge when cookies are
- *      provided, and produces a TLS / JA4 fingerprint that matches a
- *      real Chrome browser.
+ *   1. Auto-discover hidden pages via robots.txt and sitemap.xml.
  *
- *   2. Walk the HTML with `Bun.HTMLRewriter` (lol-html, streaming) to
- *      extract every asset URL from `<link>`, `<script>`, `<img>`,
- *      `<source>`, `<video>`, `<audio>`, `<iframe>`, `<object>`, `<embed>`,
- *      `srcset` attributes, plus `style` attributes containing `url(...)`.
+ *   2. Crawl HTML pages recursively (asynchronously and in parallel) up to limits.
+ *      Supports subdomains and CDNs based on configuration.
  *
- *   3. Concurrently download every asset, with a configurable worker
- *      pool. Each asset is also walked when it's a CSS file — `url(...)`
- *      and `@import` references are extracted and queued recursively.
+ *   3. Walk the HTML with `Bun.HTMLRewriter` (lol-html, streaming) to
+ *      extract every asset URL.
  *
- *   4. Rewrite every URL in the HTML and CSS files to a relative path
- *      pointing at the local copy. Absolute paths to the same origin
- *      are also localised so the mirror is fully relocatable.
+ *   4. Concurrently download every asset, with a configurable worker
+ *      pool. Re-walk CSS for nested assets.
  *
- *   5. Emit `manifest.json` listing every asset (URL, local path, bytes,
- *      sha256, content-type, http-status, source-of-discovery).
+ *   5. Rewrite URLs inside HTML (assets and navigation links) and CSS to relative local paths.
  *
- * The mirror works on any site bxc can reach :
- *   - Static HTML / classic websites : trivial.
- *   - Cloudflare-gated sites : pass `cookies` (cf_clearance + session).
- *   - SPAs : pre-render via `profile: "fast"` (Lightpanda) — the mirror
- *     captures the post-hydration DOM, not the empty shell.
+ *   6. Write sidecar gzip (.gz) files for text-based assets.
  *
- * Bun-native only : `Bun.HTMLRewriter`, `Bun.file`, `Bun.write`,
- * `Bun.CryptoHasher`, `Bun.Glob`, `fetch` global.
+ *   7. Emit `manifest.json`.
  */
 
 import {
@@ -60,24 +46,25 @@ import {
 	relative as relativePath,
 	resolve as resolvePath,
 } from "node:path";
-import { Browser } from "../api/browser.ts";
-import type { AnyPage } from "../api/types.ts";
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
+import { autoDiscoverAndParse } from "../utils/sitemap.ts";
+import type { HarEntry, HarLog } from "../recorder/types.ts";
+import { ImpersonatedClient, type ImpersonateProfile } from "../ffi/curl-impersonate.ts";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type MirrorProfile = "static" | "fast" | "http";
+export type MirrorProfile = "static" | "fast" | "http" | "stealth" | "max";
 
 export interface MirrorOptions {
 	/** Output directory — created if missing. */
 	outDir: string;
-	/** Bxc profile used to fetch the seed page (default: `"http"`). */
+	/** Bxc profile used to fetch pages (default: `"http"`). */
 	profile?: MirrorProfile;
 	/** Cookie jar path passed to bxc (Playwright/CDP/Netscape JSON). */
 	cookies?: string;
-	/** Concurrent asset downloads (default: 6). */
+	/** Concurrent asset downloads / crawl threads (default: 6). */
 	concurrency?: number;
 	/** Per-asset fetch timeout in ms (default: 15_000). */
 	timeoutMs?: number;
@@ -96,6 +83,49 @@ export interface MirrorOptions {
 	log?: (msg: string) => void;
 	/** Bypass TLS certificate validation. */
 	insecure?: boolean;
+
+	/** Proxy server URL (e.g. `http://127.0.0.1:8080`). */
+	proxy?: string;
+	/** Proxy credentials (e.g. `user:password`). */
+	proxyAuth?: string;
+	/** Server credentials (e.g. `user:password`). */
+	auth?: string;
+	/** Set default HTTP version to request. */
+	httpVersion?: "1.0" | "1.1" | "2.0" | "3.0" | "default";
+	/** Enable curl verbose logging. */
+	verbose?: boolean;
+
+	// --- CRAWL / RECURSIVE OPTIONS ---
+	/** Enable recursive crawling (multi-page) instead of single page (default: false). */
+	recursive?: boolean;
+	/** Maximum HTML pages to crawl (default: 1 for non-recursive, 100 for recursive). */
+	maxPages?: number;
+	/** Maximum crawl depth for links (default: 0 for non-recursive, 10 for recursive). */
+	maxDepth?: number;
+	/** Compress assets with gzip (.gz) sidecar files. */
+	compress?: boolean;
+	/** Auto-discover hidden pages via robots.txt and sitemap.xml. */
+	discoverHidden?: boolean;
+	/** Resolve and scrape subdomains of the seed host. */
+	resolveSubdomains?: boolean;
+	/** Resolve and scrape CDNs or external assets / pages from specific domains (or true to resolve general CDNs). */
+	resolveCdns?: string[] | boolean;
+	/** Allow only these domains for crawling and downloading. */
+	allowedDomains?: string[];
+	/** Exclude these domains from crawling and downloading. */
+	excludedDomains?: string[];
+	/** Allow only paths starting with these prefixes. */
+	allowedPaths?: string[];
+	/** Exclude paths starting with these prefixes. */
+	excludedPaths?: string[];
+	/** Only crawl pages under the parent directory path of the seed URL. */
+	noParent?: boolean;
+	/** Skip creating host-name directories for same-origin files. */
+	noHostDirectories?: boolean;
+	/** Time delay in milliseconds to wait between requests. */
+	delayMs?: number;
+	/** Output path to save the crawl session as a HAR log. */
+	har?: string;
 }
 
 export interface MirrorAssetRecord {
@@ -124,6 +154,154 @@ export interface MirrorManifest {
 }
 
 // ---------------------------------------------------------------------------
+// Host/Subdomain Utilities
+// ---------------------------------------------------------------------------
+
+function getBaseDomain(hostname: string): string {
+	const parts = hostname.split(".");
+	if (parts.length >= 3) {
+		const secondToLast = parts[parts.length - 2];
+		if (
+			["co", "com", "net", "org", "edu", "gov", "ac"].includes(secondToLast)
+		) {
+			return parts.slice(-3).join(".");
+		}
+	}
+	return parts.slice(-2).join(".");
+}
+
+function matchesFilters(
+	urlStr: string,
+	seedUrl: URL,
+	options: MirrorOptions,
+): boolean {
+	try {
+		const u = new URL(urlStr);
+		const host = u.hostname;
+		const path = u.pathname;
+
+		// 1. Domain filters
+		if (options.allowedDomains && options.allowedDomains.length > 0) {
+			if (!options.allowedDomains.includes(host) && host !== seedUrl.hostname) {
+				return false;
+			}
+		}
+		if (options.excludedDomains && options.excludedDomains.length > 0) {
+			if (options.excludedDomains.includes(host)) {
+				return false;
+			}
+		}
+
+		// 2. Path filters
+		if (options.allowedPaths && options.allowedPaths.length > 0) {
+			const matched = options.allowedPaths.some((p) => path.startsWith(p));
+			if (!matched) return false;
+		}
+		if (options.excludedPaths && options.excludedPaths.length > 0) {
+			const matched = options.excludedPaths.some((p) => path.startsWith(p));
+			if (matched) return false;
+		}
+
+		// 3. No Parent filter
+		if (options.noParent) {
+			let seedDir = seedUrl.pathname;
+			if (!seedDir.endsWith("/")) {
+				seedDir = seedDir.slice(0, seedDir.lastIndexOf("/") + 1);
+			}
+			if (!path.startsWith(seedDir)) {
+				return false;
+			}
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function shouldCrawl(
+	urlStr: string,
+	seedUrl: URL,
+	options: MirrorOptions,
+): boolean {
+	if (!matchesFilters(urlStr, seedUrl, options)) return false;
+
+	try {
+		const u = new URL(urlStr);
+		const host = u.hostname;
+		const seedHost = seedUrl.hostname;
+
+		if (host === seedHost) return true;
+
+		if (options.resolveSubdomains) {
+			const seedBaseDomain = getBaseDomain(seedHost);
+			const hostBaseDomain = getBaseDomain(host);
+			if (hostBaseDomain === seedBaseDomain) return true;
+		}
+
+		if (options.resolveCdns) {
+			if (options.resolveCdns === true) {
+				if (
+					host.includes("cdn") ||
+					host.includes("static") ||
+					host.includes("assets")
+				)
+					return true;
+			} else if (Array.isArray(options.resolveCdns)) {
+				if (options.resolveCdns.includes(host)) return true;
+			}
+		}
+
+		return false;
+	} catch {
+		return false;
+	}
+}
+
+function shouldDownloadAsset(
+	urlStr: string,
+	seedUrl: URL,
+	options: MirrorOptions,
+): boolean {
+	if (!matchesFilters(urlStr, seedUrl, options)) return false;
+
+	try {
+		const u = new URL(urlStr);
+		const host = u.hostname;
+		const seedHost = seedUrl.hostname;
+
+		if (host === seedHost) return true;
+
+		if (options.resolveSubdomains) {
+			const seedBaseDomain = getBaseDomain(seedHost);
+			const hostBaseDomain = getBaseDomain(host);
+			if (hostBaseDomain === seedBaseDomain) return true;
+		}
+
+		if (options.resolveCdns) {
+			if (options.resolveCdns === true) {
+				if (
+					host.includes("cdn") ||
+					host.includes("static") ||
+					host.includes("assets")
+				)
+					return true;
+			} else if (Array.isArray(options.resolveCdns)) {
+				if (options.resolveCdns.includes(host)) return true;
+			}
+		}
+
+		if (options.sameOriginOnly) {
+			return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+// ---------------------------------------------------------------------------
 // URL → local path mapping
 // ---------------------------------------------------------------------------
 
@@ -137,6 +315,7 @@ function mapUrlToLocalPath(
 	url: string,
 	outDir: string,
 	seedHost: string,
+	options?: MirrorOptions,
 ): string {
 	const u = new URL(url);
 	let pathname = u.pathname.replace(/^\/+/, "");
@@ -152,8 +331,13 @@ function mapUrlToLocalPath(
 			pathname = `${pathname}__q${hash}`;
 		}
 	}
-	const sameOrigin = u.hostname === seedHost;
-	const root = sameOrigin ? u.hostname : `_external/${u.hostname}`;
+	let sameOrigin = u.hostname === seedHost;
+	if (!sameOrigin && options?.resolveSubdomains) {
+		sameOrigin = getBaseDomain(u.hostname) === getBaseDomain(seedHost);
+	}
+	const root = sameOrigin
+		? (options?.noHostDirectories ? "" : u.hostname)
+		: `_external/${u.hostname}`;
 	return resolvePath(outDir, root, pathname);
 }
 
@@ -163,8 +347,63 @@ function simpleHash(s: string): string {
 	return Math.abs(h).toString(36);
 }
 
+function buildHarEntry(
+	url: string,
+	r: DownloadedAsset,
+	ua: string,
+): HarEntry {
+	const requestHeaders: Record<string, string> = { "User-Agent": ua };
+	const u = new URL(url);
+	const queryParams = Array.from(u.searchParams.entries()).map(([name, value]) => ({ name, value }));
+
+	const harRequest = {
+		method: "GET",
+		url,
+		httpVersion: "HTTP/1.1",
+		cookies: [],
+		headers: Object.entries(requestHeaders).map(([name, value]) => ({ name, value })),
+		queryString: queryParams,
+		headersSize: -1,
+		bodySize: -1,
+	};
+
+	const resHeaders = r.headers ?? {};
+	const harResponse = {
+		status: r.httpStatus,
+		statusText: r.error ? `Failed: ${r.error}` : "OK",
+		httpVersion: "HTTP/1.1",
+		cookies: [],
+		headers: Object.entries(resHeaders).map(([name, value]) => ({ name, value })),
+		content: {
+			size: r.body.byteLength,
+			mimeType: r.contentType,
+		},
+		redirectURL: resHeaders["location"] ?? "",
+		headersSize: -1,
+		bodySize: r.body.byteLength,
+		comment: r.error ? `Error: ${r.error}` : undefined,
+	};
+
+	const duration = r.durationMs ?? 0;
+	return {
+		startedDateTime: r.startedAt ?? new Date().toISOString(),
+		time: Math.round(duration),
+		request: harRequest,
+		response: harResponse,
+		cache: {},
+		timings: {
+			blocked: -1,
+			dns: -1,
+			connect: -1,
+			send: 0,
+			wait: Math.round(duration),
+			receive: 0,
+		},
+	};
+}
+
 // ---------------------------------------------------------------------------
-// HTML asset extraction (HTMLRewriter)
+// HTML asset / link extraction
 // ---------------------------------------------------------------------------
 
 interface AssetTask {
@@ -172,11 +411,6 @@ interface AssetTask {
 	sourceTag: string;
 }
 
-// Only `<link>` rels that load actual assets are captured. SEO/navigation
-// rels (`alternate`, `canonical`, `next`, `prev`, `dns-prefetch`,
-// `preconnect`, `author`, `license`, `me`, `bookmark`, `pingback`,
-// `prerender`, `search`) do not produce a downloadable resource and
-// trigger Cloudflare 403s on every variant — we ignore them.
 const HTML_ASSET_SELECTORS: Array<{
 	selector: string;
 	attr: string;
@@ -264,7 +498,8 @@ function discoverHtmlAssets(html: string, baseUrl: string): AssetTask[] {
 			raw.startsWith("data:") ||
 			raw.startsWith("javascript:") ||
 			raw.startsWith("#") ||
-			raw.startsWith("mailto:")
+			raw.startsWith("mailto:") ||
+			raw.startsWith("tel:")
 		) {
 			return;
 		}
@@ -307,7 +542,6 @@ function discoverHtmlAssets(html: string, baseUrl: string): AssetTask[] {
 			},
 		});
 	}
-	// Inline `style="background:url(...)"`
 	rw.on("[style]", {
 		element(el) {
 			const s = el.getAttribute("style") ?? "";
@@ -316,6 +550,53 @@ function discoverHtmlAssets(html: string, baseUrl: string): AssetTask[] {
 	});
 	rw.transform(html);
 	return tasks;
+}
+
+function discoverHtmlLinks(html: string, baseUrl: string): string[] {
+	const links: string[] = [];
+	const base = new URL(baseUrl);
+	const push = (raw: string): void => {
+		if (
+			!raw ||
+			raw.startsWith("data:") ||
+			raw.startsWith("javascript:") ||
+			raw.startsWith("#") ||
+			raw.startsWith("mailto:") ||
+			raw.startsWith("tel:")
+		) {
+			return;
+		}
+		try {
+			const abs = new URL(raw, base).href;
+			links.push(abs);
+		} catch {
+			// invalid URL
+		}
+	};
+
+	type El = { getAttribute: (n: string) => string | null };
+	type RewriterCtor = new () => {
+		on(sel: string, h: { element: (el: El) => void }): unknown;
+		transform(html: string): string;
+	};
+	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor })
+		.HTMLRewriter;
+	if (!Rewriter) {
+		for (const m of html.matchAll(/<a[^>]+href=["']([^"']+)["']/gi)) {
+			push(m[1]);
+		}
+		return links;
+	}
+
+	const rw = new Rewriter();
+	rw.on("a[href], area[href]", {
+		element(el) {
+			const v = el.getAttribute("href");
+			if (v) push(v);
+		},
+	});
+	rw.transform(html);
+	return links;
 }
 
 // ---------------------------------------------------------------------------
@@ -337,7 +618,8 @@ function rewriteHtmlLinks(
 			raw.startsWith("data:") ||
 			raw.startsWith("javascript:") ||
 			raw.startsWith("#") ||
-			raw.startsWith("mailto:")
+			raw.startsWith("mailto:") ||
+			raw.startsWith("tel:")
 		) {
 			return raw;
 		}
@@ -362,7 +644,6 @@ function rewriteHtmlLinks(
 	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor })
 		.HTMLRewriter;
 	if (!Rewriter) {
-		// Fallback : naive replace
 		let out = html;
 		for (const [abs, local] of urlToLocal) {
 			out = out.split(abs).join(relativePath(htmlOutDir, local));
@@ -403,6 +684,13 @@ function rewriteHtmlLinks(
 				},
 			);
 			el.setAttribute("style", rewritten);
+		},
+	});
+	// Rewrite links & anchors as well
+	rw.on("a[href], area[href]", {
+		element(el) {
+			const v = el.getAttribute("href");
+			if (v) el.setAttribute("href", remap(v));
 		},
 	});
 	return rw.transform(html);
@@ -446,6 +734,38 @@ function rewriteCssLinks(
 }
 
 // ---------------------------------------------------------------------------
+// Pre-compression (Gzip sidecar)
+// ---------------------------------------------------------------------------
+
+function isCompressible(filePath: string): boolean {
+	const ext = filePath.split(".").pop()?.toLowerCase();
+	if (!ext) return false;
+	return [
+		"html",
+		"css",
+		"js",
+		"svg",
+		"json",
+		"xml",
+		"txt",
+		"ttf",
+		"otf",
+		"woff",
+	].includes(ext);
+}
+
+async function compressFile(localPath: string): Promise<void> {
+	try {
+		const file = Bun.file(localPath);
+		const bytes = await file.arrayBuffer();
+		const compressed = Bun.gzipSync(new Uint8Array(bytes));
+		await Bun.write(`${localPath}.gz`, compressed);
+	} catch {
+		// Ignore compression failure for single files
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Asset downloader with worker pool
 // ---------------------------------------------------------------------------
 
@@ -456,6 +776,9 @@ interface DownloadedAsset {
 	contentType: string;
 	httpStatus: number;
 	error?: string;
+	headers?: Record<string, string>;
+	durationMs?: number;
+	startedAt?: string;
 }
 
 function cookieHeaderForHost(
@@ -484,31 +807,147 @@ async function downloadAsset(
 		cookieJar?: Cookie[];
 		maxBytes: number;
 		insecure?: boolean;
+		profile?: MirrorProfile;
+		proxy?: string;
+		proxyAuth?: string;
+		auth?: string;
+		httpVersion?: "1.0" | "1.1" | "2.0" | "3.0" | "default";
+		verbose?: boolean;
 	},
 ): Promise<DownloadedAsset> {
+	const startedAt = new Date().toISOString();
+	const tStart = Bun.nanoseconds();
+
+	const isLocal =
+		url.startsWith("http://localhost") ||
+		url.startsWith("http://127.0.0.1") ||
+		url.startsWith("http://[::1]");
+
+	if (isLocal) {
+		try {
+			const headers: Record<string, string> = { "User-Agent": options.ua };
+			const cookieHeader = cookieHeaderForHost(
+				options.cookieJar,
+				new URL(url).hostname,
+			);
+			if (cookieHeader) headers["Cookie"] = cookieHeader;
+
+			const fetchOpts: any = {
+				signal: AbortSignal.timeout(options.timeoutMs),
+				headers,
+				redirect: "follow",
+			};
+			if (options.insecure) {
+				fetchOpts.tls = { rejectUnauthorized: false };
+			}
+			const r = await fetch(url, fetchOpts);
+			const durationMs = (Bun.nanoseconds() - tStart) / 1e6;
+
+			let finalUrl = r.url;
+			if (finalUrl.startsWith("/")) {
+				finalUrl = new URL(finalUrl, url).href;
+			}
+			const contentType =
+				r.headers.get("content-type") ?? "application/octet-stream";
+
+			const responseHeaders: Record<string, string> = {};
+			r.headers.forEach((v, k) => {
+				responseHeaders[k] = v;
+			});
+
+			if (!r.ok) {
+				return {
+					url,
+					finalUrl,
+					body: new Uint8Array(),
+					contentType,
+					httpStatus: r.status,
+					error: `HTTP ${r.status}`,
+					headers: responseHeaders,
+					durationMs,
+					startedAt,
+				};
+			}
+			const body = new Uint8Array(await r.arrayBuffer());
+			if (body.byteLength > options.maxBytes) {
+				return {
+					url,
+					finalUrl,
+					body: new Uint8Array(),
+					contentType,
+					httpStatus: r.status,
+					error: `body ${body.byteLength}b exceeds maxAssetBytes ${options.maxBytes}`,
+					headers: responseHeaders,
+					durationMs,
+					startedAt,
+				};
+			}
+			return { url, finalUrl, body, contentType, httpStatus: r.status, headers: responseHeaders, durationMs, startedAt };
+		} catch (err) {
+			const durationMs = (Bun.nanoseconds() - tStart) / 1e6;
+			return {
+				url,
+				finalUrl: url,
+				body: new Uint8Array(),
+				contentType: "error",
+				httpStatus: 0,
+				error: err instanceof Error ? err.message : String(err),
+				headers: {},
+				durationMs,
+				startedAt,
+			};
+		}
+	}
+
+	// Map MirrorProfile to curl-impersonate ImpersonateProfile
+	let impersonateProfile: ImpersonateProfile = "chrome131";
+	if (options.profile === "stealth" || options.profile === "max") {
+		impersonateProfile = "chrome146";
+	} else if (options.profile === "fast") {
+		impersonateProfile = "chrome110";
+	} else if (options.profile === "http" || options.profile === "static") {
+		impersonateProfile = "chrome131";
+	}
+
+	const client = new ImpersonatedClient({
+		profile: impersonateProfile,
+		proxy: options.proxy,
+		proxyAuth: options.proxyAuth,
+		auth: options.auth,
+		httpVersion: options.httpVersion,
+		verbose: options.verbose,
+		sslVerify: !options.insecure,
+		timeoutMs: options.timeoutMs,
+	});
+
 	try {
-		const headers: Record<string, string> = { "User-Agent": options.ua };
+		const requestHeaders: Record<string, string> = { "User-Agent": options.ua };
 		const cookieHeader = cookieHeaderForHost(
 			options.cookieJar,
 			new URL(url).hostname,
 		);
-		if (cookieHeader) headers["Cookie"] = cookieHeader;
 
 		const fetchOpts: any = {
-			signal: AbortSignal.timeout(options.timeoutMs),
-			headers,
-			redirect: "follow",
+			headers: requestHeaders,
+			cookies: cookieHeader,
+			insecure: options.insecure,
 		};
-		if (options.insecure) {
-			fetchOpts.tls = { rejectUnauthorized: false };
-		}
-		const r = await fetch(url, fetchOpts);
-		let finalUrl = r.url;
+
+		const r = await client.fetch(url, fetchOpts);
+		const durationMs = (Bun.nanoseconds() - tStart) / 1e6;
+
+		let finalUrl = r.effectiveUrl || r.url || url;
 		if (finalUrl.startsWith("/")) {
 			finalUrl = new URL(finalUrl, url).href;
 		}
 		const contentType =
 			r.headers.get("content-type") ?? "application/octet-stream";
+
+		const responseHeaders: Record<string, string> = {};
+		r.headers.forEach((v, k) => {
+			responseHeaders[k] = v;
+		});
+
 		if (!r.ok) {
 			return {
 				url,
@@ -517,8 +956,12 @@ async function downloadAsset(
 				contentType,
 				httpStatus: r.status,
 				error: `HTTP ${r.status}`,
+				headers: responseHeaders,
+				durationMs,
+				startedAt,
 			};
 		}
+
 		const body = new Uint8Array(await r.arrayBuffer());
 		if (body.byteLength > options.maxBytes) {
 			return {
@@ -528,10 +971,14 @@ async function downloadAsset(
 				contentType,
 				httpStatus: r.status,
 				error: `body ${body.byteLength}b exceeds maxAssetBytes ${options.maxBytes}`,
+				headers: responseHeaders,
+				durationMs,
+				startedAt,
 			};
 		}
-		return { url, finalUrl, body, contentType, httpStatus: r.status };
+		return { url, finalUrl, body, contentType, httpStatus: r.status, headers: responseHeaders, durationMs, startedAt };
 	} catch (err) {
+		const durationMs = (Bun.nanoseconds() - tStart) / 1e6;
 		return {
 			url,
 			finalUrl: url,
@@ -539,7 +986,12 @@ async function downloadAsset(
 			contentType: "error",
 			httpStatus: 0,
 			error: err instanceof Error ? err.message : String(err),
+			headers: {},
+			durationMs,
+			startedAt,
 		};
+	} finally {
+		client.close();
 	}
 }
 
@@ -565,10 +1017,6 @@ async function workerPool<T, U>(
 // Main entry
 // ---------------------------------------------------------------------------
 
-// Chrome 131 stable Linux UA so our asset fetches blend with the seed page
-// (which was opened by curl-impersonate `chrome131`). Cloudflare-gated
-// hosts compare the UA fingerprint against the cf_clearance cookie ; a
-// mismatch yields 403 even with valid cookies.
 const DEFAULT_UA =
 	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
@@ -576,14 +1024,15 @@ export async function mirrorSite(
 	seed: string,
 	options: MirrorOptions,
 ): Promise<MirrorManifest> {
-	const profile: MirrorProfile = options.profile ?? "http";
 	const concurrency = options.concurrency ?? 6;
 	const timeoutMs = options.timeoutMs ?? 15_000;
-	const sameOriginOnly = options.sameOriginOnly ?? false;
 	const maxAssetBytes = options.maxAssetBytes ?? 50_000_000;
 	const ua = options.userAgent ?? DEFAULT_UA;
 	const log = options.log ?? (() => {});
 	const filter = options.filter ?? (() => true);
+
+	const maxPages = options.maxPages ?? (options.recursive ? 100 : 1);
+	const maxDepth = options.maxDepth ?? (options.recursive ? 10 : 0);
 
 	const startedAt = new Date().toISOString();
 	const t0 = Bun.nanoseconds();
@@ -591,7 +1040,7 @@ export async function mirrorSite(
 	const seedHost = seedUrl.hostname;
 	const outDir = resolvePath(options.outDir);
 
-	// Load cookie jar once — same-origin asset fetches reuse it.
+	// Load cookie jar once — same-origin fetches reuse it.
 	let cookieJar: Cookie[] | undefined;
 	if (options.cookies) {
 		try {
@@ -606,49 +1055,144 @@ export async function mirrorSite(
 		}
 	}
 
-	// Step 1 — fetch the seed via the chosen bxc profile.
-	let seedHtml = "";
-	let seedFinalUrl = seed;
-	let seedStatus = 0;
-	let page: AnyPage | undefined;
-	try {
-		page = await Browser.newPage({
-			profile,
-			cookies: options.cookies,
-			httpOpts: { profile: "chrome131" },
-		});
-		const nav = await page.goto(seed, { timeoutMs });
-		seedFinalUrl = page.url();
-		seedStatus = nav.status;
-		seedHtml = await page.content().catch(() => "");
-	} finally {
+	const harEntries: HarEntry[] = [];
+
+	// Step 1 — HTML page crawling queue setup.
+	const crawledHtml = new Map<string, { html: string; finalUrl: string }>();
+	const htmlQueue = new Set<string>();
+	const htmlSeen = new Set<string>();
+	const htmlDepth = new Map<string, number>();
+
+	htmlQueue.add(seed);
+	htmlSeen.add(seed);
+	htmlDepth.set(seed, 0);
+
+	// Discover hidden pages via sitemap.xml / robots.txt if requested
+	if (options.discoverHidden) {
+		log(`[mirror] discovering sitemaps and robots.txt for ${seed}...`);
 		try {
-			await page?.close();
-		} catch {
-			// ignore
+			for await (const sUrl of autoDiscoverAndParse(seed, {
+				userAgent: ua,
+				signal: AbortSignal.timeout(timeoutMs),
+			})) {
+				const urlStr = sUrl.loc;
+				if (!htmlSeen.has(urlStr)) {
+					htmlSeen.add(urlStr);
+					htmlQueue.add(urlStr);
+					htmlDepth.set(urlStr, 0); // Sitemap pages treated as depth 0
+				}
+			}
+			log(`[mirror] sitemaps parsed, total pages in queue: ${htmlQueue.size}`);
+		} catch (err) {
+			log(`[mirror] sitemap discovery error: ${err}`);
 		}
-		await Browser.close().catch(() => undefined);
 	}
-	log(`[mirror] seed ${seedStatus} ${seedHtml.length}b ${seedFinalUrl}`);
 
-	// Step 2 — discover assets in the seed HTML.
-	const seen = new Set<string>();
-	const queue: AssetTask[] = [];
-	const enqueue = (task: AssetTask): void => {
-		if (seen.has(task.url)) return;
-		if (sameOriginOnly && new URL(task.url).hostname !== seedHost) return;
-		if (!filter(task.url, task.sourceTag)) return;
-		seen.add(task.url);
-		queue.push(task);
+	// Step 2 — Crawl pages concurrently in parallel
+	let activeFetches = 0;
+
+	const processNextHtml = async (): Promise<void> => {
+		if (htmlQueue.size === 0 || crawledHtml.size >= maxPages) return;
+
+		const url = htmlQueue.values().next().value;
+		if (!url) return;
+		htmlQueue.delete(url);
+
+		const depth = htmlDepth.get(url) ?? 0;
+		if (depth > maxDepth) return;
+
+		activeFetches++;
+		try {
+			log(`[mirror] crawling page [depth=${depth}] ${url}`);
+			const r = await downloadAsset(url, {
+				ua,
+				timeoutMs,
+				cookieJar,
+				maxBytes: maxAssetBytes,
+				insecure: options.insecure,
+				profile: options.profile,
+				proxy: options.proxy,
+				proxyAuth: options.proxyAuth,
+				auth: options.auth,
+				httpVersion: options.httpVersion,
+				verbose: options.verbose,
+			});
+			if (options.delayMs && options.delayMs > 0) {
+				await new Promise((resolve) => setTimeout(resolve, options.delayMs));
+			}
+			harEntries.push(buildHarEntry(url, r, ua));
+			if (r.error) {
+				log(`[mirror] failed to crawl ${url}: ${r.error}`);
+				return;
+			}
+			const htmlText = new TextDecoder().decode(r.body);
+			crawledHtml.set(url, { html: htmlText, finalUrl: r.finalUrl });
+
+			if (
+				options.recursive &&
+				depth < maxDepth &&
+				crawledHtml.size < maxPages
+			) {
+				const discoveredLinks = discoverHtmlLinks(htmlText, r.finalUrl);
+				for (const link of discoveredLinks) {
+					if (htmlSeen.has(link)) continue;
+					if (crawledHtml.size + htmlQueue.size >= maxPages) continue;
+
+					if (shouldCrawl(link, seedUrl, options)) {
+						htmlSeen.add(link);
+						htmlQueue.add(link);
+						htmlDepth.set(link, depth + 1);
+					}
+				}
+			}
+		} catch (err) {
+			log(`[mirror] crawl error for ${url}: ${err}`);
+		} finally {
+			activeFetches--;
+		}
 	};
-	for (const t of discoverHtmlAssets(seedHtml, seedFinalUrl)) enqueue(t);
-	log(`[mirror] discovered ${queue.length} assets in seed HTML`);
 
-	// Step 3 — download with a fixed worker pool. CSS files are re-walked for
-	// nested url(...) and @import.
+	while (
+		(htmlQueue.size > 0 || activeFetches > 0) &&
+		crawledHtml.size < maxPages
+	) {
+		const freeSlots = concurrency - activeFetches;
+		if (freeSlots > 0 && htmlQueue.size > 0) {
+			const promises: Promise<void>[] = [];
+			const toFetch = Math.min(freeSlots, htmlQueue.size);
+			for (let i = 0; i < toFetch; i++) {
+				promises.push(processNextHtml());
+			}
+			await Promise.all(promises);
+		} else {
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		}
+	}
+	log(`[mirror] crawl complete. Crawled ${crawledHtml.size} pages.`);
+
+	// Step 3 — Discover assets from all crawled HTML pages
+	const seenAssets = new Set<string>();
+	const assetQueue: AssetTask[] = [];
+
+	const enqueueAsset = (task: AssetTask): void => {
+		if (seenAssets.has(task.url)) return;
+		if (!shouldDownloadAsset(task.url, seedUrl, options)) return;
+		if (!filter(task.url, task.sourceTag)) return;
+		seenAssets.add(task.url);
+		assetQueue.push(task);
+	};
+
+	for (const [, pageData] of crawledHtml) {
+		for (const t of discoverHtmlAssets(pageData.html, pageData.finalUrl)) {
+			enqueueAsset(t);
+		}
+	}
+	log(`[mirror] discovered ${assetQueue.length} assets to download`);
+
+	// Step 4 — Download all assets concurrently with a worker pool.
 	const records = new Map<string, MirrorAssetRecord>();
-	while (queue.length > 0) {
-		const batch = queue.splice(0, queue.length); // drain current
+	while (assetQueue.length > 0) {
+		const batch = assetQueue.splice(0, assetQueue.length); // drain current
 		const results = await workerPool(batch, concurrency, (t) =>
 			downloadAsset(t.url, {
 				ua,
@@ -656,12 +1200,19 @@ export async function mirrorSite(
 				cookieJar,
 				maxBytes: maxAssetBytes,
 				insecure: options.insecure,
+				profile: options.profile,
+				proxy: options.proxy,
+				proxyAuth: options.proxyAuth,
+				auth: options.auth,
+				httpVersion: options.httpVersion,
+				verbose: options.verbose,
 			}),
 		);
 		for (let i = 0; i < batch.length; i++) {
 			const t = batch[i];
 			const r = results[i];
-			const localPath = mapUrlToLocalPath(r.finalUrl, outDir, seedHost);
+			harEntries.push(buildHarEntry(t.url, r, ua));
+			const localPath = mapUrlToLocalPath(r.finalUrl, outDir, seedHost, options);
 			const sha256 =
 				r.body.byteLength > 0
 					? new Bun.CryptoHasher("sha256").update(r.body).digest("hex")
@@ -681,81 +1232,188 @@ export async function mirrorSite(
 
 			if (r.error) continue;
 
-			// Recurse into CSS to discover nested assets BEFORE writing.
+			// Recurse into CSS to discover nested assets.
 			if (r.contentType.includes("css") || t.url.endsWith(".css")) {
 				const cssText = new TextDecoder().decode(r.body);
 				for (const u of extractCssUrls(cssText)) {
 					try {
-						enqueue({ url: new URL(u, r.finalUrl).href, sourceTag: "css-url" });
+						enqueueAsset({
+							url: new URL(u, r.finalUrl).href,
+							sourceTag: "css-url",
+						});
 					} catch {
-						// skip
+						// ignore
 					}
 				}
 			}
 
-			// Persist raw bytes (links rewritten in step 4).
+			// Persist raw bytes (rewritten in step 5).
 			await Bun.write(localPath, r.body);
 		}
 		log(
-			`[mirror] downloaded ${batch.length} assets, queue=${queue.length}, total=${records.size}`,
+			`[mirror] downloaded ${batch.length} assets, queue=${assetQueue.length}, total=${records.size}`,
 		);
 	}
 
-	// Step 4 — rewrite links inside HTML + CSS files.
+	// Step 5 — Rewrite links inside HTML + CSS files.
 	const urlToLocal = new Map<string, string>();
-	urlToLocal.set(
-		seedFinalUrl,
-		mapUrlToLocalPath(seedFinalUrl, outDir, seedHost),
-	);
+	for (const [url, pageData] of crawledHtml) {
+		const localPath = mapUrlToLocalPath(
+			pageData.finalUrl,
+			outDir,
+			seedHost,
+			options,
+		);
+		urlToLocal.set(url, localPath);
+		urlToLocal.set(pageData.finalUrl, localPath);
+	}
 	for (const [url, rec] of records) {
-		if (!rec.error) urlToLocal.set(url, rec.localPath);
+		if (!rec.error) {
+			urlToLocal.set(url, rec.localPath);
+			urlToLocal.set(rec.finalUrl, rec.localPath);
+		}
 	}
 
-	// Seed HTML rewrite + write
-	const seedLocal = mapUrlToLocalPath(seedFinalUrl, outDir, seedHost);
-	const rewrittenHtml = rewriteHtmlLinks(
-		seedHtml,
-		seedFinalUrl,
-		urlToLocal,
-		seedLocal,
-	);
-	await Bun.write(seedLocal, rewrittenHtml);
-	log(`[mirror] seed written → ${seedLocal}`);
+	// Rewrite HTML pages
+	let rewrittenHtmlCount = 0;
+	const htmlPromises: Promise<void>[] = [];
+	for (const [, pageData] of crawledHtml) {
+		const localPath = mapUrlToLocalPath(
+			pageData.finalUrl,
+			outDir,
+			seedHost,
+			options,
+		);
+		const rewrittenHtml = rewriteHtmlLinks(
+			pageData.html,
+			pageData.finalUrl,
+			urlToLocal,
+			localPath,
+		);
+		htmlPromises.push(
+			(async () => {
+				await Bun.write(localPath, rewrittenHtml);
+				if (options.compress && isCompressible(localPath)) {
+					await compressFile(localPath);
+				}
+			})(),
+		);
+		rewrittenHtmlCount++;
+	}
+	await Promise.all(htmlPromises);
+	log(`[mirror] rewrote and wrote ${rewrittenHtmlCount} HTML files`);
 
 	// CSS rewrite pass
 	let cssRewritten = 0;
+	const cssPromises: Promise<void>[] = [];
 	for (const rec of records.values()) {
 		if (rec.error) continue;
 		if (!(rec.contentType.includes("css") || rec.url.endsWith(".css")))
 			continue;
-		const css = await Bun.file(rec.localPath).text();
-		const next = rewriteCssLinks(css, rec.finalUrl, urlToLocal, rec.localPath);
-		if (next !== css) {
-			await Bun.write(rec.localPath, next);
-			cssRewritten++;
-		}
+		cssPromises.push(
+			(async () => {
+				const css = await Bun.file(rec.localPath).text();
+				const next = rewriteCssLinks(
+					css,
+					rec.finalUrl,
+					urlToLocal,
+					rec.localPath,
+				);
+				if (next !== css) {
+					await Bun.write(rec.localPath, next);
+					cssRewritten++;
+				}
+				if (options.compress && isCompressible(rec.localPath)) {
+					await compressFile(rec.localPath);
+				}
+			})(),
+		);
 	}
+	await Promise.all(cssPromises);
 	log(`[mirror] rewrote ${cssRewritten} CSS files`);
 
-	// Step 5 — manifest
+	// Pre-compress remaining assets if compress is true
+	if (options.compress) {
+		const compressPromises: Promise<void>[] = [];
+		for (const rec of records.values()) {
+			if (rec.error) continue;
+			if (rec.contentType.includes("css") || rec.url.endsWith(".css")) continue;
+			if (isCompressible(rec.localPath)) {
+				compressPromises.push(compressFile(rec.localPath));
+			}
+		}
+		await Promise.all(compressPromises);
+		log(`[mirror] compressed remaining text assets`);
+	}
+
+	// Step 6 — manifest
 	const completedAt = new Date().toISOString();
 	const failed = [...records.values()].filter((r) => r.error).length;
-	const totalBytes = [...records.values()].reduce((acc, r) => acc + r.bytes, 0);
+	const htmlBytesSum = [...crawledHtml.values()].reduce(
+		(acc, p) => acc + p.html.length,
+		0,
+	);
+	const assetBytesSum = [...records.values()].reduce(
+		(acc, r) => acc + r.bytes,
+		0,
+	);
+	const totalBytes = htmlBytesSum + assetBytesSum;
+
+	const seedLocal = mapUrlToLocalPath(seed, outDir, seedHost, options);
 	const manifest: MirrorManifest = {
 		seed,
 		rootHtmlPath: relativePath(outDir, seedLocal),
 		startedAt,
 		completedAt,
 		durationMs: (Bun.nanoseconds() - t0) / 1e6,
-		totalAssets: records.size,
+		totalAssets: records.size + crawledHtml.size,
 		totalBytes,
 		failed,
-		assets: [...records.values()].sort((a, b) => a.url.localeCompare(b.url)),
+		assets: [
+			...[...crawledHtml.keys()].map((url) => {
+				const localPath = mapUrlToLocalPath(url, outDir, seedHost, options);
+				return {
+					url,
+					finalUrl: crawledHtml.get(url)!.finalUrl,
+					localPath,
+					relativePath: relativePath(outDir, localPath),
+					sourceTag: "html-crawler",
+					contentType: "text/html",
+					bytes: crawledHtml.get(url)!.html.length,
+					httpStatus: 200,
+				};
+			}),
+			...records.values(),
+		].sort((a, b) => a.url.localeCompare(b.url)),
 	};
+
 	await Bun.write(
 		resolvePath(outDir, "manifest.json"),
 		JSON.stringify(manifest, null, 2),
 	);
 	log(`[mirror] manifest → ${outDir}/manifest.json`);
+
+	if (options.har) {
+		const harLog: HarLog = {
+			version: "1.2",
+			creator: { name: "Bxc", version: "0.1.0" },
+			browser: { name: "Bxc", version: "0.1.0" },
+			pages: [
+				{
+					startedDateTime: startedAt,
+					id: "mirror_1",
+					title: `Mirror of ${seed}`,
+					pageTimings: { onContentLoad: -1, onLoad: -1 },
+				},
+			],
+			entries: harEntries,
+		};
+		await Bun.write(
+			resolvePath(options.har),
+			JSON.stringify({ log: harLog }, null, 2),
+		);
+		log(`[mirror] HAR log saved to ${options.har}`);
+	}
+
 	return manifest;
 }
