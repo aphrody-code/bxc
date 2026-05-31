@@ -15,7 +15,16 @@
  */
 
 import "reflect-metadata";
-import { Resolver, Query, Arg, ObjectType, Field, ID, Int, Float } from "type-graphql";
+import {
+	Resolver,
+	Query,
+	Arg,
+	ObjectType,
+	Field,
+	ID,
+	Int,
+	Float,
+} from "type-graphql";
 import { Database } from "bun:sqlite";
 import { join } from "node:path";
 
@@ -318,11 +327,17 @@ export class FutResolver {
 		@Arg("gender", { nullable: true }) gender?: string,
 		@Arg("foot", { nullable: true }) foot?: string,
 		@Arg("sortBy", { nullable: true, defaultValue: "rating" }) sortBy?: string,
-		@Arg("sortOrder", { nullable: true, defaultValue: "desc" }) sortOrder?: string,
-		@Arg("limit", () => Int, { nullable: true, defaultValue: 50 }) limit?: number,
-		@Arg("offset", () => Int, { nullable: true, defaultValue: 0 }) offset?: number,
+		@Arg("sortOrder", { nullable: true, defaultValue: "desc" })
+		sortOrder?: string,
+		@Arg("limit", () => Int, { nullable: true, defaultValue: 50 })
+		limit?: number,
+		@Arg("offset", () => Int, { nullable: true, defaultValue: 0 })
+		offset?: number,
 	): Promise<GraphQLFutPlayer[]> {
-		const dbPath = join(import.meta.dir, "../data/fut_extracted_database.sqlite");
+		const dbPath = join(
+			import.meta.dir,
+			"../data/fut_extracted_database.sqlite",
+		);
 		const db = new Database(dbPath);
 
 		let sql = "SELECT * FROM players WHERE 1=1";
@@ -484,24 +499,56 @@ export class FutResolver {
 
 	@Query(() => FutStatsSummary)
 	async futStatsSummary(): Promise<FutStatsSummary> {
-		const dbPath = join(import.meta.dir, "../data/fut_extracted_database.sqlite");
+		const dbPath = join(
+			import.meta.dir,
+			"../data/fut_extracted_database.sqlite",
+		);
 		const db = new Database(dbPath);
 
-		const totalPlayers = db.query("SELECT COUNT(*) as count FROM players").get() as any;
-		const totalPrices = db.query("SELECT COUNT(*) as count FROM prices").get() as any;
-		const avgOverall = db.query("SELECT AVG(overall_rating) as avg FROM players WHERE overall_rating IS NOT NULL").get() as any;
+		const totalPlayers = db
+			.query("SELECT COUNT(*) as count FROM players")
+			.get() as any;
+		const totalPrices = db
+			.query("SELECT COUNT(*) as count FROM prices")
+			.get() as any;
+		const avgOverall = db
+			.query(
+				"SELECT AVG(overall_rating) as avg FROM players WHERE overall_rating IS NOT NULL",
+			)
+			.get() as any;
 
-		const positionCounts = db.query("SELECT position, COUNT(*) as count FROM players GROUP BY position ORDER BY count DESC").all() as any[];
-		const rarityCounts = db.query("SELECT rarity, COUNT(*) as count FROM players WHERE rarity IS NOT NULL GROUP BY rarity ORDER BY count DESC LIMIT 10").all() as any[];
-		const genderCounts = db.query("SELECT gender, COUNT(*) as count FROM players WHERE gender IS NOT NULL GROUP BY gender").all() as any[];
+		const positionCounts = db
+			.query(
+				"SELECT position, COUNT(*) as count FROM players GROUP BY position ORDER BY count DESC",
+			)
+			.all() as any[];
+		const rarityCounts = db
+			.query(
+				"SELECT rarity, COUNT(*) as count FROM players WHERE rarity IS NOT NULL GROUP BY rarity ORDER BY count DESC LIMIT 10",
+			)
+			.all() as any[];
+		const genderCounts = db
+			.query(
+				"SELECT gender, COUNT(*) as count FROM players WHERE gender IS NOT NULL GROUP BY gender",
+			)
+			.all() as any[];
 
 		return {
 			totalPlayersCrawled: totalPlayers?.count || 0,
 			totalPricesTracked: totalPrices?.count || 0,
 			averageOverallRating: Math.round((avgOverall?.avg || 0) * 10) / 10,
-			positions: positionCounts.map((r) => ({ name: r.position, count: r.count })),
-			rarities: rarityCounts.map((r) => ({ name: r.rarity || "Unknown", count: r.count })),
-			genders: genderCounts.map((r) => ({ name: r.gender || "Unknown", count: r.count })),
+			positions: positionCounts.map((r) => ({
+				name: r.position,
+				count: r.count,
+			})),
+			rarities: rarityCounts.map((r) => ({
+				name: r.rarity || "Unknown",
+				count: r.count,
+			})),
+			genders: genderCounts.map((r) => ({
+				name: r.gender || "Unknown",
+				count: r.count,
+			})),
 		};
 	}
 }

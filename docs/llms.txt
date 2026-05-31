@@ -4,9 +4,19 @@ Bxc (Browser-X) is a native, zero-spawn, high-performance web browser automation
 
 ## Core Capabilities
 - **Zero-Spawn**: Native, in-process Chromium CDP and Static DOM transports. No heavy Puppeteer/Playwright headless processes.
-- **Stealth Profiles**: Automated Cloudflare and Turnstile bot bypass using Ghost browsers and automated click models.
-- **Google Atlas**: Deep scanning of Google domains, routing, and vertical parameters.
-- **WBO Metagame Tracking**: Automated parsing of tournament podium finishes and player standings from World Beyblade Organization forums.
+- **Stealth Profiles**: Automated Cloudflare and Turnstile bot bypass using Ghost browsers, custom fingerprinted V8 profiles, and automated human-interaction click models.
+- **Unified Command Profiles**: Every subcommand (`scrape`, `recon`, `mirror`, `challonge`, `har`, `fut`, `voiranime`, `google`) supports 5 profiles:
+  - `static`: Extremely fast, in-process HTML parser & DOM selector.
+  - `fast`: Full JS execution using the lightweight Lightpanda WebAssembly browser.
+  - `http`: Direct TLS-fingerprinted raw HTTP requests (`curl-impersonate`).
+  - `stealth`: Ghost browser with stealth headers, user-agents, and fingerprint patches.
+  - `max`: Multi-transport fallback loop attempting all profiles until successful.
+- **Google Ecosystem Atlas**: Deep auditing of Wiz, Angular, and Lit frontend structures across 5000+ Google domains, with mandate guard compliance and Smart Routing.
+- **Specialized Stealth Scrapers**:
+  - **FUT**: Scrapes FIFA Ultimate Team prices from FUTBin and stats from FUTGG.
+  - **VoirAnime**: Resolves video streaming servers (Vidmoly, Filemoon, Streamhide, etc.) and catalog data.
+  - **X.com**: Pulls profile markdown snapshots, screenshots, and processes bio/followers via local AI.
+  - **WBO Metagame Tracking**: Automated parsing of tournament podium finishes and player standings from World Beyblade Organization forums.
 - **Standalone Portability & FFI Embedding**: Standalone builds (`bun scripts/build-standalone.ts`) embed all native shared libraries and binaries (`libbxc_rust_bridge`, `libcurl-impersonate`, `lightpanda`, `wappalyzergo-cli`) directly. On first run, Bxc extracts them to `~/.bxc/bin/` with proper executable permissions, providing a zero-dependency, single-file cross-platform distribution.
 
 ---
@@ -33,11 +43,38 @@ await page.close();
 
 ## 🛠️ CLI Interface
 
-```bash
-# Get user profile information
-bxc worldbeyblade profile aphrody --pretty
+Bxc features a powerful, modular, agent-friendly CLI. Subcommands dynamically load their required dependencies (such as Rust FFI, SQLite, or browser layers) lazily.
 
-# Start Elysia dashboard & API server
+```bash
+# Recon, Detect & Scrape
+bxc recon https://google.com --profile stealth
+bxc detect https://design.google --json
+bxc scrape https://example.com "h1" --profile max
+
+# Google Search (using stable udm=14 Web view)
+bxc search "bun runtime" --num 5 --json
+
+# Google Ecosystem & Mandate Client/Auditor
+bxc google search "how does V8 FFI work"
+bxc google open https://accounts.google.com --profile stealth
+bxc google audit https://mail.google.com https://docs.google.com
+
+# X.com profile scraper
+bxc xcom profile @elonmusk --screenshot --ai-extract
+
+# FIFA Ultimate Team stats & price scrapers
+bxc fut price https://www.futbin.com/26/player/123/name --profile max
+bxc fut player https://www.fut.gg/players/123-name/
+
+# VoirAnime streaming catalog search & resolver
+bxc voiranime search "inazuma"
+bxc voiranime resolve https://embed-provider.com/embed/123
+
+# World Beyblade Organization community scraping & Challonge
+bxc worldbeyblade profile aphrody --pretty
+bxc challonge https://challonge.com/tournament-slug
+
+# Local web dashboard & JSON API server
 bxc api
 # or
 bun run server:start
@@ -57,11 +94,36 @@ Bxc registers these stdio MCP tools under the `bxc-native-mcp` server:
 - **`bxc_google_fetch`**: Fetch markdown and JSON-LD/meta tags in one pass.
 - **`bxc_wbo_rankings`**: Query WBO player standings & leaderboards.
 - **`bxc_wbo_metagame`**: Query WBO Beyblade X competitive metagame stats.
+- **`bxc_recon`**: Full one-shot URL reconnaissance (CDN, headers, frameworks, CSS selectors, assets).
+- **`bxc_mirror`**: Download and mirror a complete site layout locally.
+- **`bxc_challonge`**: Extract a structured typed snapshot of any Challonge tournament page.
+- **`bxc_worldbeyblade`**: Full forum automation (check status, get profile, thread, subforum post list, private message inbox & sending).
+- **Unified Browser Tools**: Persistent browser automation primitives:
+  - **`browser_navigate`**: Navigate the active page to a URL and wait for load.
+  - **`browser_snapshot`**: Get current page title, URL, and markdown content.
+  - **`browser_click`**: Click an element matching a CSS selector.
+  - **`browser_fill`**: Set the value of an input element.
+  - **`browser_type`**: Type text into an input element.
+  - **`browser_press_key`**: Dispatch keyboard key presses.
+  - **`browser_select_option`**: Select an option from a `<select>` dropdown.
+  - **`browser_evaluate`**: Evaluate JS expressions in the page context.
+  - **`browser_wait_for`**: Wait for a CSS selector to appear in the DOM.
+  - **`browser_screenshot`**: Capture a PNG screenshot of the viewport.
+  - **`browser_close`**: Close the active page and release the browser state.
+- **Specialized Stealth Scrapers**: Exposes Bxc's advanced stealth scrapers directly:
+  - **`bxc_fut_price`**: Get player console/PC price from FUTBin.
+  - **`bxc_fut_player`**: Get player statistics and traits from FUTGG.
+  - **`bxc_voiranime_search`**: Search for animes in the catalog.
+  - **`bxc_voiranime_info`**: Retrieve anime series metadata and episode list.
+  - **`bxc_voiranime_resolve`**: Resolve video streaming servers from iframe embeds.
+  - **`bxc_xcom_profile`**: Scrape Twitter profile markdown snapshots, screenshots, and AI info.
 
 ---
 
 ## 📖 Key Documentation Links
 - [WBO Metagame Tracking](WBO-METAGAME-TRACKING.md) — Detailed manual on Beyblade X WBO standings parsing.
+- [Google Atlas Smart Routing](GOOGLE-ATLAS.md) — Google properties auditor & mandate guard.
 - [Serverless Deployments](SERVERLESS.md) — Deploying Bxc on Vercel or AWS Lambda.
 - [Windows Cross-Compiling](BUILD-WINDOWS.md) — MSVC standalone building guides.
 - [Lightpanda Integration](LIGHTPANDA-WINDOWS.md) — FFI-based WebAssembly browser engine hooks.
+

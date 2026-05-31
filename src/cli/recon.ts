@@ -22,12 +22,7 @@
 
 import { Browser, type Page } from "../api/browser.ts";
 import { detectFrameworks } from "../detect.ts";
-import {
-	EXIT,
-	type CommonOptions,
-	logger,
-	parseCommonArgs,
-} from "./shared.ts";
+import { EXIT, type CommonOptions, logger, parseCommonArgs } from "./shared.ts";
 import { bxcFetch } from "../utils/bxc-fetch.ts";
 
 // ---------------------------------------------------------------------------

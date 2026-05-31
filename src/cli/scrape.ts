@@ -21,7 +21,7 @@
 import { Browser } from "../api/browser.ts";
 import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
-type ScrapeProfile = "static" | "fast" | "http";
+type ScrapeProfile = "static" | "fast" | "http" | "stealth" | "max";
 
 interface ScrapeOptions extends CommonOptions {
 	url: string;
@@ -40,7 +40,7 @@ Usage:
   bxc scrape <url> --markdown [options]
 
 Options:
-  --profile <name>   static (default) | fast | http
+  --profile <name>   static (default) | fast | http | stealth | max
   --markdown         convert the entire page to GFM Markdown
   --max <N>          max elements returned (default: 50)
   --help, -h         this help
@@ -67,7 +67,13 @@ function parseArgs(
 		switch (a) {
 			case "--profile": {
 				const v = argv[++i] as any;
-				if (v !== "static" && v !== "fast" && v !== "http") {
+				if (
+					v !== "static" &&
+					v !== "fast" &&
+					v !== "http" &&
+					v !== "stealth" &&
+					v !== "max"
+				) {
 					logger.error(`Invalid profile: ${v}`);
 					return null;
 				}
@@ -112,12 +118,15 @@ export async function main(
 
 	let page: Awaited<ReturnType<typeof Browser.newPage>> | undefined;
 	try {
+		const isBrowserProfile =
+			opts.profile === "fast" ||
+			opts.profile === "stealth" ||
+			opts.profile === "max";
 		page = await Browser.newPage({
 			profile: opts.profile,
-			spawnOpts:
-				opts.profile === "fast"
-					? { logLevel: "error", readyTimeoutMs: 10_000 }
-					: undefined,
+			spawnOpts: isBrowserProfile
+				? { logLevel: "error", readyTimeoutMs: 10_000 }
+				: undefined,
 		});
 		await page.goto(opts.url, { timeoutMs: opts.timeoutMs });
 

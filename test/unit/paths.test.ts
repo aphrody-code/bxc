@@ -15,7 +15,11 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { getBxcDir, getCookiesDir, resolveCookiePath } from "../../src/utils/paths.ts";
+import {
+	getBxcDir,
+	getCookiesDir,
+	resolveCookiePath,
+} from "../../src/utils/paths.ts";
 import { join } from "node:path";
 import { existsSync, rmSync } from "node:fs";
 

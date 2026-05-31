@@ -163,7 +163,10 @@ Sitemap: ${serverUrl}/sitemap.xml`,
 	});
 
 	test("should respect advanced filters: noParent and noHostDirectories", async () => {
-		const outDirFiltered = join(import.meta.dir, "../../tmp/mirror-test-filtered");
+		const outDirFiltered = join(
+			import.meta.dir,
+			"../../tmp/mirror-test-filtered",
+		);
 		if (existsSync(outDirFiltered)) {
 			rmSync(outDirFiltered, { recursive: true, force: true });
 		}

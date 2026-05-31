@@ -112,7 +112,10 @@ export async function loadCookieJar(filePath: string): Promise<Cookie[]> {
 /**
  * Saves a list of cookies to a file on disk or cookie jar name shortcut.
  */
-export async function saveCookieJar(filePath: string, cookies: Cookie[]): Promise<void> {
+export async function saveCookieJar(
+	filePath: string,
+	cookies: Cookie[],
+): Promise<void> {
 	const resolved = resolveCookiePath(filePath);
 	await Bun.write(resolved, JSON.stringify(cookies, null, 2));
 }

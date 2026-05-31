@@ -189,7 +189,7 @@ export interface ResolvedSource {
 
 export interface VoiranimeOptions {
 	/** bxc transport profile. `static` (default) is fastest and zero-spawn. */
-	profile?: "static" | "http" | "fast";
+	profile?: "static" | "http" | "fast" | "stealth" | "max";
 	/** Site origin override (default `https://voir-anime.to`). */
 	baseUrl?: string;
 	/** Per-request navigation timeout in ms (default 30000). */

@@ -70,12 +70,19 @@ export async function resolveBinary(): Promise<string> {
 
 	if (hasEmbedded && wappalyzergoAsset) {
 		try {
-			const extracted = extractEmbeddedAssetIfNeeded(wappalyzergoAsset, "wappalyzergo-cli", true);
+			const extracted = extractEmbeddedAssetIfNeeded(
+				wappalyzergoAsset,
+				"wappalyzergo-cli",
+				true,
+			);
 			if (extracted && (await Bun.file(extracted).exists())) {
 				return extracted;
 			}
 		} catch (err) {
-			console.warn(`[bxc] Failed to load/extract embedded wappalyzergo-cli:`, err);
+			console.warn(
+				`[bxc] Failed to load/extract embedded wappalyzergo-cli:`,
+				err,
+			);
 		}
 	}
 

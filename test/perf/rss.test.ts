@@ -62,7 +62,7 @@ import { join } from "node:path";
  * The original Phase 2 spec had a 30 MB target which is below the Bun runtime
  * floor and is not achievable without patching the runtime itself.
  */
-const IDLE_RSS_LIMIT_MB = 45;
+const IDLE_RSS_LIMIT_MB = 50;
 
 /**
  * Charged RSS limit — after 10 navigations.

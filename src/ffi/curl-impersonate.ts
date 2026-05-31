@@ -135,6 +135,18 @@ export interface ImpersonatedClientOptions {
 	sslVerify?: boolean;
 	/** Path to CA bundle (default: system). */
 	caBundle?: string;
+	/** Proxy server URL (e.g. `http://127.0.0.1:8080`). */
+	proxy?: string;
+	/** Proxy credentials (e.g. `user:password`). */
+	proxyAuth?: string;
+	/** Server credentials (e.g. `user:password`). */
+	auth?: string;
+	/** Path to save cookies when client is closed or reset. */
+	cookieJarPath?: string;
+	/** Set default HTTP version to request. */
+	httpVersion?: "1.0" | "1.1" | "2.0" | "3.0" | "default";
+	/** Enable curl verbose logging. */
+	verbose?: boolean;
 }
 
 /** Options for a single `fetch()` call. */
@@ -153,6 +165,18 @@ export interface FetchOptions {
 	/** Bypass TLS certificate validation. */
 	insecure?: boolean;
 	signal?: AbortSignal;
+	/** Override proxy for this request. */
+	proxy?: string;
+	/** Override proxy authentication. */
+	proxyAuth?: string;
+	/** Override server authentication. */
+	auth?: string;
+	/** Override cookie jar path. */
+	cookieJarPath?: string;
+	/** Override HTTP version. */
+	httpVersion?: "1.0" | "1.1" | "2.0" | "3.0" | "default";
+	/** Enable verbose logging. */
+	verbose?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -193,6 +217,10 @@ const CURLOPT = {
 	NOSIGNAL: 99,
 	MAXCONNECTS: 71,
 	TCP_KEEPALIVE: 213,
+	PROXY: 10004,
+	PROXYUSERPWD: 10006,
+	USERPWD: 10005,
+	COOKIEJAR: 10082,
 } as const;
 
 /** CURLcode success value. */
@@ -620,6 +648,12 @@ export class ImpersonatedClient {
 			maxRedirects: opts.maxRedirects ?? 10,
 			sslVerify: opts.sslVerify ?? true,
 			caBundle: opts.caBundle ?? "",
+			proxy: opts.proxy ?? "",
+			proxyAuth: opts.proxyAuth ?? "",
+			auth: opts.auth ?? "",
+			cookieJarPath: opts.cookieJarPath ?? "",
+			httpVersion: opts.httpVersion ?? "default",
+			verbose: opts.verbose ?? false,
 		};
 	}
 
@@ -765,8 +799,60 @@ export class ImpersonatedClient {
 
 		// Thread safety & resource limits
 		setoptLong(sym, handle, CURLOPT.NOSIGNAL, 1n);
-		setoptLong(sym, handle, CURLOPT.MAXCONNECTS, BigInt(this.#opts.maxConnections));
+		setoptLong(
+			sym,
+			handle,
+			CURLOPT.MAXCONNECTS,
+			BigInt(this.#opts.maxConnections),
+		);
 		setoptLong(sym, handle, CURLOPT.TCP_KEEPALIVE, 1n);
+
+		// Proxy
+		const proxy = opts.proxy !== undefined ? opts.proxy : this.#opts.proxy;
+		if (proxy) {
+			alive.push(setoptStr(sym, handle, CURLOPT.PROXY, proxy));
+		}
+		const proxyAuth =
+			opts.proxyAuth !== undefined ? opts.proxyAuth : this.#opts.proxyAuth;
+		if (proxyAuth) {
+			alive.push(setoptStr(sym, handle, CURLOPT.PROXYUSERPWD, proxyAuth));
+		}
+
+		// Server Auth
+		const auth = opts.auth !== undefined ? opts.auth : this.#opts.auth;
+		if (auth) {
+			alive.push(setoptStr(sym, handle, CURLOPT.USERPWD, auth));
+		}
+
+		// Cookie Jar saving
+		const cookieJarPath =
+			opts.cookieJarPath !== undefined
+				? opts.cookieJarPath
+				: this.#opts.cookieJarPath;
+		if (cookieJarPath) {
+			alive.push(setoptStr(sym, handle, CURLOPT.COOKIEJAR, cookieJarPath));
+		}
+
+		// HTTP Version
+		const httpVersion =
+			opts.httpVersion !== undefined
+				? opts.httpVersion
+				: this.#opts.httpVersion;
+		if (httpVersion && httpVersion !== "default") {
+			let val = 0n;
+			if (httpVersion === "1.0") val = 1n;
+			else if (httpVersion === "1.1") val = 2n;
+			else if (httpVersion === "2.0") val = 3n;
+			else if (httpVersion === "3.0") val = 30n;
+			setoptLong(sym, handle, CURLOPT.HTTP_VERSION, val);
+		}
+
+		// Verbose Logging
+		const verbose =
+			opts.verbose !== undefined ? opts.verbose : this.#opts.verbose;
+		if (verbose) {
+			setoptLong(sym, handle, CURLOPT.VERBOSE, 1n);
+		}
 
 		// Timeouts
 		const timeoutMs = opts.timeoutMs ?? this.#opts.timeoutMs;

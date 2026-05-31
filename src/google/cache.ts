@@ -100,7 +100,9 @@ export class GoogleCache {
 
 		// Safely migrate schema to include compression column
 		try {
-			this.#db.exec("ALTER TABLE cache ADD COLUMN compression INTEGER NOT NULL DEFAULT 0;");
+			this.#db.exec(
+				"ALTER TABLE cache ADD COLUMN compression INTEGER NOT NULL DEFAULT 0;",
+			);
 		} catch {
 			// Column already exists
 		}
@@ -149,7 +151,10 @@ export class GoogleCache {
 
 		if (row.is_json === 1) {
 			try {
-				const text = typeof binary === "string" ? binary : new TextDecoder().decode(binary);
+				const text =
+					typeof binary === "string"
+						? binary
+						: new TextDecoder().decode(binary);
 				return JSON.parse(text) as T;
 			} catch {
 				return null;
@@ -157,7 +162,9 @@ export class GoogleCache {
 		}
 
 		if (row.is_json === 2) {
-			return (typeof binary === "string" ? binary : new TextDecoder().decode(binary)) as unknown as T;
+			return (typeof binary === "string"
+				? binary
+				: new TextDecoder().decode(binary)) as unknown as T;
 		}
 
 		return binary as unknown as T;
@@ -188,7 +195,10 @@ export class GoogleCache {
 		}
 
 		if (payload.length > 512) {
-			const rawBytes = typeof payload === "string" ? new TextEncoder().encode(payload) : payload;
+			const rawBytes =
+				typeof payload === "string"
+					? new TextEncoder().encode(payload)
+					: payload;
 			payload = Bun.gzipSync(rawBytes as any);
 			compression = 1;
 		}

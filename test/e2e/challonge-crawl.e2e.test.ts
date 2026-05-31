@@ -197,6 +197,7 @@ async function probeWithProfile(
 	try {
 		page = (await Browser.newPage({
 			profile,
+			insecure: true,
 			spawnOpts: {
 				logLevel: "error",
 				readyTimeoutMs: 10_000,

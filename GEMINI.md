@@ -34,6 +34,16 @@ Bxc is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses
 | `bxc-wbo-analyst` | Alias to update WBO metagame metrics / synergies |
 | `bxc-wbo-dashboard` | Alias to start the interactive Elysia server |
 
+## Dedicated Scrapers & Verticals
+
+| CLI Command | Target & Description |
+|-------------|----------------------|
+| `bxc fut` | Scrapes FUT prices from FUTBin and statistics from FUTGG. |
+| `bxc voiranime` | Searches VoirAnime streams and resolves iframe streaming embeds (vidmoly, filemoon, etc.). |
+| `bxc google` | Google ecosystem smart auditor, GFE compliance check, and mandate client. |
+| `bxc xcom` | Scrapes public X.com (Twitter) profiles to markdown snapshots and screenshots. |
+| `bxc worldbeyblade` | Scrapes, synchronizes, and parses WBO standings and player rankings. |
+
 ## Testing and Quality
 
 - **Commands:**

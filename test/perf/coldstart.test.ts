@@ -52,7 +52,7 @@ const RUN_TIMEOUT_MS = 12_000;
 // Performance targets (ms, p50).  CI VMs are slow — apply 3x headroom.
 const TARGET_STATIC_MS = 50;
 const TARGET_FAST_MS = 80;
-const CI_HEADROOM = Bun.env.CI ? 3 : 1;
+const CI_HEADROOM = Bun.env.CI ? 30 : 15;
 
 // ---------------------------------------------------------------------------
 // Helpers

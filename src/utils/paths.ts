@@ -98,7 +98,12 @@ export function resolveCookiePath(nameOrPath: string): string {
 	}
 
 	// If it contains slashes or path symbols, treat as raw path
-	if (nameOrPath.includes("/") || nameOrPath.includes("\\") || nameOrPath.endsWith(".json") || nameOrPath.endsWith(".txt")) {
+	if (
+		nameOrPath.includes("/") ||
+		nameOrPath.includes("\\") ||
+		nameOrPath.endsWith(".json") ||
+		nameOrPath.endsWith(".txt")
+	) {
 		return nameOrPath;
 	}
 

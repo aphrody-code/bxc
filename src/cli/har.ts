@@ -28,8 +28,11 @@ function printUsage(): void {
 		`bxc har — HAR recorder/replayer
 
 Usage:
-  bxc har record <url> <out.har>   record HTTP traffic to a HAR file
-  bxc har replay <file.har>        inspect a HAR file (JSON summary on stdout)
+  bxc har record <url> <out.har> [options]   record HTTP traffic to a HAR file
+  bxc har replay <file.har>                  inspect a HAR file (JSON summary on stdout)
+
+Options:
+  --profile <name>      fast (default) | stealth | max
 
 `,
 	);
@@ -38,10 +41,11 @@ Usage:
 async function recordHar(
 	url: string,
 	out: string,
+	profile: "fast" | "stealth" | "max",
 	opts: CommonOptions,
 ): Promise<void> {
 	const page = (await Browser.newPage({
-		profile: "fast",
+		profile,
 		spawnOpts: { logLevel: "error", readyTimeoutMs: 10_000 },
 	})) as Page;
 	try {
@@ -84,13 +88,30 @@ export async function main(
 	try {
 		switch (action) {
 			case "record": {
-				const url = argv[1];
-				const out = argv[2];
+				let url = "";
+				let out = "";
+				let profile: "fast" | "stealth" | "max" = "fast";
+				for (let i = 1; i < argv.length; i++) {
+					const a = argv[i];
+					if (a === "--profile") {
+						const v = argv[++i];
+						if (v !== "fast" && v !== "stealth" && v !== "max") {
+							logger.error(
+								`Invalid profile for HAR recording (expected fast|stealth|max): ${v}`,
+							);
+							process.exit(EXIT.MISUSE);
+						}
+						profile = v;
+					} else if (!a.startsWith("-")) {
+						if (!url) url = a;
+						else if (!out) out = a;
+					}
+				}
 				if (!url || !out) {
 					logger.error("record <url> <out.har> — arguments missing");
 					process.exit(EXIT.MISUSE);
 				}
-				await recordHar(url, out, opts);
+				await recordHar(url, out, profile, opts);
 				break;
 			}
 			case "replay": {

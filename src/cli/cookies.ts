@@ -61,7 +61,9 @@ export async function main(
 		case "load": {
 			const file = argv[1];
 			if (!file) {
-				logger.error("load <jar.json|shortcut> — cookie jar target argument missing");
+				logger.error(
+					"load <jar.json|shortcut> — cookie jar target argument missing",
+				);
 				process.exit(EXIT.MISUSE);
 			}
 			try {
