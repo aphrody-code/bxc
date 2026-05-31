@@ -199,19 +199,21 @@ export async function scrapeFutGgPlayer(
 	let workrateAttack = wrMatch ? wrMatch[1].trim() : undefined;
 	let workrateDefense = wrMatch ? wrMatch[2].trim() : undefined;
 	if (workrateAttack === undefined || workrateDefense === undefined) {
-		const wraSerMatch = /\battackingWorkrate\s*:\s*(?:"([^"]+)"|([a-z]+|null))/.exec(content);
-		const wrdSerMatch = /\bdefensiveWorkrate\s*:\s*(?:"([^"]+)"|([a-z]+|null))/.exec(content);
+		const wraSerMatch =
+			/\battackingWorkrate\s*:\s*(?:"([^"]+)"|([a-z]+|null))/.exec(content);
+		const wrdSerMatch =
+			/\bdefensiveWorkrate\s*:\s*(?:"([^"]+)"|([a-z]+|null))/.exec(content);
 		if (wraSerMatch && wraSerMatch[1]) workrateAttack = wraSerMatch[1];
 		if (wrdSerMatch && wrdSerMatch[1]) workrateDefense = wrdSerMatch[1];
 	}
-
 
 	// 6. Differentiate standard Playstyles and Playstyles+ (Plus)
 	const playstylesPlus: string[] = [];
 	const playstylesSet = new Set<string>();
 	const playstylesPlusSet = new Set<string>();
 
-	const playstyleBlockRegex = /<div class="relative table[^"]*">([\s\S]*?)<span class="overflow-hidden">([^<]+)<\/span>/g;
+	const playstyleBlockRegex =
+		/<div class="relative table[^"]*">([\s\S]*?)<span class="overflow-hidden">([^<]+)<\/span>/g;
 	let psMatch;
 	while ((psMatch = playstyleBlockRegex.exec(content)) !== null) {
 		const block = psMatch[1];
@@ -278,7 +280,9 @@ export async function scrapeFutGgPlayer(
 
 	// 7. Parse Biology, Card Attributes, and Detailed Stats from serialized state
 	const overallMatch = /\boverall\s*:\s*(\d+)/.exec(content);
-	const overallRating = overallMatch ? parseInt(overallMatch[1], 10) : undefined;
+	const overallRating = overallMatch
+		? parseInt(overallMatch[1], 10)
+		: undefined;
 
 	const dobMatch = /\bdateOfBirth\s*:\s*"([^"]+)"/.exec(content);
 	const dateOfBirth = dobMatch ? dobMatch[1] : undefined;
@@ -302,34 +306,82 @@ export async function scrapeFutGgPlayer(
 		}
 	}
 
-	const altPosMatch = /alternativePositions\s*:\s*(?:\$R\[\d+\]\s*=\s*)?(\[[^\]]*\])/.exec(content);
+	const altPosMatch =
+		/alternativePositions\s*:\s*(?:\$R\[\d+\]\s*=\s*)?(\[[^\]]*\])/.exec(
+			content,
+		);
 	let alternativePositions: string[] = [];
 	if (altPosMatch && altPosMatch[1]) {
 		try {
-			alternativePositions = JSON.parse(altPosMatch[1].replace(/'/g, '"').replace(/!1/g, "false").replace(/!0/g, "true"));
+			alternativePositions = JSON.parse(
+				altPosMatch[1]
+					.replace(/'/g, '"')
+					.replace(/!1/g, "false")
+					.replace(/!0/g, "true"),
+			);
 		} catch {}
 	}
 
-	const rarityMatch = /Rarity<\/span><span[^>]*>(?:<[^>]+>)*\s*([^<]+)\s*(?:<\/[^>]+>)*\s*<\/span>/i.exec(content);
+	const rarityMatch =
+		/Rarity<\/span><span[^>]*>(?:<[^>]+>)*\s*([^<]+)\s*(?:<\/[^>]+>)*\s*<\/span>/i.exec(
+			content,
+		);
 	const rarity = rarityMatch ? rarityMatch[1].trim() : undefined;
 
-	const accMatch = /AcceleRATE<\/span><span[^>]*>\s*([^<]+)\s*<\/span>/i.exec(content);
+	const accMatch = /AcceleRATE<\/span><span[^>]*>\s*([^<]+)\s*<\/span>/i.exec(
+		content,
+	);
 	const accelerateType = accMatch ? accMatch[1].trim() : undefined;
 
 	const isWomenMatch = /\bisWomen\s*:\s*(![01]|true|false)/.exec(content);
-	const gender = isWomenMatch && (isWomenMatch[1] === "!0" || isWomenMatch[1] === "true") ? "Women" : "Men";
+	const gender =
+		isWomenMatch && (isWomenMatch[1] === "!0" || isWomenMatch[1] === "true")
+			? "Women"
+			: "Men";
 
 	const subStats: Record<string, number> = {};
 	const subStatNames = [
-		"Acceleration", "SprintSpeed", "Agility", "Balance", "Reactions", "BallControl",
-		"Dribbling", "Composure", "Jumping", "Stamina", "Strength", "Aggression",
-		"Interceptions", "HeadingAccuracy", "DefensiveAwareness", "StandingTackle", "SlidingTackle",
-		"Vision", "Crossing", "FkAccuracy", "ShortPassing", "LongPassing", "Curve",
-		"Positioning", "Finishing", "ShotPower", "LongShots", "Volleys", "Penalties",
-		"GkDiving", "GkHandling", "GkKicking", "GkReflexes", "GkPositioning", "GkSpeed"
+		"Acceleration",
+		"SprintSpeed",
+		"Agility",
+		"Balance",
+		"Reactions",
+		"BallControl",
+		"Dribbling",
+		"Composure",
+		"Jumping",
+		"Stamina",
+		"Strength",
+		"Aggression",
+		"Interceptions",
+		"HeadingAccuracy",
+		"DefensiveAwareness",
+		"StandingTackle",
+		"SlidingTackle",
+		"Vision",
+		"Crossing",
+		"FkAccuracy",
+		"ShortPassing",
+		"LongPassing",
+		"Curve",
+		"Positioning",
+		"Finishing",
+		"ShotPower",
+		"LongShots",
+		"Volleys",
+		"Penalties",
+		"GkDiving",
+		"GkHandling",
+		"GkKicking",
+		"GkReflexes",
+		"GkPositioning",
+		"GkSpeed",
 	];
 	for (const statName of subStatNames) {
-		const match = new RegExp(`\\battribute${statName}\\s*:\\s*(\\d+)`, "i").exec(content);
+		const match = new RegExp(
+			`\\battribute${statName}\\s*:\\s*(\\d+)`,
+			"i",
+		).exec(content);
 		if (match && match[1]) {
 			const key = statName.charAt(0).toLowerCase() + statName.slice(1);
 			subStats[key] = parseInt(match[1], 10);
@@ -413,4 +465,3 @@ export async function scrapeFutGgPlayer(
 		gkSpeed: subStats.gkSpeed,
 	};
 }
-

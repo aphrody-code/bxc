@@ -41,7 +41,7 @@ export interface FutPlayer {
 	workrateAttack?: string;
 	workrateDefense?: string;
 	isGeneric?: boolean;
-	
+
 	// Biology/card attributes
 	overallRating?: number;
 	dateOfBirth?: string;
@@ -91,7 +91,6 @@ export interface FutPlayer {
 	gkPositioning?: number;
 	gkSpeed?: number;
 }
-
 
 export interface FutPrice {
 	url: string;
