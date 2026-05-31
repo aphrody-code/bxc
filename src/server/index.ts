@@ -6,6 +6,7 @@ import { logger } from "@bogeychan/elysia-logger";
 import { createYoga } from "graphql-yoga";
 import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
+import { FutResolver } from "./graphql/resolvers/FutResolver.ts";
 import { Browser } from "../api/browser.ts";
 
 function classifyPlayer(player: any) {
@@ -45,7 +46,7 @@ function classifyPlayer(player: any) {
 async function bootstrap() {
 	// 1. Build Type-GraphQL Schema
 	const schema = await buildSchema({
-		resolvers: [ScrapeResolver],
+		resolvers: [ScrapeResolver, FutResolver],
 		validate: false,
 	});
 

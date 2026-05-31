@@ -208,44 +208,72 @@ export async function scrapeFutGgPlayer(
 
 	// 6. Differentiate standard Playstyles and Playstyles+ (Plus)
 	const playstylesPlus: string[] = [];
-	const KNOWN_PLAYSTYLES = [
-		"Jockey",
-		"Intercept",
-		"Anticipate",
-		"Block",
-		"Bruiser",
-		"Slide Tackle",
-		"Power Header",
-		"Finesse Shot",
-		"Power Shot",
-		"Dead Ball",
-		"Chip Shot",
-		"Pinged Pass",
-		"Incisive Pass",
-		"Long Ball Pass",
-		"Tiki Taka",
-		"Whipped Pass",
-		"First Touch",
-		"Flair",
-		"Press Proven",
-		"Rapid",
-		"Technical",
-		"Trickster",
-		"Quick Step",
-		"Relentless",
-		"Trivela",
-		"Acrobatic",
-	];
-	for (const ps of KNOWN_PLAYSTYLES) {
-		const plusRegex = new RegExp(`\\b${ps}\\+|\\b${ps}\\s+Plus\\b`, "i");
-		if (plusRegex.test(content)) {
-			playstylesPlus.push(ps);
+	const playstylesSet = new Set<string>();
+	const playstylesPlusSet = new Set<string>();
+
+	const playstyleBlockRegex = /<div class="relative table[^"]*">([\s\S]*?)<span class="overflow-hidden">([^<]+)<\/span>/g;
+	let psMatch;
+	while ((psMatch = playstyleBlockRegex.exec(content)) !== null) {
+		const block = psMatch[1];
+		const name = psMatch[2].trim();
+		if (block.toLowerCase().includes("#e3c075")) {
+			playstylesPlusSet.add(name);
 		} else {
-			const normalRegex = new RegExp(`\\b${ps}\\b`, "i");
-			if (normalRegex.test(content)) {
-				playstyles.push(ps);
+			playstylesSet.add(name);
+		}
+	}
+
+	// Fallback to regex checks if HTML structure parsing found nothing (e.g. mock HTML or altered markup)
+	if (playstylesSet.size === 0 && playstylesPlusSet.size === 0) {
+		const KNOWN_PLAYSTYLES = [
+			"Jockey",
+			"Intercept",
+			"Anticipate",
+			"Block",
+			"Bruiser",
+			"Slide Tackle",
+			"Power Header",
+			"Finesse Shot",
+			"Power Shot",
+			"Dead Ball",
+			"Chip Shot",
+			"Pinged Pass",
+			"Incisive Pass",
+			"Long Ball Pass",
+			"Long Ball",
+			"Tiki Taka",
+			"Whipped Pass",
+			"First Touch",
+			"Flair",
+			"Press Proven",
+			"Rapid",
+			"Technical",
+			"Trickster",
+			"Quick Step",
+			"Relentless",
+			"Trivela",
+			"Acrobatic",
+			"Aerial",
+			"Aerial Fortress",
+		];
+		for (const ps of KNOWN_PLAYSTYLES) {
+			const plusRegex = new RegExp(`\\b${ps}\\+|\\b${ps}\\s+Plus\\b`, "i");
+			if (plusRegex.test(content)) {
+				playstylesPlusSet.add(ps);
+			} else {
+				const normalRegex = new RegExp(`\\b${ps}\\b`, "i");
+				if (normalRegex.test(content)) {
+					playstylesSet.add(ps);
+				}
 			}
 		}
+	}
+
+	for (const ps of playstylesSet) {
+		playstyles.push(ps);
+	}
+	for (const ps of playstylesPlusSet) {
+		playstylesPlus.push(ps);
 	}
 
 	// 7. Parse Biology, Card Attributes, and Detailed Stats from serialized state
