@@ -12,7 +12,7 @@ The Bxc FUT Engine is a specialized sub-module designed to scrape, clean, and se
          [ FUT.gg Scraper ]      [ FUTBin Scraper ]       [ EA Web App Client ]
                  │                       │                        │
                  ▼                       ▼                        ▼
-           Profile: static         Profile: ghost           Profile: http
+           Profile: static         Profile: stealth         Profile: http
 ```
 
 ---
@@ -26,11 +26,11 @@ To ensure high reliability on resource-constrained servers, Bxc uses a dynamic r
    - **Strategy**: Can be read using static DOM query selectors without executing heavy JavaScript.
 
 2. **FUTBin (High Challenge)**
-   - **Profile**: `ghost`
-   - **Strategy**: Uses Lightpanda backed by a custom stealth injection suite (`navigator.webdriver` removal, realistic screen dimensions, and locale overrides) to pass Cloudflare Turnstile verification.
+   - **Profile**: `stealth`
+   - **Strategy**: Uses Lightpanda/Bxc-Engine backed by a custom stealth injection suite (`navigator.webdriver` removal, realistic screen dimensions, and locale overrides) to pass Cloudflare Turnstile verification.
 
 3. **EA Sports FC Web App (Medium Challenge / SPA)**
-   - **Profile**: `http` (with pre-authenticated cookies) or `ghost`
+   - **Profile**: `http` (with pre-authenticated cookies) or `stealth`
    - **Strategy**: Bypasses Akamai Edge filtering and uses pre-auth cookie injection for API calls.
 
 ---
