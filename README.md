@@ -114,8 +114,13 @@ bun run build:linux          # Rust cdylib + standalone binary (Linux)
 cargo build -p bxc-rust-bridge --release   # → rust-bridge/target/release/libbxc_rust_bridge.{so,dylib,dll}
 ```
 
-**You don't need the Rust toolchain to get started.** The libraries are
-`dlopen`-ed lazily on first use, so:
+**You don't need the Rust toolchain to get started.** When using the compiled standalone binaries (built via `bun scripts/build-standalone.ts`), all native dependencies (`libbxc_rust_bridge`, `libcurl-impersonate`, and the `lightpanda` browser binary) are **embedded directly** in the single executable file.
+
+At runtime:
+- On first use, Bxc **automatically extracts** these embedded binaries to `~/.bxc/bin/` with proper executable permissions.
+- Dynamic libraries are loaded (`dlopen`-ed) from this directory, making the standalone binary 100% self-contained, portable, and zero-install.
+- When running from source, the libraries are still loaded lazily from their dev paths (`rust-bridge/target/...` and `vendor/...`).
+- You can override these paths at any time using the environment variables `BXC_RUST_BRIDGE_LIB`, `LIBCURL_IMPERSONATE_PATH`, or `BXC_LIGHTPANDA_PATH`.
 
 - Importing the engine **never crashes** when a `.so` is absent.
 - `page.markdown()` and `bxc scrape --markdown` fall back to a
@@ -124,10 +129,6 @@ cargo build -p bxc-rust-bridge --release   # → rust-bridge/target/release/libb
 - Paths that genuinely require the native engine (CSS selector queries) surface
   an **actionable error** telling you exactly how to build it — never a cryptic
   FFI stack trace.
-
-Override the library location with `BXC_RUST_BRIDGE_LIB=/path/to/lib.so` (and
-`LIBCURL_IMPERSONATE_PATH` for the `http` profile) when shipping prebuilt
-binaries.
 
 ---
 
