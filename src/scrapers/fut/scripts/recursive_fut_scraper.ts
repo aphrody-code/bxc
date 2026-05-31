@@ -17,12 +17,20 @@
 import { scrapeFutGgPlayer } from "../futgg.ts";
 import { scrapeFutBinPrice } from "../futbin.ts";
 import { Browser } from "../../../api/browser.ts";
+import { launchGhostBrowser } from "../../../profiles/ghost/index.ts";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
-import pLimit from "p-limit";
 import Bottleneck from "bottleneck";
+import PQueue from "p-queue";
+import pRetry, { AbortError } from "p-retry";
+import { LRUCache } from "lru-cache";
 import { FutPlayerSchema, FutPriceSchema } from "../types.ts";
+
+const dnsCache = new LRUCache<string, string>({
+	max: 100,
+	ttl: 1000 * 60 * 10, // 10 minutes cache
+});
 
 const futggCookies = join(import.meta.dir, "../cookies/futgg.json");
 const hasFutggCookies = existsSync(futggCookies);
@@ -65,6 +73,89 @@ function getPlayerIdFromUrl(url: string): string {
 	return Bun.hash.wyhash(url).toString();
 }
 
+function getUrlPriority(url: string): number {
+	// Player endpoints get highest priority
+	if (
+		url.includes("/players/") &&
+		!url.endsWith("/players/") &&
+		!url.includes("?")
+	) {
+		return 2;
+	}
+	if (url.includes("/player/") && !url.endsWith("/player/")) {
+		return 2;
+	}
+	// Normal pages (listings, clubs, etc.)
+	if (
+		url.includes("/clubs/") ||
+		url.includes("/nations/") ||
+		url.includes("/leagues/")
+	) {
+		return 1;
+	}
+	// Default/other URLs
+	return 0;
+}
+
+async function fetchPageContentWithRetry(
+	url: string,
+	profile: "static" | "http" | "stealth" | "ghost" | "fast",
+	cookies?: string,
+): Promise<{ content: string; status: string }> {
+	return pRetry(
+		async () => {
+			if (profile === "ghost") {
+				const ghost = await launchGhostBrowser();
+				try {
+					const res = await ghost.page.goto(url);
+					await Bun.sleep(2000);
+					const content = await ghost.page.content();
+					const title = await ghost.page.title();
+					if (title.includes("Just a moment") || title.includes("Cloudflare")) {
+						throw new AbortError("Cloudflare Turnstile challenge detected");
+					}
+					if (res && res.status === 404) {
+						throw new AbortError(`404 Not Found: ${url}`);
+					}
+					return { content, status: "success" };
+				} finally {
+					await ghost.close();
+				}
+			} else {
+				const page = await Browser.newPage({
+					profile,
+					cookies,
+				});
+				try {
+					const res = await page.goto(url);
+					const title = await page.title();
+					if (title.includes("Just a moment") || title.includes("Cloudflare")) {
+						throw new AbortError("Cloudflare Turnstile challenge detected");
+					}
+					if (res && res.status === 404) {
+						throw new AbortError(`404 Not Found: ${url}`);
+					}
+					if (res && res.status >= 500) {
+						throw new Error(`Server error ${res.status}: ${url}`);
+					}
+					const content = await page.content();
+					return { content, status: "success" };
+				} finally {
+					await page.close();
+				}
+			}
+		},
+		{
+			retries: 2,
+			onFailedAttempt: (failedAttempt) => {
+				console.warn(
+					`  [Retry] Attempt ${failedAttempt.attemptNumber} failed for ${url}. ${failedAttempt.retriesLeft} retries left. Error: ${failedAttempt.error.message}`,
+				);
+			},
+		},
+	);
+}
+
 async function runRecursiveScraper() {
 	if (!RUN_LIVE) {
 		console.log(
@@ -84,7 +175,7 @@ async function runRecursiveScraper() {
 
 	// Collect allowed domains and seed URLs
 	const allowedDomains: string[] = [];
-	const queue: Array<{ url: string; depth: number }> = [];
+	const seedsToEnqueue: string[] = [];
 
 	for (const key of Object.keys(mapping)) {
 		const config = mapping[key];
@@ -93,7 +184,7 @@ async function runRecursiveScraper() {
 		}
 		const seeds = config.seed_urls || [];
 		for (const s of seeds) {
-			queue.push({ url: s, depth: 1 });
+			seedsToEnqueue.push(s);
 		}
 	}
 
@@ -345,24 +436,41 @@ async function runRecursiveScraper() {
 		minTime: DELAY_MS,
 	});
 
+	const pQueue = new PQueue({
+		concurrency: 3,
+	});
+
 	async function processUrl(current: { url: string; depth: number }) {
+		if (pagesCrawled >= MAX_PAGES) return;
 		// Visited lookup using Bun's native wyhash
 		const urlHash = Bun.hash.wyhash(current.url);
 		if (state.visitedHashes.has(urlHash)) return;
 		state.visitedHashes.add(urlHash);
 		pagesCrawled++;
+		if (pagesCrawled >= MAX_PAGES) {
+			pQueue.clear();
+		}
 
 		console.log(
-			`\n[${pagesCrawled}/${MAX_PAGES === Infinity ? "Unlimited" : MAX_PAGES}] Crawling Depth ${current.depth}: ${current.url}`,
+			`\n[${pagesCrawled}/${MAX_PAGES === Infinity ? "Unlimited" : MAX_PAGES}] Crawling Depth ${current.depth} (Priority: ${getUrlPriority(current.url)}): ${current.url}`,
 		);
 
-		// DNS lookup
+		// DNS lookup with LRU Cache
 		try {
 			const hostname = new URL(current.url).hostname;
-			const dnsResult = await Bun.dns.lookup(hostname);
-			console.log(
-				`  [DNS] Resolved hostname '${hostname}' to IP: ${dnsResult[0]?.address || "unknown"}`,
-			);
+			let resolvedIp = dnsCache.get(hostname);
+			if (!resolvedIp) {
+				const dnsResult = await Bun.dns.lookup(hostname);
+				resolvedIp = dnsResult[0]?.address || "unknown";
+				dnsCache.set(hostname, resolvedIp);
+				console.log(
+					`  [DNS] Resolved hostname '${hostname}' to IP: ${resolvedIp}`,
+				);
+			} else {
+				console.log(
+					`  [DNS Cache Hit] Hostname '${hostname}' resolved to IP: ${resolvedIp}`,
+				);
+			}
 		} catch (dnsErr: any) {
 			console.warn(
 				`  [DNS Warning] Failed to resolve hostname: ${dnsErr.message}`,
@@ -371,199 +479,175 @@ async function runRecursiveScraper() {
 
 		try {
 			let content = "";
-			let status = "success";
+			const status = "success";
 
 			if (current.url.includes("fut.gg")) {
 				if (
 					current.url.includes("/players/") &&
 					!current.url.endsWith("/players/")
 				) {
-					const page = await Browser.newPage({
-						profile: "static",
-						cookies: hasFutggCookies ? futggCookies : undefined,
-					});
-					try {
-						await page.goto(current.url);
-						content = await page.content();
-						state.success++;
+					const fetched = await fetchPageContentWithRetry(
+						current.url,
+						"static",
+						hasFutggCookies ? futggCookies : undefined,
+					);
+					content = fetched.content;
+					state.success++;
 
-						const player = await scrapeFutGgPlayer(content, "static");
-						if (player.isGeneric) {
-							console.log(
-								`  -> Skipping generic hub/listing page: ${player.name}`,
-							);
-						} else {
-							// Schema validation with Zod
-							const validatedPlayer = FutPlayerSchema.parse(player);
-							state.players.push(validatedPlayer);
-							console.log(
-								`  -> Extracted Player details:\n${Bun.inspect(validatedPlayer)}`,
-							);
-
-							// Persist to SQLite
-							(
-								insertPlayer as unknown as {
-									run: (
-										params: Record<
-											string,
-											string | number | bigint | boolean | null | undefined
-										>,
-									) => void;
-								}
-							).run({
-								$id: getPlayerIdFromUrl(current.url),
-								$name: validatedPlayer.name,
-								$rating: validatedPlayer.rating,
-								$position: validatedPlayer.position,
-								$club: validatedPlayer.club,
-								$nation: validatedPlayer.nation,
-								$league: validatedPlayer.league,
-								$playstyles: JSON.stringify(validatedPlayer.playstyles),
-								$playstyles_plus: JSON.stringify(
-									validatedPlayer.playstylesPlus || [],
-								),
-								$pac: validatedPlayer.pac,
-								$sho: validatedPlayer.sho,
-								$pas: validatedPlayer.pas,
-								$dri: validatedPlayer.dri,
-								$def: validatedPlayer.def,
-								$phy: validatedPlayer.phy,
-								$div: validatedPlayer.div,
-								$han: validatedPlayer.han,
-								$kic: validatedPlayer.kic,
-								$ref: validatedPlayer.ref,
-								$spd: validatedPlayer.spd,
-								$pos: validatedPlayer.pos,
-								$skill_moves: validatedPlayer.skillMoves,
-								$weak_foot: validatedPlayer.weakFoot,
-								$workrate_attack: validatedPlayer.workrateAttack,
-								$workrate_defense: validatedPlayer.workrateDefense,
-								$url: current.url,
-
-								$overall_rating: validatedPlayer.overallRating,
-								$date_of_birth: validatedPlayer.dateOfBirth,
-								$height: validatedPlayer.height,
-								$weight: validatedPlayer.weight,
-								$foot: validatedPlayer.foot,
-								$age: validatedPlayer.age,
-								$rarity: validatedPlayer.rarity,
-								$accelerate_type: validatedPlayer.accelerateType,
-								$gender: validatedPlayer.gender,
-								$alternative_positions: JSON.stringify(
-									validatedPlayer.alternativePositions || [],
-								),
-
-								$acceleration: validatedPlayer.acceleration,
-								$sprint_speed: validatedPlayer.sprintSpeed,
-								$agility: validatedPlayer.agility,
-								$balance: validatedPlayer.balance,
-								$reactions: validatedPlayer.reactions,
-								$ball_control: validatedPlayer.ballControl,
-								$dribbling: validatedPlayer.dribbling,
-								$composure: validatedPlayer.composure,
-								$jumping: validatedPlayer.jumping,
-								$stamina: validatedPlayer.stamina,
-								$strength: validatedPlayer.strength,
-								$aggression: validatedPlayer.aggression,
-								$interceptions: validatedPlayer.interceptions,
-								$heading_accuracy: validatedPlayer.headingAccuracy,
-								$defensive_awareness: validatedPlayer.defensiveAwareness,
-								$standing_tackle: validatedPlayer.standingTackle,
-								$sliding_tackle: validatedPlayer.slidingTackle,
-								$vision: validatedPlayer.vision,
-								$crossing: validatedPlayer.crossing,
-								$fk_accuracy: validatedPlayer.fkAccuracy,
-								$short_passing: validatedPlayer.shortPassing,
-								$long_passing: validatedPlayer.longPassing,
-								$curve: validatedPlayer.curve,
-								$positioning: validatedPlayer.positioning,
-								$finishing: validatedPlayer.finishing,
-								$shot_power: validatedPlayer.shotPower,
-								$long_shots: validatedPlayer.longShots,
-								$volleys: validatedPlayer.volleys,
-								$penalties: validatedPlayer.penalties,
-								$gk_diving: validatedPlayer.gkDiving,
-								$gk_handling: validatedPlayer.gkHandling,
-								$gk_kicking: validatedPlayer.gkKicking,
-								$gk_reflexes: validatedPlayer.gkReflexes,
-								$gk_positioning: validatedPlayer.gkPositioning,
-								$gk_speed: validatedPlayer.gkSpeed,
-							});
-						}
-					} finally {
-						await page.close();
-					}
-				} else {
-					const page = await Browser.newPage({
-						profile: "static",
-						cookies: hasFutggCookies ? futggCookies : undefined,
-					});
-					try {
-						await page.goto(current.url);
-						content = await page.content();
-						state.success++;
-					} finally {
-						await page.close();
-					}
-				}
-			} else if (current.url.includes("futbin.com")) {
-				if (current.url.includes("/player/")) {
-					const page = await Browser.newPage({
-						profile: "stealth",
-						cookies: hasFutbinCookies ? futbinCookies : undefined,
-					});
-					try {
-						await page.goto(current.url);
-						content = await page.content();
-						state.success++;
-
-						const price = await scrapeFutBinPrice(
-							content,
-							"ghost",
-							current.url,
-						);
-						// Schema validation with Zod
-						const validatedPrice = FutPriceSchema.parse(price);
-						state.prices.push(validatedPrice);
+					const player = await scrapeFutGgPlayer(content, "static");
+					if (player.isGeneric) {
 						console.log(
-							`  -> Extracted Price details:\n${Bun.inspect(validatedPrice)}`,
+							`  -> Skipping generic hub/listing page: ${player.name}`,
+						);
+					} else {
+						// Schema validation with Zod
+						const validatedPlayer = FutPlayerSchema.parse(player);
+						state.players.push(validatedPlayer);
+						console.log(
+							`  -> Extracted Player details:\n${Bun.inspect(validatedPlayer)}`,
 						);
 
 						// Persist to SQLite
-						insertPrice.run({
+						(
+							insertPlayer as unknown as {
+								run: (
+									params: Record<
+										string,
+										string | number | bigint | boolean | null | undefined
+									>,
+								) => void;
+							}
+						).run({
+							$id: getPlayerIdFromUrl(current.url),
+							$name: validatedPlayer.name,
+							$rating: validatedPlayer.rating,
+							$position: validatedPlayer.position,
+							$club: validatedPlayer.club,
+							$nation: validatedPlayer.nation,
+							$league: validatedPlayer.league,
+							$playstyles: JSON.stringify(validatedPlayer.playstyles),
+							$playstyles_plus: JSON.stringify(
+								validatedPlayer.playstylesPlus || [],
+							),
+							$pac: validatedPlayer.pac,
+							$sho: validatedPlayer.sho,
+							$pas: validatedPlayer.pas,
+							$dri: validatedPlayer.dri,
+							$def: validatedPlayer.def,
+							$phy: validatedPlayer.phy,
+							$div: validatedPlayer.div,
+							$han: validatedPlayer.han,
+							$kic: validatedPlayer.kic,
+							$ref: validatedPlayer.ref,
+							$spd: validatedPlayer.spd,
+							$pos: validatedPlayer.pos,
+							$skill_moves: validatedPlayer.skillMoves,
+							$weak_foot: validatedPlayer.weakFoot,
+							$workrate_attack: validatedPlayer.workrateAttack,
+							$workrate_defense: validatedPlayer.workrateDefense,
 							$url: current.url,
-							$price: validatedPrice.price,
-							$last_updated: validatedPrice.lastUpdated,
+
+							$overall_rating: validatedPlayer.overallRating,
+							$date_of_birth: validatedPlayer.dateOfBirth,
+							$height: validatedPlayer.height,
+							$weight: validatedPlayer.weight,
+							$foot: validatedPlayer.foot,
+							$age: validatedPlayer.age,
+							$rarity: validatedPlayer.rarity,
+							$accelerate_type: validatedPlayer.accelerateType,
+							$gender: validatedPlayer.gender,
+							$alternative_positions: JSON.stringify(
+								validatedPlayer.alternativePositions || [],
+							),
+
+							$acceleration: validatedPlayer.acceleration,
+							$sprint_speed: validatedPlayer.sprintSpeed,
+							$agility: validatedPlayer.agility,
+							$balance: validatedPlayer.balance,
+							$reactions: validatedPlayer.reactions,
+							$ball_control: validatedPlayer.ballControl,
+							$dribbling: validatedPlayer.dribbling,
+							$composure: validatedPlayer.composure,
+							$jumping: validatedPlayer.jumping,
+							$stamina: validatedPlayer.stamina,
+							$strength: validatedPlayer.strength,
+							$aggression: validatedPlayer.aggression,
+							$interceptions: validatedPlayer.interceptions,
+							$heading_accuracy: validatedPlayer.headingAccuracy,
+							$defensive_awareness: validatedPlayer.defensiveAwareness,
+							$standing_tackle: validatedPlayer.standingTackle,
+							$sliding_tackle: validatedPlayer.slidingTackle,
+							$vision: validatedPlayer.vision,
+							$crossing: validatedPlayer.crossing,
+							$fk_accuracy: validatedPlayer.fkAccuracy,
+							$short_passing: validatedPlayer.shortPassing,
+							$long_passing: validatedPlayer.longPassing,
+							$curve: validatedPlayer.curve,
+							$positioning: validatedPlayer.positioning,
+							$finishing: validatedPlayer.finishing,
+							$shot_power: validatedPlayer.shotPower,
+							$long_shots: validatedPlayer.longShots,
+							$volleys: validatedPlayer.volleys,
+							$penalties: validatedPlayer.penalties,
+							$gk_diving: validatedPlayer.gkDiving,
+							$gk_handling: validatedPlayer.gkHandling,
+							$gk_kicking: validatedPlayer.gkKicking,
+							$gk_reflexes: validatedPlayer.gkReflexes,
+							$gk_positioning: validatedPlayer.gkPositioning,
+							$gk_speed: validatedPlayer.gkSpeed,
 						});
-					} finally {
-						await page.close();
 					}
 				} else {
-					const page = await Browser.newPage({
-						profile: "http",
-						cookies: hasFutbinCookies ? futbinCookies : undefined,
+					const fetched = await fetchPageContentWithRetry(
+						current.url,
+						"static",
+						hasFutggCookies ? futggCookies : undefined,
+					);
+					content = fetched.content;
+					state.success++;
+				}
+			} else if (current.url.includes("futbin.com")) {
+				if (current.url.includes("/player/")) {
+					const fetched = await fetchPageContentWithRetry(
+						current.url,
+						"stealth",
+						hasFutbinCookies ? futbinCookies : undefined,
+					);
+					content = fetched.content;
+					state.success++;
+
+					const price = await scrapeFutBinPrice(content, "ghost", current.url);
+					// Schema validation with Zod
+					const validatedPrice = FutPriceSchema.parse(price);
+					state.prices.push(validatedPrice);
+					console.log(
+						`  -> Extracted Price details:\n${Bun.inspect(validatedPrice)}`,
+					);
+
+					// Persist to SQLite
+					insertPrice.run({
+						$url: current.url,
+						$price: validatedPrice.price,
+						$last_updated: validatedPrice.lastUpdated,
 					});
-					try {
-						await page.goto(current.url);
-						content = await page.content();
-						state.success++;
-					} finally {
-						await page.close();
-					}
+				} else {
+					const fetched = await fetchPageContentWithRetry(
+						current.url,
+						"http",
+						hasFutbinCookies ? futbinCookies : undefined,
+					);
+					content = fetched.content;
+					state.success++;
 				}
 			} else if (current.url.includes("ea.com")) {
-				const page = await Browser.newPage({
-					profile: "http",
-					cookies: hasEaCookies ? eaCookies : undefined,
-				});
-				try {
-					const res = await page.goto(current.url);
-					state.success++;
-					content = await page.content();
-					console.log(`  -> EA UT HTTP Status: ${res.status}`);
-				} finally {
-					await page.close();
-				}
+				const fetched = await fetchPageContentWithRetry(
+					current.url,
+					"http",
+					hasEaCookies ? eaCookies : undefined,
+				);
+				content = fetched.content;
+				state.success++;
+				console.log(`  -> EA UT page successfully fetched.`);
 			}
 
 			// Save visited URL state
@@ -584,11 +668,8 @@ async function runRecursiveScraper() {
 				let newLinksCount = 0;
 				for (const link of links) {
 					const linkHash = Bun.hash.wyhash(link);
-					if (
-						!state.visitedHashes.has(linkHash) &&
-						queue.every((q) => q.url !== link)
-					) {
-						queue.push({ url: link, depth: current.depth + 1 });
+					if (!state.visitedHashes.has(linkHash)) {
+						enqueueUrl(link, current.depth + 1);
 						newLinksCount++;
 					}
 				}
@@ -621,41 +702,29 @@ async function runRecursiveScraper() {
 		}
 	}
 
-	const activePromises: Promise<void>[] = [];
+	function enqueueUrl(url: string, depth: number) {
+		if (pagesCrawled >= MAX_PAGES || depth > MAX_DEPTH) {
+			return;
+		}
+		const urlHash = Bun.hash.wyhash(url);
+		if (state.visitedHashes.has(urlHash)) return;
 
-	while (
-		(queue.length > 0 || activePromises.length > 0) &&
-		pagesCrawled < MAX_PAGES
-	) {
-		// Fill active slots up to concurrency limit of 3
-		while (
-			queue.length > 0 &&
-			activePromises.length < 3 &&
-			pagesCrawled < MAX_PAGES
-		) {
-			const current = queue.shift();
-			if (!current) continue;
-
-			// Quick check to avoid launching redundant tasks
-			const urlHash = Bun.hash.wyhash(current.url);
-			if (state.visitedHashes.has(urlHash)) continue;
-
-			// Wrap and schedule the scrape task with Bottleneck + p-limit
-			const p = limiter.schedule(() => processUrl(current));
-			activePromises.push(p);
-
-			p.finally(() => {
-				const index = activePromises.indexOf(p);
-				if (index > -1) {
-					activePromises.splice(index, 1);
-				}
+		pQueue
+			.add(() => limiter.schedule(() => processUrl({ url, depth })), {
+				priority: getUrlPriority(url),
+			})
+			.catch((err) => {
+				console.error(`Queue task failed for URL ${url}: ${err.message}`);
 			});
-		}
-
-		if (activePromises.length > 0) {
-			await Promise.race(activePromises);
-		}
 	}
+
+	// Enqueue all seed URLs
+	for (const s of seedsToEnqueue) {
+		enqueueUrl(s, 1);
+	}
+
+	// Wait for the queue to become idle
+	await pQueue.onIdle();
 
 	// Final save to JSON database
 	await saveJsonDatabase(state);

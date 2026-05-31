@@ -96,7 +96,10 @@
 		"elysia": "^1.4.28",
 		"graphql": "^16.14.0",
 		"graphql-yoga": "^5.21.0",
+		"lru-cache": "^11.5.1",
 		"p-limit": "^7.3.0",
+		"p-queue": "^9.3.0",
+		"p-retry": "^8.0.0",
 		"reflect-metadata": "^0.2.2",
 		"type-graphql": "^2.0.0-rc.3",
 		"zod": "^4.4.3"
