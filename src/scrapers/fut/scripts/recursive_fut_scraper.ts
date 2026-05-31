@@ -396,9 +396,16 @@ async function runRecursiveScraper() {
 							);
 
 							// Persist to SQLite
-							(insertPlayer as unknown as {
-								run: (params: Record<string, string | number | bigint | boolean | null | undefined>) => void;
-							}).run({
+							(
+								insertPlayer as unknown as {
+									run: (
+										params: Record<
+											string,
+											string | number | bigint | boolean | null | undefined
+										>,
+									) => void;
+								}
+							).run({
 								$id: getPlayerIdFromUrl(current.url),
 								$name: player.name,
 								$rating: player.rating,
