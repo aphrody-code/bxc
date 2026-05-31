@@ -169,6 +169,78 @@ zig build -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseFast
 
 Aucun MSVC requis — Zig embarque tout. NB : `zig build` peut prendre 15-30 min la première fois (V8 build).
 
+### 3.5 Pourquoi Lightpanda Windows est complexe
+
+Lightpanda combine :
+- **Zig** pour le runtime, le DOM et la stack réseau.
+- **WebKit jsruntime** (V8 fork) pour l'exécution JavaScript.
+- **libxml2** et **libcurl** pour le parsing HTML et fetch.
+
+Sur Linux et macOS, Lightpanda publie des prebuilts WebKit/V8 hermétiques. Sur Windows, ces prebuilts n'existent pas nativement (GNU/MSVC). Deux alternatives :
+1. Cross-compiler avec `zig build -Dtarget=x86_64-windows-gnu` — **fonctionne pour le runtime de base**, mais l'intégration V8 est manquante sans prebuilt V8 pour Mingw-w64.
+2. Skipper Lightpanda et utiliser Bxc en mode dégradé (`static`/`http` profiles).
+
+### 3.6 Erreurs typiques et résolutions
+
+#### 1. `@import` of ZON must have a known result type
+Zig 0.13+ a introduit des changements sur les imports ZON. Si vous utilisez Zig 0.14 :
+- **Option A** : Pinnez le tag Lightpanda testé :
+  ```bash
+  git -C ~/lightpanda checkout v0.5.0
+  ```
+- **Option B** : Mettez à jour vers Zig Master.
+
+#### 4.2 `error: unable to find dynamic system library 'WebKitJSRuntime'`
+Prebuilt V8 manquant pour Windows :
+- **Option A** : Skipper Lightpanda côté bxc :
+  ```bash
+  bun scripts/build-windows.ts --skip-lightpanda
+  ```
+- **Option B** : Compiler V8 à la main depuis les sources (compilation longue de 4-8h, non recommandé).
+- **Option C** : Attendre que l'upstream publie des builds Windows stables.
+
+#### 4.3 `LINK : fatal error LNK1181: cannot open input file 'kernel32.lib'`
+Toolchain Windows-MSVC mal détectée. Forcer les chemins SDK :
+```powershell
+$env:WindowsSdkDir = "C:\Program Files (x86)\Windows Kits\10"
+$env:VCToolsInstallDir = "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.40.33807"
+zig build -Dtarget=x86_64-windows-msvc
+```
+Préférer `x86_64-windows-gnu` pour éviter de dépendre de MSVC localement.
+
+#### 4.4 Le binaire fonctionne sur Windows 11 mais pas Windows 10
+Bxc et Lightpanda requièrent au minimum **Windows 10 Build 17763 (1809)** (tout comme le runtime Bun).
+
+### 3.7 Test post-build et intégration Bxc
+
+Pour valider Lightpanda sur Windows :
+```powershell
+.\lightpanda.exe serve --port 9222
+```
+Puis tester l'attachement via Bxc :
+```powershell
+bxc scrape https://google.com --profile fast --lightpanda-path .\lightpanda.exe
+```
+
+### 3.8 Roadmap upstream à surveiller
+
+| Feature | Statut | Note |
+|---|---|---|
+| Lightpanda `aarch64-windows` | non démarré | demande V8 ARM64 prebuilts |
+| Lightpanda `windows-msvc` | exploratoire | dépend du build WebKit MSVC |
+| `-Dno-v8` flag (skip JS engine) | à proposer | utile pour bxc `static` profile |
+| Static linking V8 sur Windows | en cours upstream | dépend de webkit2gtk-windows team |
+
+### 3.9 Fork-et-patch local (last resort)
+
+Si vous devez forcer un build Lightpanda :
+```bash
+git clone https://developers.google.com/lightpanda-io/browser.git ~/lightpanda-fork
+cd ~/lightpanda-fork
+# Stubber les sections V8/WebKit pour contourner le linker
+zig build -Dtarget=x86_64-windows-gnu -Doptimize=Debug
+```
+
 ---
 
 ## 4. agent-browser — `cargo xwin` (Rust)
