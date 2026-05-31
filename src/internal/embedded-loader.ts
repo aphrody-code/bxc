@@ -20,6 +20,7 @@ import {
 	mkdirSync,
 	statSync,
 	renameSync,
+	chmodSync,
 } from "node:fs";
 import { join } from "node:path";
 import { hasEmbedded } from "../rust/embedded-assets.ts";
@@ -35,6 +36,7 @@ import { hasEmbedded } from "../rust/embedded-assets.ts";
 export function extractEmbeddedAssetIfNeeded(
 	assetPath: string,
 	filename: string,
+	makeExecutable: boolean = false,
 ): string {
 	if (!hasEmbedded || !assetPath) {
 		return assetPath;
@@ -63,6 +65,9 @@ export function extractEmbeddedAssetIfNeeded(
 		const data = readFileSync(assetPath);
 		const tmpPath = `${targetPath}.tmp.${process.pid}`;
 		writeFileSync(tmpPath, data);
+		if (makeExecutable) {
+			chmodSync(tmpPath, 0o755);
+		}
 		renameSync(tmpPath, targetPath);
 
 		return targetPath;

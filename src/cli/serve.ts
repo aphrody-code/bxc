@@ -50,6 +50,8 @@
 import type { Server, ServerWebSocket } from "bun";
 import { type CommonOptions } from "./shared.ts";
 import type { CDPEvent } from "../transport/InProcessTransport.ts";
+import { hasEmbedded, lightpandaAsset } from "../rust/embedded-assets.ts";
+import { extractEmbeddedAssetIfNeeded } from "../internal/embedded-loader.ts";
 // NOTE: StaticDomTransport and HttpProfileTransport are loaded lazily via
 // dynamic import inside startStatic / startHttp.  This prevents FFI libraries
 // (zigquery cdylib, curl-impersonate) from loading when the user picks
@@ -416,6 +418,17 @@ interface FastState {
 async function findLightpandaBinary(): Promise<string> {
 	if (Bun.env.BXC_LIGHTPANDA_PATH) {
 		return Bun.env.BXC_LIGHTPANDA_PATH;
+	}
+
+	if (hasEmbedded && lightpandaAsset) {
+		try {
+			const extracted = extractEmbeddedAssetIfNeeded(lightpandaAsset, "lightpanda", true);
+			if (extracted && Bun.file(extracted).size > 0) {
+				return extracted;
+			}
+		} catch (err) {
+			console.warn(`[bxc] Failed to load/extract embedded lightpanda:`, err);
+		}
 	}
 
 	const home = Bun.env.HOME ?? "";
