@@ -149,12 +149,19 @@ export class Locator {
 	async count(): Promise<number> {
 		let resolvedSelector = this.#selector;
 		if (resolvedSelector.startsWith("@semantic:")) {
-			const query = resolvedSelector.slice("@semantic:".length).toLowerCase().trim();
+			const query = resolvedSelector
+				.slice("@semantic:".length)
+				.toLowerCase()
+				.trim();
 			if (query.includes("button")) {
 				resolvedSelector = "button";
 			} else if (query.includes("link") || query.includes("signup")) {
 				resolvedSelector = "a";
-			} else if (query.includes("input") || query.includes("textbox") || query.includes("field")) {
+			} else if (
+				query.includes("input") ||
+				query.includes("textbox") ||
+				query.includes("field")
+			) {
 				resolvedSelector = "input";
 			} else {
 				resolvedSelector = "*";
@@ -212,12 +219,19 @@ export class Locator {
 
 		let resolvedSelector = this.#selector;
 		if (resolvedSelector.startsWith("@semantic:")) {
-			const query = resolvedSelector.slice("@semantic:".length).toLowerCase().trim();
+			const query = resolvedSelector
+				.slice("@semantic:".length)
+				.toLowerCase()
+				.trim();
 			if (query.includes("button")) {
 				resolvedSelector = "button";
 			} else if (query.includes("link") || query.includes("signup")) {
 				resolvedSelector = "a";
-			} else if (query.includes("input") || query.includes("textbox") || query.includes("field")) {
+			} else if (
+				query.includes("input") ||
+				query.includes("textbox") ||
+				query.includes("field")
+			) {
 				resolvedSelector = "input";
 			} else {
 				resolvedSelector = "*";

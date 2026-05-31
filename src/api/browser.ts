@@ -1476,6 +1476,8 @@ class BrowserSingleton {
 			);
 			const fullTransport = await WebSocketTransport.create({
 				headless: opts.headless,
+				insecure: opts.insecure,
+				...opts.spawnOpts,
 			});
 			const page = await Page.create(fullTransport, opts, context);
 			this.#pages.push(page);

@@ -444,6 +444,92 @@ describe("Error handling", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Test 8 — Added libcurl features (Auth, HTTP Version, CookieJar, Verbose)
+// ---------------------------------------------------------------------------
+
+describe("Advanced libcurl features", () => {
+	test("Server Authentication (auth option)", async () => {
+		if (!LIB_PRESENT || !NETWORK_OK) return;
+
+		// Correct credentials
+		const res = await client.fetch(
+			"https://httpbin.org/basic-auth/user/passwd",
+			{
+				auth: "user:passwd",
+			},
+		);
+		expect(res.status).toBe(200);
+
+		// Incorrect credentials should fail (HTTP 401)
+		const resFail = await client.fetch(
+			"https://httpbin.org/basic-auth/user/passwd",
+			{
+				auth: "wrong:wrong",
+			},
+		);
+		expect(resFail.status).toBe(401);
+	});
+
+	test("HTTP Version Forcing", async () => {
+		if (!LIB_PRESENT || !NETWORK_OK) return;
+
+		// Force HTTP/1.1
+		const res = await client.fetch("https://httpbin.org/get", {
+			httpVersion: "1.1",
+		});
+		expect(res.status).toBe(200);
+
+		// We check if we can force HTTP/2.0
+		const res2 = await client.fetch("https://httpbin.org/get", {
+			httpVersion: "2.0",
+		});
+		expect(res2.status).toBe(200);
+	});
+
+	test("Cookie Jar saving (cookieJarPath option)", async () => {
+		if (!LIB_PRESENT || !NETWORK_OK) return;
+
+		const jarPath = join(import.meta.dir, "../../tmp/test-cookiejar.txt");
+		const fs = require("node:fs");
+		if (fs.existsSync(jarPath)) fs.unlinkSync(jarPath);
+
+		// Initialize client with cookieJarPath
+		using jarClient = new ImpersonatedClient({
+			profile: "chrome131",
+			cookieJarPath: jarPath,
+		});
+
+		// Make request that sets a cookie
+		const res = await jarClient.fetch(
+			"https://httpbin.org/cookies/set?testcookie=jarvalue",
+		);
+		expect(res.status).toBe(200);
+
+		// Close client to flush cookie jar to disk
+		jarClient.close();
+
+		// Verify cookie jar file exists and contains the cookie
+		expect(fs.existsSync(jarPath)).toBe(true);
+		const contents = fs.readFileSync(jarPath, "utf8");
+		expect(contents).toContain("testcookie");
+		expect(contents).toContain("jarvalue");
+
+		// Cleanup
+		fs.unlinkSync(jarPath);
+	});
+
+	test("Verbose mode logging", async () => {
+		if (!LIB_PRESENT || !NETWORK_OK) return;
+
+		// Request with verbose logging enabled (mostly checks it does not crash)
+		const res = await client.fetch("https://httpbin.org/get", {
+			verbose: true,
+		});
+		expect(res.status).toBe(200);
+	});
+});
+
+// ---------------------------------------------------------------------------
 // Test 8 — Benchmark (informational, not a real test assertion)
 // ---------------------------------------------------------------------------
 

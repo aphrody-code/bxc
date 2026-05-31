@@ -75,3 +75,7 @@ src/scrapers/fut/data/*.sqlite
 src/scrapers/fut/data/*.sqlite-shm
 src/scrapers/fut/data/*.sqlite-wal
 src/scrapers/fut/data/fut_extracted_database.json
+
+# Temporary directories
+tmp/
+

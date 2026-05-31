@@ -183,14 +183,19 @@ async function camoufoxAvailable(): Promise<boolean> {
 // is always available when the FFI lib is present (which it is in this repo);
 // otherwise the API will throw on first newPage call and we surface it as fail.
 async function curlImpersonateAvailable(): Promise<boolean> {
+	if (
+		Bun.env.BXC_CURL_IMPERSONATE_LIB &&
+		(await fileExists(Bun.env.BXC_CURL_IMPERSONATE_LIB))
+	)
+		return true;
+	const root = new URL("../../", import.meta.url).pathname;
 	const candidates = [
-		Bun.env.BXC_CURL_IMPERSONATE_LIB,
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate.so.4",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate.so",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate-chrome.so.4.8.0",
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/curl-impersonate/libcurl-impersonate-chrome.so",
-	].filter(Boolean) as string[];
+		`${root}vendor/curl-impersonate/libcurl-impersonate.so.4.8.0`,
+		`${root}vendor/curl-impersonate/libcurl-impersonate.so.4`,
+		`${root}vendor/curl-impersonate/libcurl-impersonate.so`,
+		`${root}vendor/curl-impersonate/libcurl-impersonate-chrome.so.4.8.0`,
+		`${root}vendor/curl-impersonate/libcurl-impersonate-chrome.so`,
+	];
 	return (await anyExists(candidates)) !== null;
 }
 
