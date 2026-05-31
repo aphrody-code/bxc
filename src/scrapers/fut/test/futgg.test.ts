@@ -16,15 +16,15 @@
 
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { Browser } from "../../src/api/browser.ts";
-import { launchGhostBrowser } from "../../src/profiles/ghost/index.ts";
+import { Browser } from "../../../api/browser.ts";
+import { launchGhostBrowser } from "../../../profiles/ghost/index.ts";
 
 const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 const TEST_URL = "https://www.fut.gg/";
 
 // Helper to check if curl-impersonate FFI is available
 async function isHttpProfileAvailable(): Promise<boolean> {
-	const bxcDir = join(import.meta.dir, "../..");
+	const bxcDir = join(import.meta.dir, "../../../..");
 	const curlVendorDir = join(bxcDir, "vendor/curl-impersonate");
 	const curlCandidates = [
 		`${curlVendorDir}/libcurl-impersonate-chrome.so.4.8.0`,
