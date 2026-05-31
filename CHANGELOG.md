@@ -6,11 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
-## [Unreleased]
+## [0.5.4] - 2026-05-31
 
-### Removed
+### Added
 
-- Module `depot_tools` (`src/depot_tools/`, `python-bridge/depot_manager.py`, sous-module `vendor/depot_tools`) — depot_tools extrait en installation standalone hors du paquet
+- Script unifié [bxc-control.sh](file:///home/ubuntu/bxc/scripts/bxc-control.sh) pour l'automatisation des tâches de déploiement et d'administration sur le VPS (build, backup, déploiement, logs, et SSH tunnel).
+- Configuration [biome.json](file:///home/ubuntu/bxc/biome.json) pour formater l'intégralité du projet en ignorant les répertoires tiers (`vendor/`, `tmp/`, `dist/`).
+
+### Fixed
+
+- Résolution d'un bug de double démarrage du serveur CDP sur le port 9222 dans [serve.ts](file:///home/ubuntu/bxc/src/cli/serve.ts#L969-L975) lors de l'import du module par le routeur principal, via l'ajout d'une garde `import.meta.main`.
+- Correction des permissions du dossier `/var/log/bxc/` pour permettre à l'utilisateur `ubuntu` d'écrire dans les logs du service systemd.
+- Vérification complète de la compilation cross-platform sur Linux, Windows MSVC, et WebAssembly (`wasm32-unknown-unknown` sur `bxc-rust-bridge` et `obscura-dom`).
+
+### Documentation
+
+- Fusion complète des notes techniques de Lightpanda Windows dans le guide centralisé [BUILD-WINDOWS.md](file:///home/ubuntu/bxc/docs/BUILD-WINDOWS.md) et suppression du fichier doublon `docs/LIGHTPANDA-WINDOWS.md`.
+- Mise à jour de [CLAUDE.md](file:///home/ubuntu/bxc/CLAUDE.md) pour y documenter la procédure de mise à jour automatisée de version.
 
 ## [0.5.3] - 2026-05-29
 

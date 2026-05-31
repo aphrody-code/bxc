@@ -35,11 +35,20 @@
 Bxc is designed for high-concurrency agentic workflows. It solves the "Heavy Browser" problem by moving the DOM and network layers directly into the Bun runtime memory space.
 
 ### 🧩 MCP Server Capabilities
-Bxc ships with a native **Model Context Protocol (MCP)** server (`src/mcp/server.ts`). AI agents can use it to:
-- **`tune_memory_sqlite`**: Structured project memory storage (faster than text).
-- **`bxc_scrape_markdown`**: Convert any URL to clean GFM Markdown for minimal token usage.
-- **`bxc_cdp_evaluate`**: Execute sandboxed JavaScript in a high-stealth environment.
-- **`bxc_detect_frameworks`**: Deep tech-stack analysis (Wiz, Angular, React, etc.).
+Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/mcp/server.ts`). AI agents can use it to:
+* **`tune_memory_sqlite`**: Structured project memory storage (faster than text).
+* **`bxc_scrape_markdown`**: Convert any URL to clean GFM Markdown.
+* **`bxc_detect_frameworks`**: Deep tech-stack analysis (Wiz, Angular, React, etc.).
+* **`bxc_cdp_evaluate`**: Execute sandboxed JavaScript in a high-stealth environment.
+* **`bxc_search`**: Powerful Google Web Search with rich snippet options.
+* **`bxc_google_fetch`**: Fetches markdown and structured metadata (JSON-LD, OG, Meta tags).
+* **`bxc_wbo_rankings` / `bxc_wbo_metagame`**: Query WBO player rankings and Beyblade X metagame stats.
+* **`bxc_recon`**: Full one-shot URL reconnaissance (CDN, headers, frameworks, CSS selectors sample, assets).
+* **`bxc_mirror`**: Download and mirror a complete site layout locally.
+* **`bxc_challonge`**: Extract a structured typed snapshot of any Challonge tournament page.
+* **`bxc_worldbeyblade`**: Full forum automation (check status, get profile, thread, subforum post list, private message inbox & sending).
+* **Unified Browser Tools**: Persistent browser automation primitives (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill`, `browser_type`, `browser_press_key`, `browser_select_option`, `browser_evaluate`, `browser_wait_for`, `browser_screenshot`, `browser_close`).
+* **Specialized Scrapers**: Exposes Bxc's advanced stealth crawlers directly as tools (`bxc_fut_price`, `bxc_fut_player`, `bxc_voiranime_search`, `bxc_voiranime_info`, `bxc_voiranime_resolve`, `bxc_xcom_profile`).
 
 ---
 
@@ -55,17 +64,58 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 | `bxc scrape` | `bxc scrape <url> <css-selector>` | Extract `textContent` of matched elements (`--max N`). |
 | `bxc scrape` | `bxc scrape <url> --markdown` | Convert the whole page to clean GFM Markdown. |
 | `bxc search` | `bxc search <query> [--json\|--markdown]` | Google Web Search → clean organic results. |
-| `bxc mirror` | `bxc mirror <url>` | Download a full site (HTML + CSS + JS + assets). |
-| `bxc challonge` | `bxc challonge <url>` | Snapshot a Challonge tournament page. |
+| `bxc mirror` | `bxc mirror <url> <out-dir>` | Download and mirror a complete site layout locally (supports recursion, filters, proxy, auth, and HAR). |
+| `bxc challonge`| `bxc challonge <url>` | Snapshot a Challonge tournament page. |
+| `bxc fut` | `bxc fut <action> <url>` | FIFA Ultimate Team player price (`price` / FUTBin) or stats (`player` / FUTGG). |
+| `bxc voiranime`| `bxc voiranime <action> <arg>` | VoirAnime streaming search (`search`), info (`info`), or embed resolver (`resolve`). |
+| `bxc google` | `bxc google <action> <arg>` | Google Ecosystem client for search (`search`), mandate audit (`open`), or mass audit (`audit`). |
+| `bxc xcom` | `bxc xcom profile <username>` | X.com profile scraper (supports `--screenshot` and `--ai-extract`). |
+| `bxc worldbeyblade` | `bxc worldbeyblade <action>` | worldbeyblade.org automation tools (profile, thread, PMs). |
+| `bxc cookies` | `bxc cookies <action>` | Cookie jar management tools. |
+| `bxc har` | `bxc har <action> <url> <out.har>`| HAR (HTTP Archive) recorder/replayer. |
 | `bxc api` | `bxc api` | Run Bxc as an HTTP JSON API. |
 | `bxc install` | `bxc install` | Downloads native dependencies (Lightpanda). |
+| `bxc chrome` | `bxc chrome <action>` | Native Chromium management. |
 
-`scrape` accepts a `--profile` of `static` (default, in-process DOM), `fast`
-(Lightpanda, full JS), or `http` (curl-impersonate, TLS-fingerprinted, no DOM).
+### ⚙️ Command Profiles
+
+Every standard content command (`scrape`, `recon`, `mirror`, `challonge`, `har`, `fut`, `voiranime`, `google`) supports the `--profile` option:
+* **`static`**: Extremely fast in-process HTML parser & DOM engine (no JS).
+* **`fast`**: Lightpanda WebAssembly browser engine executing JS.
+* **`http`**: TLS-fingerprinted direct requests bypassing DOM rendering entirely.
+* **`stealth`**: Injected ghost-patched browser profile to bypass Turnstile / Cloudflare.
+* **`max`**: Automatic multi-transport fallback pipeline (falls back through static/http/stealth until success).
 
 **Exit codes** (stable for agent control flow): `0` success · `1` bad usage ·
 `65` data/runtime error · `70` internal error · `130` interrupted. Errors are
 written to `stderr` as `[error] <message>`; data to `stdout`.
+
+### 📂 `bxc mirror` — Recursive Site Mirroring & Archiver
+
+Downloads a complete site layout concurrently using `curl-impersonate` FFI and Bun's event loop, rewriting links locally.
+
+```bash
+# Recursively mirror up to 50 pages from a site with a Chrome 131 fingerprint, generating a session.har
+bxc mirror https://example.com/ ./dist-mirror --recursive --max-pages 50 --har ./session.har
+```
+
+Options:
+* `--recursive`: Enable multi-page recursive crawl.
+* `--max-pages <N>`: Maximum HTML pages to crawl.
+* `--max-depth <N>`: Maximum recursion depth.
+* `--compress`: Write gzip `.gz` sidecars for all text assets.
+* `--discover-hidden`: Parse sitemaps and `robots.txt` automatically.
+* `--resolve-subdomains`: Scrape/resolve subdomains.
+* `--allowed-domains <list>` / `--excluded-domains <list>`: Domain filters.
+* `--allowed-paths <list>` / `--excluded-paths <list>`: Path prefix filters.
+* `--no-parent`: Do not ascend to parent directory during crawl.
+* `--no-host-directories`: Skip creating host folders for same-origin assets.
+* `--delay-ms <N>`: Add sleep delay between page crawls.
+* `--har <path>`: Archive all network transactions in a modern HTTP Archive (.har) format.
+* `--proxy <url>` / `--proxy-auth <user:pass>`: HTTP/SOCKS5 proxy settings.
+* `--auth <user:pass>`: Basic authentication credentials.
+* `--http-version <1.0|1.1|2.0|3.0>`: Force HTTP version.
+* `--verbose`: Enable verbose FFI libcurl connection tracing.
 
 ### 🔍 `bxc search` — Google Web Search
 
@@ -88,6 +138,52 @@ logged-in results and fewer challenges. Override with `--cookies <path>`, or
 force anonymous with `--no-auth`. The default transport is a native `fetch`
 (no extra binaries); `ghost` (Lightpanda) and `http` (curl-impersonate) are
 used as fallbacks if a response looks blocked.
+
+### ⚽ `bxc fut` — FIFA Ultimate Team Scraper
+Extracts live price data and statistics.
+```bash
+# Get player price from FUTBin
+bxc fut price "https://www.futbin.com/26/player/1042/cristiano-ronaldo" --profile max
+
+# Get detailed player stats from FUTGG
+bxc fut player "https://www.fut.gg/players/20801-cristiano-ronaldo/" --profile static
+```
+
+### 📺 `bxc voiranime` — VoirAnime Streaming Scraper
+Interacts with the popular French streaming directory (WordPress wp-manga based).
+```bash
+# Search for anime (e.g. "inazuma")
+bxc voiranime search "inazuma eleven"
+
+# Extract series metadata and episodes slug
+bxc voiranime info "inazuma-eleven-go-chrono-stone-vostfr"
+
+# Resolve direct media stream URL from iframe embeds (e.g. vidmoly, filemoon)
+bxc voiranime resolve "https://vidmoly.to/embed-xyz"
+```
+
+### 🛡️ `bxc google` — Google Properties Auditor
+Audits frontend assets, CDNs, and Google Front End (GFE) compliance, enforcing the mandate guard.
+```bash
+# Perform organic Google search with smart-routing rules
+bxc google search "stealth browser engine"
+
+# Visit account or properties with mandate audit
+bxc google open "https://accounts.google.com" --profile stealth
+
+# Audit massive list of Google subdomains concurrently
+bxc google audit "https://mail.google.com" "https://docs.google.com" "https://drive.google.com"
+```
+
+### 🐦 `bxc xcom` — X.com Scraper
+Scrapes Twitter profiles cleanly without needing active developer API accounts.
+```bash
+# Scrape public info and print markdown
+bxc xcom profile elonmusk
+
+# Scrape profile with visual screenshot and local AI info extraction
+bxc xcom profile elonmusk --screenshot --ai-extract
+```
 
 ---
 
@@ -129,6 +225,18 @@ At runtime:
 - Paths that genuinely require the native engine (CSS selector queries) surface
   an **actionable error** telling you exactly how to build it — never a cryptic
   FFI stack trace.
+
+### 🛠️ VPS Administration & Automation (`bxc-control`)
+
+Bxc provides a unified management and automation script at [scripts/bxc-control.sh](file:///home/ubuntu/bxc/scripts/bxc-control.sh) for managing builds, backups, systemd services, logs, and tunnel processes on your VPS:
+
+```bash
+./scripts/bxc-control.sh status     # Check systemd bxc.service status and running processes
+./scripts/bxc-control.sh deploy     # Deploy standalone binaries, update logs, reload and restart systemd
+./scripts/bxc-control.sh logs       # Tail API and Error logs
+./scripts/bxc-control.sh backup     # Run full monorepo backup (Zstd compressed archive + Git bundle)
+./scripts/bxc-control.sh tunnel     # Check SOCKS5 SSH Tunnel connection status to VPS
+```
 
 ---
 

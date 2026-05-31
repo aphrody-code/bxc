@@ -29,6 +29,12 @@ bun run build:linux                          # Linux Rust cdylib + standalone
 bun run typecheck                            # tsc --noEmit sur workspaces
 bun run lint                                 # oxlint .
 
+# Commandes des Scrapers dédiés
+bun src/cli/index.ts fut price <url>         # FIFA Ultimate Team Price
+bun src/cli/index.ts voiranime search <q>    # VoirAnime search (ex: "inazuma")
+bun src/cli/index.ts google search <q>       # Google Atlas Audits
+bun src/cli/index.ts xcom profile <user>     # Twitter profile markdown / screenshot
+
 # Stack binaire
 cargo build -p bxc-engine --release          # moteur Rust
 ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_bridge.*)
@@ -39,8 +45,12 @@ ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_brid
 ```
 bxc/
 ├── src/                          # API browser TS
+│   ├── google/                   # Google Ecosystem Atlas & compliance
 │   └── scrapers/
-│       └── worldbeyblade/        # Scraper & metagame sub-package
+│       ├── worldbeyblade/        # Scraper & metagame sub-package
+│       ├── fut/                  # FIFA Ultimate Team (FUTBin / FUTGG)
+│       ├── voiranime.ts          # VoirAnime catalog & embed resolver
+│       └── xcom.ts               # X.com profile markdown scraper
 ├── packages/
 │   ├── api/                      # Elysia server (GraphQL + REST)
 │   ├── bxc-extension/            # MCP stdio (bxc-gemini)
@@ -61,18 +71,17 @@ d'emoji, pas de `Co-Authored-By`, pas de `Generated with…`.
 
 ## Intégration vps
 
-Submodule `vps/packages/bxc` → tag `v0.5.3`. Workflow update :
+Submodule `vps/packages/bxc` → tag `v0.5.4`. Workflow update :
 
 ```bash
 cd ~/bxc
 # ... commit + push ...
-git tag -a v0.5.3 -m "v0.5.3 — modularization of worldbeyblade scraper"
-git push origin v0.5.3
-gh release create v0.5.3 --repo aphrody-code/bxc --title "bxc v0.5.3" --notes "Restructure worldbeyblade scraper, ranking syncing, and metagame analytics logic into a unified sub-module"
+git tag -a v0.5.4 -m "v0.5.4 — xplatform cargo checks, FFI port bugfix and manager script"
+git push origin v0.5.4
+gh release create v0.5.4 --repo aphrody-code/bxc --title "bxc v0.5.4" --notes "Release version 0.5.4 with xplatform compilation, FFI port bugfix and bxc-control VPS manager script"
 
-cd ~/vps/packages/bxc
-git fetch --tags origin && git checkout v0.5.3
-cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.5.3" && git push
+# Deploying standalone and reloading systemd service is automated via bxc-control:
+./scripts/bxc-control.sh deploy
 ```
 
 ## Skills Claude Code à consulter
@@ -101,3 +110,4 @@ cd ~/vps && git add packages/bxc && git commit -m "chore(bxc): repin → v0.5.3"
   `vendor/mcp-sdk-typescript/**` → ~60-140 échecs préexistants (Zod v4, Task
   pagination, capabilities, CF-workers qui exige `pnpm`). Ce ne sont PAS des
   régressions bxc — filtrer le bruit MCP-SDK avant de conclure.
+- **Mapping de profiles des scrapers** : Le CLI expose `stealth`, `max`, `fast`, `static` et `http`. Certains scrapers internes (comme `fut` ou `voiranime`) n'acceptent qu'un sous-ensemble (ex: `ghost` ou `static`). Veillez à bien mapper les types de profile CLI vers les options attendues par les scrapers sous peine d'erreurs strictes à la compilation TypeScript (`tsc --noEmit`).
