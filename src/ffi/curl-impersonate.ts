@@ -62,6 +62,8 @@ import {
 	toArrayBuffer,
 } from "bun:ffi";
 import { join } from "node:path";
+import { hasEmbedded, curlImpersonateAsset } from "../rust/embedded-assets.ts";
+import { extractEmbeddedAssetIfNeeded } from "../internal/embedded-loader.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -255,6 +257,29 @@ const SYMBOLS = {
 } as const;
 
 function resolveLibPath(): string {
+	if (hasEmbedded && curlImpersonateAsset) {
+		const name =
+			process.platform === "win32"
+				? "libcurl-impersonate.dll"
+				: process.platform === "darwin"
+					? "libcurl-impersonate.dylib"
+					: "libcurl-impersonate.so";
+		try {
+			const extracted = extractEmbeddedAssetIfNeeded(
+				curlImpersonateAsset,
+				name,
+			);
+			if (extracted && Bun.file(extracted).size > 0) {
+				return extracted;
+			}
+		} catch (err) {
+			console.warn(
+				`[bxc] Failed to load/extract embedded curl-impersonate:`,
+				err,
+			);
+		}
+	}
+
 	// Bun-native path: import.meta.dir replaces dirname(fileURLToPath(import.meta.url))
 	const dir = import.meta.dir;
 	const vendor = join(dir, "../../vendor/curl-impersonate");

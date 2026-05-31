@@ -16,6 +16,8 @@
 
 import { CString, dlopen, FFIType, ptr, suffix } from "bun:ffi";
 import { join } from "node:path";
+import { hasEmbedded, rustBridgeAsset } from "./embedded-assets.ts";
+import { extractEmbeddedAssetIfNeeded } from "../internal/embedded-loader.ts";
 
 /**
  * Resolves the rust-bridge cdylib path.
@@ -24,12 +26,23 @@ function resolveRustBridgePath(): string {
 	const envOverride = Bun.env["BXC_RUST_BRIDGE_LIB"];
 	if (envOverride) return envOverride;
 
-	const repoRoot = join(import.meta.dir, "..", "..");
-	const targetDir = join(repoRoot, "rust-bridge", "target", "release");
 	const name =
 		process.platform === "win32"
 			? `bxc_rust_bridge.${suffix}`
 			: `libbxc_rust_bridge.${suffix}`;
+	if (hasEmbedded && rustBridgeAsset) {
+		try {
+			const extracted = extractEmbeddedAssetIfNeeded(rustBridgeAsset, name);
+			if (extracted && Bun.file(extracted).size > 0) {
+				return extracted;
+			}
+		} catch (err) {
+			console.warn(`[bxc] Failed to load/extract embedded rust bridge:`, err);
+		}
+	}
+
+	const repoRoot = join(import.meta.dir, "..", "..");
+	const targetDir = join(repoRoot, "rust-bridge", "target", "release");
 	return join(targetDir, name);
 }
 
