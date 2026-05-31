@@ -5,3 +5,4 @@ export const hasEmbedded = false;
 export const rustBridgeAsset: string = "";
 export const curlImpersonateAsset: string = "";
 export const lightpandaAsset: string = "";
+export const wappalyzergoAsset: string = "";

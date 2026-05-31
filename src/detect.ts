@@ -24,6 +24,8 @@
 import { resolve } from "node:path";
 import { detectGoogleSpecifics, googleToTech } from "./google/index.ts";
 import { bxcFetch } from "./utils/bxc-fetch.ts";
+import { hasEmbedded, wappalyzergoAsset } from "./rust/embedded-assets.ts";
+import { extractEmbeddedAssetIfNeeded } from "./internal/embedded-loader.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,6 +67,17 @@ const HERE = import.meta.dir;
 export async function resolveBinary(): Promise<string> {
 	const fromEnv = Bun.env.BXC_WAPPALYZERGO_BIN;
 	if (fromEnv && (await Bun.file(fromEnv).exists())) return fromEnv;
+
+	if (hasEmbedded && wappalyzergoAsset) {
+		try {
+			const extracted = extractEmbeddedAssetIfNeeded(wappalyzergoAsset, "wappalyzergo-cli", true);
+			if (extracted && (await Bun.file(extracted).exists())) {
+				return extracted;
+			}
+		} catch (err) {
+			console.warn(`[bxc] Failed to load/extract embedded wappalyzergo-cli:`, err);
+		}
+	}
 
 	const candidate = resolve(
 		HERE,
