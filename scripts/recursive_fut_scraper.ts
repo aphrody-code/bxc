@@ -19,6 +19,16 @@ import { scrapeFutBinPrice } from "../src/scrapers/fut/futbin.ts";
 import { Browser } from "../src/api/browser.ts";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
+import { existsSync } from "node:fs";
+
+const futggCookies = join(import.meta.dir, "../cookies/futgg.json");
+const hasFutggCookies = existsSync(futggCookies);
+
+const futbinCookies = join(import.meta.dir, "../cookies/futbin.json");
+const hasFutbinCookies = existsSync(futbinCookies);
+
+const eaCookies = join(import.meta.dir, "../cookies/ea.json");
+const hasEaCookies = existsSync(eaCookies);
 
 const RUN_LIVE = !process.env.SKIP_NETWORK_TESTS;
 const MAX_DEPTH = process.env.MAX_DEPTH
@@ -253,7 +263,10 @@ async function runRecursiveScraper() {
 					current.url.includes("/players/") &&
 					!current.url.endsWith("/players/")
 				) {
-					const page = await Browser.newPage({ profile: "static" });
+					const page = await Browser.newPage({
+						profile: "static",
+						cookies: hasFutggCookies ? futggCookies : undefined,
+					});
 					try {
 						await page.goto(current.url);
 						content = await page.content();
@@ -304,7 +317,10 @@ async function runRecursiveScraper() {
 						await page.close();
 					}
 				} else {
-					const page = await Browser.newPage({ profile: "static" });
+					const page = await Browser.newPage({
+						profile: "static",
+						cookies: hasFutggCookies ? futggCookies : undefined,
+					});
 					try {
 						await page.goto(current.url);
 						content = await page.content();
@@ -315,7 +331,10 @@ async function runRecursiveScraper() {
 				}
 			} else if (current.url.includes("futbin.com")) {
 				if (current.url.includes("/player/")) {
-					const page = await Browser.newPage({ profile: "ghost" });
+					const page = await Browser.newPage({
+						profile: "ghost",
+						cookies: hasFutbinCookies ? futbinCookies : undefined,
+					});
 					try {
 						await page.goto(current.url);
 						content = await page.content();
@@ -339,7 +358,10 @@ async function runRecursiveScraper() {
 						await page.close();
 					}
 				} else {
-					const page = await Browser.newPage({ profile: "http" });
+					const page = await Browser.newPage({
+						profile: "http",
+						cookies: hasFutbinCookies ? futbinCookies : undefined,
+					});
 					try {
 						await page.goto(current.url);
 						content = await page.content();
@@ -349,7 +371,10 @@ async function runRecursiveScraper() {
 					}
 				}
 			} else if (current.url.includes("ea.com")) {
-				const page = await Browser.newPage({ profile: "http" });
+				const page = await Browser.newPage({
+					profile: "http",
+					cookies: hasEaCookies ? eaCookies : undefined,
+				});
 				try {
 					const res = await page.goto(current.url);
 					state.success++;
