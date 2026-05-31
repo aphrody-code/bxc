@@ -41,7 +41,57 @@ export interface FutPlayer {
 	workrateAttack?: string;
 	workrateDefense?: string;
 	isGeneric?: boolean;
+	
+	// Biology/card attributes
+	overallRating?: number;
+	dateOfBirth?: string;
+	height?: number;
+	weight?: number;
+	foot?: string;
+	age?: number;
+	rarity?: string;
+	accelerateType?: string;
+	gender?: string;
+	alternativePositions?: string[];
+
+	// Detailed sub-stats
+	acceleration?: number;
+	sprintSpeed?: number;
+	agility?: number;
+	balance?: number;
+	reactions?: number;
+	ballControl?: number;
+	dribbling?: number;
+	composure?: number;
+	jumping?: number;
+	stamina?: number;
+	strength?: number;
+	aggression?: number;
+	interceptions?: number;
+	headingAccuracy?: number;
+	defensiveAwareness?: number;
+	standingTackle?: number;
+	slidingTackle?: number;
+	vision?: number;
+	crossing?: number;
+	fkAccuracy?: number;
+	shortPassing?: number;
+	longPassing?: number;
+	curve?: number;
+	positioning?: number;
+	finishing?: number;
+	shotPower?: number;
+	longShots?: number;
+	volleys?: number;
+	penalties?: number;
+	gkDiving?: number;
+	gkHandling?: number;
+	gkKicking?: number;
+	gkReflexes?: number;
+	gkPositioning?: number;
+	gkSpeed?: number;
 }
+
 
 export interface FutPrice {
 	url: string;
