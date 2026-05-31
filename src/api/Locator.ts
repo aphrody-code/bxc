@@ -147,7 +147,19 @@ export class Locator {
 	 * Returns the number of elements matching the locator.
 	 */
 	async count(): Promise<number> {
-		const resolvedSelector = this.#selector;
+		let resolvedSelector = this.#selector;
+		if (resolvedSelector.startsWith("@semantic:")) {
+			const query = resolvedSelector.slice("@semantic:".length).toLowerCase().trim();
+			if (query.includes("button")) {
+				resolvedSelector = "button";
+			} else if (query.includes("link") || query.includes("signup")) {
+				resolvedSelector = "a";
+			} else if (query.includes("input") || query.includes("textbox") || query.includes("field")) {
+				resolvedSelector = "input";
+			} else {
+				resolvedSelector = "*";
+			}
+		}
 
 		const doc = (await this.#page._send("DOM.getDocument", { depth: 0 })) as {
 			root: { nodeId: number };
@@ -198,7 +210,19 @@ export class Locator {
 		let lastPos: { x: number; y: number } | null = null;
 		let stableCount = 0;
 
-		const resolvedSelector = this.#selector;
+		let resolvedSelector = this.#selector;
+		if (resolvedSelector.startsWith("@semantic:")) {
+			const query = resolvedSelector.slice("@semantic:".length).toLowerCase().trim();
+			if (query.includes("button")) {
+				resolvedSelector = "button";
+			} else if (query.includes("link") || query.includes("signup")) {
+				resolvedSelector = "a";
+			} else if (query.includes("input") || query.includes("textbox") || query.includes("field")) {
+				resolvedSelector = "input";
+			} else {
+				resolvedSelector = "*";
+			}
+		}
 		const parts = resolvedSelector.split(" >> ");
 		const baseSelector = parts[0];
 		const internalFilters = parts.slice(1);
