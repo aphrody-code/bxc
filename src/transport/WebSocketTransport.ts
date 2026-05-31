@@ -32,6 +32,7 @@ export interface WebSocketTransportOptions {
 	binaryPath?: string;
 	logLevel?: "debug" | "info" | "warn" | "error" | "fatal" | string;
 	readyTimeoutMs?: number;
+	insecure?: boolean;
 }
 
 async function findFreePort(host: string): Promise<number> {
@@ -103,7 +104,8 @@ export class WebSocketTransport implements ConnectionTransport {
 				}
 			}
 
-			let chromePath = Bun.env["BXC_CHROME_BIN"] ?? Bun.env["CHROME_PATH"];
+			let chromePath =
+				opts.binaryPath ?? Bun.env["BXC_CHROME_BIN"] ?? Bun.env["CHROME_PATH"];
 			let userDataDir = Bun.env["BXC_USER_DATA_DIR"];
 			const isWin = process.platform === "win32";
 
@@ -178,7 +180,10 @@ export class WebSocketTransport implements ConnectionTransport {
 					// Lightpanda is headless by default, but we can pass stealth
 				}
 				if (opts.logLevel) {
-					args.push(`--log-level=${opts.logLevel}`);
+					args.push("--log-level", opts.logLevel);
+				}
+				if (opts.insecure) {
+					args.push("--insecure-disable-tls-host-verification");
 				}
 			} else {
 				const launchArgs = [
