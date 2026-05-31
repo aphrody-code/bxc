@@ -8,6 +8,40 @@ import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
 import { Browser } from "../api/browser.ts";
 
+function classifyPlayer(player: any) {
+	const tags: string[] = [];
+	if (!player) return tags;
+
+	// Pace Classification
+	if (player.pac >= 90) tags.push("Speedster");
+	else if (player.pac >= 80) tags.push("Fast");
+
+	// Shooting Classification
+	if (player.sho >= 85) tags.push("Clinical Finisher");
+
+	// Playmaker Classification
+	if (player.pas >= 85 && player.dri >= 85) tags.push("Elite Playmaker");
+
+	// Defensive Classification
+	if (player.def >= 85 && player.phy >= 85) tags.push("Defensive Wall");
+
+	// Goalkeeper Classification
+	if (player.div >= 85 && player.ref >= 85) tags.push("Wall GK");
+
+	// Playstyles Classification
+	let psPlus = player.playstylesPlus;
+	if (typeof psPlus === "string") {
+		try {
+			psPlus = JSON.parse(psPlus);
+		} catch {}
+	}
+	if (Array.isArray(psPlus) && psPlus.length > 0) {
+		tags.push("Playstyles+ Star");
+	}
+
+	return tags;
+}
+
 async function bootstrap() {
 	// 1. Build Type-GraphQL Schema
 	const schema = await buildSchema({
@@ -82,7 +116,13 @@ async function bootstrap() {
 								url,
 								(profile || "static") as any,
 							);
-							return { success: true, data };
+							return {
+								success: true,
+								data: {
+									...data,
+									classifications: classifyPlayer(data),
+								},
+							};
 						} catch (e: any) {
 							return { success: false, error: e.message };
 						}
@@ -193,8 +233,12 @@ async function bootstrap() {
 						params["$offset"] = offset;
 
 						try {
-							const rows = db.query(sql).all(params);
-							return { success: true, count: rows.length, data: rows };
+							const rows = db.query(sql).all(params) as any[];
+							const enrichedRows = rows.map((row) => ({
+								...row,
+								classifications: classifyPlayer(row),
+							}));
+							return { success: true, count: rows.length, data: enrichedRows };
 						} catch (e: any) {
 							return { success: false, error: e.message };
 						}
