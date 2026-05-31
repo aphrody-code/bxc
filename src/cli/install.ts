@@ -39,8 +39,9 @@ interface LightpandaPlatform {
 	assetName: string;
 }
 
-export const VENDOR_DIR =
-	Bun.env.BXC_VENDOR_DIR ?? join(homedir(), ".bxc", "vendor");
+import { getVendorDir } from "../utils/paths.ts";
+
+export const VENDOR_DIR = Bun.env.BXC_VENDOR_DIR ?? getVendorDir();
 const LIGHTPANDA_TAG = Bun.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
 
 function printUsage(): void {
