@@ -997,11 +997,87 @@ server.registerTool(
 			concurrency: z
 				.number()
 				.default(6)
-				.describe("Parallel asset downloads concurrency."),
+				.describe("Parallel downloads concurrency."),
 			sameOriginOnly: z
 				.boolean()
 				.default(false)
 				.describe("Skip cross-origin assets."),
+			recursive: z
+				.boolean()
+				.default(false)
+				.describe("Enable recursive multi-page crawling."),
+			maxPages: z.number().optional().describe("Maximum HTML pages to crawl."),
+			maxDepth: z.number().optional().describe("Maximum crawl depth."),
+			compress: z
+				.boolean()
+				.default(false)
+				.describe("Pre-compress text assets with gzip sidecar files."),
+			discoverHidden: z
+				.boolean()
+				.default(false)
+				.describe("Discover hidden pages via robots.txt and sitemaps."),
+			resolveSubdomains: z
+				.boolean()
+				.default(false)
+				.describe("Scrape and resolve subdomains of the seed host."),
+			resolveCdns: z
+				.union([z.boolean(), z.array(z.string())])
+				.optional()
+				.describe(
+					"Resolve and download assets/pages on CDNs (boolean or array of domains).",
+				),
+			allowedDomains: z
+				.array(z.string())
+				.optional()
+				.describe("Allow only these domains for crawling and downloading."),
+			excludedDomains: z
+				.array(z.string())
+				.optional()
+				.describe("Exclude these domains from crawling and downloading."),
+			allowedPaths: z
+				.array(z.string())
+				.optional()
+				.describe("Allow only paths starting with these prefixes."),
+			excludedPaths: z
+				.array(z.string())
+				.optional()
+				.describe("Exclude paths starting with these prefixes."),
+			noParent: z
+				.boolean()
+				.default(false)
+				.describe("Only crawl pages under the seed URL directory path."),
+			noHostDirectories: z
+				.boolean()
+				.default(false)
+				.describe("Skip creating host-name directories for same-origin files."),
+			delayMs: z
+				.number()
+				.optional()
+				.describe("Throttle wait time (milliseconds) between crawls."),
+			har: z
+				.string()
+				.optional()
+				.describe("Output path to save the crawl session as a HAR log."),
+			proxy: z
+				.string()
+				.optional()
+				.describe("Proxy server URL (e.g. http://127.0.0.1:8080)."),
+			proxyAuth: z
+				.string()
+				.optional()
+				.describe("Proxy credentials (e.g. user:password)."),
+			auth: z
+				.string()
+				.optional()
+				.describe("Server credentials (e.g. user:password)."),
+			httpVersion: z
+				.enum(["1.0", "1.1", "2.0", "3.0", "default"])
+				.optional()
+				.describe("Set default HTTP version to request."),
+			verbose: z
+				.boolean()
+				.optional()
+				.describe("Enable verbose libcurl logging."),
 		}),
 	},
 	async (args) => {
@@ -1011,6 +1087,26 @@ server.registerTool(
 			profile: args.profile,
 			concurrency: args.concurrency,
 			sameOriginOnly: args.sameOriginOnly,
+			recursive: args.recursive,
+			maxPages: args.maxPages,
+			maxDepth: args.maxDepth,
+			compress: args.compress,
+			discoverHidden: args.discoverHidden,
+			resolveSubdomains: args.resolveSubdomains,
+			resolveCdns: args.resolveCdns,
+			allowedDomains: args.allowedDomains,
+			excludedDomains: args.excludedDomains,
+			allowedPaths: args.allowedPaths,
+			excludedPaths: args.excludedPaths,
+			noParent: args.noParent,
+			noHostDirectories: args.noHostDirectories,
+			delayMs: args.delayMs,
+			har: args.har,
+			proxy: args.proxy,
+			proxyAuth: args.proxyAuth,
+			auth: args.auth,
+			httpVersion: args.httpVersion,
+			verbose: args.verbose,
 		});
 		return {
 			content: [
