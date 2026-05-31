@@ -96,13 +96,27 @@ describe("Futbin Tests", () => {
 
 			const response = await ghost.page.goto(TARGET_URL);
 			const status = response ? response.status : 200;
-			const body = await ghost.page.content();
+			let body = "";
+			try {
+				body = await ghost.page.content();
+			} catch (e: any) {
+				console.warn(`[Futbin Ghost] Failed to retrieve page content: ${e.message}`);
+			}
+
+			let title = "";
+			try {
+				title = await ghost.page.title();
+			} catch (e: any) {
+				console.warn(`[Futbin Ghost] Failed to retrieve page title: ${e.message}`);
+			}
 
 			const isBotBlocked =
 				status === 403 ||
 				status === 503 ||
 				/Just a moment/i.test(body) ||
+				/Just a moment/i.test(title) ||
 				/Checking your browser/i.test(body) ||
+				/Checking your browser/i.test(title) ||
 				/cf-mitigated/i.test(body) ||
 				/cloudflare/i.test(body) ||
 				/datadome/i.test(body) ||
@@ -112,14 +126,13 @@ describe("Futbin Tests", () => {
 
 			if (isBotBlocked) {
 				console.log(
-					`[Futbin Ghost] Bot protection detected. Status: ${status}`,
+					`[Futbin Ghost] Bot protection detected. Status: ${status} (Title: "${title}")`,
 				);
 				expect(isBotBlocked).toBe(true);
 			} else {
 				console.log(
 					`[Futbin Ghost] Page fetched successfully. Status: ${status}`,
 				);
-				const title = await ghost.page.title();
 				expect(title.toLowerCase()).toContain("futbin");
 			}
 		} finally {
