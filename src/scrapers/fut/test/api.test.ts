@@ -15,8 +15,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { scrapeFutGgPlayer } from "../../src/scrapers/fut/futgg.ts";
-import { scrapeFutBinPrice } from "../../src/scrapers/fut/futbin.ts";
+import { scrapeFutGgPlayer } from "../futgg.ts";
+import { scrapeFutBinPrice } from "../futbin.ts";
 
 const RUN_LIVE = !Bun.env.SKIP_NETWORK_TESTS;
 
