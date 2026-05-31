@@ -30,6 +30,7 @@ import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {
 	target: string;
+	profile: "static" | "fast" | "http" | "stealth" | "max";
 	cookies?: string;
 	pretty: boolean;
 	summary: boolean;
@@ -43,6 +44,7 @@ Usage:
   bxc challonge <url-or-path> [options]
 
 Options:
+  --profile <name>     static | fast | http (default) | stealth | max
   --cookies <path>     Cookie jar JSON for Cloudflare-gated tournaments
   --summary            print a one-screen ASCII summary instead of JSON
   --pretty             pretty-print JSON
@@ -59,6 +61,7 @@ function parseArgs(
 	const opts: CliOptions = {
 		...baseOpts,
 		target: "",
+		profile: "http",
 		pretty: process.stdout.isTTY,
 		summary: false,
 	};
@@ -66,6 +69,21 @@ function parseArgs(
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
+			case "--profile": {
+				const v = argv[++i] as any;
+				if (
+					v !== "static" &&
+					v !== "fast" &&
+					v !== "http" &&
+					v !== "stealth" &&
+					v !== "max"
+				) {
+					logger.error(`Invalid profile: ${v}`);
+					return null;
+				}
+				opts.profile = v;
+				break;
+			}
 			case "--cookies":
 				opts.cookies = argv[++i];
 				break;
@@ -94,9 +112,16 @@ async function loadFromTarget(
 	opts: CliOptions,
 ): Promise<ChallongeTournamentSnapshot> {
 	if (/^https?:\/\//.test(opts.target)) {
+		const isBrowserProfile =
+			opts.profile === "fast" ||
+			opts.profile === "stealth" ||
+			opts.profile === "max";
 		const page = await Browser.newPage({
-			profile: "http",
+			profile: opts.profile,
 			cookies: opts.cookies,
+			spawnOpts: isBrowserProfile
+				? { logLevel: "error", readyTimeoutMs: 10_000 }
+				: undefined,
 			httpOpts: { profile: "chrome131" },
 		});
 		try {

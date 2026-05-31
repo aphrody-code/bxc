@@ -134,8 +134,13 @@ describe.if(RUN_LIVE)("FUT Scraper Live Integration Tests", () => {
 			expect(player.name).toBeDefined();
 			expect(player.rating).toBeGreaterThan(80);
 		} catch (err: any) {
-			if (err.message.includes("Cloudflare") || err.message.includes("Turnstile")) {
-				console.warn(`[FutGg Live Test] Skipped due to bot protection block: ${err.message}`);
+			if (
+				err.message.includes("Cloudflare") ||
+				err.message.includes("Turnstile")
+			) {
+				console.warn(
+					`[FutGg Live Test] Skipped due to bot protection block: ${err.message}`,
+				);
 			} else {
 				throw err;
 			}
@@ -149,8 +154,13 @@ describe.if(RUN_LIVE)("FUT Scraper Live Integration Tests", () => {
 			expect(priceInfo.url).toBe(url);
 			expect(priceInfo.price).toBeDefined();
 		} catch (err: any) {
-			if (err.message.includes("Cloudflare") || err.message.includes("Turnstile")) {
-				console.warn(`[FutBin Live Test] Skipped due to bot protection block: ${err.message}`);
+			if (
+				err.message.includes("Cloudflare") ||
+				err.message.includes("Turnstile")
+			) {
+				console.warn(
+					`[FutBin Live Test] Skipped due to bot protection block: ${err.message}`,
+				);
 			} else {
 				throw err;
 			}

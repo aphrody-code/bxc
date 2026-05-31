@@ -60,6 +60,10 @@ Subcommands:
   mirror    Download a full site (HTML+CSS+JS+assets)
   challonge Extract snapshot from a Challonge tournament page
   worldbeyblade worldbeyblade.org automation tools (profile, thread, PMs)
+  fut       FIFA Ultimate Team (FUTGG/FUTBin) player price & stats scraper
+  voiranime VoirAnime streaming site catalog search & resolver (e.g. "inazuma")
+  google    Google properties auditor & client
+  xcom      X.com profile scraper
 
 Global Options:
   --insecure, -k  Bypass TLS certificate validation
@@ -179,6 +183,30 @@ async function main() {
 
 		case "worldbeyblade": {
 			const mod = await import("./worldbeyblade.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "fut": {
+			const mod = await import("./fut.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "voiranime": {
+			const mod = await import("./voiranime.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "google": {
+			const mod = await import("./google.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "xcom": {
+			const mod = await import("./xcom.ts");
 			await mod.main(args, opts);
 			break;
 		}

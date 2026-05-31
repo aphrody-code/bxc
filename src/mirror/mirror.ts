@@ -49,7 +49,10 @@ import {
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
 import { autoDiscoverAndParse } from "../utils/sitemap.ts";
 import type { HarEntry, HarLog } from "../recorder/types.ts";
-import { ImpersonatedClient, type ImpersonateProfile } from "../ffi/curl-impersonate.ts";
+import {
+	ImpersonatedClient,
+	type ImpersonateProfile,
+} from "../ffi/curl-impersonate.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -336,7 +339,9 @@ function mapUrlToLocalPath(
 		sameOrigin = getBaseDomain(u.hostname) === getBaseDomain(seedHost);
 	}
 	const root = sameOrigin
-		? (options?.noHostDirectories ? "" : u.hostname)
+		? options?.noHostDirectories
+			? ""
+			: u.hostname
 		: `_external/${u.hostname}`;
 	return resolvePath(outDir, root, pathname);
 }
@@ -347,21 +352,22 @@ function simpleHash(s: string): string {
 	return Math.abs(h).toString(36);
 }
 
-function buildHarEntry(
-	url: string,
-	r: DownloadedAsset,
-	ua: string,
-): HarEntry {
+function buildHarEntry(url: string, r: DownloadedAsset, ua: string): HarEntry {
 	const requestHeaders: Record<string, string> = { "User-Agent": ua };
 	const u = new URL(url);
-	const queryParams = Array.from(u.searchParams.entries()).map(([name, value]) => ({ name, value }));
+	const queryParams = Array.from(u.searchParams.entries()).map(
+		([name, value]) => ({ name, value }),
+	);
 
 	const harRequest = {
 		method: "GET",
 		url,
 		httpVersion: "HTTP/1.1",
 		cookies: [],
-		headers: Object.entries(requestHeaders).map(([name, value]) => ({ name, value })),
+		headers: Object.entries(requestHeaders).map(([name, value]) => ({
+			name,
+			value,
+		})),
 		queryString: queryParams,
 		headersSize: -1,
 		bodySize: -1,
@@ -373,7 +379,10 @@ function buildHarEntry(
 		statusText: r.error ? `Failed: ${r.error}` : "OK",
 		httpVersion: "HTTP/1.1",
 		cookies: [],
-		headers: Object.entries(resHeaders).map(([name, value]) => ({ name, value })),
+		headers: Object.entries(resHeaders).map(([name, value]) => ({
+			name,
+			value,
+		})),
 		content: {
 			size: r.body.byteLength,
 			mimeType: r.contentType,
@@ -882,7 +891,16 @@ async function downloadAsset(
 					startedAt,
 				};
 			}
-			return { url, finalUrl, body, contentType, httpStatus: r.status, headers: responseHeaders, durationMs, startedAt };
+			return {
+				url,
+				finalUrl,
+				body,
+				contentType,
+				httpStatus: r.status,
+				headers: responseHeaders,
+				durationMs,
+				startedAt,
+			};
 		} catch (err) {
 			const durationMs = (Bun.nanoseconds() - tStart) / 1e6;
 			return {
@@ -976,7 +994,16 @@ async function downloadAsset(
 				startedAt,
 			};
 		}
-		return { url, finalUrl, body, contentType, httpStatus: r.status, headers: responseHeaders, durationMs, startedAt };
+		return {
+			url,
+			finalUrl,
+			body,
+			contentType,
+			httpStatus: r.status,
+			headers: responseHeaders,
+			durationMs,
+			startedAt,
+		};
 	} catch (err) {
 		const durationMs = (Bun.nanoseconds() - tStart) / 1e6;
 		return {
@@ -1212,7 +1239,12 @@ export async function mirrorSite(
 			const t = batch[i];
 			const r = results[i];
 			harEntries.push(buildHarEntry(t.url, r, ua));
-			const localPath = mapUrlToLocalPath(r.finalUrl, outDir, seedHost, options);
+			const localPath = mapUrlToLocalPath(
+				r.finalUrl,
+				outDir,
+				seedHost,
+				options,
+			);
 			const sha256 =
 				r.body.byteLength > 0
 					? new Bun.CryptoHasher("sha256").update(r.body).digest("hex")

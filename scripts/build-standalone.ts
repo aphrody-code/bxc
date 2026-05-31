@@ -257,21 +257,72 @@ function getBinaryPathsForTarget(suffix: string): {
 	let lightpanda: string | null = null;
 
 	if (suffix === "linux-x64") {
-		rustBridge = join(root, "rust-bridge", "target", "release", "libbxc_rust_bridge.so");
-		lightpanda = join(root, "vendor", "lightpanda-bin", "linux-x64", "lightpanda");
+		rustBridge = join(
+			root,
+			"rust-bridge",
+			"target",
+			"release",
+			"libbxc_rust_bridge.so",
+		);
+		lightpanda = join(
+			root,
+			"vendor",
+			"lightpanda-bin",
+			"linux-x64",
+			"lightpanda",
+		);
 	} else if (suffix === "linux-arm64") {
-		rustBridge = join(root, "rust-bridge", "target", "aarch64-unknown-linux-gnu", "release", "libbxc_rust_bridge.so");
-		lightpanda = join(root, "vendor", "lightpanda-bin", "linux-arm64", "lightpanda");
+		rustBridge = join(
+			root,
+			"rust-bridge",
+			"target",
+			"aarch64-unknown-linux-gnu",
+			"release",
+			"libbxc_rust_bridge.so",
+		);
+		lightpanda = join(
+			root,
+			"vendor",
+			"lightpanda-bin",
+			"linux-arm64",
+			"lightpanda",
+		);
 	} else if (suffix.startsWith("windows-")) {
-		rustBridge = join(root, "rust-bridge", "target", "x86_64-pc-windows-msvc", "release", "bxc_rust_bridge.dll");
+		rustBridge = join(
+			root,
+			"rust-bridge",
+			"target",
+			"x86_64-pc-windows-msvc",
+			"release",
+			"bxc_rust_bridge.dll",
+		);
 		if (!Bun.file(rustBridge).size) {
 			rustBridge = join(root, "dist", suffix, "bxc_rust_bridge.dll");
 		}
-		lightpanda = join(root, "vendor", "lightpanda-bin", "windows-x64", "lightpanda.exe");
+		lightpanda = join(
+			root,
+			"vendor",
+			"lightpanda-bin",
+			"windows-x64",
+			"lightpanda.exe",
+		);
 	} else if (suffix.startsWith("darwin-")) {
 		const arch = suffix.endsWith("arm64") ? "aarch64" : "x86_64";
-		rustBridge = join(root, "rust-bridge", "target", `${arch}-apple-darwin`, "release", "libbxc_rust_bridge.dylib");
-		lightpanda = join(root, "vendor", "lightpanda-bin", `darwin-${suffix.endsWith("arm64") ? "arm64" : "x64"}`, "lightpanda");
+		rustBridge = join(
+			root,
+			"rust-bridge",
+			"target",
+			`${arch}-apple-darwin`,
+			"release",
+			"libbxc_rust_bridge.dylib",
+		);
+		lightpanda = join(
+			root,
+			"vendor",
+			"lightpanda-bin",
+			`darwin-${suffix.endsWith("arm64") ? "arm64" : "x64"}`,
+			"lightpanda",
+		);
 	}
 
 	// Double check existence. If file size is 0 or it throws, it doesn't exist.
@@ -297,13 +348,9 @@ function findWappalyzergo(suffix: string): string | null {
 	let candidates: string[] = [];
 
 	if (suffix.startsWith("windows-")) {
-		candidates = [
-			join(vendor, "wappalyzergo-cli.exe"),
-		];
+		candidates = [join(vendor, "wappalyzergo-cli.exe")];
 	} else {
-		candidates = [
-			join(vendor, "wappalyzergo-cli"),
-		];
+		candidates = [join(vendor, "wappalyzergo-cli")];
 	}
 
 	for (const c of candidates) {
@@ -357,7 +404,9 @@ function findCurlImpersonate(suffix: string): string | null {
 
 async function generateEmbeddedAssetsForTarget(t: BuildTarget): Promise<void> {
 	const root = join(import.meta.dir, "..");
-	const { rustBridge, lightpanda, wappalyzergo } = getBinaryPathsForTarget(t.suffix);
+	const { rustBridge, lightpanda, wappalyzergo } = getBinaryPathsForTarget(
+		t.suffix,
+	);
 	const curlImpersonate = findCurlImpersonate(t.suffix);
 
 	const destFile = join(root, "src", "rust", "embedded-assets.ts");
