@@ -17,8 +17,8 @@
 import { describe, expect, test } from "bun:test";
 import { graphql } from "graphql";
 import { buildSchema } from "type-graphql";
-import { ScrapeResolver } from "../../src/server/graphql/resolvers/ScrapeResolver.ts";
-import { FutResolver } from "../../src/server/graphql/resolvers/FutResolver.ts";
+import { ScrapeResolver } from "../../../server/graphql/resolvers/ScrapeResolver.ts";
+import { FutResolver } from "../graphql/FutResolver.ts";
 
 describe("FUT GraphQL Resolvers Integration", () => {
 	test("should build schema and execute futStatsSummary query", async () => {

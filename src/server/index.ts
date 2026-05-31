@@ -6,7 +6,7 @@ import { logger } from "@bogeychan/elysia-logger";
 import { createYoga } from "graphql-yoga";
 import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
-import { FutResolver } from "./graphql/resolvers/FutResolver.ts";
+import { FutResolver } from "../scrapers/fut/graphql/FutResolver.ts";
 import { Browser } from "../api/browser.ts";
 
 function classifyPlayer(player: any) {
@@ -166,7 +166,7 @@ async function bootstrap() {
 						const { join } = await import("node:path");
 						const dbPath = join(
 							import.meta.dir,
-							"../../data/fut_extracted_database.sqlite",
+							"../scrapers/fut/data/fut_extracted_database.sqlite",
 						);
 						const db = new Database(dbPath);
 
@@ -267,7 +267,7 @@ async function bootstrap() {
 					const { join } = await import("node:path");
 					const dbPath = join(
 						import.meta.dir,
-						"../../data/fut_extracted_database.sqlite",
+						"../scrapers/fut/data/fut_extracted_database.sqlite",
 					);
 					try {
 						const db = new Database(dbPath);

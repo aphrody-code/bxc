@@ -15,8 +15,8 @@
  */
 
 import { test, expect, describe } from "bun:test";
-import { Browser } from "../../src/api/browser.ts";
-import { launchGhostBrowser } from "../../src/profiles/ghost/index.ts";
+import { Browser } from "../../../api/browser.ts";
+import { launchGhostBrowser } from "../../../profiles/ghost/index.ts";
 
 const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 const TARGET_URL = "https://www.futbin.com/";

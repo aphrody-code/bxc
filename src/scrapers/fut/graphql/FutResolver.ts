@@ -322,7 +322,7 @@ export class FutResolver {
 		@Arg("limit", () => Int, { nullable: true, defaultValue: 50 }) limit?: number,
 		@Arg("offset", () => Int, { nullable: true, defaultValue: 0 }) offset?: number,
 	): Promise<GraphQLFutPlayer[]> {
-		const dbPath = join(import.meta.dir, "../../../../data/fut_extracted_database.sqlite");
+		const dbPath = join(import.meta.dir, "../data/fut_extracted_database.sqlite");
 		const db = new Database(dbPath);
 
 		let sql = "SELECT * FROM players WHERE 1=1";
@@ -484,7 +484,7 @@ export class FutResolver {
 
 	@Query(() => FutStatsSummary)
 	async futStatsSummary(): Promise<FutStatsSummary> {
-		const dbPath = join(import.meta.dir, "../../../../data/fut_extracted_database.sqlite");
+		const dbPath = join(import.meta.dir, "../data/fut_extracted_database.sqlite");
 		const db = new Database(dbPath);
 
 		const totalPlayers = db.query("SELECT COUNT(*) as count FROM players").get() as any;

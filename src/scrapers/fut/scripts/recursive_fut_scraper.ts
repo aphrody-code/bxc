@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { scrapeFutGgPlayer } from "../src/scrapers/fut/futgg.ts";
-import { scrapeFutBinPrice } from "../src/scrapers/fut/futbin.ts";
-import { Browser } from "../src/api/browser.ts";
+import { scrapeFutGgPlayer } from "../futgg.ts";
+import { scrapeFutBinPrice } from "../futbin.ts";
+import { Browser } from "../../../api/browser.ts";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
@@ -42,7 +42,7 @@ const DELAY_MS = process.env.DELAY_MS
 	: 1000;
 
 interface CrawlState {
-	visitedHashes: Set<number>;
+	visitedHashes: Set<bigint>;
 	players: any[];
 	prices: any[];
 	errors: number;
@@ -196,7 +196,7 @@ async function runRecursiveScraper() {
 	`);
 
 	const state: CrawlState = {
-		visitedHashes: new Set<number>(),
+		visitedHashes: new Set<bigint>(),
 		players: [],
 		prices: [],
 		errors: 0,
@@ -205,10 +205,10 @@ async function runRecursiveScraper() {
 
 	// Load previously visited hashes from database to enable resumeability
 	const visitedRows = db.query("SELECT url_hash FROM visited_urls").all() as {
-		url_hash: number;
+		url_hash: number | bigint;
 	}[];
 	for (const row of visitedRows) {
-		state.visitedHashes.add(Number(row.url_hash));
+		state.visitedHashes.add(BigInt(row.url_hash));
 	}
 	console.log(
 		`Loaded ${state.visitedHashes.size} previously visited URLs from SQLite database.`,
@@ -396,7 +396,9 @@ async function runRecursiveScraper() {
 							);
 
 							// Persist to SQLite
-							insertPlayer.run({
+							(insertPlayer as unknown as {
+								run: (params: Record<string, string | number | bigint | boolean | null | undefined>) => void;
+							}).run({
 								$id: getPlayerIdFromUrl(current.url),
 								$name: player.name,
 								$rating: player.rating,
@@ -493,7 +495,7 @@ async function runRecursiveScraper() {
 			} else if (current.url.includes("futbin.com")) {
 				if (current.url.includes("/player/")) {
 					const page = await Browser.newPage({
-						profile: "ghost",
+						profile: "stealth",
 						cookies: hasFutbinCookies ? futbinCookies : undefined,
 					});
 					try {

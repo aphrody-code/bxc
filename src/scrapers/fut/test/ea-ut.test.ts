@@ -15,8 +15,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { Browser } from "../../src/api/browser.ts";
-import { launchGhostBrowser } from "../../src/profiles/ghost/index.ts";
+import { Browser } from "../../../api/browser.ts";
+import { launchGhostBrowser } from "../../../profiles/ghost/index.ts";
 
 const RUN_LIVE = !Bun.env.SKIP_NETWORK_TESTS;
 
