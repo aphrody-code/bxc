@@ -20,6 +20,7 @@
 
 import { WorldBeybladeScraper } from "../scrapers/worldbeyblade/index.ts";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
+import { existsSync } from "node:fs";
 
 interface CliOptions extends CommonOptions {
 	action:
@@ -91,12 +92,16 @@ function parseArgs(
 	else if (actionStr === "sendpm") action = "sendpm";
 	else return null;
 
+	const defaultCookie = existsSync("data/worldbeyblade_cookies.json")
+		? "data/worldbeyblade_cookies.json"
+		: "worldbeyblade";
+
 	const opts: CliOptions = {
 		...baseOpts,
 		action,
 		target: "",
 		page: 1,
-		cookies: "data/worldbeyblade_cookies.json",
+		cookies: defaultCookie,
 		pretty: process.stdout.isTTY,
 	};
 
