@@ -213,20 +213,28 @@ async function runRecursiveScraper() {
 					current.url.includes("/players/") &&
 					!current.url.endsWith("/players/")
 				) {
-					const player = await scrapeFutGgPlayer(current.url, "static");
-					state.players.push(player);
-					state.success++;
-					console.log(`  -> Extracted Player details:\n${Bun.inspect(player)}`);
+					const page = await Browser.newPage({ profile: "static" });
+					try {
+						await page.goto(current.url);
+						content = await page.content();
+						state.success++;
+						
+						const player = await scrapeFutGgPlayer(content, "static");
+						state.players.push(player);
+						console.log(`  -> Extracted Player details:\n${Bun.inspect(player)}`);
 
-					// Persist to SQLite
-					insertPlayer.run({
-						$id: getPlayerIdFromUrl(current.url),
-						$name: player.name,
-						$rating: player.rating,
-						$position: player.position,
-						$playstyles: JSON.stringify(player.playstyles),
-						$url: current.url,
-					});
+						// Persist to SQLite
+						insertPlayer.run({
+							$id: getPlayerIdFromUrl(current.url),
+							$name: player.name,
+							$rating: player.rating,
+							$position: player.position,
+							$playstyles: JSON.stringify(player.playstyles),
+							$url: current.url,
+						});
+					} finally {
+						await page.close();
+					}
 				} else {
 					const page = await Browser.newPage({ profile: "static" });
 					try {
@@ -239,17 +247,25 @@ async function runRecursiveScraper() {
 				}
 			} else if (current.url.includes("futbin.com")) {
 				if (current.url.includes("/player/")) {
-					const price = await scrapeFutBinPrice(current.url, "ghost");
-					state.prices.push(price);
-					state.success++;
-					console.log(`  -> Extracted Price details:\n${Bun.inspect(price)}`);
+					const page = await Browser.newPage({ profile: "ghost" });
+					try {
+						await page.goto(current.url);
+						content = await page.content();
+						state.success++;
 
-					// Persist to SQLite
-					insertPrice.run({
-						$url: current.url,
-						$price: price.price,
-						$last_updated: price.lastUpdated,
-					});
+						const price = await scrapeFutBinPrice(content, "ghost", current.url);
+						state.prices.push(price);
+						console.log(`  -> Extracted Price details:\n${Bun.inspect(price)}`);
+
+						// Persist to SQLite
+						insertPrice.run({
+							$url: current.url,
+							$price: price.price,
+							$last_updated: price.lastUpdated,
+						});
+					} finally {
+						await page.close();
+					}
 				} else {
 					const page = await Browser.newPage({ profile: "http" });
 					try {

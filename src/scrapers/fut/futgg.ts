@@ -19,31 +19,35 @@ import { launchGhostBrowser } from "../../profiles/ghost/index.ts";
 import type { FutPlayer } from "./types.ts";
 
 export async function scrapeFutGgPlayer(
-	url: string,
+	urlOrHtml: string,
 	profile: "static" | "http" | "ghost" = "static",
 ): Promise<FutPlayer> {
 	let content = "";
 	let title = "";
 
-	if (profile === "ghost") {
-		const ghost = await launchGhostBrowser();
-		try {
-			await ghost.page.goto(url);
-			await Bun.sleep(2000);
-			content = await ghost.page.content();
-			title = await ghost.page.title();
-		} finally {
-			await ghost.close();
+	if (urlOrHtml.startsWith("http://") || urlOrHtml.startsWith("https://")) {
+		if (profile === "ghost") {
+			const ghost = await launchGhostBrowser();
+			try {
+				await ghost.page.goto(urlOrHtml);
+				await Bun.sleep(2000);
+				content = await ghost.page.content();
+				title = await ghost.page.title();
+			} finally {
+				await ghost.close();
+			}
+		} else {
+			const page = await Browser.newPage({ profile });
+			try {
+				await page.goto(urlOrHtml);
+				content = await page.content();
+				title = await page.title();
+			} finally {
+				await page.close();
+			}
 		}
 	} else {
-		const page = await Browser.newPage({ profile });
-		try {
-			await page.goto(url);
-			content = await page.content();
-			title = await page.title();
-		} finally {
-			await page.close();
-		}
+		content = urlOrHtml;
 	}
 
 	let name = "";
