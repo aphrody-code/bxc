@@ -466,23 +466,40 @@ export class Page implements AnyPage {
 	/** Returns the document `<title>`. */
 	async title(): Promise<string> {
 		this.#assertOpen();
-		const { result } = (await this._send("Runtime.evaluate", {
-			expression: "document.title",
-			returnByValue: true,
-		})) as { result: { value?: string } };
-		return (result.value as string) ?? "";
+		try {
+			const { result } = (await this._send("Runtime.evaluate", {
+				expression: "document.title",
+				returnByValue: true,
+			})) as { result: { value?: string } };
+			return (result.value as string) ?? "";
+		} catch {
+			return "";
+		}
 	}
 
 	/** Returns the full `outerHTML` of the document root. */
 	async content(): Promise<string> {
 		this.#assertOpen();
-		const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
-			root: { nodeId: number };
-		};
-		const { outerHTML } = (await this._send("DOM.getOuterHTML", {
-			nodeId: doc.root.nodeId,
-		})) as { outerHTML: string };
-		return outerHTML;
+		try {
+			const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
+				root: { nodeId: number };
+			};
+			const { outerHTML } = (await this._send("DOM.getOuterHTML", {
+				nodeId: doc.root.nodeId,
+			})) as { outerHTML: string };
+			return outerHTML;
+		} catch {
+			// Fallback to Runtime.evaluate if DOM domain nodes are in transition
+			try {
+				const { result } = (await this._send("Runtime.evaluate", {
+					expression: "document.documentElement.outerHTML",
+					returnByValue: true,
+				})) as { result: { value?: string } };
+				return (result.value as string) ?? "";
+			} catch {
+				return "";
+			}
+		}
 	}
 
 	/**
@@ -677,16 +694,20 @@ export class Page implements AnyPage {
 	 */
 	async $<E = unknown>(sel: string): Promise<E | null> {
 		this.#assertOpen();
-		const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
-			root: { nodeId: number };
-		};
-		const { nodeId } = (await this._send("DOM.querySelector", {
-			nodeId: doc.root.nodeId,
-			selector: sel,
-		})) as { nodeId: number };
-		if (!nodeId) return null;
-		// Return a lightweight handle object (not a real DOM Element reference)
-		return this.#makeHandle<E>(nodeId);
+		try {
+			const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
+				root: { nodeId: number };
+			};
+			const { nodeId } = (await this._send("DOM.querySelector", {
+				nodeId: doc.root.nodeId,
+				selector: sel,
+			})) as { nodeId: number };
+			if (!nodeId) return null;
+			// Return a lightweight handle object (not a real DOM Element reference)
+			return this.#makeHandle<E>(nodeId);
+		} catch {
+			return null;
+		}
 	}
 
 	/**
@@ -694,14 +715,18 @@ export class Page implements AnyPage {
 	 */
 	async $$<E = unknown>(sel: string): Promise<E[]> {
 		this.#assertOpen();
-		const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
-			root: { nodeId: number };
-		};
-		const { nodeIds } = (await this._send("DOM.querySelectorAll", {
-			nodeId: doc.root.nodeId,
-			selector: sel,
-		})) as { nodeIds: number[] };
-		return nodeIds.map((id) => this.#makeHandle<E>(id));
+		try {
+			const doc = (await this._send("DOM.getDocument", { depth: 0 })) as {
+				root: { nodeId: number };
+			};
+			const { nodeIds } = (await this._send("DOM.querySelectorAll", {
+				nodeId: doc.root.nodeId,
+				selector: sel,
+			})) as { nodeIds: number[] };
+			return nodeIds.map((id) => this.#makeHandle<E>(id));
+		} catch {
+			return [];
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -788,29 +813,33 @@ export class Page implements AnyPage {
 		const handle = await this.$(sel);
 		if (!handle) throw new Error(`Element not found: ${sel}`);
 
-		// Get element coordinates for a real click
-		const { model } = (await this._send("DOM.getBoxModel", {
-			nodeId: (handle as any).nodeId,
-		})) as {
-			model: { content: number[] };
-		};
-		const x = ((model.content[0] ?? 0) + (model.content[2] ?? 0)) / 2;
-		const y = ((model.content[1] ?? 0) + (model.content[5] ?? 0)) / 2;
+		try {
+			// Get element coordinates for a real click
+			const { model } = (await this._send("DOM.getBoxModel", {
+				nodeId: (handle as any).nodeId,
+			})) as {
+				model: { content: number[] };
+			};
+			const x = ((model.content[0] ?? 0) + (model.content[2] ?? 0)) / 2;
+			const y = ((model.content[1] ?? 0) + (model.content[5] ?? 0)) / 2;
 
-		await this._send("Input.dispatchMouseEvent", {
-			type: "mousePressed",
-			x,
-			y,
-			button: "left",
-			clickCount: 1,
-		});
-		await this._send("Input.dispatchMouseEvent", {
-			type: "mouseReleased",
-			x,
-			y,
-			button: "left",
-			clickCount: 1,
-		});
+			await this._send("Input.dispatchMouseEvent", {
+				type: "mousePressed",
+				x,
+				y,
+				button: "left",
+				clickCount: 1,
+			});
+			await this._send("Input.dispatchMouseEvent", {
+				type: "mouseReleased",
+				x,
+				y,
+				button: "left",
+				clickCount: 1,
+			});
+		} catch (err: any) {
+			throw new Error(`Failed to click element '${sel}': ${err.message}`);
+		}
 	}
 
 	/**
