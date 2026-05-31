@@ -10,7 +10,7 @@ Fetches and parses player details from FUT.gg.
 - **Endpoint**: `GET /api/v1/fut/player`
 - **Query Parameters**:
   - `url` (required): The FUT.gg player page URL (e.g. `https://www.fut.gg/players/26-20801-cristiano-ronaldo/`).
-  - `profile` (optional): `static` (default) | `http` | `ghost`.
+  - `profile` (optional): `static` (default) | `http` | `stealth`.
 - **Response**:
 ```json
 {
@@ -36,7 +36,7 @@ Fetches the current player price from FUTBin.
 - **Endpoint**: `GET /api/v1/fut/price`
 - **Query Parameters**:
   - `url` (required): The FUTBin player page URL.
-  - `profile` (optional): `http` (default) | `ghost`.
+  - `profile` (optional): `http` (default) | `stealth`.
 - **Response**:
 ```json
 {
