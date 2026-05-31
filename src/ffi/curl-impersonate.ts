@@ -190,6 +190,9 @@ const CURLOPT = {
 	// "" = enable any built-in encoding (gzip, deflate, br, zstd) — required
 	// to receive decoded bodies for hosts that always answer compressed.
 	ACCEPT_ENCODING: 102,
+	NOSIGNAL: 99,
+	MAXCONNECTS: 71,
+	TCP_KEEPALIVE: 213,
 } as const;
 
 /** CURLcode success value. */
@@ -759,6 +762,11 @@ export class ImpersonatedClient {
 		} catch {
 			/* falls through to JS-side decode */
 		}
+
+		// Thread safety & resource limits
+		setoptLong(sym, handle, CURLOPT.NOSIGNAL, 1n);
+		setoptLong(sym, handle, CURLOPT.MAXCONNECTS, BigInt(this.#opts.maxConnections));
+		setoptLong(sym, handle, CURLOPT.TCP_KEEPALIVE, 1n);
 
 		// Timeouts
 		const timeoutMs = opts.timeoutMs ?? this.#opts.timeoutMs;

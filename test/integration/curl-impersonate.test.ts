@@ -204,7 +204,7 @@ describe("Cloudflare bypass — basic challenge", () => {
 // ---------------------------------------------------------------------------
 
 describe("POST request with JSON body", () => {
-	test("POST https://www.google.com/post returns echoed JSON body", async () => {
+	test("POST https://httpbin.org/post returns echoed JSON body", async () => {
 		if (!LIB_PRESENT || !NETWORK_OK) {
 			console.warn("SKIP: lib not present or network disabled");
 			return;
@@ -218,13 +218,13 @@ describe("POST request with JSON body", () => {
 
 		let res: ImpersonatedResponse;
 		try {
-			res = await client.fetch("https://www.google.com/post", {
+			res = await client.fetch("https://httpbin.org/post", {
 				method: "POST",
 				body: JSON.stringify(payload),
 				headers: { "content-type": "application/json" },
 			});
 		} catch (e) {
-			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
+			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -254,13 +254,13 @@ describe("POST request with JSON body", () => {
 
 		let res: ImpersonatedResponse;
 		try {
-			res = await client.fetch("https://www.google.com/post", {
+			res = await client.fetch("https://httpbin.org/post", {
 				method: "POST",
 				body: params,
 				headers: { "content-type": "application/x-www-form-urlencoded" },
 			});
 		} catch (e) {
-			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
+			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -286,11 +286,11 @@ describe("Cookie handling", () => {
 
 		let res: ImpersonatedResponse;
 		try {
-			res = await client.fetch("https://www.google.com/cookies", {
+			res = await client.fetch("https://httpbin.org/cookies", {
 				cookies: cookieStr,
 			});
 		} catch (e) {
-			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
+			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
 			return;
 		}
 
@@ -310,13 +310,13 @@ describe("Cookie handling", () => {
 		try {
 			// httpbin /cookies/set sets a cookie then redirects to /cookies
 			res = await client.fetch(
-				"https://www.google.com/cookies/set?test_cookie=hello",
+				"https://httpbin.org/cookies/set?test_cookie=hello",
 				{
 					followRedirects: true,
 				},
 			);
 		} catch (e) {
-			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
+			console.warn("SKIP: httpbin.org unreachable —", (e as Error).message);
 			return;
 		}
 
