@@ -100,14 +100,18 @@ describe("Futbin Tests", () => {
 			try {
 				body = await ghost.page.content();
 			} catch (e: any) {
-				console.warn(`[Futbin Ghost] Failed to retrieve page content: ${e.message}`);
+				console.warn(
+					`[Futbin Ghost] Failed to retrieve page content: ${e.message}`,
+				);
 			}
 
 			let title = "";
 			try {
 				title = await ghost.page.title();
 			} catch (e: any) {
-				console.warn(`[Futbin Ghost] Failed to retrieve page title: ${e.message}`);
+				console.warn(
+					`[Futbin Ghost] Failed to retrieve page title: ${e.message}`,
+				);
 			}
 
 			const isBotBlocked =
