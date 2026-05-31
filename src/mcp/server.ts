@@ -8,6 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { Database } from "bun:sqlite";
+import { existsSync } from "node:fs";
 
 // Bxc Native Imports (dynamically loaded inside tool execution for cold start speed)
 let activePage: any = null;
@@ -1105,8 +1106,11 @@ server.registerTool(
 		);
 		const scraper = new WorldBeybladeScraper();
 		try {
+			const defaultCookie = existsSync("data/worldbeyblade_cookies.json")
+				? "data/worldbeyblade_cookies.json"
+				: "worldbeyblade";
 			await scraper.init({
-				cookies: args.cookies || "data/worldbeyblade_cookies.json",
+				cookies: args.cookies || defaultCookie,
 			});
 			if (args.action === "status") {
 				const loggedIn = await scraper.checkLoginStatus();

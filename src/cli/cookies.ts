@@ -15,24 +15,31 @@
  */
 
 /**
- * `bxc cookies <action>` — cookie jar tools.
+ * `bxc cookies` — cookie jar tools.
  */
 
 import {
 	filterExpired,
 	loadCookieJar,
+	saveCookieJar,
 	maskCookiesForLog,
 } from "../cookies/cookie-loader.ts";
+import { getCookiesDir, resolveCookiePath } from "../utils/paths.ts";
 import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
+import { readdirSync, existsSync } from "node:fs";
+import { basename, join } from "node:path";
 
 function printUsage(): void {
 	Bun.stdout.write(
 		`bxc cookies — cookie jar tools
 
 Usage:
-  bxc cookies load <jar.json>
+  bxc cookies load <jar.json|shortcut>              Load and validate cookies
+  bxc cookies save <shortcut> <path_to_jar.json>    Save cookies to ~/.bxc/cookies/<shortcut>.json
+  bxc cookies list                                  List all saved cookie jars in ~/.bxc/cookies
+  bxc cookies show <shortcut>                       Show cookie metadata for a saved shortcut
 
-Output (stdout): JSON { total, fresh, masked[] }
+Output (stdout): JSON format
 
 Supports formats: Playwright, CDP, Netscape, EditThisCookie.
 
@@ -54,7 +61,7 @@ export async function main(
 		case "load": {
 			const file = argv[1];
 			if (!file) {
-				logger.error("load <jar.json> — file argument missing");
+				logger.error("load <jar.json|shortcut> — cookie jar target argument missing");
 				process.exit(EXIT.MISUSE);
 			}
 			try {
@@ -74,6 +81,102 @@ export async function main(
 			}
 			break;
 		}
+
+		case "save": {
+			const shortcut = argv[1];
+			const sourceFile = argv[2];
+			if (!shortcut || !sourceFile) {
+				logger.error("save <shortcut> <path_to_jar.json> — missing arguments");
+				process.exit(EXIT.MISUSE);
+			}
+			try {
+				if (!existsSync(sourceFile)) {
+					throw new Error(`Source file does not exist: ${sourceFile}`);
+				}
+				const cookies = await loadCookieJar(sourceFile);
+				await saveCookieJar(shortcut, cookies);
+				Bun.stdout.write(
+					JSON.stringify(
+						{
+							ok: true,
+							message: `Successfully saved ${cookies.length} cookies to shortcut '${shortcut}'`,
+							path: resolveCookiePath(shortcut),
+						},
+						null,
+						2,
+					) + "\n",
+				);
+			} catch (err) {
+				logger.error(err instanceof Error ? err.message : String(err));
+				process.exit(EXIT.DATA_ERR);
+			}
+			break;
+		}
+
+		case "list": {
+			try {
+				const dir = getCookiesDir();
+				const files = readdirSync(dir).filter(
+					(f) => f.endsWith(".json") || f.endsWith(".txt"),
+				);
+				const list = [];
+				for (const f of files) {
+					try {
+						const name = basename(f, f.endsWith(".json") ? ".json" : ".txt");
+						const cookies = await loadCookieJar(join(dir, f));
+						const fresh = filterExpired(cookies);
+						list.push({
+							shortcut: name,
+							filename: f,
+							total: cookies.length,
+							fresh: fresh.length,
+						});
+					} catch {
+						list.push({
+							shortcut: f,
+							filename: f,
+							error: "Unrecognized cookie format or corrupted",
+						});
+					}
+				}
+				Bun.stdout.write(JSON.stringify(list, null, 2) + "\n");
+			} catch (err) {
+				logger.error(err instanceof Error ? err.message : String(err));
+				process.exit(EXIT.SOFTWARE);
+			}
+			break;
+		}
+
+		case "show": {
+			const shortcut = argv[1];
+			if (!shortcut) {
+				logger.error("show <shortcut> — shortcut argument missing");
+				process.exit(EXIT.MISUSE);
+			}
+			try {
+				const cookies = await loadCookieJar(shortcut);
+				const fresh = filterExpired(cookies);
+				const domains = [...new Set(cookies.map((c) => c.domain))];
+				Bun.stdout.write(
+					JSON.stringify(
+						{
+							shortcut,
+							resolvedPath: resolveCookiePath(shortcut),
+							total: cookies.length,
+							fresh: fresh.length,
+							domains,
+						},
+						null,
+						2,
+					) + "\n",
+				);
+			} catch (err) {
+				logger.error(err instanceof Error ? err.message : String(err));
+				process.exit(EXIT.DATA_ERR);
+			}
+			break;
+		}
+
 		default:
 			logger.error(`unknown action '${action}'`);
 			printUsage();

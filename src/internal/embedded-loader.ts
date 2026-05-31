@@ -25,6 +25,8 @@ import {
 import { join } from "node:path";
 import { hasEmbedded } from "../rust/embedded-assets.ts";
 
+import { getBinDir } from "../utils/paths.ts";
+
 /**
  * Extracts an embedded binary asset from Bun's virtual filesystem ($bunfs)
  * to a physical directory (~/.bxc/bin) so that dlopen/kernel dynamic linkers
@@ -42,8 +44,7 @@ export function extractEmbeddedAssetIfNeeded(
 		return assetPath;
 	}
 
-	const home = Bun.env.HOME || Bun.env.USERPROFILE || "/tmp";
-	const binDir = join(home, ".bxc", "bin");
+	const binDir = getBinDir();
 	const targetPath = join(binDir, filename);
 
 	try {

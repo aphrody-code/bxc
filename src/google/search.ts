@@ -38,13 +38,10 @@ import {
 /** Transport used to fetch the SERP HTML. */
 export type SearchTransport = "auto" | "fetch" | "ghost" | "http";
 
+import { resolveCookiePath } from "../utils/paths.ts";
+
 /** Default location of the authenticated Google cookie jar. */
-export const DEFAULT_GOOGLE_COOKIE_JAR = join(
-	homedir(),
-	".bxc",
-	"cookies",
-	"google.json",
-);
+export const DEFAULT_GOOGLE_COOKIE_JAR = resolveCookiePath("google");
 
 const DESKTOP_UA =
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";

@@ -48,6 +48,8 @@ export interface CacheOptions {
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_MAX_ENTRIES = 10000;
 
+import { getCacheFile } from "../utils/paths.ts";
+
 export class GoogleCache {
 	readonly #db: Database;
 	readonly #ttl: number;
@@ -64,11 +66,9 @@ export class GoogleCache {
 	constructor(opts: CacheOptions = {}) {
 		let dbPath = opts.path;
 
-		if (!dbPath && process.env.HOME) {
-			const dir = join(process.env.HOME, ".bxc");
+		if (!dbPath) {
 			try {
-				mkdirSync(dir, { recursive: true });
-				dbPath = join(dir, "cache.sqlite");
+				dbPath = getCacheFile("cache.sqlite");
 			} catch {
 				dbPath = ":memory:";
 			}

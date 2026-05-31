@@ -89,21 +89,32 @@ interface RawJsonCookie {
 	session?: boolean;
 }
 
+import { resolveCookiePath } from "../utils/paths.ts";
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Loads, parses, validates and filters cookies from a file on disk.
+ * Loads, parses, validates and filters cookies from a file on disk or a name shortcut.
  *
- * @param filePath - Path to a cookie file (JSON or Netscape `cookies.txt`).
+ * @param filePath - Path to a cookie file (JSON/txt) or cookie jar name shortcut (e.g., "google").
  * @returns Array of valid, non-expired {@link Cookie} records.
- * @throws If the file does not parse as a known format.
+ * @throws If the file does not exist or does not parse as a known format.
  */
 export async function loadCookieJar(filePath: string): Promise<Cookie[]> {
-	const raw = await Bun.file(filePath).text();
+	const resolved = resolveCookiePath(filePath);
+	const raw = await Bun.file(resolved).text();
 	const parsed = parseCookies(raw);
 	return filterExpired(parsed);
+}
+
+/**
+ * Saves a list of cookies to a file on disk or cookie jar name shortcut.
+ */
+export async function saveCookieJar(filePath: string, cookies: Cookie[]): Promise<void> {
+	const resolved = resolveCookiePath(filePath);
+	await Bun.write(resolved, JSON.stringify(cookies, null, 2));
 }
 
 /**
