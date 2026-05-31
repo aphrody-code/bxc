@@ -1,6 +1,6 @@
 {
 	"project": "Bxc",
-	"version": "1.0.0",
+	"version": "0.5.4",
 	"agents": {
 		"GeminiCLI": {
 			"role": "Lead Orchestrator & Autonomous Developer",
@@ -49,8 +49,8 @@
 		"handover": "Record significant architectural milestones in MEGA-PLAN.md."
 	},
 	"active_context": {
-		"last_major_change": "MCP SDK vendoring & Bun-native migration (May 17, 2026)",
-		"current_focus": "Workspace documentation & Agent Synchronization",
-		"status": "Healthy (0-error Oxlint compliance)"
+		"last_major_change": "FFI curl-impersonate integration, recursive crawler options, HAR logging (May 31, 2026)",
+		"current_focus": "Windows cross-compilation and verification testing",
+		"status": "Healthy (Unit tests green, FFI mirror verified)"
 	}
 }
