@@ -80,7 +80,12 @@ export class GoogleCache {
 		});
 
 		// WAL mode is crucial for performance on VPS with multiple workers
-		this.#db.exec("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
+		this.#db.exec(`
+			PRAGMA journal_mode = WAL;
+			PRAGMA synchronous = NORMAL;
+			PRAGMA temp_store = MEMORY;
+			PRAGMA cache_size = -10000;
+		`);
 
 		this.#db.exec(`
 			CREATE TABLE IF NOT EXISTS cache (
@@ -93,14 +98,21 @@ export class GoogleCache {
 			CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache(expires_at);
 		`);
 
+		// Safely migrate schema to include compression column
+		try {
+			this.#db.exec("ALTER TABLE cache ADD COLUMN compression INTEGER NOT NULL DEFAULT 0;");
+		} catch {
+			// Column already exists
+		}
+
 		this.#ttl = opts.defaultTtlMs ?? DEFAULT_TTL_MS;
 		this.#max = opts.maxEntries ?? DEFAULT_MAX_ENTRIES;
 
 		this.#getStmt = this.#db.prepare(
-			"SELECT payload, is_json FROM cache WHERE key = ? AND expires_at > ?",
+			"SELECT payload, is_json, compression FROM cache WHERE key = ? AND expires_at > ?",
 		);
 		this.#setStmt = this.#db.prepare(
-			"INSERT OR REPLACE INTO cache (key, payload, is_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+			"INSERT OR REPLACE INTO cache (key, payload, is_json, created_at, expires_at, compression) VALUES (?, ?, ?, ?, ?, ?)",
 		);
 		this.#delStmt = this.#db.prepare("DELETE FROM cache WHERE key = ?");
 		this.#purgeStmt = this.#db.prepare(
@@ -110,57 +122,78 @@ export class GoogleCache {
 		this.#evictStmt = this.#db.prepare(
 			"DELETE FROM cache WHERE key IN (SELECT key FROM cache ORDER BY created_at ASC LIMIT ?)",
 		);
+
+		// Schedule a background purge of expired items on launch
+		setTimeout(() => {
+			try {
+				this.purgeExpired();
+			} catch {
+				// ignore
+			}
+		}, 1000);
 	}
 
-	/**
-	 * Retrieve a value from the cache.
-	 * Handles both JSON objects and raw Uint8Array (BLOB).
-	 */
 	get<T>(key: string): T | null {
 		const row = this.#getStmt.get(key, Date.now()) as {
 			payload: Uint8Array | string;
 			is_json: number;
+			compression: number;
 		} | null;
 
 		if (!row) return null;
 
+		let binary = row.payload;
+		if (row.compression === 1) {
+			binary = Bun.gunzipSync(binary as any);
+		}
+
 		if (row.is_json === 1) {
 			try {
-				// Bun handles Uint8Array -> string conversion efficiently
-				const text =
-					typeof row.payload === "string"
-						? row.payload
-						: new TextDecoder().decode(row.payload);
+				const text = typeof binary === "string" ? binary : new TextDecoder().decode(binary);
 				return JSON.parse(text) as T;
 			} catch {
 				return null;
 			}
 		}
 
-		return row.payload as unknown as T;
+		if (row.is_json === 2) {
+			return (typeof binary === "string" ? binary : new TextDecoder().decode(binary)) as unknown as T;
+		}
+
+		return binary as unknown as T;
 	}
 
 	/**
 	 * Store a value in the cache with an optional TTL.
 	 * Automatically detects if the value should be stored as JSON or raw BLOB.
+	 * Compresses values dynamically if they exceed 512 bytes.
 	 */
 	set<T>(key: string, value: T, ttlMs?: number): void {
 		const now = Date.now();
 		const expires = now + (ttlMs ?? this.#ttl);
 
 		let payload: Uint8Array | string;
-		let isJson = 0;
+		let isJson = 0; // 0 = raw, 1 = json, 2 = string
+		let compression = 0;
 
 		if (value instanceof Uint8Array) {
 			payload = value;
+			isJson = 0;
 		} else if (typeof value === "string") {
 			payload = value;
+			isJson = 2;
 		} else {
 			payload = JSON.stringify(value);
 			isJson = 1;
 		}
 
-		this.#setStmt.run(key, payload, isJson, now, expires);
+		if (payload.length > 512) {
+			const rawBytes = typeof payload === "string" ? new TextEncoder().encode(payload) : payload;
+			payload = Bun.gzipSync(rawBytes as any);
+			compression = 1;
+		}
+
+		this.#setStmt.run(key, payload, isJson, now, expires, compression);
 
 		this.#maybeEvict();
 	}
