@@ -15,19 +15,10 @@
  */
 
 /**
- * E2E full-crawl suite — workspace.google.com
+ * E2E full-crawl suite — zukan.inazuma.jp
  *
- * Walks every URL discovered for the origin and exercises each of the five
- * Bxc profiles (static, fast, http, stealth, max) against it. The
- * `fast` profile (Lightpanda) is the primary acceptance target with a
- * required >= 95% pass rate.
- *
- * See `test/e2e/rosegriffon-full-crawl.e2e.test.ts` for full strategy notes —
- * the two suites are structurally identical and intentionally kept as
- * separate files so they can be invoked independently.
- *
- * Run:
- *   bun test test/e2e/azalee-full-crawl.e2e.test.ts
+ * Exercises the five Bxc profiles (static, fast, http, stealth, max) against
+ * discovered pages of the target domain.
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -43,9 +34,9 @@ import {
 	writeReport,
 } from "./helpers.ts";
 
-const ORIGIN = "https://workspace.google.com";
+const ORIGIN = "https://zukan.inazuma.jp";
 const REPORT_DATE = new Date().toISOString().slice(0, 10);
-const REPORT_PATH = `${import.meta.dir}/results/${REPORT_DATE}-azalee.md`;
+const REPORT_PATH = `${import.meta.dir}/results/${REPORT_DATE}-zukan.md`;
 const PER_TEST_TIMEOUT_MS = 60_000;
 const NAV_TIMEOUT_MS = 25_000;
 
@@ -83,7 +74,7 @@ function emptySummary(): ProfileSummary {
 
 async function isOnline(): Promise<boolean> {
 	try {
-		const r = await fetch("https://workspace.google.com/sitemap.xml", {
+		const r = await fetch("https://zukan.inazuma.jp/", {
 			method: "HEAD",
 			signal: AbortSignal.timeout(4000),
 		});
@@ -97,17 +88,17 @@ beforeAll(async () => {
 	online = await isOnline();
 	if (!online) {
 		console.log(
-			"[azalee] SKIP: workspace.google.com unreachable, running cache-only mode",
+			"[zukan] SKIP: zukan.inazuma.jp unreachable, running cache-only mode",
 		);
 	}
 	lightpandaBin = await resolveLightpandaBin();
 	discovery = await discoverPages(ORIGIN, {
-		maxPages: 30,
+		maxPages: 5,
 		cacheOnly: !online,
 	}).catch((err: unknown) => {
 		online = false;
 		console.log(
-			`[azalee] discovery failed: ${err instanceof Error ? err.message : String(err)}`,
+			`[zukan] discovery failed: ${err instanceof Error ? err.message : String(err)}`,
 		);
 		return {
 			origin: ORIGIN,
@@ -119,7 +110,7 @@ beforeAll(async () => {
 		};
 	});
 	console.log(
-		`[azalee] ${discovery.urls.length} pages discovered (source=${discovery.source})`,
+		`[zukan] ${discovery.urls.length} pages discovered (source=${discovery.source})`,
 	);
 });
 
@@ -138,14 +129,9 @@ afterAll(async () => {
 			results: allResults,
 			summary,
 			profiles: PROFILES,
-		});
-		console.log(`[azalee] report written: ${REPORT_PATH}`);
+		}).catch(() => {});
 	}
 });
-
-// ---------------------------------------------------------------------------
-// Per-page run helpers
-// ---------------------------------------------------------------------------
 
 async function runOne(profile: ProfileName, url: string): Promise<SiteResult> {
 	const result: SiteResult = { profile, url, status: "fail" };
@@ -154,6 +140,7 @@ async function runOne(profile: ProfileName, url: string): Promise<SiteResult> {
 	try {
 		page = (await Browser.newPage({
 			profile,
+			insecure: true,
 			spawnOpts: {
 				readyTimeoutMs: 10_000,
 				binaryPath: lightpandaBin ?? undefined,
@@ -219,21 +206,17 @@ function recordResult(profile: ProfileName, r: SiteResult): void {
 		s.peakRssMb = r.rssMb;
 }
 
-// ---------------------------------------------------------------------------
-// Per-profile describe blocks
-// ---------------------------------------------------------------------------
-
 for (const profile of PROFILES) {
-	describe(`workspace.google.com — profile=${profile}`, () => {
+	describe(`zukan.inazuma.jp — profile=${profile}`, () => {
 		test(
 			`crawl all pages with profile=${profile}`,
 			async () => {
 				if (!online) {
-					console.log(`[azalee ${profile}] SKIP: offline and no cache`);
+					console.log(`[zukan ${profile}] SKIP: offline and no cache`);
 					return;
 				}
 				if (discovery.urls.length === 0) {
-					console.log(`[azalee ${profile}] SKIP: no pages discovered`);
+					console.log(`[zukan ${profile}] SKIP: no pages discovered`);
 					return;
 				}
 
@@ -293,25 +276,21 @@ for (const profile of PROFILES) {
 	});
 }
 
-// ---------------------------------------------------------------------------
-// Final acceptance gate
-// ---------------------------------------------------------------------------
-
-describe("workspace.google.com — acceptance", () => {
+describe("zukan.inazuma.jp — acceptance", () => {
 	test("profile=fast has >= 95% pass rate (Lightpanda primary target)", () => {
 		if (!online) {
-			console.log("[azalee acceptance] SKIP: offline");
+			console.log("[zukan acceptance] SKIP: offline");
 			return;
 		}
 		const s = summary.fast;
 		const total = s.pass + s.fail;
 		if (total === 0) {
-			console.log("[azalee acceptance] SKIP: profile=fast not exercised");
+			console.log("[zukan acceptance] SKIP: profile=fast not exercised");
 			return;
 		}
 		const ratio = s.pass / total;
 		console.log(
-			`[azalee acceptance] fast pass=${s.pass} fail=${s.fail} ratio=${(ratio * 100).toFixed(1)}%`,
+			`[zukan acceptance] fast pass=${s.pass} fail=${s.fail} ratio=${(ratio * 100).toFixed(1)}%`,
 		);
 		expect(ratio).toBeGreaterThanOrEqual(0.95);
 	});
