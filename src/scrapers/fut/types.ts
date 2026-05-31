@@ -14,86 +14,92 @@
  * limitations under the License.
  */
 
-export interface FutPlayer {
-	name: string;
-	rating: number;
-	position: string;
-	club?: string;
-	nation?: string;
-	league?: string;
-	price?: string;
-	playstyles: string[];
-	playstylesPlus?: string[];
-	pac?: number;
-	sho?: number;
-	pas?: number;
-	dri?: number;
-	def?: number;
-	phy?: number;
-	div?: number;
-	han?: number;
-	kic?: number;
-	ref?: number;
-	spd?: number;
-	pos?: number;
-	skillMoves?: number;
-	weakFoot?: number;
-	workrateAttack?: string;
-	workrateDefense?: string;
-	isGeneric?: boolean;
+import { z } from "zod";
+
+export const FutPlayerSchema = z.object({
+	name: z.string(),
+	rating: z.number(),
+	position: z.string(),
+	club: z.string().optional(),
+	nation: z.string().optional(),
+	league: z.string().optional(),
+	price: z.string().optional(),
+	playstyles: z.array(z.string()),
+	playstylesPlus: z.array(z.string()).optional(),
+	pac: z.number().optional(),
+	sho: z.number().optional(),
+	pas: z.number().optional(),
+	dri: z.number().optional(),
+	def: z.number().optional(),
+	phy: z.number().optional(),
+	div: z.number().optional(),
+	han: z.number().optional(),
+	kic: z.number().optional(),
+	ref: z.number().optional(),
+	spd: z.number().optional(),
+	pos: z.number().optional(),
+	skillMoves: z.number().optional(),
+	weakFoot: z.number().optional(),
+	workrateAttack: z.string().optional(),
+	workrateDefense: z.string().optional(),
+	isGeneric: z.boolean().optional(),
 
 	// Biology/card attributes
-	overallRating?: number;
-	dateOfBirth?: string;
-	height?: number;
-	weight?: number;
-	foot?: string;
-	age?: number;
-	rarity?: string;
-	accelerateType?: string;
-	gender?: string;
-	alternativePositions?: string[];
+	overallRating: z.number().optional(),
+	dateOfBirth: z.string().optional(),
+	height: z.number().optional(),
+	weight: z.number().optional(),
+	foot: z.string().optional(),
+	age: z.number().optional(),
+	rarity: z.string().optional(),
+	accelerateType: z.string().optional(),
+	gender: z.string().optional(),
+	alternativePositions: z.array(z.string()).optional(),
 
 	// Detailed sub-stats
-	acceleration?: number;
-	sprintSpeed?: number;
-	agility?: number;
-	balance?: number;
-	reactions?: number;
-	ballControl?: number;
-	dribbling?: number;
-	composure?: number;
-	jumping?: number;
-	stamina?: number;
-	strength?: number;
-	aggression?: number;
-	interceptions?: number;
-	headingAccuracy?: number;
-	defensiveAwareness?: number;
-	standingTackle?: number;
-	slidingTackle?: number;
-	vision?: number;
-	crossing?: number;
-	fkAccuracy?: number;
-	shortPassing?: number;
-	longPassing?: number;
-	curve?: number;
-	positioning?: number;
-	finishing?: number;
-	shotPower?: number;
-	longShots?: number;
-	volleys?: number;
-	penalties?: number;
-	gkDiving?: number;
-	gkHandling?: number;
-	gkKicking?: number;
-	gkReflexes?: number;
-	gkPositioning?: number;
-	gkSpeed?: number;
-}
+	acceleration: z.number().optional(),
+	sprintSpeed: z.number().optional(),
+	agility: z.number().optional(),
+	balance: z.number().optional(),
+	reactions: z.number().optional(),
+	ballControl: z.number().optional(),
+	dribbling: z.number().optional(),
+	composure: z.number().optional(),
+	jumping: z.number().optional(),
+	stamina: z.number().optional(),
+	strength: z.number().optional(),
+	aggression: z.number().optional(),
+	interceptions: z.number().optional(),
+	headingAccuracy: z.number().optional(),
+	defensiveAwareness: z.number().optional(),
+	standingTackle: z.number().optional(),
+	slidingTackle: z.number().optional(),
+	vision: z.number().optional(),
+	crossing: z.number().optional(),
+	fkAccuracy: z.number().optional(),
+	shortPassing: z.number().optional(),
+	longPassing: z.number().optional(),
+	curve: z.number().optional(),
+	positioning: z.number().optional(),
+	finishing: z.number().optional(),
+	shotPower: z.number().optional(),
+	longShots: z.number().optional(),
+	volleys: z.number().optional(),
+	penalties: z.number().optional(),
+	gkDiving: z.number().optional(),
+	gkHandling: z.number().optional(),
+	gkKicking: z.number().optional(),
+	gkReflexes: z.number().optional(),
+	gkPositioning: z.number().optional(),
+	gkSpeed: z.number().optional(),
+});
 
-export interface FutPrice {
-	url: string;
-	price: string;
-	lastUpdated: string;
-}
+export type FutPlayer = z.infer<typeof FutPlayerSchema>;
+
+export const FutPriceSchema = z.object({
+	url: z.string().url(),
+	price: z.string(),
+	lastUpdated: z.string(),
+});
+
+export type FutPrice = z.infer<typeof FutPriceSchema>;

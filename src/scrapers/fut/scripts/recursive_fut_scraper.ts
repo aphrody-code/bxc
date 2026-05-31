@@ -20,6 +20,9 @@ import { Browser } from "../../../api/browser.ts";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
+import pLimit from "p-limit";
+import Bottleneck from "bottleneck";
+import { FutPlayerSchema, FutPriceSchema } from "../types.ts";
 
 const futggCookies = join(import.meta.dir, "../cookies/futgg.json");
 const hasFutggCookies = existsSync(futggCookies);
@@ -337,13 +340,15 @@ async function runRecursiveScraper() {
 
 	let pagesCrawled = 0;
 
-	while (queue.length > 0 && pagesCrawled < MAX_PAGES) {
-		const current = queue.shift();
-		if (!current) continue;
+	const limiter = new Bottleneck({
+		maxConcurrent: 3,
+		minTime: DELAY_MS,
+	});
 
+	async function processUrl(current: { url: string; depth: number }) {
 		// Visited lookup using Bun's native wyhash
 		const urlHash = Bun.hash.wyhash(current.url);
-		if (state.visitedHashes.has(urlHash)) continue;
+		if (state.visitedHashes.has(urlHash)) return;
 		state.visitedHashes.add(urlHash);
 		pagesCrawled++;
 
@@ -365,8 +370,6 @@ async function runRecursiveScraper() {
 		}
 
 		try {
-			await Bun.sleep(DELAY_MS);
-
 			let content = "";
 			let status = "success";
 
@@ -390,9 +393,11 @@ async function runRecursiveScraper() {
 								`  -> Skipping generic hub/listing page: ${player.name}`,
 							);
 						} else {
-							state.players.push(player);
+							// Schema validation with Zod
+							const validatedPlayer = FutPlayerSchema.parse(player);
+							state.players.push(validatedPlayer);
 							console.log(
-								`  -> Extracted Player details:\n${Bun.inspect(player)}`,
+								`  -> Extracted Player details:\n${Bun.inspect(validatedPlayer)}`,
 							);
 
 							// Persist to SQLite
@@ -407,80 +412,82 @@ async function runRecursiveScraper() {
 								}
 							).run({
 								$id: getPlayerIdFromUrl(current.url),
-								$name: player.name,
-								$rating: player.rating,
-								$position: player.position,
-								$club: player.club,
-								$nation: player.nation,
-								$league: player.league,
-								$playstyles: JSON.stringify(player.playstyles),
-								$playstyles_plus: JSON.stringify(player.playstylesPlus || []),
-								$pac: player.pac,
-								$sho: player.sho,
-								$pas: player.pas,
-								$dri: player.dri,
-								$def: player.def,
-								$phy: player.phy,
-								$div: player.div,
-								$han: player.han,
-								$kic: player.kic,
-								$ref: player.ref,
-								$spd: player.spd,
-								$pos: player.pos,
-								$skill_moves: player.skillMoves,
-								$weak_foot: player.weakFoot,
-								$workrate_attack: player.workrateAttack,
-								$workrate_defense: player.workrateDefense,
+								$name: validatedPlayer.name,
+								$rating: validatedPlayer.rating,
+								$position: validatedPlayer.position,
+								$club: validatedPlayer.club,
+								$nation: validatedPlayer.nation,
+								$league: validatedPlayer.league,
+								$playstyles: JSON.stringify(validatedPlayer.playstyles),
+								$playstyles_plus: JSON.stringify(
+									validatedPlayer.playstylesPlus || [],
+								),
+								$pac: validatedPlayer.pac,
+								$sho: validatedPlayer.sho,
+								$pas: validatedPlayer.pas,
+								$dri: validatedPlayer.dri,
+								$def: validatedPlayer.def,
+								$phy: validatedPlayer.phy,
+								$div: validatedPlayer.div,
+								$han: validatedPlayer.han,
+								$kic: validatedPlayer.kic,
+								$ref: validatedPlayer.ref,
+								$spd: validatedPlayer.spd,
+								$pos: validatedPlayer.pos,
+								$skill_moves: validatedPlayer.skillMoves,
+								$weak_foot: validatedPlayer.weakFoot,
+								$workrate_attack: validatedPlayer.workrateAttack,
+								$workrate_defense: validatedPlayer.workrateDefense,
 								$url: current.url,
 
-								$overall_rating: player.overallRating,
-								$date_of_birth: player.dateOfBirth,
-								$height: player.height,
-								$weight: player.weight,
-								$foot: player.foot,
-								$age: player.age,
-								$rarity: player.rarity,
-								$accelerate_type: player.accelerateType,
-								$gender: player.gender,
+								$overall_rating: validatedPlayer.overallRating,
+								$date_of_birth: validatedPlayer.dateOfBirth,
+								$height: validatedPlayer.height,
+								$weight: validatedPlayer.weight,
+								$foot: validatedPlayer.foot,
+								$age: validatedPlayer.age,
+								$rarity: validatedPlayer.rarity,
+								$accelerate_type: validatedPlayer.accelerateType,
+								$gender: validatedPlayer.gender,
 								$alternative_positions: JSON.stringify(
-									player.alternativePositions || [],
+									validatedPlayer.alternativePositions || [],
 								),
 
-								$acceleration: player.acceleration,
-								$sprint_speed: player.sprintSpeed,
-								$agility: player.agility,
-								$balance: player.balance,
-								$reactions: player.reactions,
-								$ball_control: player.ballControl,
-								$dribbling: player.dribbling,
-								$composure: player.composure,
-								$jumping: player.jumping,
-								$stamina: player.stamina,
-								$strength: player.strength,
-								$aggression: player.aggression,
-								$interceptions: player.interceptions,
-								$heading_accuracy: player.headingAccuracy,
-								$defensive_awareness: player.defensiveAwareness,
-								$standing_tackle: player.standingTackle,
-								$sliding_tackle: player.slidingTackle,
-								$vision: player.vision,
-								$crossing: player.crossing,
-								$fk_accuracy: player.fkAccuracy,
-								$short_passing: player.shortPassing,
-								$long_passing: player.longPassing,
-								$curve: player.curve,
-								$positioning: player.positioning,
-								$finishing: player.finishing,
-								$shot_power: player.shotPower,
-								$long_shots: player.longShots,
-								$volleys: player.volleys,
-								$penalties: player.penalties,
-								$gk_diving: player.gkDiving,
-								$gk_handling: player.gkHandling,
-								$gk_kicking: player.gkKicking,
-								$gk_reflexes: player.gkReflexes,
-								$gk_positioning: player.gkPositioning,
-								$gk_speed: player.gkSpeed,
+								$acceleration: validatedPlayer.acceleration,
+								$sprint_speed: validatedPlayer.sprintSpeed,
+								$agility: validatedPlayer.agility,
+								$balance: validatedPlayer.balance,
+								$reactions: validatedPlayer.reactions,
+								$ball_control: validatedPlayer.ballControl,
+								$dribbling: validatedPlayer.dribbling,
+								$composure: validatedPlayer.composure,
+								$jumping: validatedPlayer.jumping,
+								$stamina: validatedPlayer.stamina,
+								$strength: validatedPlayer.strength,
+								$aggression: validatedPlayer.aggression,
+								$interceptions: validatedPlayer.interceptions,
+								$heading_accuracy: validatedPlayer.headingAccuracy,
+								$defensive_awareness: validatedPlayer.defensiveAwareness,
+								$standing_tackle: validatedPlayer.standingTackle,
+								$sliding_tackle: validatedPlayer.slidingTackle,
+								$vision: validatedPlayer.vision,
+								$crossing: validatedPlayer.crossing,
+								$fk_accuracy: validatedPlayer.fkAccuracy,
+								$short_passing: validatedPlayer.shortPassing,
+								$long_passing: validatedPlayer.longPassing,
+								$curve: validatedPlayer.curve,
+								$positioning: validatedPlayer.positioning,
+								$finishing: validatedPlayer.finishing,
+								$shot_power: validatedPlayer.shotPower,
+								$long_shots: validatedPlayer.longShots,
+								$volleys: validatedPlayer.volleys,
+								$penalties: validatedPlayer.penalties,
+								$gk_diving: validatedPlayer.gkDiving,
+								$gk_handling: validatedPlayer.gkHandling,
+								$gk_kicking: validatedPlayer.gkKicking,
+								$gk_reflexes: validatedPlayer.gkReflexes,
+								$gk_positioning: validatedPlayer.gkPositioning,
+								$gk_speed: validatedPlayer.gkSpeed,
 							});
 						}
 					} finally {
@@ -515,14 +522,18 @@ async function runRecursiveScraper() {
 							"ghost",
 							current.url,
 						);
-						state.prices.push(price);
-						console.log(`  -> Extracted Price details:\n${Bun.inspect(price)}`);
+						// Schema validation with Zod
+						const validatedPrice = FutPriceSchema.parse(price);
+						state.prices.push(validatedPrice);
+						console.log(
+							`  -> Extracted Price details:\n${Bun.inspect(validatedPrice)}`,
+						);
 
 						// Persist to SQLite
 						insertPrice.run({
 							$url: current.url,
-							$price: price.price,
-							$last_updated: price.lastUpdated,
+							$price: validatedPrice.price,
+							$last_updated: validatedPrice.lastUpdated,
 						});
 					} finally {
 						await page.close();
@@ -607,6 +618,42 @@ async function runRecursiveScraper() {
 			} catch (dbErr) {
 				// Ignore DB logging errors
 			}
+		}
+	}
+
+	const activePromises: Promise<void>[] = [];
+
+	while (
+		(queue.length > 0 || activePromises.length > 0) &&
+		pagesCrawled < MAX_PAGES
+	) {
+		// Fill active slots up to concurrency limit of 3
+		while (
+			queue.length > 0 &&
+			activePromises.length < 3 &&
+			pagesCrawled < MAX_PAGES
+		) {
+			const current = queue.shift();
+			if (!current) continue;
+
+			// Quick check to avoid launching redundant tasks
+			const urlHash = Bun.hash.wyhash(current.url);
+			if (state.visitedHashes.has(urlHash)) continue;
+
+			// Wrap and schedule the scrape task with Bottleneck + p-limit
+			const p = limiter.schedule(() => processUrl(current));
+			activePromises.push(p);
+
+			p.finally(() => {
+				const index = activePromises.indexOf(p);
+				if (index > -1) {
+					activePromises.splice(index, 1);
+				}
+			});
+		}
+
+		if (activePromises.length > 0) {
+			await Promise.race(activePromises);
 		}
 	}
 
