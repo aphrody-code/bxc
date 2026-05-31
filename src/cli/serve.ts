@@ -422,7 +422,11 @@ async function findLightpandaBinary(): Promise<string> {
 
 	if (hasEmbedded && lightpandaAsset) {
 		try {
-			const extracted = extractEmbeddedAssetIfNeeded(lightpandaAsset, "lightpanda", true);
+			const extracted = extractEmbeddedAssetIfNeeded(
+				lightpandaAsset,
+				"lightpanda",
+				true,
+			);
 			if (extracted && Bun.file(extracted).size > 0) {
 				return extracted;
 			}
@@ -965,7 +969,9 @@ export async function main(
 	void (null as CDPEvent | null);
 }
 
-main().catch((err) => {
-	console.error("[bxc] fatal", err);
-	process.exit(1);
-});
+if (import.meta.main) {
+	main().catch((err) => {
+		console.error("[bxc] fatal", err);
+		process.exit(1);
+	});
+}
