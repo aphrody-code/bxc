@@ -138,7 +138,11 @@ describe("enqueueLinks", () => {
 	// 3. strategy: "same-domain" accepts subdomains
 	it('strategy "same-domain" accepts sub-domains', async () => {
 		const page = makeMockPage(
-			["https://sub.google.com/x", "https://google.com/y", "https://evil.com/z"],
+			[
+				"https://sub.google.com/x",
+				"https://google.com/y",
+				"https://evil.com/z",
+			],
 			"https://google.com/",
 		);
 		const { added, skipped } = await enqueueLinks({
@@ -241,7 +245,11 @@ describe("enqueueLinks", () => {
 			"https://google.com/dup", // same URL twice
 			"https://google.com/unique",
 		]);
-		const { added, skipped } = await enqueueLinks({ page, queue, strategy: "all" });
+		const { added, skipped } = await enqueueLinks({
+			page,
+			queue,
+			strategy: "all",
+		});
 		expect(added).toBe(2);
 		expect(skipped).toBe(1); // duplicate
 	});
@@ -283,7 +291,10 @@ describe("enqueueLinks", () => {
 
 	// 12. Edge case: relative hrefs are resolved against baseUrl
 	it("resolves relative hrefs correctly", async () => {
-		const page = makeMockPage(["/about", "../contact", "help.html"], "https://google.com/sub/");
+		const page = makeMockPage(
+			["/about", "../contact", "help.html"],
+			"https://google.com/sub/",
+		);
 		const { added } = await enqueueLinks({ page, queue, strategy: "all" });
 		const queued = queue.fetchBatch(10);
 		const urls = queued.map((r) => r.url).sort();
@@ -331,7 +342,11 @@ describe("enqueueLinks", () => {
 	// 16. Null href attributes are skipped
 	it("skips elements with null href attribute", async () => {
 		const page = makeMockPage([null, "https://google.com/real"]);
-		const { added, skipped } = await enqueueLinks({ page, queue, strategy: "all" });
+		const { added, skipped } = await enqueueLinks({
+			page,
+			queue,
+			strategy: "all",
+		});
 		expect(added).toBe(1);
 		expect(skipped).toBe(1);
 	});
@@ -341,7 +356,11 @@ describe("enqueueLinks", () => {
 		const page = makeMockPage(["https://google.com/existing"]);
 		// Pre-populate the queue with the same URL
 		queue.addRequest("https://google.com/existing");
-		const { added, skipped } = await enqueueLinks({ page, queue, strategy: "all" });
+		const { added, skipped } = await enqueueLinks({
+			page,
+			queue,
+			strategy: "all",
+		});
 		expect(added).toBe(0);
 		expect(skipped).toBe(1);
 	});

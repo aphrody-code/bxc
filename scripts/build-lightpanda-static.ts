@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 /**
  * Build script — ZigQuery DOM-only library → liblightpanda_dom.{so,a}
  *
@@ -80,4 +79,3 @@ if (await Bun.file(soPath).exists()) {
 }
 
 console.log("[bxc] ✓ done.");
-

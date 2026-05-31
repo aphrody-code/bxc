@@ -48,7 +48,8 @@ const LIB_PATH = join(
 	import.meta.dir,
 	"../../vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
 );
-const LIB_PRESENT = (await Bun.file(LIB_PATH).exists()) || !!Bun.env.LIBCURL_IMPERSONATE_PATH;
+const LIB_PRESENT =
+	(await Bun.file(LIB_PATH).exists()) || !!Bun.env.LIBCURL_IMPERSONATE_PATH;
 const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
 /** Skip condition: if either the lib or network is missing, skip the test. */
@@ -132,7 +133,9 @@ describe("TLS fingerprint — Chrome131", () => {
 		// TLS 1.3 — tls.peet.ws reports either "TLS 1.3" (text) or "772" (decimal of 0x0304)
 		// Both mean TLS 1.3 (0x0304 = 772 in decimal)
 		const version = json.tls.tls_version_negotiated;
-		expect(version === "TLS 1.3" || version === "772" || version === "0x0304").toBe(true);
+		expect(
+			version === "TLS 1.3" || version === "772" || version === "0x0304",
+		).toBe(true);
 
 		console.log("JA4:", json.tls.ja4);
 		console.log("JA3 hash:", json.tls.ja3_hash);
@@ -207,7 +210,11 @@ describe("POST request with JSON body", () => {
 			return;
 		}
 
-		const payload = { message: "bxc-test", ts: Date.now(), nested: { ok: true } };
+		const payload = {
+			message: "bxc-test",
+			ts: Date.now(),
+			nested: { ok: true },
+		};
 
 		let res: ImpersonatedResponse;
 		try {
@@ -223,7 +230,10 @@ describe("POST request with JSON body", () => {
 
 		expect(res.status).toBe(200);
 
-		const json = (await res.json()) as { json: typeof payload; headers: Record<string, string> };
+		const json = (await res.json()) as {
+			json: typeof payload;
+			headers: Record<string, string>;
+		};
 
 		// httpbin echoes back the parsed JSON body under `.json`
 		expect(json.json).toEqual(payload);
@@ -299,9 +309,12 @@ describe("Cookie handling", () => {
 		let res: ImpersonatedResponse;
 		try {
 			// httpbin /cookies/set sets a cookie then redirects to /cookies
-			res = await client.fetch("https://www.google.com/cookies/set?test_cookie=hello", {
-				followRedirects: true,
-			});
+			res = await client.fetch(
+				"https://www.google.com/cookies/set?test_cookie=hello",
+				{
+					followRedirects: true,
+				},
+			);
 		} catch (e) {
 			console.warn("SKIP: www.google.com unreachable —", (e as Error).message);
 			return;
@@ -340,7 +353,10 @@ describe("Multiple impersonation profiles", () => {
 		}
 
 		expect(res.status).toBe(200);
-		const json = (await res.json()) as { tls: { ja4: string }; http_version: string };
+		const json = (await res.json()) as {
+			tls: { ja4: string };
+			http_version: string;
+		};
 
 		// Firefox JA4 still starts with "t13d" but has different ciphers/extensions
 		expect(json.tls.ja4).toMatch(/^t13d/);
@@ -394,9 +410,9 @@ describe("Error handling", () => {
 		});
 
 		try {
-			await expect(shortTimeoutClient.fetch("https://www.google.com/delay/5")).rejects.toBeInstanceOf(
-				CurlError,
-			);
+			await expect(
+				shortTimeoutClient.fetch("https://www.google.com/delay/5"),
+			).rejects.toBeInstanceOf(CurlError);
 		} finally {
 			shortTimeoutClient.close();
 		}
@@ -408,7 +424,9 @@ describe("Error handling", () => {
 			return;
 		}
 
-		await expect(client.fetch("this-is-not-a-valid-url")).rejects.toBeInstanceOf(CurlError);
+		await expect(
+			client.fetch("this-is-not-a-valid-url"),
+		).rejects.toBeInstanceOf(CurlError);
 	});
 
 	test("closed client throws", async () => {
@@ -419,7 +437,9 @@ describe("Error handling", () => {
 
 		const tmpClient = new ImpersonatedClient();
 		tmpClient.close();
-		await expect(tmpClient.fetch("https://google.com")).rejects.toThrow("closed");
+		await expect(tmpClient.fetch("https://google.com")).rejects.toThrow(
+			"closed",
+		);
 	});
 });
 
@@ -457,7 +477,9 @@ describe("Performance", () => {
 		const max = Math.max(...times);
 
 		console.log(`Performance (${times.length}/${N} requests succeeded):`);
-		console.log(`  avg: ${avg.toFixed(0)}ms, min: ${min.toFixed(0)}ms, max: ${max.toFixed(0)}ms`);
+		console.log(
+			`  avg: ${avg.toFixed(0)}ms, min: ${min.toFixed(0)}ms, max: ${max.toFixed(0)}ms`,
+		);
 
 		// Should complete within 30s total
 		const total = times.reduce((a, b) => a + b, 0);

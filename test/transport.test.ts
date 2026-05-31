@@ -32,7 +32,10 @@
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { Browser, Page } from "../src/api/browser.js";
-import { CDPError, InProcessTransport } from "../src/transport/InProcessTransport.js";
+import {
+	CDPError,
+	InProcessTransport,
+} from "../src/transport/InProcessTransport.js";
 import { StaticDomTransport } from "../src/transport/StaticDomTransport.js";
 
 // ---------------------------------------------------------------------------
@@ -114,7 +117,13 @@ describe("InProcessTransport", () => {
 				if (msg.error) reject(new Error(msg.error.message));
 				else resolve(msg.result);
 			};
-			transport.send(JSON.stringify({ id: 42, method: "Test.echo", params: { value: "hello" } }));
+			transport.send(
+				JSON.stringify({
+					id: 42,
+					method: "Test.echo",
+					params: { value: "hello" },
+				}),
+			);
 		});
 
 		expect(result).toEqual({ echo: "hello" });
@@ -126,7 +135,9 @@ describe("InProcessTransport", () => {
 			throw new CDPError("Unsupported", -32601);
 		});
 
-		const msg = await new Promise<{ error?: { code: number; message: string } }>((resolve) => {
+		const msg = await new Promise<{
+			error?: { code: number; message: string };
+		}>((resolve) => {
 			transport.onmessage = (raw) => resolve(JSON.parse(raw));
 			transport.send(JSON.stringify({ id: 1, method: "Foo.bar", params: {} }));
 		});
@@ -154,7 +165,9 @@ describe("InProcessTransport", () => {
 		transport.close();
 		// Should not throw
 		expect(() =>
-			transport.send(JSON.stringify({ id: 1, method: "Test.noop", params: {} })),
+			transport.send(
+				JSON.stringify({ id: 1, method: "Test.noop", params: {} }),
+			),
 		).not.toThrow();
 	});
 
@@ -206,9 +219,9 @@ describe("StaticDomTransport CDP methods", () => {
 	});
 
 	test("unsupported method returns structured error listing supported methods", async () => {
-		await expect(cdpCall(transport, "HeadlessExperimental.beginFrame", {})).rejects.toThrow(
-			/StaticDomTransport.*Browser\.getVersion/,
-		);
+		await expect(
+			cdpCall(transport, "HeadlessExperimental.beginFrame", {}),
+		).rejects.toThrow(/StaticDomTransport.*Browser\.getVersion/);
 	});
 
 	test("Page.navigate with data: URI updates page state", async () => {
@@ -222,7 +235,12 @@ describe("StaticDomTransport CDP methods", () => {
 			flatten: true,
 		})) as { sessionId: string };
 
-		await cdpCall(transport, "Page.navigate", { url: "data:text/html,<h1>hello</h1>" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "data:text/html,<h1>hello</h1>" },
+			sessionId,
+		);
 
 		const { result } = (await cdpCall(
 			transport,
@@ -232,7 +250,9 @@ describe("StaticDomTransport CDP methods", () => {
 		)) as { result: { value?: string } };
 
 		// title from data: URI with no <title> tag is empty string
-		expect(typeof result.value === "string" || result.value === undefined).toBe(true);
+		expect(typeof result.value === "string" || result.value === undefined).toBe(
+			true,
+		);
 	});
 
 	test("DOM.querySelector returns nodeId 0 for missing selector", async () => {
@@ -244,9 +264,19 @@ describe("StaticDomTransport CDP methods", () => {
 			flatten: true,
 		})) as { sessionId: string };
 
-		await cdpCall(transport, "Page.navigate", { url: "data:text/html,<h1>hi</h1>" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "data:text/html,<h1>hi</h1>" },
+			sessionId,
+		);
 
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 
@@ -276,7 +306,12 @@ describe("StaticDomTransport CDP methods", () => {
 			sessionId,
 		);
 
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 
@@ -292,7 +327,8 @@ describe("StaticDomTransport CDP methods", () => {
 	});
 
 	test("DOM.getOuterHTML for root returns full HTML", async () => {
-		const html = "<html><head><title>Test</title></head><body><p>hi</p></body></html>";
+		const html =
+			"<html><head><title>Test</title></head><body><p>hi</p></body></html>";
 		const { targetId } = (await cdpCall(transport, "Target.createTarget", {
 			url: "about:blank",
 		})) as { targetId: string };
@@ -308,7 +344,12 @@ describe("StaticDomTransport CDP methods", () => {
 			sessionId,
 		);
 
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 
@@ -357,7 +398,9 @@ describe("Page API", () => {
 		const page = await Page.create(transport);
 		await page.goto(
 			"data:text/html," +
-				encodeURIComponent("<html><head><title>My Page</title></head><body></body></html>"),
+				encodeURIComponent(
+					"<html><head><title>My Page</title></head><body></body></html>",
+				),
 		);
 		const t = await page.title();
 		expect(t).toBe("My Page");
@@ -467,7 +510,9 @@ describe("Transport lifecycle", () => {
 		expect(t.closed).toBe(true);
 		// Must not throw
 		expect(() =>
-			t.send(JSON.stringify({ id: 1, method: "Browser.getVersion", params: {} })),
+			t.send(
+				JSON.stringify({ id: 1, method: "Browser.getVersion", params: {} }),
+			),
 		).not.toThrow();
 	});
 

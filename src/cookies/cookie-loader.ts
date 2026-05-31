@@ -164,7 +164,9 @@ function parseJsonCookies(raw: string): Cookie[] {
 		throw new Error(`loadCookieJar: invalid JSON (${(err as Error).message})`);
 	}
 	if (!Array.isArray(json)) {
-		throw new Error("loadCookieJar: JSON cookie file must be an array of cookie objects");
+		throw new Error(
+			"loadCookieJar: JSON cookie file must be an array of cookie objects",
+		);
 	}
 	const out: Cookie[] = [];
 	for (const item of json) {
@@ -247,7 +249,8 @@ function parseNetscapeCookies(raw: string): Cookie[] {
 		const parts = line.split("\t");
 		if (parts.length < 7) continue;
 
-		const [domain, hostFlag, path, secureFlag, expiryStr, name, ...valueParts] = parts;
+		const [domain, hostFlag, path, secureFlag, expiryStr, name, ...valueParts] =
+			parts;
 		const value = valueParts.join("\t"); // values may contain tabs
 
 		if (!domain || !name) continue;

@@ -56,7 +56,10 @@ Options:
 	);
 }
 
-function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions | null {
+function parseArgs(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): CliOptions | null {
 	const opts: CliOptions = {
 		...baseOpts,
 		url: "",
@@ -115,18 +118,22 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions
 	return opts;
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
 		process.exit(EXIT.MISUSE);
 	}
 
-	const log = (opts.verbose || !opts.quiet)
-		? (msg: string): void => {
-				Bun.stderr.write(`${msg}\n`);
-			}
-		: undefined;
+	const log =
+		opts.verbose || !opts.quiet
+			? (msg: string): void => {
+					Bun.stderr.write(`${msg}\n`);
+				}
+			: undefined;
 
 	try {
 		const manifest = await mirrorSite(opts.url, {

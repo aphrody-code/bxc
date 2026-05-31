@@ -287,7 +287,7 @@ async function main(): Promise<void> {
 	);
 
 	const results: BuildResult[] = await Promise.all(
-		targets.map((t) => buildOne(t, entry, outDir, defines, enableBytecode))
+		targets.map((t) => buildOne(t, entry, outDir, defines, enableBytecode)),
 	);
 
 	for (const r of results) {

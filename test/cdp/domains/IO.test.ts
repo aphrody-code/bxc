@@ -109,7 +109,10 @@ describe("IO domain handler", () => {
 		// registerIOStream is exported from IO.ts for exactly this purpose.
 		// We create a local Map to verify the logic works correctly independent
 		// of the transport handler state.
-		const testMap = new Map<string, import("../../../src/cdp/types.js").IOStream>();
+		const testMap = new Map<
+			string,
+			import("../../../src/cdp/types.js").IOStream
+		>();
 		const data = new TextEncoder().encode("hello world");
 		const handle = registerIOStream(testMap, data);
 
@@ -123,7 +126,10 @@ describe("IO domain handler", () => {
 		const chunkSize = 65536;
 		const remaining = stream.data.byteLength - stream.position;
 		expect(remaining).toBe(11);
-		const sliceEnd = Math.min(stream.position + chunkSize, stream.data.byteLength);
+		const sliceEnd = Math.min(
+			stream.position + chunkSize,
+			stream.data.byteLength,
+		);
 		const chunk = stream.data.slice(stream.position, sliceEnd);
 		stream.position = sliceEnd;
 		const eof = stream.position >= stream.data.byteLength;
@@ -135,14 +141,16 @@ describe("IO domain handler", () => {
 	});
 
 	test("IO.read on unknown handle throws an error", async () => {
-		await expect(cdpCall(transport, "IO.read", { handle: "io-nonexistent-xyz" })).rejects.toThrow(
-			/io-nonexistent-xyz/,
-		);
+		await expect(
+			cdpCall(transport, "IO.read", { handle: "io-nonexistent-xyz" }),
+		).rejects.toThrow(/io-nonexistent-xyz/);
 	});
 
 	test("IO.close on unknown handle is a no-op", async () => {
 		// Should not throw
-		const result = await cdpCall(transport, "IO.close", { handle: "io-fake-handle" });
+		const result = await cdpCall(transport, "IO.close", {
+			handle: "io-fake-handle",
+		});
 		expect(result).toEqual({});
 	});
 
@@ -158,8 +166,14 @@ describe("IO domain handler", () => {
 	// -------------------------------------------------------------------------
 
 	test("registerIOStream generates unique handles", () => {
-		const map1 = new Map<string, import("../../../src/cdp/types.js").IOStream>();
-		const map2 = new Map<string, import("../../../src/cdp/types.js").IOStream>();
+		const map1 = new Map<
+			string,
+			import("../../../src/cdp/types.js").IOStream
+		>();
+		const map2 = new Map<
+			string,
+			import("../../../src/cdp/types.js").IOStream
+		>();
 		const h1 = registerIOStream(map1, new Uint8Array(4));
 		const h2 = registerIOStream(map2, new Uint8Array(4));
 		// Handles are sequential "io-N" strings — must be different

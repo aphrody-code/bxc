@@ -51,10 +51,14 @@ import {
 
 const ROOT = join(import.meta.dir, "../..");
 const COOKIE_FILE = join(ROOT, "cookies/private/google.json");
-const LIB_PATH = join(ROOT, "vendor/curl-impersonate/libcurl-impersonate.so.4.8.0");
+const LIB_PATH = join(
+	ROOT,
+	"vendor/curl-impersonate/libcurl-impersonate.so.4.8.0",
+);
 
 const HAS_COOKIES = await Bun.file(COOKIE_FILE).exists();
-const HAS_LIB = (await Bun.file(LIB_PATH).exists()) || !!Bun.env.LIBCURL_IMPERSONATE_PATH;
+const HAS_LIB =
+	(await Bun.file(LIB_PATH).exists()) || !!Bun.env.LIBCURL_IMPERSONATE_PATH;
 const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
 const TEST_URL = "https://www.google.com";
@@ -165,7 +169,14 @@ describe("cookie-loader — format detection", () => {
 
 	test("masks cookie values for logging (security)", () => {
 		const cookies = parseCookies(
-			JSON.stringify([{ name: "sid", value: "secret-do-not-log-me", domain: ".google.com", path: "/" }]),
+			JSON.stringify([
+				{
+					name: "sid",
+					value: "secret-do-not-log-me",
+					domain: ".google.com",
+					path: "/",
+				},
+			]),
 		);
 		const masked = maskCookiesForLog(cookies);
 		expect(masked).not.toContain("secret-do-not-log-me");
@@ -238,7 +249,9 @@ describe.if(RUN_LIVE)("Browser.newPage({ cookies }) — google.com live", () => 
 		const cookies = await loadCookieJar(COOKIE_FILE);
 		expect(cookies.length).toBeGreaterThan(0);
 		// Sanity check that at least one cookie is for google.com
-		const google = cookies.filter((c) => c.domain.toLowerCase().includes("google"));
+		const google = cookies.filter((c) =>
+			c.domain.toLowerCase().includes("google"),
+		);
 		expect(google.length).toBeGreaterThan(0);
 		// Log only masked output (security)
 		console.log(

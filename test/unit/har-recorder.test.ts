@@ -44,7 +44,11 @@ import { StaticDomTransport } from "../../src/transport/StaticDomTransport.js";
 // ---------------------------------------------------------------------------
 
 /** Simulates injecting a CDP Network event into a transport's onmessage. */
-function injectCdpEvent(transport: StaticDomTransport, sessionId: string, event: unknown): void {
+function injectCdpEvent(
+	transport: StaticDomTransport,
+	sessionId: string,
+	event: unknown,
+): void {
 	const raw = JSON.stringify({
 		method: (event as { method: string }).method,
 		params: (event as { params: unknown }).params,
@@ -85,7 +89,14 @@ function makeResponseEvent(
 		params: {
 			requestId,
 			timestamp: Date.now() / 1000 + 0.1,
-			response: { url, status, statusText: "OK", headers, mimeType, encodedDataLength: 1234 },
+			response: {
+				url,
+				status,
+				statusText: "OK",
+				headers,
+				mimeType,
+				encodedDataLength: 1234,
+			},
 		},
 	};
 }
@@ -158,8 +169,16 @@ describe("HarRecorder lifecycle", () => {
 		const sessionId = page._internalSessionId;
 
 		recorder.start();
-		injectCdpEvent(transport, sessionId, makeRequestEvent("req1", "https://a.com/"));
-		injectCdpEvent(transport, sessionId, makeResponseEvent("req1", "https://a.com/"));
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeRequestEvent("req1", "https://a.com/"),
+		);
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeResponseEvent("req1", "https://a.com/"),
+		);
 		// Give microtasks a tick to process
 		await new Promise<void>((r) => setTimeout(r, 20));
 		const log1 = recorder.stop();
@@ -231,7 +250,11 @@ describe("CDP event capturing", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		injectCdpEvent(transport, sessionId, makeRequestEvent("r1", "https://google.com/"));
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeRequestEvent("r1", "https://google.com/"),
+		);
 
 		// Allow async processing
 		await new Promise<void>((r) => setTimeout(r, 10));
@@ -258,7 +281,13 @@ describe("CDP event capturing", () => {
 		injectCdpEvent(
 			transport,
 			sessionId,
-			makeResponseEvent("r2", url, 200, { "content-type": "application/json" }, "application/json"),
+			makeResponseEvent(
+				"r2",
+				url,
+				200,
+				{ "content-type": "application/json" },
+				"application/json",
+			),
 		);
 
 		await new Promise<void>((r) => setTimeout(r, 20));
@@ -308,7 +337,10 @@ describe("HarEntry shape", () => {
 		injectCdpEvent(
 			transport,
 			sessionId,
-			makeRequestEvent("r4", url, "GET", { cookie: "session=abc123", "x-custom": "value" }),
+			makeRequestEvent("r4", url, "GET", {
+				cookie: "session=abc123",
+				"x-custom": "value",
+			}),
 		);
 		injectCdpEvent(transport, sessionId, makeResponseEvent("r4", url));
 
@@ -338,7 +370,10 @@ describe("HarEntry shape", () => {
 		injectCdpEvent(
 			transport,
 			sessionId,
-			makeResponseEvent("r5", url, 200, { "content-type": "text/html", "content-length": "1024" }),
+			makeResponseEvent("r5", url, 200, {
+				"content-type": "text/html",
+				"content-length": "1024",
+			}),
 		);
 
 		await new Promise<void>((r) => setTimeout(r, 20));
@@ -363,7 +398,11 @@ describe("HarEntry shape", () => {
 		const sessionId = page._internalSessionId;
 		const url = "https://google.com/style.css";
 		injectCdpEvent(transport, sessionId, makeRequestEvent("r6", url));
-		injectCdpEvent(transport, sessionId, makeResponseEvent("r6", url, 200, {}, "text/css"));
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeResponseEvent("r6", url, 200, {}, "text/css"),
+		);
 
 		await new Promise<void>((r) => setTimeout(r, 20));
 
@@ -391,8 +430,16 @@ describe("HarRecorder.save()", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		injectCdpEvent(transport, sessionId, makeRequestEvent("r7", "https://google.com/"));
-		injectCdpEvent(transport, sessionId, makeResponseEvent("r7", "https://google.com/"));
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeRequestEvent("r7", "https://google.com/"),
+		);
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeResponseEvent("r7", "https://google.com/"),
+		);
 
 		await new Promise<void>((r) => setTimeout(r, 20));
 
@@ -446,8 +493,16 @@ describe("Timing calculations", () => {
 		recorder.start();
 
 		const sessionId = page._internalSessionId;
-		injectCdpEvent(transport, sessionId, makeRequestEvent("r8", "https://google.com/"));
-		injectCdpEvent(transport, sessionId, makeResponseEvent("r8", "https://google.com/"));
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeRequestEvent("r8", "https://google.com/"),
+		);
+		injectCdpEvent(
+			transport,
+			sessionId,
+			makeResponseEvent("r8", "https://google.com/"),
+		);
 
 		await new Promise<void>((r) => setTimeout(r, 20));
 

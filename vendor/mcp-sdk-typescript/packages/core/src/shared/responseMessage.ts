@@ -1,10 +1,10 @@
-import type { Result, Task } from '../types/index.js';
+import type { Result, Task } from "../types/index.js";
 
 /**
  * Base message type for the response stream.
  */
 export interface BaseResponseMessage {
-    type: string;
+	type: string;
 }
 
 /**
@@ -14,8 +14,8 @@ export interface BaseResponseMessage {
  * `working`). May be emitted multiple times with the same status.
  */
 export interface TaskStatusMessage extends BaseResponseMessage {
-    type: 'taskStatus';
-    task: Task;
+	type: "taskStatus";
+	task: Task;
 }
 
 /**
@@ -25,8 +25,8 @@ export interface TaskStatusMessage extends BaseResponseMessage {
  * This is always the first message for task-augmented requests.
  */
 export interface TaskCreatedMessage extends BaseResponseMessage {
-    type: 'taskCreated';
-    task: Task;
+	type: "taskCreated";
+	task: Task;
 }
 
 /**
@@ -36,8 +36,8 @@ export interface TaskCreatedMessage extends BaseResponseMessage {
  * messages will follow.
  */
 export interface ResultMessage<T extends Result> extends BaseResponseMessage {
-    type: 'result';
-    result: T;
+	type: "result";
+	result: T;
 }
 
 /**
@@ -46,8 +46,8 @@ export interface ResultMessage<T extends Result> extends BaseResponseMessage {
  * Yielded once if the operation fails. Terminal — no further messages will follow.
  */
 export interface ErrorMessage extends BaseResponseMessage {
-    type: 'error';
-    error: Error;
+	type: "error";
+	error: Error;
 }
 
 /**
@@ -64,20 +64,27 @@ export interface ErrorMessage extends BaseResponseMessage {
  * Progress notifications are handled through the existing {@linkcode index.RequestOptions | onprogress} callback.
  * Side-channeled messages (server requests/notifications) are handled through registered handlers.
  */
-export type ResponseMessage<T extends Result> = TaskStatusMessage | TaskCreatedMessage | ResultMessage<T> | ErrorMessage;
+export type ResponseMessage<T extends Result> =
+	| TaskStatusMessage
+	| TaskCreatedMessage
+	| ResultMessage<T>
+	| ErrorMessage;
 
-export type AsyncGeneratorValue<T> = T extends AsyncGenerator<infer U> ? U : never;
+export type AsyncGeneratorValue<T> =
+	T extends AsyncGenerator<infer U> ? U : never;
 
 /**
  * Collects all values from an async generator into an array.
  */
-export async function toArrayAsync<T extends AsyncGenerator<unknown>>(it: T): Promise<AsyncGeneratorValue<T>[]> {
-    const arr: AsyncGeneratorValue<T>[] = [];
-    for await (const o of it) {
-        arr.push(o as AsyncGeneratorValue<T>);
-    }
+export async function toArrayAsync<T extends AsyncGenerator<unknown>>(
+	it: T,
+): Promise<AsyncGeneratorValue<T>[]> {
+	const arr: AsyncGeneratorValue<T>[] = [];
+	for await (const o of it) {
+		arr.push(o as AsyncGeneratorValue<T>);
+	}
 
-    return arr;
+	return arr;
 }
 
 /**
@@ -85,14 +92,17 @@ export async function toArrayAsync<T extends AsyncGenerator<unknown>>(it: T): Pr
  * discarding intermediate `taskCreated` and `taskStatus` messages. Throws
  * if an `error` message is received or the stream ends without a result.
  */
-export async function takeResult<T extends Result, U extends AsyncGenerator<ResponseMessage<T>>>(it: U): Promise<T> {
-    for await (const o of it) {
-        if (o.type === 'result') {
-            return o.result;
-        } else if (o.type === 'error') {
-            throw o.error;
-        }
-    }
+export async function takeResult<
+	T extends Result,
+	U extends AsyncGenerator<ResponseMessage<T>>,
+>(it: U): Promise<T> {
+	for await (const o of it) {
+		if (o.type === "result") {
+			return o.result;
+		} else if (o.type === "error") {
+			throw o.error;
+		}
+	}
 
-    throw new Error('No result in stream.');
+	throw new Error("No result in stream.");
 }

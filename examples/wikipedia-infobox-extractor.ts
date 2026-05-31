@@ -135,7 +135,9 @@ async function extractInfobox(page: Page): Promise<InboxRow[]> {
 
 const dataset = await Dataset.open("wikipedia-infoboxes");
 
-console.log(`Extracting infoboxes for ${TOPICS.length} Google topics (profile: static)...`);
+console.log(
+	`Extracting infoboxes for ${TOPICS.length} Google topics (profile: static)...`,
+);
 
 for (let i = 0; i < TOPICS.length; i++) {
 	const topic = TOPICS[i];
@@ -173,7 +175,9 @@ for (let i = 0; i < TOPICS.length; i++) {
 			`  [${i + 1}/${TOPICS.length}] "${topic}" — ${rowCount} infobox rows (${elapsedMs}ms)`,
 		);
 	} catch (err) {
-		console.error(`  [${i + 1}/${TOPICS.length}] FAILED "${topic}": ${String(err)}`);
+		console.error(
+			`  [${i + 1}/${TOPICS.length}] FAILED "${topic}": ${String(err)}`,
+		);
 		record = {
 			topic,
 			url,
@@ -196,4 +200,6 @@ for (let i = 0; i < TOPICS.length; i++) {
 const count = dataset.getItemCount();
 await dataset.close();
 
-console.log(`\nDone. ${count} topics saved to storage/datasets/wikipedia-infoboxes/data.jsonl`);
+console.log(
+	`\nDone. ${count} topics saved to storage/datasets/wikipedia-infoboxes/data.jsonl`,
+);

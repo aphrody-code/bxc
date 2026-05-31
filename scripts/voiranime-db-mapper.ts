@@ -80,7 +80,10 @@ async function pool<T>(
 	n: number,
 	fn: (item: T, va: VoiranimeScraper, index: number) => Promise<void>,
 ): Promise<void> {
-	const scrapers = Array.from({ length: Math.min(n, items.length) || 1 }, () => new VoiranimeScraper());
+	const scrapers = Array.from(
+		{ length: Math.min(n, items.length) || 1 },
+		() => new VoiranimeScraper(),
+	);
 	let idx = 0;
 	const worker = async (w: number) => {
 		const va = scrapers[w];
@@ -101,7 +104,9 @@ async function pool<T>(
 
 async function main() {
 	const t0 = Date.now();
-	console.log(`[mapper] discovery (concurrency=${CONCURRENCY}, players=${WITH_PLAYERS})`);
+	console.log(
+		`[mapper] discovery (concurrency=${CONCURRENCY}, players=${WITH_PLAYERS})`,
+	);
 
 	// 1. Discover the franchise: search ∪ seeds.
 	const disc = new VoiranimeScraper();
@@ -138,7 +143,10 @@ async function main() {
 		franchise: "Dragon Ball",
 		generatedAt: new Date().toISOString(),
 		seriesCount: orderedSlugs.length,
-		episodeCount: orderedSlugs.reduce((n, s) => n + (seriesBySlug.get(s)?.episodeCount ?? 0), 0),
+		episodeCount: orderedSlugs.reduce(
+			(n, s) => n + (seriesBySlug.get(s)?.episodeCount ?? 0),
+			0,
+		),
 		series: orderedSlugs.map((s) => seriesBySlug.get(s)!),
 	});
 
@@ -150,7 +158,10 @@ async function main() {
 				...buildDoc(),
 				series: orderedSlugs.map((s) => {
 					const v = seriesBySlug.get(s)!;
-					return { ...v, episodes: v.episodes.map(({ players: _drop, ...e }) => e) };
+					return {
+						...v,
+						episodes: v.episodes.map(({ players: _drop, ...e }) => e),
+					};
 				}),
 			},
 			null,
@@ -165,7 +176,9 @@ async function main() {
 		const jobs: Job[] = [];
 		for (const s of orderedSlugs) {
 			const ser = seriesBySlug.get(s)!;
-			ser.episodes.forEach((e, i) => jobs.push({ slug: s, epIndex: i, url: e.url }));
+			ser.episodes.forEach((e, i) =>
+				jobs.push({ slug: s, epIndex: i, url: e.url }),
+			);
 		}
 		console.log(`[mapper] resolving players for ${jobs.length} episodes`);
 
@@ -218,7 +231,9 @@ async function main() {
 	);
 
 	const secs = ((Date.now() - t0) / 1000).toFixed(1);
-	console.log(`[mapper] done in ${secs}s — ${orderedSlugs.length} series, ${buildDoc().episodeCount} episodes`);
+	console.log(
+		`[mapper] done in ${secs}s — ${orderedSlugs.length} series, ${buildDoc().episodeCount} episodes`,
+	);
 }
 
 main().catch((e) => {

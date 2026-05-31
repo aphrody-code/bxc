@@ -80,8 +80,11 @@ function cookieMatchesUrl(cookie: CdpCookie, url: string): boolean {
 	}
 
 	// Domain match: exact or suffix (.google.com matches sub.google.com)
-	const cookieDomain = cookie.domain.startsWith(".") ? cookie.domain.slice(1) : cookie.domain;
-	const domainMatch = hostname === cookieDomain || hostname.endsWith(`.${cookieDomain}`);
+	const cookieDomain = cookie.domain.startsWith(".")
+		? cookie.domain.slice(1)
+		: cookie.domain;
+	const domainMatch =
+		hostname === cookieDomain || hostname.endsWith(`.${cookieDomain}`);
 	if (!domainMatch) return false;
 
 	// Path match: cookie path must be a prefix of the URL path
@@ -131,7 +134,12 @@ function normalizeCookieParam(param: CdpCookieParam): CdpCookie {
 // Handler
 // ---------------------------------------------------------------------------
 
-export const NetworkHandler: DomainHandler = async (method, params, ctx, _sessionId) => {
+export const NetworkHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	_sessionId,
+) => {
 	const net = ctx.networkCtx;
 
 	switch (method) {
@@ -220,17 +228,23 @@ export const NetworkHandler: DomainHandler = async (method, params, ctx, _sessio
 			const entry = net.requestRegistry.get(p.requestId);
 			if (!entry) {
 				// Per CDP spec, throw an error if the requestId is unknown
-				throw new Error(`No response body available for requestId: ${p.requestId}`);
+				throw new Error(
+					`No response body available for requestId: ${p.requestId}`,
+				);
 			}
 			if (!entry.responseBody) {
-				throw new Error(`Response body not yet available for requestId: ${p.requestId}`);
+				throw new Error(
+					`Response body not yet available for requestId: ${p.requestId}`,
+				);
 			}
 
 			// Detect whether the body is binary (not valid UTF-8) and base64-encode
 			let body: string;
 			let base64Encoded: boolean;
 			try {
-				body = new TextDecoder("utf-8", { fatal: true }).decode(entry.responseBody);
+				body = new TextDecoder("utf-8", { fatal: true }).decode(
+					entry.responseBody,
+				);
 				base64Encoded = false;
 			} catch {
 				body = (entry.responseBody as Uint8Array).toBase64();

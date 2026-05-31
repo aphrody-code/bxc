@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 /**
  * dump-tournament.ts — full HTML/JSON harvest of a Challonge tournament.
  *
@@ -46,7 +45,8 @@ import { Browser, type HttpPage } from "../../src/api/browser.ts";
 
 const CHALLONGE_ORIGIN = "https://challonge.com";
 const COOKIE_JAR =
-	Bun.env.CHALLONGE_COOKIES ?? `${import.meta.dir}/cookies/private/challonge.json`;
+	Bun.env.CHALLONGE_COOKIES ??
+	`${import.meta.dir}/cookies/private/challonge.json`;
 
 interface TargetUrl {
 	id: string;
@@ -63,8 +63,16 @@ function tournamentTargets(slug: string): TargetUrl[] {
 		{ id: "04-standings", url: `${base}/standings`, expectJson: false },
 		{ id: "05-participants", url: `${base}/participants`, expectJson: false },
 		{ id: "06-stations", url: `${base}/stations`, expectJson: false },
-		{ id: "07-tournament", url: `${CHALLONGE_ORIGIN}/${slug}.json`, expectJson: true },
-		{ id: "08-log-json", url: `${CHALLONGE_ORIGIN}/${slug}/log.json`, expectJson: true },
+		{
+			id: "07-tournament",
+			url: `${CHALLONGE_ORIGIN}/${slug}.json`,
+			expectJson: true,
+		},
+		{
+			id: "08-log-json",
+			url: `${CHALLONGE_ORIGIN}/${slug}/log.json`,
+			expectJson: true,
+		},
 		{
 			id: "09-standings-json",
 			url: `${CHALLONGE_ORIGIN}/${slug}/standings.json`,
@@ -75,8 +83,16 @@ function tournamentTargets(slug: string): TargetUrl[] {
 			url: `${CHALLONGE_ORIGIN}/${slug}/participants.json`,
 			expectJson: true,
 		},
-		{ id: "11-stations-json", url: `${CHALLONGE_ORIGIN}/${slug}/stations.json`, expectJson: true },
-		{ id: "12-matches-json", url: `${CHALLONGE_ORIGIN}/${slug}/matches.json`, expectJson: true },
+		{
+			id: "11-stations-json",
+			url: `${CHALLONGE_ORIGIN}/${slug}/stations.json`,
+			expectJson: true,
+		},
+		{
+			id: "12-matches-json",
+			url: `${CHALLONGE_ORIGIN}/${slug}/matches.json`,
+			expectJson: true,
+		},
 	];
 }
 
@@ -185,7 +201,8 @@ function extractFromHtml(html: string, baseUrl: string): ExtractedAssets {
 		): unknown;
 		transform(html: string): string;
 	};
-	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor }).HTMLRewriter;
+	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor })
+		.HTMLRewriter;
 	if (!Rewriter) {
 		// Fallback regex parsing for non-Bun runtimes.
 		for (const m of html.matchAll(
@@ -282,7 +299,8 @@ function extractCssSelectors(css: string, max = 200): string[] {
 	const out = new Set<string>();
 	for (const m of css.matchAll(/([^{}@]+)\{[^{}]*\}/g)) {
 		const sel = m[1].trim().replace(/\s+/g, " ");
-		if (!sel || sel.startsWith("@") || sel.startsWith("/*") || sel.length > 200) continue;
+		if (!sel || sel.startsWith("@") || sel.startsWith("/*") || sel.length > 200)
+			continue;
 		if (/^\d/.test(sel)) continue;
 		for (const s of sel.split(",")) {
 			const t = s.trim();
@@ -293,12 +311,18 @@ function extractCssSelectors(css: string, max = 200): string[] {
 	return [...out];
 }
 
-async function analyse(results: DownloadResult[], outDir: string, slug: string): Promise<string> {
+async function analyse(
+	results: DownloadResult[],
+	outDir: string,
+	slug: string,
+): Promise<string> {
 	const lines: string[] = [];
 	lines.push(`# Challonge tournament dump — ${slug}`);
 	lines.push("");
 	lines.push(`Date : ${new Date().toISOString().slice(0, 19)}Z`);
-	lines.push(`Cookie jar : ${(await cookieJarPresent()) ? COOKIE_JAR : "absent"}`);
+	lines.push(
+		`Cookie jar : ${(await cookieJarPresent()) ? COOKIE_JAR : "absent"}`,
+	);
 	lines.push("");
 
 	// Per-URL summary
@@ -334,8 +358,10 @@ async function analyse(results: DownloadResult[], outDir: string, slug: string):
 		const html = await Bun.file(path).text();
 		const x = extractFromHtml(html, r.url);
 		for (const [k, v] of x.hosts) allHosts.set(k, (allHosts.get(k) ?? 0) + v);
-		for (const [k, v] of x.classNames) allClassNames.set(k, (allClassNames.get(k) ?? 0) + v);
-		for (const [k, v] of x.dataAttrs) allDataAttrs.set(k, (allDataAttrs.get(k) ?? 0) + v);
+		for (const [k, v] of x.classNames)
+			allClassNames.set(k, (allClassNames.get(k) ?? 0) + v);
+		for (const [k, v] of x.dataAttrs)
+			allDataAttrs.set(k, (allDataAttrs.get(k) ?? 0) + v);
 		for (const s of x.scripts) allScripts.add(s);
 		for (const s of x.stylesheets) allStylesheets.add(s);
 		for (const g of x.inlineGlobals) allInlineGlobals.add(g);
@@ -345,7 +371,9 @@ async function analyse(results: DownloadResult[], outDir: string, slug: string):
 	lines.push("");
 	lines.push("| Host | Asset count |");
 	lines.push("|---|---|");
-	for (const [host, count] of [...allHosts.entries()].sort((a, b) => b[1] - a[1])) {
+	for (const [host, count] of [...allHosts.entries()].sort(
+		(a, b) => b[1] - a[1],
+	)) {
 		lines.push(`| \`${host}\` | ${count} |`);
 	}
 	lines.push("");
@@ -368,7 +396,9 @@ async function analyse(results: DownloadResult[], outDir: string, slug: string):
 	}
 
 	// Top class names + data-attrs
-	const topClasses = [...allClassNames.entries()].sort((a, b) => b[1] - a[1]).slice(0, 60);
+	const topClasses = [...allClassNames.entries()]
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, 60);
 	lines.push(`## Top CSS class names (top 60 of ${allClassNames.size})`);
 	lines.push("");
 	lines.push("| Class | Occurrences |");
@@ -385,12 +415,16 @@ async function analyse(results: DownloadResult[], outDir: string, slug: string):
 	lines.push("");
 
 	// CSS selectors from up to 5 stylesheets
-	lines.push("## CSS selectors (sample, up to 200 per stylesheet, max 5 stylesheets)");
+	lines.push(
+		"## CSS selectors (sample, up to 200 per stylesheet, max 5 stylesheets)",
+	);
 	lines.push("");
 	let fetched = 0;
 	for (const sheet of allStylesheets) {
 		if (fetched >= 5) {
-			lines.push(`_… ${allStylesheets.size - 5} more stylesheets not analysed_`);
+			lines.push(
+				`_… ${allStylesheets.size - 5} more stylesheets not analysed_`,
+			);
 			break;
 		}
 		const css = await fetchStylesheet(sheet);
@@ -444,7 +478,9 @@ async function main(): Promise<void> {
 	}
 
 	const targets = tournamentTargets(slug);
-	Bun.stderr.write(`dump-tournament: ${targets.length} URLs for slug=${slug}\n`);
+	Bun.stderr.write(
+		`dump-tournament: ${targets.length} URLs for slug=${slug}\n`,
+	);
 
 	const results: DownloadResult[] = [];
 	for (const t of targets) {
@@ -457,7 +493,11 @@ async function main(): Promise<void> {
 
 	await Bun.write(
 		resolvePath(outDir, "manifest.json"),
-		JSON.stringify({ slug, fetchedAt: new Date().toISOString(), results }, null, 2),
+		JSON.stringify(
+			{ slug, fetchedAt: new Date().toISOString(), results },
+			null,
+			2,
+		),
 	);
 
 	const md = await analyse(results, outDir, slug);

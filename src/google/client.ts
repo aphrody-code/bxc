@@ -16,14 +16,21 @@
 
 /**
  * @module bxc/google/client
- * 
+ *
  * High-level unified Google client for stealth scraping and audit.
  */
 
 import { Browser, Page } from "../api/browser.ts";
 import { enforceMandate } from "./mandate-guard.ts";
-import { auditNetwork, type NetworkAuditResult } from "../utils/network-auditor.ts";
-import { googleWebSearch, type SearchResult, type SearchOptions } from "./search.ts";
+import {
+	auditNetwork,
+	type NetworkAuditResult,
+} from "../utils/network-auditor.ts";
+import {
+	googleWebSearch,
+	type SearchResult,
+	type SearchOptions,
+} from "./search.ts";
 import { GoogleMassScanner } from "./mass-scanner.ts";
 import { parseSerp, type SerpContent } from "./serp-parser.ts";
 import { sharedCache } from "./cache.ts";
@@ -43,7 +50,7 @@ export class GoogleClient {
 		this.#options = {
 			profile: "stealth",
 			useCache: true,
-			...opts
+			...opts,
 		};
 	}
 
@@ -60,12 +67,18 @@ export class GoogleClient {
 	/**
 	 * Navigate to a Google property with mandate enforcement and Atlas-aware routing.
 	 */
-	async open(url: string, opts: { profile?: string } = {}): Promise<{ page: Page, audit: NetworkAuditResult }> {
+	async open(
+		url: string,
+		opts: { profile?: string } = {},
+	): Promise<{ page: Page; audit: NetworkAuditResult }> {
 		await enforceMandate(url);
-		
+
 		const hostname = new URL(url).hostname;
 		const atlasProfile = this.resolveAtlasProfile(hostname);
-		const profile = (opts.profile || atlasProfile || this.#options.profile || "stealth") as any;
+		const profile = (opts.profile ||
+			atlasProfile ||
+			this.#options.profile ||
+			"stealth") as any;
 
 		const page = (await Browser.newPage({
 			profile,
@@ -80,7 +93,11 @@ export class GoogleClient {
 		const audit = await auditNetwork(hostname);
 
 		if (this.#options.useCache) {
-			sharedCache().set(`page:${url}`, { title: await page.title(), status: resp.status, audit });
+			sharedCache().set(`page:${url}`, {
+				title: await page.title(),
+				status: resp.status,
+				audit,
+			});
 		}
 
 		return { page, audit };
@@ -89,7 +106,10 @@ export class GoogleClient {
 	/**
 	 * Perform a stealth search.
 	 */
-	async search(query: string, opts: SearchOptions = {}): Promise<SearchResult[]> {
+	async search(
+		query: string,
+		opts: SearchOptions = {},
+	): Promise<SearchResult[]> {
 		const cacheKey = `search:${query}:${opts.hl || "en"}:${opts.gl || "US"}`;
 		if (this.#options.useCache) {
 			const cached = sharedCache().get<SearchResult[]>(cacheKey);
@@ -115,10 +135,14 @@ export class GoogleClient {
 	/**
 	 * Run a massive audit on multiple properties.
 	 */
-	async auditMassive(seeds: string[], maxPages: number = 5656, concurrency: number = 24) {
+	async auditMassive(
+		seeds: string[],
+		maxPages: number = 5656,
+		concurrency: number = 24,
+	) {
 		const scanner = new GoogleMassScanner({
 			concurrency,
-			maxPages
+			maxPages,
 		});
 		return scanner.scan(seeds);
 	}

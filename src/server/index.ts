@@ -43,32 +43,81 @@ async function bootstrap() {
 
 		// --- REST API ---
 		.group("/api/v1", (app) =>
-			app.post(
-				"/scrape",
-				async ({ body }) => {
-					const { url, profile } = body as { url: string; profile?: string };
-					const page = await Browser.newPage({
-						profile: (profile || "static") as any,
-					});
-					try {
-						const res = await page.goto(url);
-						return {
-							url,
-							status: res.status,
-							title: await page.title(),
-							content: await page.content(),
-						};
-					} finally {
-						await page.close();
-					}
-				},
-				{
-					body: t.Object({
-						url: t.String(),
-						profile: t.Optional(t.String()),
-					}),
-				},
-			),
+			app
+				.post(
+					"/scrape",
+					async ({ body }) => {
+						const { url, profile } = body as { url: string; profile?: string };
+						const page = await Browser.newPage({
+							profile: (profile || "static") as any,
+						});
+						try {
+							const res = await page.goto(url);
+							return {
+								url,
+								status: res.status,
+								title: await page.title(),
+								content: await page.content(),
+							};
+						} finally {
+							await page.close();
+						}
+					},
+					{
+						body: t.Object({
+							url: t.String(),
+							profile: t.Optional(t.String()),
+						}),
+					},
+				)
+				.get(
+					"/fut/player",
+					async ({ query }) => {
+						const { url, profile } = query as { url: string; profile?: string };
+						const { scrapeFutGgPlayer } = await import(
+							"../scrapers/fut/index.ts"
+						);
+						try {
+							const data = await scrapeFutGgPlayer(
+								url,
+								(profile || "static") as any,
+							);
+							return { success: true, data };
+						} catch (e: any) {
+							return { success: false, error: e.message };
+						}
+					},
+					{
+						query: t.Object({
+							url: t.String(),
+							profile: t.Optional(t.String()),
+						}),
+					},
+				)
+				.get(
+					"/fut/price",
+					async ({ query }) => {
+						const { url, profile } = query as { url: string; profile?: string };
+						const { scrapeFutBinPrice } = await import(
+							"../scrapers/fut/index.ts"
+						);
+						try {
+							const data = await scrapeFutBinPrice(
+								url,
+								(profile || "ghost") as any,
+							);
+							return { success: true, data };
+						} catch (e: any) {
+							return { success: false, error: e.message };
+						}
+					},
+					{
+						query: t.Object({
+							url: t.String(),
+							profile: t.Optional(t.String()),
+						}),
+					},
+				),
 		)
 
 		// --- GraphQL API ---

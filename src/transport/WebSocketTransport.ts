@@ -27,7 +27,7 @@ export interface WebSocketTransportOptions {
 	stderrLogger?: (chunk: string) => void;
 	/** Force headless mode. */
 	headless?: boolean;
-	
+
 	// --- Legacy Lightpanda Options (SocketPairTransport compatibility) ---
 	binaryPath?: string;
 	logLevel?: "debug" | "info" | "warn" | "error" | "fatal" | string;
@@ -85,7 +85,7 @@ export class WebSocketTransport implements ConnectionTransport {
 		if (!wsUrl) {
 			const repoRoot = join(import.meta.dir, "..", "..");
 			const cargoTomlPath = join(repoRoot, "rust-bridge", "Cargo.toml");
-			
+
 			const ext = process.platform === "win32" ? ".exe" : "";
 			const binName = `bxc-engine${ext}`;
 			const binPaths = [
@@ -94,7 +94,7 @@ export class WebSocketTransport implements ConnectionTransport {
 				join(repoRoot, "dist", binName),
 				join(process.cwd(), binName),
 			];
-			
+
 			let bin: string | null = null;
 			for (const p of binPaths) {
 				if (Bun.file(p).size > 0) {
@@ -113,7 +113,10 @@ export class WebSocketTransport implements ConnectionTransport {
 					const winPaths = [
 						"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
 						"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-						join(Bun.env["LOCALAPPDATA"] || "", "Google\\Chrome\\Application\\chrome.exe")
+						join(
+							Bun.env["LOCALAPPDATA"] || "",
+							"Google\\Chrome\\Application\\chrome.exe",
+						),
 					];
 					for (const p of winPaths) {
 						if (await Bun.file(p).exists()) {
@@ -123,22 +126,41 @@ export class WebSocketTransport implements ConnectionTransport {
 					}
 				}
 				if (!userDataDir) {
-					userDataDir = join(Bun.env["LOCALAPPDATA"] || "", "Google\\Chrome\\User Data");
+					userDataDir = join(
+						Bun.env["LOCALAPPDATA"] || "",
+						"Google\\Chrome\\User Data",
+					);
 				}
 			}
-			
+
 			if (!chromePath) {
-				const pathArgs = bin 
+				const pathArgs = bin
 					? [bin, "chrome-path"]
-					: ["cargo", "run", "--manifest-path", cargoTomlPath, "--bin", "bxc-engine", "--", "chrome-path"];
+					: [
+							"cargo",
+							"run",
+							"--manifest-path",
+							cargoTomlPath,
+							"--bin",
+							"bxc-engine",
+							"--",
+							"chrome-path",
+						];
 
 				const pathProc = Bun.spawnSync(pathArgs, {
 					env: Bun.env,
 				});
 				if (!pathProc.success) {
-					throw new Error("Failed to resolve chrome path: " + pathProc.stderr.toString());
+					throw new Error(
+						"Failed to resolve chrome path: " + pathProc.stderr.toString(),
+					);
 				}
-				chromePath = pathProc.stdout.toString().trim().split("\n").pop()?.trim();
+				chromePath = pathProc.stdout
+					.toString()
+					.trim()
+					.split("\n")
+					.pop()
+					?.trim();
 				if (!chromePath) {
 					throw new Error("Failed to parse resolved chromium path");
 				}
@@ -161,7 +183,7 @@ export class WebSocketTransport implements ConnectionTransport {
 			} else {
 				const launchArgs = [
 					`--remote-debugging-port=${port}`,
-					"--remote-allow-origins=*" // Required for CDP connections
+					"--remote-allow-origins=*", // Required for CDP connections
 				];
 
 				if (isWin) {
@@ -213,8 +235,10 @@ export class WebSocketTransport implements ConnectionTransport {
 				wsUrl = await new Promise<string>((resolve, reject) => {
 					let output = "";
 					// Chromium typically logs the WebSocket URL to stderr
-					const reader = (proc!.stderr as ReadableStream<Uint8Array>).getReader();
-					
+					const reader = (
+						proc!.stderr as ReadableStream<Uint8Array>
+					).getReader();
+
 					const readLoop = async () => {
 						try {
 							const { done, value } = await reader.read();
@@ -222,7 +246,7 @@ export class WebSocketTransport implements ConnectionTransport {
 								const text = new TextDecoder().decode(value);
 								output += text;
 								if (opts.stderrLogger) opts.stderrLogger(text);
-								
+
 								const lines = output.split("\n");
 								for (const line of lines) {
 									const match = line.match(/ws:\/\/[^\s]+/);
@@ -235,7 +259,11 @@ export class WebSocketTransport implements ConnectionTransport {
 							if (!done) {
 								readLoop();
 							} else {
-								reject(new Error("Process exited before emitting ws url. Output: " + output));
+								reject(
+									new Error(
+										"Process exited before emitting ws url. Output: " + output,
+									),
+								);
 							}
 						} catch (e) {
 							reject(e);

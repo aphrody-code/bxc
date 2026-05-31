@@ -66,7 +66,8 @@ function readBlString(view: DataView, offset = 0): string {
 	if (len === 0) return "";
 
 	// Reconstruct the native pointer (works on 64-bit little-endian hosts).
-	const dataPtr = (dataPtrLow + dataPtrHigh * 0x1_0000_0000) as unknown as Pointer;
+	const dataPtr = (dataPtrLow +
+		dataPtrHigh * 0x1_0000_0000) as unknown as Pointer;
 
 	const bytes = new Uint8Array(len);
 	for (let i = 0; i < len; i++) {
@@ -192,12 +193,18 @@ describe.skipIf(!hasLib)("zigbridge smoke test — liblightpanda_dom", () => {
 
 	// -------------------------------------------------------------------------
 	test("find h1 selector — count == 1", () => {
-		const html = new TextEncoder().encode("<html><body><h1>Hi</h1></body></html>");
+		const html = new TextEncoder().encode(
+			"<html><body><h1>Hi</h1></body></html>",
+		);
 		const doc = _symbols!.bl_doc_from_html(ptr(html), BigInt(html.byteLength));
 		expect(doc).not.toBeNull();
 
 		const selStr = new TextEncoder().encode("h1");
-		const sel = _symbols!.bl_doc_find(doc!, ptr(selStr), BigInt(selStr.byteLength));
+		const sel = _symbols!.bl_doc_find(
+			doc!,
+			ptr(selStr),
+			BigInt(selStr.byteLength),
+		);
 		expect(sel).not.toBeNull();
 		expect(Number(_symbols!.bl_sel_count(sel!))).toBe(1);
 
@@ -213,7 +220,11 @@ describe.skipIf(!hasLib)("zigbridge smoke test — liblightpanda_dom", () => {
 		expect(doc).not.toBeNull();
 
 		const selStr = new TextEncoder().encode("h1");
-		const sel = _symbols!.bl_doc_find(doc!, ptr(selStr), BigInt(selStr.byteLength));
+		const sel = _symbols!.bl_doc_find(
+			doc!,
+			ptr(selStr),
+			BigInt(selStr.byteLength),
+		);
 		expect(sel).not.toBeNull();
 		expect(Number(_symbols!.bl_sel_count(sel!))).toBe(1);
 
@@ -238,12 +249,21 @@ describe.skipIf(!hasLib)("zigbridge smoke test — liblightpanda_dom", () => {
 		const html = new TextEncoder().encode('<h1 id="title">Hi</h1>');
 		const doc = _symbols!.bl_doc_from_html(ptr(html), BigInt(html.byteLength))!;
 		const selStr = new TextEncoder().encode("h1");
-		const sel = _symbols!.bl_doc_find(doc, ptr(selStr), BigInt(selStr.byteLength))!;
+		const sel = _symbols!.bl_doc_find(
+			doc,
+			ptr(selStr),
+			BigInt(selStr.byteLength),
+		)!;
 		const el = _symbols!.bl_sel_at(sel, 0n)!;
 
 		const attrName = new TextEncoder().encode("id");
 		const out = new Uint8Array(BL_STRING_SIZE);
-		_symbols!.bl_sel_attr_into(el, ptr(attrName), BigInt(attrName.byteLength), ptr(out));
+		_symbols!.bl_sel_attr_into(
+			el,
+			ptr(attrName),
+			BigInt(attrName.byteLength),
+			ptr(out),
+		);
 		const attrVal = readBlString(new DataView(out.buffer));
 		// Skip bl_string_free for arena-owned strings (cap=0 → no-op).
 		// FFI binding for by-value BlString needs a separate _ptr wrapper (TODO).
@@ -260,7 +280,11 @@ describe.skipIf(!hasLib)("zigbridge smoke test — liblightpanda_dom", () => {
 		const html = new TextEncoder().encode("<div><span>x</span></div>");
 		const doc = _symbols!.bl_doc_from_html(ptr(html), BigInt(html.byteLength))!;
 		const selStr = new TextEncoder().encode("span");
-		const sel = _symbols!.bl_doc_find(doc, ptr(selStr), BigInt(selStr.byteLength))!;
+		const sel = _symbols!.bl_doc_find(
+			doc,
+			ptr(selStr),
+			BigInt(selStr.byteLength),
+		)!;
 		const el = _symbols!.bl_sel_at(sel, 0n)!;
 
 		const out = new Uint8Array(BL_STRING_SIZE);
@@ -281,7 +305,11 @@ describe.skipIf(!hasLib)("zigbridge smoke test — liblightpanda_dom", () => {
 		const html = new TextEncoder().encode("<div></div>");
 		const doc = _symbols!.bl_doc_from_html(ptr(html), BigInt(html.byteLength))!;
 		const selStr = new TextEncoder().encode("span");
-		const sel = _symbols!.bl_doc_find(doc, ptr(selStr), BigInt(selStr.byteLength))!;
+		const sel = _symbols!.bl_doc_find(
+			doc,
+			ptr(selStr),
+			BigInt(selStr.byteLength),
+		)!;
 
 		expect(Number(_symbols!.bl_sel_count(sel))).toBe(0);
 		expect(_symbols!.bl_sel_at(sel, 0n)).toBeNull();
@@ -296,7 +324,11 @@ describe.skipIf(!hasLib)("zigbridge smoke test — liblightpanda_dom", () => {
 		const html = new TextEncoder().encode("<p>ok</p>");
 		const doc = _symbols!.bl_doc_from_html(ptr(html), BigInt(html.byteLength))!;
 		const selStr = new TextEncoder().encode("p");
-		const sel = _symbols!.bl_doc_find(doc, ptr(selStr), BigInt(selStr.byteLength))!;
+		const sel = _symbols!.bl_doc_find(
+			doc,
+			ptr(selStr),
+			BigInt(selStr.byteLength),
+		)!;
 		const el = _symbols!.bl_sel_at(sel, 0n)!;
 
 		_symbols!.bl_sel_destroy(el);

@@ -28,6 +28,7 @@ interface ScrapeOptions extends CommonOptions {
 	selector: string;
 	profile: ScrapeProfile;
 	max: number;
+	markdown: boolean;
 }
 
 function printUsage(): void {
@@ -36,9 +37,11 @@ function printUsage(): void {
 
 Usage:
   bxc scrape <url> <css-selector> [options]
+  bxc scrape <url> --markdown [options]
 
 Options:
   --profile <name>   static (default) | fast | http
+  --markdown         convert the entire page to GFM Markdown
   --max <N>          max elements returned (default: 50)
   --help, -h         this help
 
@@ -46,13 +49,17 @@ Options:
 	);
 }
 
-function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOptions | null {
+function parseArgs(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): ScrapeOptions | null {
 	const opts: ScrapeOptions = {
 		...baseOpts,
 		url: "",
 		selector: "",
 		profile: "static",
 		max: 50,
+		markdown: false,
 	};
 	const positional: string[] = [];
 	for (let i = 0; i < argv.length; i++) {
@@ -67,6 +74,9 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOpti
 				opts.profile = v;
 				break;
 			}
+			case "--markdown":
+				opts.markdown = true;
+				break;
 			case "--max":
 				opts.max = parseInt(argv[++i], 10);
 				break;
@@ -77,16 +87,23 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ScrapeOpti
 				if (!a.startsWith("-")) positional.push(a);
 		}
 	}
-	if (positional.length < 2) {
-		logger.error("requires <url> and <selector>");
+	if (positional.length < 1) {
+		logger.error("requires <url>");
+		return null;
+	}
+	if (!opts.markdown && positional.length < 2) {
+		logger.error("requires <selector> (unless --markdown is set)");
 		return null;
 	}
 	opts.url = positional[0];
-	opts.selector = positional[1];
+	opts.selector = positional[1] ?? "body";
 	return opts;
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
@@ -98,9 +115,18 @@ export async function main(argv: readonly string[], baseOpts: CommonOptions): Pr
 		page = await Browser.newPage({
 			profile: opts.profile,
 			spawnOpts:
-				opts.profile === "fast" ? { logLevel: "error", readyTimeoutMs: 10_000 } : undefined,
+				opts.profile === "fast"
+					? { logLevel: "error", readyTimeoutMs: 10_000 }
+					: undefined,
 		});
 		await page.goto(opts.url, { timeoutMs: opts.timeoutMs });
+
+		if (opts.markdown) {
+			const md = await page.markdown();
+			Bun.stdout.write(md + "\n");
+			return;
+		}
+
 		const els = await page.$$(opts.selector);
 		const out: Array<{ index: number; text: string }> = [];
 		for (let i = 0; i < els.length && i < opts.max; i++) {

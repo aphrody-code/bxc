@@ -88,14 +88,17 @@ export class CookieJar {
 	/** Returns a copy of every cookie (excluding expired ones). */
 	all(): CookieRecord[] {
 		const now = Date.now();
-		return this.#cookies.filter((c) => !c.expires || c.expires > now).map((c) => ({ ...c }));
+		return this.#cookies
+			.filter((c) => !c.expires || c.expires > now)
+			.map((c) => ({ ...c }));
 	}
 
 	/** Sets or updates a cookie by `(name, domain, path)` triple. */
 	set(c: CookieRecord): void {
 		const path = c.path ?? "/";
 		const idx = this.#cookies.findIndex(
-			(x) => x.name === c.name && x.domain === c.domain && (x.path ?? "/") === path,
+			(x) =>
+				x.name === c.name && x.domain === c.domain && (x.path ?? "/") === path,
 		);
 		if (idx >= 0) this.#cookies[idx] = { ...c, path };
 		else this.#cookies.push({ ...c, path });
@@ -139,7 +142,10 @@ export class CookieJar {
 	}
 
 	/** Applies one or more `Set-Cookie` response headers to this jar. */
-	applySetCookie(setCookie: string | string[] | undefined, requestUrl: string): void {
+	applySetCookie(
+		setCookie: string | string[] | undefined,
+		requestUrl: string,
+	): void {
 		if (!setCookie) return;
 		const headers = Array.isArray(setCookie) ? setCookie : [setCookie];
 		let defaultDomain: string;
@@ -289,7 +295,9 @@ function sanitize(host: string): string {
 }
 
 function hostMatches(requestHost: string, cookieDomain: string): boolean {
-	const cookie = cookieDomain.startsWith(".") ? cookieDomain.slice(1) : cookieDomain;
+	const cookie = cookieDomain.startsWith(".")
+		? cookieDomain.slice(1)
+		: cookieDomain;
 	if (!cookie) return false;
 	if (requestHost === cookie) return true;
 	return requestHost.endsWith(`.${cookie}`);
@@ -302,7 +310,10 @@ function pathMatches(requestPath: string, cookiePath: string): boolean {
 	return false;
 }
 
-function parseSetCookie(header: string, defaultDomain: string): CookieRecord | null {
+function parseSetCookie(
+	header: string,
+	defaultDomain: string,
+): CookieRecord | null {
 	const parts = header.split(";").map((p) => p.trim());
 	if (parts.length === 0) return null;
 	const [first, ...attrs] = parts;
@@ -339,7 +350,8 @@ function parseSetCookie(header: string, defaultDomain: string): CookieRecord | n
 				out.httpOnly = true;
 				break;
 			case "samesite":
-				if (val === "Strict" || val === "Lax" || val === "None") out.sameSite = val;
+				if (val === "Strict" || val === "Lax" || val === "None")
+					out.sameSite = val;
 				break;
 		}
 	}

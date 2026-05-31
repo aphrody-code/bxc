@@ -21,7 +21,13 @@
 import type { Locator } from "./Locator.ts";
 import type { Frame } from "./Frame.ts";
 import type { BrowserContext } from "./BrowserContext.ts";
-import type { NavigationResponse, GotoOptions, ScreenshotOptions, PDFOptions, PageOptions } from "./browser.ts";
+import type {
+	NavigationResponse,
+	GotoOptions,
+	ScreenshotOptions,
+	PDFOptions,
+	PageOptions,
+} from "./browser.ts";
 
 /**
  * Unified interface for all Bxc pages (Page and HttpPage).
@@ -30,27 +36,30 @@ export interface AnyPage extends AsyncDisposable {
 	url(): string;
 	title(): Promise<string>;
 	content(): Promise<string>;
+	markdown(): Promise<string>;
 	goto(url: string, options?: GotoOptions): Promise<NavigationResponse>;
 	close(): Promise<void>;
 	context(): BrowserContext | null;
 	profile(): string;
 	upgradeProfile(newProfile: string, options?: PageOptions): Promise<AnyPage>;
-	
+
 	// Common Methods
 	evaluate<T, R = unknown>(fn: (arg: R) => T, arg?: R): Promise<T>;
 	setContent(html: string, options?: GotoOptions): Promise<void>;
-	addCookies(cookies: Array<{
-		name: string;
-		value: string;
-		url?: string;
-		domain?: string;
-		path?: string;
-		expires?: number;
-		secure?: boolean;
-		httpOnly?: boolean;
-		sameSite?: "Strict" | "Lax" | "None";
-	}>): Promise<void>;
-	
+	addCookies(
+		cookies: Array<{
+			name: string;
+			value: string;
+			url?: string;
+			domain?: string;
+			path?: string;
+			expires?: number;
+			secure?: boolean;
+			httpOnly?: boolean;
+			sameSite?: "Strict" | "Lax" | "None";
+		}>,
+	): Promise<void>;
+
 	// Methods common to all profiles
 	locator(selector: string): Locator;
 	mainFrame(): Frame;
@@ -59,15 +68,19 @@ export interface AnyPage extends AsyncDisposable {
 	$$<E = unknown>(selector: string): Promise<E[]>;
 	screenshot(options?: ScreenshotOptions): Promise<Uint8Array>;
 	pdf(options?: PDFOptions): Promise<Uint8Array>;
-	
+
 	// Agentic / AI
 	aiExtract?(instruction: string): Promise<{
 		data: Record<string, string | string[]>;
 		selectors: Record<string, string>;
 	}>;
 	aiAct?(instruction: string): Promise<void>;
-	
+
 	// Optional or Stubbed in HttpPage
 	click?(selector: string, options?: { timeout?: number }): Promise<void>;
-	fill?(selector: string, text: string, options?: { timeout?: number }): Promise<void>;
+	fill?(
+		selector: string,
+		text: string,
+		options?: { timeout?: number },
+	): Promise<void>;
 }

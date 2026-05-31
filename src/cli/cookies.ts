@@ -18,7 +18,11 @@
  * `bxc cookies <action>` — cookie jar tools.
  */
 
-import { filterExpired, loadCookieJar, maskCookiesForLog } from "../cookies/cookie-loader.ts";
+import {
+	filterExpired,
+	loadCookieJar,
+	maskCookiesForLog,
+} from "../cookies/cookie-loader.ts";
 import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
 function printUsage(): void {
@@ -36,7 +40,10 @@ Supports formats: Playwright, CDP, Netscape, EditThisCookie.
 	);
 }
 
-export async function main(argv: readonly string[], _opts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	_opts: CommonOptions,
+): Promise<void> {
 	const action = argv[0];
 	if (!action || action === "--help" || action === "-h") {
 		printUsage();
@@ -55,7 +62,11 @@ export async function main(argv: readonly string[], _opts: CommonOptions): Promi
 				const fresh = filterExpired(cookies);
 				const masked = maskCookiesForLog(fresh).split("\n").slice(0, 20);
 				Bun.stdout.write(
-					JSON.stringify({ total: cookies.length, fresh: fresh.length, masked }, null, 2) + "\n",
+					JSON.stringify(
+						{ total: cookies.length, fresh: fresh.length, masked },
+						null,
+						2,
+					) + "\n",
 				);
 			} catch (err) {
 				logger.error(err instanceof Error ? err.message : String(err));

@@ -7,16 +7,16 @@
  * @module
  */
 
-import { McpServer } from './mcp.js';
-import { StdioServerTransport } from './stdio.js';
+import { McpServer } from "./mcp.js";
+import { StdioServerTransport } from "./stdio.js";
 
 /**
  * Example: Basic stdio transport usage.
  */
 async function StdioServerTransport_basicUsage() {
-    //#region StdioServerTransport_basicUsage
-    const server = new McpServer({ name: 'my-server', version: '1.0.0' });
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    //#endregion StdioServerTransport_basicUsage
+	//#region StdioServerTransport_basicUsage
+	const server = new McpServer({ name: "my-server", version: "1.0.0" });
+	const transport = new StdioServerTransport();
+	await server.connect(transport);
+	//#endregion StdioServerTransport_basicUsage
 }

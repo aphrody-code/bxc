@@ -17,7 +17,8 @@
 import { join, dirname } from "node:path";
 import { mkdir } from "node:fs/promises";
 
-const INDEX_FILE_PATH = "/home/ubuntu/.gemini/antigravity-cli/brain/23dff8cc-da0b-43fd-86df-15d53e4d4095/.system_generated/steps/504/content.md";
+const INDEX_FILE_PATH =
+	"/home/ubuntu/.gemini/antigravity-cli/brain/23dff8cc-da0b-43fd-86df-15d53e4d4095/.system_generated/steps/504/content.md";
 const OUTPUT_DIR = "/home/ubuntu/bxc/docs/bun";
 const CONCURRENCY_LIMIT = 8; // polite concurrency
 const RETRIES = 3;
@@ -30,14 +31,16 @@ async function run() {
 	}
 
 	const content = await file.text();
-	
+
 	// Extract all URLs matching https://bun.com/docs/...
 	const urlRegex = /https:\/\/bun\.com\/docs\/[^\s\)]+/g;
-	const matches = [...content.matchAll(urlRegex)].map(m => m[0]);
-	
+	const matches = [...content.matchAll(urlRegex)].map((m) => m[0]);
+
 	// Deduplicate URLs
 	const urls = [...new Set(matches)];
-	console.log(`Found ${urls.length} unique Bun documentation URLs in the index.`);
+	console.log(
+		`Found ${urls.length} unique Bun documentation URLs in the index.`,
+	);
 
 	const queue = [...urls];
 	let successCount = 0;
@@ -71,10 +74,14 @@ async function run() {
 						downloaded = true;
 						break;
 					} else {
-						console.warn(`[Attempt ${attempt}/${RETRIES}] HTTP ${res.status} for ${url}`);
+						console.warn(
+							`[Attempt ${attempt}/${RETRIES}] HTTP ${res.status} for ${url}`,
+						);
 					}
 				} catch (err: any) {
-					console.warn(`[Attempt ${attempt}/${RETRIES}] Error fetching ${url}: ${err.message}`);
+					console.warn(
+						`[Attempt ${attempt}/${RETRIES}] Error fetching ${url}: ${err.message}`,
+					);
 				}
 				await Bun.sleep(1000 * attempt);
 			}

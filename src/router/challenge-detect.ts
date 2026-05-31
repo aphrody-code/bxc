@@ -67,7 +67,10 @@ export function detectChallenge(ctx: ChallengeContext): ChallengeDetection {
 	const cfRay = headers.get("cf-ray");
 	const cfServer = headers.get("server")?.toLowerCase().includes("cloudflare");
 
-	if (cfMitigated === "challenge" || /__cf_chl_opt|cf_chl_jschl|turnstile/i.test(body)) {
+	if (
+		cfMitigated === "challenge" ||
+		/__cf_chl_opt|cf_chl_jschl|turnstile/i.test(body)
+	) {
 		evidence.push("cf-mitigated:challenge OR turnstile script detected");
 		return {
 			provider: "cloudflare-turnstile",
@@ -126,7 +129,10 @@ export function detectChallenge(ctx: ChallengeContext): ChallengeDetection {
 	}
 
 	// --- PerimeterX ---
-	if (/_pxhd=|_px[0-9]?=/.test(headers.get("set-cookie") ?? "") || /\/_px\//i.test(body)) {
+	if (
+		/_pxhd=|_px[0-9]?=/.test(headers.get("set-cookie") ?? "") ||
+		/\/_px\//i.test(body)
+	) {
 		evidence.push("perimeterx cookie/url");
 		return {
 			provider: "perimeterx",
@@ -137,7 +143,11 @@ export function detectChallenge(ctx: ChallengeContext): ChallengeDetection {
 	}
 
 	// --- Kasada ---
-	if (/kasada|x-kpsdk-/.test(body) || headers.get("x-kpsdk-ct") || headers.get("x-kpsdk-st")) {
+	if (
+		/kasada|x-kpsdk-/.test(body) ||
+		headers.get("x-kpsdk-ct") ||
+		headers.get("x-kpsdk-st")
+	) {
 		evidence.push("kasada markers");
 		return {
 			provider: "kasada",
@@ -186,7 +196,9 @@ export function detectChallenge(ctx: ChallengeContext): ChallengeDetection {
 }
 
 /** Heuristique pour décider du profil initial sans avoir requête d'abord. */
-export function suggestInitialProfile(url: string): "static" | "fast" | "stealth" | "max" {
+export function suggestInitialProfile(
+	url: string,
+): "static" | "fast" | "stealth" | "max" {
 	const u = new URL(url);
 	const host = u.hostname.toLowerCase();
 
@@ -223,7 +235,12 @@ export function suggestInitialProfile(url: string): "static" | "fast" | "stealth
 	}
 
 	// Domaines connus simples
-	const knownSimple = ["google.com", "www.google.com", "developers.google.com", "design.google"];
+	const knownSimple = [
+		"google.com",
+		"www.google.com",
+		"developers.google.com",
+		"design.google",
+	];
 	if (knownSimple.some((d) => host === d || host.endsWith(`.${d}`))) {
 		return "fast";
 	}

@@ -60,8 +60,8 @@ async function runWithCfCheck(
 
 	// A runner "bypassed" the challenge if it got content that does NOT
 	// contain the challenge markers (even if status was non-200)
-	
-		base.success &&
+
+	base.success &&
 		!isChallengeHtml(
 			// We can only check content for runners that return it (all do via contentLength proxy)
 			// In this case we check the raw result — if success=true and content > 0 it means
@@ -100,7 +100,10 @@ async function runScenarioForRunner(
 				...result,
 				success: result.contentLength > 0,
 				error:
-					result.error ?? (result.statusCode === 403 ? "Cloudflare IUAM (expected)" : undefined),
+					result.error ??
+					(result.statusCode === 403
+						? "Cloudflare IUAM (expected)"
+						: undefined),
 			};
 			allResults.push(adjusted);
 			if (run < RUNS_PER_URL - 1) await sleep(INTER_RUN_DELAY_MS);
@@ -126,8 +129,12 @@ async function runScenarioForRunner(
 export async function run(): Promise<ScenarioResult[]> {
 	const port = await startMockServer();
 	console.log(`[${SCENARIO_ID}] mock server on :${port}`);
-	console.log(`[${SCENARIO_ID}] NOTE: mock CF pages return 403 + challenge HTML always.`);
-	console.log(`[${SCENARIO_ID}] success here = "fetched content", not "bypassed challenge".`);
+	console.log(
+		`[${SCENARIO_ID}] NOTE: mock CF pages return 403 + challenge HTML always.`,
+	);
+	console.log(
+		`[${SCENARIO_ID}] success here = "fetched content", not "bypassed challenge".`,
+	);
 
 	const runners = [
 		bxcStatic,
@@ -140,7 +147,9 @@ export async function run(): Promise<ScenarioResult[]> {
 
 	for (const runner of runners) {
 		if (runner.SKIP_REASON) {
-			console.log(`[${SCENARIO_ID}] SKIP ${runner.RUNNER_ID}: ${runner.SKIP_REASON}`);
+			console.log(
+				`[${SCENARIO_ID}] SKIP ${runner.RUNNER_ID}: ${runner.SKIP_REASON}`,
+			);
 			continue;
 		}
 		console.log(`[${SCENARIO_ID}] running ${runner.RUNNER_ID}...`);

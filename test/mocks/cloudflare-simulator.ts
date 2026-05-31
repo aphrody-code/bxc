@@ -16,7 +16,7 @@
 
 /**
  * @module test/mocks/cloudflare-simulator
- * 
+ *
  * A local mock server that simulates Cloudflare's security layers
  * to test Bxc's bypass logic without violating the Google-only mandate.
  */
@@ -29,25 +29,32 @@ export function startCloudflareMock(port: number = 29523) {
 		async fetch(req) {
 			const url = new URL(req.url);
 			const ua = req.headers.get("user-agent") ?? "";
-			
+
 			// 1. Bot detection simulation
 			if (!ua.includes("Mozilla/5.0") || ua.includes("Bun/")) {
 				return new Response("Forbidden: Bot detected (Fingerprint Mismatch)", {
 					status: 403,
-					headers: { "Server": "cloudflare", "cf-ray": "8845-MOCK-PAR" }
+					headers: { Server: "cloudflare", "cf-ray": "8845-MOCK-PAR" },
 				});
 			}
 
 			// 2. Success (Authenticated)
 			if (req.headers.get("cookie")?.includes("cf_clearance=mock_token")) {
-				return new Response(JSON.stringify({ ok: true, data: "Cloudflare Mock Passed" }), {
-					headers: { "Content-Type": "application/json", "Server": "cloudflare" }
-				});
+				return new Response(
+					JSON.stringify({ ok: true, data: "Cloudflare Mock Passed" }),
+					{
+						headers: {
+							"Content-Type": "application/json",
+							Server: "cloudflare",
+						},
+					},
+				);
 			}
 
 			// 3. Challenge simulation
 			if (url.searchParams.has("challenge")) {
-				return new Response(`
+				return new Response(
+					`
 					<html>
 						<head><title>Just a moment...</title></head>
 						<body>
@@ -60,18 +67,20 @@ export function startCloudflareMock(port: number = 29523) {
 							</script>
 						</body>
 					</html>
-				`, {
-					status: 403,
-					headers: { "Content-Type": "text/html", "Server": "cloudflare" }
-				});
+				`,
+					{
+						status: 403,
+						headers: { "Content-Type": "text/html", Server: "cloudflare" },
+					},
+				);
 			}
 
 			// Default: Redirect to challenge (302) but subsequent page is 403
 			return new Response("", {
 				status: 302,
-				headers: { "Location": url.pathname + "?challenge=1" }
+				headers: { Location: url.pathname + "?challenge=1" },
 			});
-		}
+		},
 	});
 }
 

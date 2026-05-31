@@ -29,13 +29,22 @@ import { buildCookieHeader } from "../cookies/cookie-injector.ts";
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
 import { sharedCache } from "./cache.ts";
 import { isGoogleDomain } from "./dns.ts";
-import { parseSerp, type SerpContent, type OrganicResult } from "./serp-parser.ts";
+import {
+	parseSerp,
+	type SerpContent,
+	type OrganicResult,
+} from "./serp-parser.ts";
 
 /** Transport used to fetch the SERP HTML. */
 export type SearchTransport = "auto" | "fetch" | "ghost" | "http";
 
 /** Default location of the authenticated Google cookie jar. */
-export const DEFAULT_GOOGLE_COOKIE_JAR = join(homedir(), ".bxc", "cookies", "google.json");
+export const DEFAULT_GOOGLE_COOKIE_JAR = join(
+	homedir(),
+	".bxc",
+	"cookies",
+	"google.json",
+);
 
 const DESKTOP_UA =
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -142,10 +151,18 @@ export async function googleSearchRich(
 		if (hit) return { ...hit, servedFromCache: true };
 	}
 
-	const { cookies, authenticated } = await resolveSearchCookies(opts.cookies, domain);
+	const { cookies, authenticated } = await resolveSearchCookies(
+		opts.cookies,
+		domain,
+	);
 
 	const transport = opts.transport ?? "auto";
-	const { html, profileUsed } = await fetchSerpHtml(url, cookies, transport, opts);
+	const { html, profileUsed } = await fetchSerpHtml(
+		url,
+		cookies,
+		transport,
+		opts,
+	);
 
 	const content = await parseSerp(html, query);
 
@@ -156,11 +173,17 @@ export async function googleSearchRich(
 		const webUrl = new URL(url);
 		webUrl.searchParams.set("udm", "14");
 		try {
-			const { html: webHtml } = await fetchSerpHtml(webUrl, cookies, transport, opts);
+			const { html: webHtml } = await fetchSerpHtml(
+				webUrl,
+				cookies,
+				transport,
+				opts,
+			);
 			const web = await parseSerp(webHtml, query);
 			if (web.organic.length > 0) {
 				content.organic = web.organic;
-				if (content.totalResults === undefined) content.totalResults = web.totalResults;
+				if (content.totalResults === undefined)
+					content.totalResults = web.totalResults;
 			}
 		} catch {
 			/* best-effort backfill */
@@ -229,7 +252,8 @@ async function resolveSearchCookies(
 	};
 }
 
-const BLOCKED_RE = /\/sorry\/|id="recaptcha"|unusual traffic|consent\.google\.com/i;
+const BLOCKED_RE =
+	/\/sorry\/|id="recaptcha"|unusual traffic|consent\.google\.com/i;
 
 /**
  * Fetches the raw SERP HTML using the requested transport. `"auto"` prefers a

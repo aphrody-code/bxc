@@ -83,7 +83,13 @@ const NAV_TIMEOUT_MS = 30_000;
 const REQUEST_DELAY_MS = 4_000;
 
 /** All profiles exercised by this suite (ordered from fastest to most stealthy). */
-const PROFILES: readonly ProfileName[] = ["static", "fast", "http", "stealth", "max"];
+const PROFILES: readonly ProfileName[] = [
+	"static",
+	"fast",
+	"http",
+	"stealth",
+	"max",
+];
 
 // ---------------------------------------------------------------------------
 // State
@@ -119,7 +125,14 @@ interface ChallongeResult extends SiteResult {
 }
 
 function emptySummary(): ProfileSummary {
-	return { pass: 0, fail: 0, skip: 0, totalGotoMs: 0, gotoCount: 0, peakRssMb: 0 };
+	return {
+		pass: 0,
+		fail: 0,
+		skip: 0,
+		totalGotoMs: 0,
+		gotoCount: 0,
+		peakRssMb: 0,
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -252,7 +265,8 @@ async function probeWithProfile(
 				`body too small: ${base.contentBytes ?? 0} < ${pattern.expectedMinBytes} bytes`;
 		} else if (!base.signalPass) {
 			base.status = "fail";
-			base.error = base.error ?? "signal check failed (expected content markers absent)";
+			base.error =
+				base.error ?? "signal check failed (expected content markers absent)";
 		} else {
 			base.status = "pass";
 		}
@@ -294,7 +308,8 @@ function recordResult(r: ChallongeResult): void {
 		s.totalGotoMs += r.gotoMs;
 		s.gotoCount++;
 	}
-	if (typeof r.rssMb === "number" && r.rssMb > s.peakRssMb) s.peakRssMb = r.rssMb;
+	if (typeof r.rssMb === "number" && r.rssMb > s.peakRssMb)
+		s.peakRssMb = r.rssMb;
 }
 
 // ---------------------------------------------------------------------------
@@ -313,23 +328,31 @@ async function writeChallongeReport(): Promise<void> {
 	// Per-profile summary
 	lines.push("## Per-profile summary");
 	lines.push("");
-	lines.push("| Profile | Pass | Fail | Skip | Pass rate | Avg goto ms | CF walls |");
+	lines.push(
+		"| Profile | Pass | Fail | Skip | Pass rate | Avg goto ms | CF walls |",
+	);
 	lines.push("|---|---|---|---|---|---|---|");
 
 	for (const p of PROFILES) {
 		const s = summary[p];
 		const total = s.pass + s.fail;
-		const rate = total === 0 ? "n/a" : `${((s.pass / total) * 100).toFixed(1)}%`;
-		const avgMs = s.gotoCount > 0 ? `${(s.totalGotoMs / s.gotoCount).toFixed(0)} ms` : "—";
-		const cfCount = allResults.filter((r) => r.profile === p && r.cfWall).length;
-		lines.push(`| ${p} | ${s.pass} | ${s.fail} | ${s.skip} | ${rate} | ${avgMs} | ${cfCount} |`);
+		const rate =
+			total === 0 ? "n/a" : `${((s.pass / total) * 100).toFixed(1)}%`;
+		const avgMs =
+			s.gotoCount > 0 ? `${(s.totalGotoMs / s.gotoCount).toFixed(0)} ms` : "—";
+		const cfCount = allResults.filter(
+			(r) => r.profile === p && r.cfWall,
+		).length;
+		lines.push(
+			`| ${p} | ${s.pass} | ${s.fail} | ${s.skip} | ${rate} | ${avgMs} | ${cfCount} |`,
+		);
 	}
 	lines.push("");
 
 	// Per-pattern x per-profile matrix
 	lines.push("## Pattern x Profile matrix");
 	lines.push("");
-		const profileHeader = PROFILES.join(" | ");
+	const profileHeader = PROFILES.join(" | ");
 	lines.push(`| Pattern | Slug/User | ${profileHeader} |`);
 	lines.push(`|---|---|${"---|".repeat(PROFILES.length)}`);
 
@@ -350,7 +373,9 @@ async function writeChallongeReport(): Promise<void> {
 				cells.push("—");
 			} else if (r.status === "pass") {
 				const ms = r.gotoMs ? `${r.gotoMs.toFixed(0)}ms` : "";
-				const kb = r.contentBytes ? ` ${(r.contentBytes / 1024).toFixed(0)}KB` : "";
+				const kb = r.contentBytes
+					? ` ${(r.contentBytes / 1024).toFixed(0)}KB`
+					: "";
 				cells.push(`pass (${ms}${kb})`);
 			} else if (r.status === "skip") {
 				cells.push("skip");
@@ -395,7 +420,9 @@ async function writeChallongeReport(): Promise<void> {
 		"The following table maps each rpb-challonge transport to its recommended Bxc profile replacement.",
 	);
 	lines.push("");
-	lines.push("| rpb-challonge transport | Current implementation | Bxc replacement | Notes |");
+	lines.push(
+		"| rpb-challonge transport | Current implementation | Bxc replacement | Notes |",
+	);
 	lines.push("|---|---|---|---|");
 	lines.push(
 		"| scraper.ts (CF managed challenge) | puppeteer-extra + StealthPlugin | `stealth` (patchright Chromium) or `max` (Camoufox FF) | Requires Chromium/Firefox binary; skip cleanly when absent |",
@@ -409,7 +436,9 @@ async function writeChallongeReport(): Promise<void> {
 	lines.push("");
 
 	// Profile guidance based on actual results
-	const httpPasses = allResults.filter((r) => r.profile === "http" && r.status === "pass").length;
+	const httpPasses = allResults.filter(
+		(r) => r.profile === "http" && r.status === "pass",
+	).length;
 	const stealthPasses = allResults.filter(
 		(r) => r.profile === "stealth" && r.status === "pass",
 	).length;
@@ -498,7 +527,9 @@ async function writeChallongeReport(): Promise<void> {
 beforeAll(async () => {
 	online = await isOnline();
 	if (!online) {
-		console.log("[challonge] SKIP: challonge.com unreachable — all tests will be skipped");
+		console.log(
+			"[challonge] SKIP: challonge.com unreachable — all tests will be skipped",
+		);
 	}
 	lightpandaBin = await resolveLightpandaBin();
 });
@@ -612,9 +643,13 @@ for (const profile of PROFILES) {
 									? "CF-WALL"
 									: "FAIL";
 					const ms = r.gotoMs ? ` goto=${r.gotoMs.toFixed(0)}ms` : "";
-					const kb = r.contentBytes ? ` ${(r.contentBytes / 1024).toFixed(0)}KB` : "";
+					const kb = r.contentBytes
+						? ` ${(r.contentBytes / 1024).toFixed(0)}KB`
+						: "";
 					const errInfo = r.error ? ` err=${r.error.slice(0, 80)}` : "";
-					console.log(`[${profile}] ${tag} [${pattern.name}/${slug}]${ms}${kb}${errInfo}`);
+					console.log(
+						`[${profile}] ${tag} [${pattern.name}/${slug}]${ms}${kb}${errInfo}`,
+					);
 
 					if (r.status === "pass") passCount++;
 					else if (r.cfWall) cfCount++;
@@ -684,7 +719,9 @@ describe("challonge — cross-profile coverage", () => {
 			for (const [key, results] of patternMap) {
 				const anyPass = results.some((r) => r.status === "pass");
 				const allSkip = results.every((r) => r.status === "skip");
-				const allCfOrSkip = results.every((r) => r.status === "skip" || r.cfWall);
+				const allCfOrSkip = results.every(
+					(r) => r.status === "skip" || r.cfWall,
+				);
 
 				if (!anyPass && !allSkip && !allCfOrSkip) {
 					issues.push(

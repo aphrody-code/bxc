@@ -151,7 +151,9 @@ async function compileTailwind(
 ): Promise<string> {
 	const args: string[] = [...cli.cmd, "--input", "-"];
 
-	const content = options.content ?? ["src/**/*.{html,ts,tsx,js,jsx,vue,svelte,astro,md,mdx}"];
+	const content = options.content ?? [
+		"src/**/*.{html,ts,tsx,js,jsx,vue,svelte,astro,md,mdx}",
+	];
 	for (const pattern of content) {
 		args.push("--content", pattern);
 	}
@@ -172,7 +174,9 @@ async function compileTailwind(
 	});
 
 	// Feed input CSS via stdin and close it.
-	const writer = (proc.stdin as { write: (data: Uint8Array) => void; end: () => void }) ?? null;
+	const writer =
+		(proc.stdin as { write: (data: Uint8Array) => void; end: () => void }) ??
+		null;
 	if (writer && typeof writer.write === "function") {
 		writer.write(new TextEncoder().encode(css));
 		writer.end();
@@ -188,7 +192,9 @@ async function compileTailwind(
 		throw new Error(`tailwindcss exited ${exitCode}: ${stderr.slice(0, 400)}`);
 	}
 	if (!stdout.trim()) {
-		throw new Error(`tailwindcss produced empty output (stderr: ${stderr.slice(0, 200)})`);
+		throw new Error(
+			`tailwindcss produced empty output (stderr: ${stderr.slice(0, 200)})`,
+		);
 	}
 	return stdout;
 }
@@ -211,7 +217,10 @@ export function tailwindPlugin(options: TailwindPluginOptions = {}): BunPlugin {
 	return {
 		name: "tailwind",
 		async setup(build) {
-			const cwd = options.cwd ?? (build.config?.root as string | undefined) ?? process.cwd();
+			const cwd =
+				options.cwd ??
+				(build.config?.root as string | undefined) ??
+				process.cwd();
 
 			build.onLoad({ filter: /\.css$/ }, async (args) => {
 				const css = await Bun.file(args.path).text();

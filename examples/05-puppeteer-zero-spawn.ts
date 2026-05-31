@@ -58,7 +58,10 @@ async function runStaticMode(): Promise<void> {
 	// puppeteer.connect() accepts any ConnectionTransport-compatible object
 	const browser = await puppeteer.connect({ transport });
 
-	console.log("puppeteer.connect() succeeded — browser version:", browser.version());
+	console.log(
+		"puppeteer.connect() succeeded — browser version:",
+		browser.version(),
+	);
 
 	const page = await browser.newPage();
 
@@ -114,7 +117,9 @@ async function runStaticMode(): Promise<void> {
 async function runFullMode(): Promise<void> {
 	section("Mode 2: WebSocketTransport (Chrome sub-process)");
 
-	const { WebSocketTransport } = await import("../src/transport/WebSocketTransport.ts");
+	const { WebSocketTransport } = await import(
+		"../src/transport/WebSocketTransport.ts"
+	);
 
 	console.log("Spawning chrome engine...");
 	let transport: any;
@@ -125,7 +130,10 @@ async function runFullMode(): Promise<void> {
 			readyTimeoutMs: 8000,
 		});
 	} catch (err) {
-		console.error("Failed to spawn engine:", err instanceof Error ? err.message : err);
+		console.error(
+			"Failed to spawn engine:",
+			err instanceof Error ? err.message : err,
+		);
 		process.exit(1);
 	}
 
@@ -142,7 +150,7 @@ async function runFullMode(): Promise<void> {
 	console.log("page.content() length →", content.length, "chars");
 
 	await browser.disconnect();
-	if (typeof transport.closeProcess === 'function') {
+	if (typeof transport.closeProcess === "function") {
 		await transport.closeProcess();
 	}
 
@@ -194,7 +202,9 @@ try {
 	if (useFullMode) {
 		await runFullMode();
 	} else {
-		console.log("\nSkipping full mode (SocketPairTransport). Pass --full to enable.");
+		console.log(
+			"\nSkipping full mode (SocketPairTransport). Pass --full to enable.",
+		);
 	}
 
 	console.log("\nAll demos completed successfully.");

@@ -16,7 +16,7 @@
 
 /**
  * @module bxc/google/mandate-guard
- * 
+ *
  * Programmatic enforcement of the "Strict Google-only Testing" mandate.
  * Prevents Bxc from making requests to non-Google domains.
  */
@@ -25,7 +25,9 @@ import { isGoogleDomain, isGoogleInfrastructure } from "./dns.ts";
 
 export class MandateViolationError extends Error {
 	constructor(hostname: string) {
-		super(`Mandate Violation: Access to non-Google domain "${hostname}" is FORBIDDEN by GEMINI.md.`);
+		super(
+			`Mandate Violation: Access to non-Google domain "${hostname}" is FORBIDDEN by GEMINI.md.`,
+		);
 		this.name = "MandateViolationError";
 	}
 }

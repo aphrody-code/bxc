@@ -16,7 +16,7 @@
 
 /**
  * @module bxc/utils/network-auditor
- * 
+ *
  * Real-time network auditing: DNS records, IPs, and CDN identification.
  */
 
@@ -34,19 +34,21 @@ export interface NetworkAuditResult {
 /**
  * Perform a real-time audit of a given hostname.
  */
-export async function auditNetwork(hostname: string): Promise<NetworkAuditResult> {
+export async function auditNetwork(
+	hostname: string,
+): Promise<NetworkAuditResult> {
 	const t0 = Bun.nanoseconds();
-	
+
 	let ips: string[] = [];
 	let cname: string | null = null;
-	
+
 	try {
 		// Bun's native DNS resolution
 		const addrs = await dns.lookup(hostname);
 		if (addrs && addrs.length > 0) {
-			ips = addrs.map(a => a.address);
+			ips = addrs.map((a) => a.address);
 		}
-		
+
 		// Note: Bun native dns currently lacks a high-level resolve('CNAME')
 		// We'll use dig for CNAME if needed or skip for now to stay native.
 	} catch {
@@ -80,9 +82,12 @@ export async function auditNetwork(hostname: string): Promise<NetworkAuditResult
 /**
  * Identify CDN/Server from response headers.
  */
-export function identifyInfraFromHeaders(headers: Record<string, string>): { cdn?: string, server?: string } {
-	const out: { cdn?: string, server?: string } = {};
-	
+export function identifyInfraFromHeaders(headers: Record<string, string>): {
+	cdn?: string;
+	server?: string;
+} {
+	const out: { cdn?: string; server?: string } = {};
+
 	const server = headers["server"];
 	if (server) out.server = server;
 
@@ -91,10 +96,20 @@ export function identifyInfraFromHeaders(headers: Record<string, string>): { cdn
 	const xCache = headers["x-cache"];
 	const xCdn = headers["x-cdn"];
 
-	if (cfRay || server?.toLowerCase().includes("cloudflare")) out.cdn = "Cloudflare";
-	else if (via?.toLowerCase().includes("cloudfront") || headers["x-amz-cf-id"]) out.cdn = "Amazon CloudFront";
-	else if (xCache?.toLowerCase().includes("fastly") || headers["x-fastly-request-id"]) out.cdn = "Fastly";
-	else if (server?.toLowerCase().includes("gws") || server?.toLowerCase().includes("ghs")) out.cdn = "Google Front End (GFE)";
+	if (cfRay || server?.toLowerCase().includes("cloudflare"))
+		out.cdn = "Cloudflare";
+	else if (via?.toLowerCase().includes("cloudfront") || headers["x-amz-cf-id"])
+		out.cdn = "Amazon CloudFront";
+	else if (
+		xCache?.toLowerCase().includes("fastly") ||
+		headers["x-fastly-request-id"]
+	)
+		out.cdn = "Fastly";
+	else if (
+		server?.toLowerCase().includes("gws") ||
+		server?.toLowerCase().includes("ghs")
+	)
+		out.cdn = "Google Front End (GFE)";
 	else if (xCdn) out.cdn = xCdn;
 
 	return out;

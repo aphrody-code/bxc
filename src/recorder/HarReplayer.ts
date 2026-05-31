@@ -71,7 +71,10 @@ export class HarReplayer {
 	readonly #entries: Map<EntryKey, HarEntry>;
 	readonly #urlIndex: Map<string, HarEntry>;
 
-	private constructor(entries: Map<EntryKey, HarEntry>, urlIndex: Map<string, HarEntry>) {
+	private constructor(
+		entries: Map<EntryKey, HarEntry>,
+		urlIndex: Map<string, HarEntry>,
+	) {
 		this.#entries = entries;
 		this.#urlIndex = urlIndex;
 	}
@@ -100,7 +103,10 @@ export class HarReplayer {
 				entries.set(key, entry);
 			}
 			// URL-only fallback index (last match for GET, first otherwise)
-			if (!urlIndex.has(entry.request.url) || entry.request.method.toUpperCase() === "GET") {
+			if (
+				!urlIndex.has(entry.request.url) ||
+				entry.request.method.toUpperCase() === "GET"
+			) {
 				urlIndex.set(entry.request.url, entry);
 			}
 		}
@@ -121,7 +127,10 @@ export class HarReplayer {
 			if (!map.has(key)) {
 				map.set(key, entry);
 			}
-			if (!urlIndex.has(entry.request.url) || entry.request.method.toUpperCase() === "GET") {
+			if (
+				!urlIndex.has(entry.request.url) ||
+				entry.request.method.toUpperCase() === "GET"
+			) {
 				urlIndex.set(entry.request.url, entry);
 			}
 		}
@@ -190,7 +199,8 @@ export class HarReplayer {
 				if (!targetUrl) {
 					return new Response(
 						JSON.stringify({
-							error: "Missing target URL. Use /<encoded-url> or ?url=<encoded-url>",
+							error:
+								"Missing target URL. Use /<encoded-url> or ?url=<encoded-url>",
 						}),
 						{
 							status: 400,
@@ -199,10 +209,13 @@ export class HarReplayer {
 					);
 				}
 
-				const entry = this.lookup(targetMethod, targetUrl) ?? this.lookup("GET", targetUrl);
+				const entry =
+					this.lookup(targetMethod, targetUrl) ?? this.lookup("GET", targetUrl);
 
 				if (!entry) {
-					const available = Array.from(this.#entries.keys()).slice(0, 10).join(", ");
+					const available = Array.from(this.#entries.keys())
+						.slice(0, 10)
+						.join(", ");
 					return new Response(
 						JSON.stringify({
 							error: `No HAR entry for ${targetMethod} ${targetUrl}`,
@@ -260,7 +273,9 @@ export class HarReplayer {
  * Reconstructs the response body from a HAR content block.
  * Handles base64-encoded binary content and plain text.
  */
-function buildResponseBody(content: HarEntry["response"]["content"]): string | ArrayBuffer | null {
+function buildResponseBody(
+	content: HarEntry["response"]["content"],
+): string | ArrayBuffer | null {
 	if (!content.text) return null;
 
 	if (content.encoding === "base64") {

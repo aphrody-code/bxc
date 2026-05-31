@@ -74,7 +74,14 @@ function makeHarEntry(
 			bodySize: body.length,
 		},
 		cache: {},
-		timings: { blocked: -1, dns: -1, connect: -1, send: 5, wait: 40, receive: 5 },
+		timings: {
+			blocked: -1,
+			dns: -1,
+			connect: -1,
+			send: 5,
+			wait: 40,
+			receive: 5,
+		},
 	};
 }
 
@@ -126,7 +133,9 @@ describe("HarReplayer factory", () => {
 	});
 
 	test("load() reads valid HAR file from disk", async () => {
-		const entries = [makeHarEntry("GET", "https://google.com/", 200, "<html></html>")];
+		const entries = [
+			makeHarEntry("GET", "https://google.com/", 200, "<html></html>"),
+		];
 		const path = await writeTempHar(entries);
 		const replayer = await HarReplayer.load(path);
 		expect(replayer.size).toBe(1);
@@ -165,7 +174,12 @@ describe("HarReplayer.lookup()", () => {
 	});
 
 	test("method case-insensitive lookup works", () => {
-		const entry = makeHarEntry("POST", "https://google.com/submit", 201, "created");
+		const entry = makeHarEntry(
+			"POST",
+			"https://google.com/submit",
+			201,
+			"created",
+		);
 		const replayer = HarReplayer.fromEntries([entry]);
 		expect(replayer.lookup("post", "https://google.com/submit")).toBeDefined();
 		expect(replayer.lookup("POST", "https://google.com/submit")).toBeDefined();
@@ -175,7 +189,9 @@ describe("HarReplayer.lookup()", () => {
 		const replayer = HarReplayer.fromEntries([
 			makeHarEntry("GET", "https://google.com/", 200, "x"),
 		]);
-		expect(replayer.lookup("GET", "https://unknown.google.com/")).toBeUndefined();
+		expect(
+			replayer.lookup("GET", "https://unknown.google.com/"),
+		).toBeUndefined();
 	});
 
 	test("multiple entries are indexed independently", () => {
@@ -188,7 +204,9 @@ describe("HarReplayer.lookup()", () => {
 		expect(replayer.size).toBe(3);
 		expect(replayer.lookup("GET", "https://a.com/")?.response.status).toBe(200);
 		expect(replayer.lookup("GET", "https://b.com/")?.response.status).toBe(301);
-		expect(replayer.lookup("POST", "https://a.com/api")?.response.status).toBe(201);
+		expect(replayer.lookup("POST", "https://a.com/api")?.response.status).toBe(
+			201,
+		);
 	});
 });
 
@@ -214,7 +232,9 @@ describe("HarReplayer.serve()", () => {
 		serversToStop.push(server);
 
 		// Path-prefixed routing: /https://google.com/test-page
-		const res = await fetch(`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`);
+		const res = await fetch(
+			`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`,
+		);
 		expect(res.status).toBe(200);
 		const body = await res.text();
 		expect(body).toBe("<h1>Hello HAR</h1>");
@@ -243,7 +263,9 @@ describe("HarReplayer.serve()", () => {
 		const server = await replayer.serve();
 		serversToStop.push(server);
 
-		const res = await fetch(`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`);
+		const res = await fetch(
+			`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`,
+		);
 		expect(res.headers.get("x-request-id")).toBe("abc-123");
 		expect(res.headers.get("content-type")).toContain("application/json");
 	});

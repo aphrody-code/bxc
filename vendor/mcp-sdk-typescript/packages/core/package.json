@@ -1,91 +1,91 @@
 {
-  "name": "@modelcontextprotocol/core",
-  "private": true,
-  "version": "2.0.0-alpha.1",
-  "description": "Model Context Protocol implementation for TypeScript - Core package",
-  "license": "MIT",
-  "author": "Anthropic, PBC (https://anthropic.com)",
-  "homepage": "https://modelcontextprotocol.io",
-  "bugs": "https://github.com/modelcontextprotocol/typescript-sdk/issues",
-  "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/modelcontextprotocol/typescript-sdk.git"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "keywords": [
-    "modelcontextprotocol",
-    "mcp",
-    "core"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
-    },
-    "./types": {
-      "types": "./src/exports/types/index.ts",
-      "import": "./src/exports/types/index.ts"
-    },
-    "./public": {
-      "types": "./src/exports/public/index.ts",
-      "import": "./src/exports/public/index.ts"
-    },
-    "./validators/cfWorker": {
-      "types": "./src/validators/cfWorkerProvider.ts",
-      "import": "./src/validators/cfWorkerProvider.ts"
-    }
-  },
-  "scripts": {
-    "typecheck": "tsgo -p tsconfig.json --noEmit",
-    "lint": "eslint src/ && prettier --ignore-path ../../.prettierignore --check .",
-    "lint:fix": "eslint src/ --fix && prettier --ignore-path ../../.prettierignore --write .",
-    "check": "bun run typecheck && bun run lint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "server": "tsx watch --clear-screen=false scripts/cli.ts server",
-    "client": "tsx scripts/cli.ts client"
-  },
-  "dependencies": {
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "json-schema-typed": "^8.0.2",
-    "zod": "^4.2.0"
-  },
-  "peerDependencies": {
-    "@cfworker/json-schema": "^4.1.1",
-    "zod": "^4.2.0"
-  },
-  "peerDependenciesMeta": {
-    "@cfworker/json-schema": {
-      "optional": true
-    },
-    "zod": {
-      "optional": false
-    }
-  },
-  "devDependencies": {
-    "@modelcontextprotocol/tsconfig": "workspace:^",
-    "@modelcontextprotocol/vitest-config": "workspace:^",
-    "@modelcontextprotocol/eslint-config": "workspace:^",
-    "@cfworker/json-schema": "^4.1.1",
-    "@eslint/js": "^9.39.2",
-    "@types/content-type": "^1.1.8",
-    "@types/cors": "^2.8.17",
-    "@types/cross-spawn": "^6.0.6",
-    "@types/eventsource": "^1.1.15",
-    "@types/express": "^5.0.6",
-    "@types/express-serve-static-core": "^5.1.0",
-    "@typescript/native-preview": "^7.0.0-dev.20251217.1",
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-n": "^17.23.1",
-    "prettier": "3.6.2",
-    "tsx": "^4.16.5",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.1",
-    "vitest": "^4.0.15"
-  }
+	"name": "@modelcontextprotocol/core",
+	"private": true,
+	"version": "2.0.0-alpha.1",
+	"description": "Model Context Protocol implementation for TypeScript - Core package",
+	"license": "MIT",
+	"author": "Anthropic, PBC (https://anthropic.com)",
+	"homepage": "https://modelcontextprotocol.io",
+	"bugs": "https://github.com/modelcontextprotocol/typescript-sdk/issues",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/modelcontextprotocol/typescript-sdk.git"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"modelcontextprotocol",
+		"mcp",
+		"core"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs"
+		},
+		"./types": {
+			"types": "./src/exports/types/index.ts",
+			"import": "./src/exports/types/index.ts"
+		},
+		"./public": {
+			"types": "./src/exports/public/index.ts",
+			"import": "./src/exports/public/index.ts"
+		},
+		"./validators/cfWorker": {
+			"types": "./src/validators/cfWorkerProvider.ts",
+			"import": "./src/validators/cfWorkerProvider.ts"
+		}
+	},
+	"scripts": {
+		"typecheck": "tsgo -p tsconfig.json --noEmit",
+		"lint": "eslint src/ && prettier --ignore-path ../../.prettierignore --check .",
+		"lint:fix": "eslint src/ --fix && prettier --ignore-path ../../.prettierignore --write .",
+		"check": "bun run typecheck && bun run lint",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"server": "tsx watch --clear-screen=false scripts/cli.ts server",
+		"client": "tsx scripts/cli.ts client"
+	},
+	"dependencies": {
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1",
+		"json-schema-typed": "^8.0.2",
+		"zod": "^4.2.0"
+	},
+	"peerDependencies": {
+		"@cfworker/json-schema": "^4.1.1",
+		"zod": "^4.2.0"
+	},
+	"peerDependenciesMeta": {
+		"@cfworker/json-schema": {
+			"optional": true
+		},
+		"zod": {
+			"optional": false
+		}
+	},
+	"devDependencies": {
+		"@modelcontextprotocol/tsconfig": "workspace:^",
+		"@modelcontextprotocol/vitest-config": "workspace:^",
+		"@modelcontextprotocol/eslint-config": "workspace:^",
+		"@cfworker/json-schema": "^4.1.1",
+		"@eslint/js": "^9.39.2",
+		"@types/content-type": "^1.1.8",
+		"@types/cors": "^2.8.17",
+		"@types/cross-spawn": "^6.0.6",
+		"@types/eventsource": "^1.1.15",
+		"@types/express": "^5.0.6",
+		"@types/express-serve-static-core": "^5.1.0",
+		"@typescript/native-preview": "^7.0.0-dev.20251217.1",
+		"eslint": "^9.39.2",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-n": "^17.23.1",
+		"prettier": "3.6.2",
+		"tsx": "^4.16.5",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.48.1",
+		"vitest": "^4.0.15"
+	}
 }

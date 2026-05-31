@@ -64,10 +64,7 @@ const QUEUE_DB = join(OUT_DIR, "crawl.db");
 const RAW_DIR = join(OUT_DIR, "raw");
 const EXTRACTED_JSONL = join(OUT_DIR, "extracted.jsonl");
 const SITE_DIR = join(OUT_DIR, "site");
-const GEMINI_COOKIES = join(
-	BXC_DIR,
-	"cookies/private/gemini.google.com.json",
-);
+const GEMINI_COOKIES = join(BXC_DIR, "cookies/private/gemini.google.com.json");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -145,9 +142,7 @@ function clamp(s: string, max: number): string {
 	return s.slice(0, max - 3) + "...";
 }
 
-
 function normalizeInternalUrl(href: string): string | null {
-
 	try {
 		if (href.startsWith("//")) href = "https:" + href;
 		if (href.startsWith("/")) href = ORIGIN + href;
@@ -347,7 +342,11 @@ async function crawl(): Promise<Map<string, ExtractedPage>> {
 // Stage 2: Extract structured data from HTML via zigquery
 // ---------------------------------------------------------------------------
 
-async function extractPage(html: string, url: string, slug: string): Promise<ExtractedPage> {
+async function extractPage(
+	html: string,
+	url: string,
+	slug: string,
+): Promise<ExtractedPage> {
 	let title = "";
 	let intro = "";
 	const sections: Section[] = [];
@@ -880,7 +879,10 @@ async function main() {
 				const htmlPath = `${RAW_DIR}/${meta.slug}.html`;
 				if (await Bun.file(htmlPath).exists()) {
 					const html = await Bun.file(htmlPath).text();
-					extractedPages.set(meta.slug, await extractPage(html, meta.url, meta.slug));
+					extractedPages.set(
+						meta.slug,
+						await extractPage(html, meta.url, meta.slug),
+					);
 				}
 			}
 		} catch {

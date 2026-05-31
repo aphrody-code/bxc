@@ -27,7 +27,11 @@ export interface InstallOptions {
 	dryRun?: boolean;
 }
 
-type LightpandaPlatformId = "x86_64-linux" | "aarch64-linux" | "x86_64-macos" | "aarch64-macos";
+type LightpandaPlatformId =
+	| "x86_64-linux"
+	| "aarch64-linux"
+	| "x86_64-macos"
+	| "aarch64-macos";
 
 interface LightpandaPlatform {
 	id: LightpandaPlatformId;
@@ -35,7 +39,8 @@ interface LightpandaPlatform {
 	assetName: string;
 }
 
-export const VENDOR_DIR = Bun.env.BXC_VENDOR_DIR ?? join(homedir(), ".bxc", "vendor");
+export const VENDOR_DIR =
+	Bun.env.BXC_VENDOR_DIR ?? join(homedir(), ".bxc", "vendor");
 const LIGHTPANDA_TAG = Bun.env.LIGHTPANDA_RELEASE_TAG ?? "nightly";
 
 function printUsage(): void {
@@ -63,7 +68,9 @@ async function streamDownload(
 	dryRun: boolean,
 ): Promise<void> {
 	if (dryRun) {
-		logger.log(`[dry-run] would download ${url} -> ${destPath}${expectedSize > 0 ? ` (${fmtMB(expectedSize)})` : ""}`);
+		logger.log(
+			`[dry-run] would download ${url} -> ${destPath}${expectedSize > 0 ? ` (${fmtMB(expectedSize)})` : ""}`,
+		);
 		return;
 	}
 
@@ -96,7 +103,9 @@ async function streamDownload(
 			if (totalBytes > 0) {
 				const pct = Math.floor((written / totalBytes) * 100);
 				if (pct !== lastPct && pct % 10 === 0) {
-					Bun.stdout.write(`\r[bxc install]   ${fmtMB(written)} / ${fmtMB(totalBytes)} (${pct}%)   `);
+					Bun.stdout.write(
+						`\r[bxc install]   ${fmtMB(written)} / ${fmtMB(totalBytes)} (${pct}%)   `,
+					);
 					lastPct = pct;
 				}
 			}
@@ -104,7 +113,9 @@ async function streamDownload(
 		await writer.flush();
 		await writer.end();
 	} catch (err) {
-		try { writer.end(); } catch {}
+		try {
+			writer.end();
+		} catch {}
 		throw err;
 	}
 	Bun.stdout.write("\n");
@@ -116,12 +127,32 @@ export function detectLightpandaPlatform(
 	arch: NodeJS.Architecture = process.arch,
 ): LightpandaPlatform | null {
 	if (platform === "linux") {
-		if (arch === "x64") return { id: "x86_64-linux", dirName: "linux-x64", assetName: "lightpanda-x86_64-linux" };
-		if (arch === "arm64") return { id: "aarch64-linux", dirName: "linux-arm64", assetName: "lightpanda-aarch64-linux" };
+		if (arch === "x64")
+			return {
+				id: "x86_64-linux",
+				dirName: "linux-x64",
+				assetName: "lightpanda-x86_64-linux",
+			};
+		if (arch === "arm64")
+			return {
+				id: "aarch64-linux",
+				dirName: "linux-arm64",
+				assetName: "lightpanda-aarch64-linux",
+			};
 	}
 	if (platform === "darwin") {
-		if (arch === "x64") return { id: "x86_64-macos", dirName: "darwin-x64", assetName: "lightpanda-x86_64-macos" };
-		if (arch === "arm64") return { id: "aarch64-macos", dirName: "darwin-arm64", assetName: "lightpanda-aarch64-macos" };
+		if (arch === "x64")
+			return {
+				id: "x86_64-macos",
+				dirName: "darwin-x64",
+				assetName: "lightpanda-x86_64-macos",
+			};
+		if (arch === "arm64")
+			return {
+				id: "aarch64-macos",
+				dirName: "darwin-arm64",
+				assetName: "lightpanda-aarch64-macos",
+			};
 	}
 	return null;
 }
@@ -143,7 +174,10 @@ async function fetchLightpandaAsset(
 	const apiUrl = `https://api.github.com/repos/lightpanda-io/browser/releases/tags/${encodeURIComponent(tag)}`;
 	try {
 		const res = await fetch(apiUrl, {
-			headers: { "User-Agent": "bxc-install", Accept: "application/vnd.github+json" },
+			headers: {
+				"User-Agent": "bxc-install",
+				Accept: "application/vnd.github+json",
+			},
 		});
 		if (!res.ok) {
 			logger.warn(`GitHub API ${apiUrl} -> HTTP ${res.status}`);
@@ -166,7 +200,10 @@ async function fetchLightpandaAsset(
 export async function installLightpanda(
 	dryRun = false,
 	vendorDir: string = VENDOR_DIR,
-): Promise<{ status: "installed" | "present" | "failed" | "unsupported"; path?: string }> {
+): Promise<{
+	status: "installed" | "present" | "failed" | "unsupported";
+	path?: string;
+}> {
 	const platform = detectLightpandaPlatform();
 	if (!platform) return { status: "unsupported" };
 
@@ -174,12 +211,16 @@ export async function installLightpanda(
 	const existing = Bun.file(destPath);
 	if (await existing.exists()) {
 		if (existing.size > 0) {
-			logger.log(`Lightpanda already installed: ${destPath} (${fmtMB(existing.size)})`);
+			logger.log(
+				`Lightpanda already installed: ${destPath} (${fmtMB(existing.size)})`,
+			);
 			return { status: "present", path: destPath };
 		}
 	}
 
-	logger.log(`Fetching Lightpanda release '${LIGHTPANDA_TAG}' for ${platform.dirName}...`);
+	logger.log(
+		`Fetching Lightpanda release '${LIGHTPANDA_TAG}' for ${platform.dirName}...`,
+	);
 	const asset = await fetchLightpandaAsset(platform, LIGHTPANDA_TAG);
 	if (!asset) return { status: "failed" };
 
@@ -192,23 +233,33 @@ export async function installLightpanda(
 		}
 		return { status: "installed", path: destPath };
 	} catch (err) {
-		logger.warn(`Download failed: ${err instanceof Error ? err.message : String(err)}`);
+		logger.warn(
+			`Download failed: ${err instanceof Error ? err.message : String(err)}`,
+		);
 		return { status: "failed" };
 	}
 }
 
-export async function runInstall(opts: { dryRun?: boolean }, vendorDir = VENDOR_DIR) {
+export async function runInstall(
+	opts: { dryRun?: boolean },
+	vendorDir = VENDOR_DIR,
+) {
 	const lightpanda = await installLightpanda(opts.dryRun, vendorDir);
 	return { lightpanda };
 }
 
-export async function main(args: string[], _opts: CommonOptions): Promise<void> {
+export async function main(
+	args: string[],
+	_opts: CommonOptions,
+): Promise<void> {
 	if (args.includes("--help") || args.includes("-h")) {
 		printUsage();
 		return;
 	}
 	const dryRun = args.includes("--dry-run");
-	logger.log(`Installing binaries into ${VENDOR_DIR}${dryRun ? " [dry-run]" : ""}`);
+	logger.log(
+		`Installing binaries into ${VENDOR_DIR}${dryRun ? " [dry-run]" : ""}`,
+	);
 	const lightpanda = await installLightpanda(dryRun, VENDOR_DIR);
 	if (lightpanda.status === "failed") {
 		logger.warn("Lightpanda install failed.");

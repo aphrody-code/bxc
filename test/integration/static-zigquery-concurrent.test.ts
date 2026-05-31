@@ -45,7 +45,9 @@ describe("StaticDomTransport — concurrent safety", () => {
 				const page = (await Browser.newPage({ profile: "static" })) as Page;
 				pages.push(page);
 				await page.goto(`data:text/html,${encodeURIComponent(html)}`);
-				const handle = (await page.$("h1")) as { textContent(): Promise<string> } | null;
+				const handle = (await page.$("h1")) as {
+					textContent(): Promise<string>;
+				} | null;
 				const text = await handle?.textContent();
 				return { i, text };
 			});

@@ -82,9 +82,7 @@ describe("htmlToMarkdownJS — portable fallback converter", () => {
 	});
 
 	test("collapses excessive whitespace and blank lines", () => {
-		const md = htmlToMarkdownJS(
-			"<p>a</p>\n\n\n\n   \n<p>b</p>",
-		);
+		const md = htmlToMarkdownJS("<p>a</p>\n\n\n\n   \n<p>b</p>");
 		expect(md).not.toMatch(/\n{3,}/);
 	});
 

@@ -7,10 +7,10 @@
  * @module
  */
 
-import { Ajv } from 'ajv';
-import _addFormats from 'ajv-formats';
+import { Ajv } from "ajv";
+import _addFormats from "ajv-formats";
 
-import { AjvJsonSchemaValidator } from './ajvProvider.js';
+import { AjvJsonSchemaValidator } from "./ajvProvider.js";
 
 const addFormats = _addFormats as unknown as typeof _addFormats.default;
 
@@ -18,31 +18,31 @@ const addFormats = _addFormats as unknown as typeof _addFormats.default;
  * Example: Default AJV instance.
  */
 function AjvJsonSchemaValidator_default() {
-    //#region AjvJsonSchemaValidator_default
-    const validator = new AjvJsonSchemaValidator();
-    //#endregion AjvJsonSchemaValidator_default
-    return validator;
+	//#region AjvJsonSchemaValidator_default
+	const validator = new AjvJsonSchemaValidator();
+	//#endregion AjvJsonSchemaValidator_default
+	return validator;
 }
 
 /**
  * Example: Custom AJV instance.
  */
 function AjvJsonSchemaValidator_customInstance() {
-    //#region AjvJsonSchemaValidator_customInstance
-    const ajv = new Ajv({ strict: true, allErrors: true });
-    const validator = new AjvJsonSchemaValidator(ajv);
-    //#endregion AjvJsonSchemaValidator_customInstance
-    return validator;
+	//#region AjvJsonSchemaValidator_customInstance
+	const ajv = new Ajv({ strict: true, allErrors: true });
+	const validator = new AjvJsonSchemaValidator(ajv);
+	//#endregion AjvJsonSchemaValidator_customInstance
+	return validator;
 }
 
 /**
  * Example: Constructor with advanced AJV configuration including formats.
  */
 function AjvJsonSchemaValidator_constructor_withFormats() {
-    //#region AjvJsonSchemaValidator_constructor_withFormats
-    const ajv = new Ajv({ validateFormats: true });
-    addFormats(ajv);
-    const validator = new AjvJsonSchemaValidator(ajv);
-    //#endregion AjvJsonSchemaValidator_constructor_withFormats
-    return validator;
+	//#region AjvJsonSchemaValidator_constructor_withFormats
+	const ajv = new Ajv({ validateFormats: true });
+	addFormats(ajv);
+	const validator = new AjvJsonSchemaValidator(ajv);
+	//#endregion AjvJsonSchemaValidator_constructor_withFormats
+	return validator;
 }

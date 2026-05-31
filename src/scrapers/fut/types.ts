@@ -23,6 +23,24 @@ export interface FutPlayer {
 	league?: string;
 	price?: string;
 	playstyles: string[];
+	playstylesPlus?: string[];
+	pac?: number;
+	sho?: number;
+	pas?: number;
+	dri?: number;
+	def?: number;
+	phy?: number;
+	div?: number;
+	han?: number;
+	kic?: number;
+	ref?: number;
+	spd?: number;
+	pos?: number;
+	skillMoves?: number;
+	weakFoot?: number;
+	workrateAttack?: string;
+	workrateDefense?: string;
+	isGeneric?: boolean;
 }
 
 export interface FutPrice {

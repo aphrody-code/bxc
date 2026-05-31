@@ -238,7 +238,10 @@ export class RequestQueue {
 		const method = (opts.method ?? "GET").toUpperCase();
 		const payload =
 			opts.userData !== undefined || opts.headers !== undefined
-				? JSON.stringify({ userData: opts.userData ?? {}, headers: opts.headers ?? {} })
+				? JSON.stringify({
+						userData: opts.userData ?? {},
+						headers: opts.headers ?? {},
+					})
 				: null;
 		const priority = opts.forefront === true ? 1 : 0;
 
@@ -259,11 +262,14 @@ export class RequestQueue {
 	 * Runs in a single transaction for performance.
 	 * Returns the count of newly inserted requests.
 	 */
-	addRequests(urls: Iterable<string | { url: string; opts?: AddRequestOptions }>): number {
+	addRequests(
+		urls: Iterable<string | { url: string; opts?: AddRequestOptions }>,
+	): number {
 		let inserted = 0;
 		const tx = this.#db.transaction(() => {
 			for (const item of urls) {
-				const [url, opts] = typeof item === "string" ? [item, {}] : [item.url, item.opts ?? {}];
+				const [url, opts] =
+					typeof item === "string" ? [item, {}] : [item.url, item.opts ?? {}];
 				if (this.addRequest(url, opts)) inserted++;
 			}
 		});
@@ -288,7 +294,9 @@ export class RequestQueue {
 	 */
 	fetchBatch(limit = 1): QueuedRequest[] {
 		const now = Date.now();
-		const rows = this.#stmtFetchBatch.all({ $limit: limit }) as Array<{ id: number }>;
+		const rows = this.#stmtFetchBatch.all({ $limit: limit }) as Array<{
+			id: number;
+		}>;
 		if (rows.length === 0) return [];
 
 		const lockTx = this.#db.transaction((ids: number[]) => {
@@ -296,7 +304,9 @@ export class RequestQueue {
 				this.#stmtLockBatch.run({ $id: id, $now: now });
 			}
 			return this.#db
-				.prepare(`SELECT * FROM requests WHERE id IN (${ids.map(() => "?").join(",")})`)
+				.prepare(
+					`SELECT * FROM requests WHERE id IN (${ids.map(() => "?").join(",")})`,
+				)
 				.all(...ids) as QueuedRequest[];
 		});
 
@@ -317,7 +327,9 @@ export class RequestQueue {
 	 * Otherwise, it enters the dead-letter queue (state = FAILED).
 	 */
 	markFailed(id: number, errorMessage: string): void {
-		const row = this.#db.prepare("SELECT retries FROM requests WHERE id = ?").get(id) as {
+		const row = this.#db
+			.prepare("SELECT retries FROM requests WHERE id = ?")
+			.get(id) as {
 			retries: number;
 		} | null;
 
@@ -326,7 +338,11 @@ export class RequestQueue {
 		if (row.retries < this.#maxRetries) {
 			this.#stmtRequeue.run({ $id: id, $msg: errorMessage });
 		} else {
-			this.#stmtMarkFailed.run({ $id: id, $msg: errorMessage, $now: Date.now() });
+			this.#stmtMarkFailed.run({
+				$id: id,
+				$msg: errorMessage,
+				$now: Date.now(),
+			});
 		}
 	}
 
@@ -341,7 +357,9 @@ export class RequestQueue {
 	 */
 	recoverStaleLocks(): number {
 		const staleThreshold = Date.now() - this.#lockTimeoutMs;
-		const result = this.#stmtRecoverStale.run({ $staleThreshold: staleThreshold });
+		const result = this.#stmtRecoverStale.run({
+			$staleThreshold: staleThreshold,
+		});
 		return result.changes;
 	}
 

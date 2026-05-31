@@ -78,7 +78,12 @@ export function getGrantedPermissions(origin: string): string[] {
  */
 export function emitDownloadWillBegin(
 	ctx: DispatchContext,
-	opts: { guid: string; url: string; suggestedFilename: string; frameId?: string },
+	opts: {
+		guid: string;
+		url: string;
+		suggestedFilename: string;
+		frameId?: string;
+	},
 ): void {
 	ctx.emitEvent({
 		method: "Browser.downloadWillBegin",
@@ -119,7 +124,12 @@ export function emitDownloadProgress(
 // Handler
 // ---------------------------------------------------------------------------
 
-export const BrowserHandler: DomainHandler = async (method, params, ctx, _sessionId) => {
+export const BrowserHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	_sessionId,
+) => {
 	switch (method) {
 		case "Browser.getVersion":
 			return {

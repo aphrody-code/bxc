@@ -1,20 +1,23 @@
-import type * as z from 'zod/v4';
+import type * as z from "zod/v4";
 
 import {
-    OAuthClientInformationFullSchema,
-    OAuthClientInformationSchema,
-    OAuthClientMetadataSchema,
-    OAuthClientRegistrationErrorSchema,
-    OAuthErrorResponseSchema,
-    OAuthMetadataSchema,
-    OAuthProtectedResourceMetadataSchema,
-    OAuthTokenRevocationRequestSchema,
-    OAuthTokensSchema,
-    OpenIdProviderDiscoveryMetadataSchema,
-    OpenIdProviderMetadataSchema
-} from '../shared/auth.js';
-import type { StandardSchemaV1, StandardSchemaV1Sync } from '../util/standardSchema.js';
-import * as schemas from './schemas.js';
+	OAuthClientInformationFullSchema,
+	OAuthClientInformationSchema,
+	OAuthClientMetadataSchema,
+	OAuthClientRegistrationErrorSchema,
+	OAuthErrorResponseSchema,
+	OAuthMetadataSchema,
+	OAuthProtectedResourceMetadataSchema,
+	OAuthTokenRevocationRequestSchema,
+	OAuthTokensSchema,
+	OpenIdProviderDiscoveryMetadataSchema,
+	OpenIdProviderMetadataSchema,
+} from "../shared/auth.js";
+import type {
+	StandardSchemaV1,
+	StandardSchemaV1Sync,
+} from "../util/standardSchema.js";
+import * as schemas from "./schemas.js";
 
 /**
  * Explicit allowlist of protocol Zod schemas that correspond to a public spec type in `types.ts`.
@@ -31,171 +34,171 @@ import * as schemas from './schemas.js';
  * a type literally named `ResourceTemplate`.
  */
 const SPEC_SCHEMA_KEYS = [
-    'AnnotationsSchema',
-    'AudioContentSchema',
-    'BaseMetadataSchema',
-    'BlobResourceContentsSchema',
-    'BooleanSchemaSchema',
-    'CallToolRequestSchema',
-    'CallToolRequestParamsSchema',
-    'CallToolResultSchema',
-    'CancelledNotificationSchema',
-    'CancelledNotificationParamsSchema',
-    'CancelTaskRequestSchema',
-    'CancelTaskResultSchema',
-    'ClientCapabilitiesSchema',
-    'ClientNotificationSchema',
-    'ClientRequestSchema',
-    'ClientResultSchema',
-    'CompatibilityCallToolResultSchema',
-    'CompleteRequestSchema',
-    'CompleteRequestParamsSchema',
-    'CompleteResultSchema',
-    'ContentBlockSchema',
-    'CreateMessageRequestSchema',
-    'CreateMessageRequestParamsSchema',
-    'CreateMessageResultSchema',
-    'CreateMessageResultWithToolsSchema',
-    'CreateTaskResultSchema',
-    'CursorSchema',
-    'ElicitationCompleteNotificationSchema',
-    'ElicitationCompleteNotificationParamsSchema',
-    'ElicitRequestSchema',
-    'ElicitRequestFormParamsSchema',
-    'ElicitRequestParamsSchema',
-    'ElicitRequestURLParamsSchema',
-    'ElicitResultSchema',
-    'EmbeddedResourceSchema',
-    'EmptyResultSchema',
-    'EnumSchemaSchema',
-    'GetPromptRequestSchema',
-    'GetPromptRequestParamsSchema',
-    'GetPromptResultSchema',
-    'GetTaskPayloadRequestSchema',
-    'GetTaskPayloadResultSchema',
-    'GetTaskRequestSchema',
-    'GetTaskResultSchema',
-    'IconSchema',
-    'IconsSchema',
-    'ImageContentSchema',
-    'ImplementationSchema',
-    'InitializedNotificationSchema',
-    'InitializeRequestSchema',
-    'InitializeRequestParamsSchema',
-    'InitializeResultSchema',
-    'JSONArraySchema',
-    'JSONObjectSchema',
-    'JSONRPCErrorResponseSchema',
-    'JSONRPCMessageSchema',
-    'JSONRPCNotificationSchema',
-    'JSONRPCRequestSchema',
-    'JSONRPCResponseSchema',
-    'JSONRPCResultResponseSchema',
-    'JSONValueSchema',
-    'LegacyTitledEnumSchemaSchema',
-    'ListPromptsRequestSchema',
-    'ListPromptsResultSchema',
-    'ListResourcesRequestSchema',
-    'ListResourcesResultSchema',
-    'ListResourceTemplatesRequestSchema',
-    'ListResourceTemplatesResultSchema',
-    'ListRootsRequestSchema',
-    'ListRootsResultSchema',
-    'ListTasksRequestSchema',
-    'ListTasksResultSchema',
-    'ListToolsRequestSchema',
-    'ListToolsResultSchema',
-    'LoggingLevelSchema',
-    'LoggingMessageNotificationSchema',
-    'LoggingMessageNotificationParamsSchema',
-    'ModelHintSchema',
-    'ModelPreferencesSchema',
-    'MultiSelectEnumSchemaSchema',
-    'NotificationSchema',
-    'NumberSchemaSchema',
-    'PaginatedRequestSchema',
-    'PaginatedRequestParamsSchema',
-    'PaginatedResultSchema',
-    'PingRequestSchema',
-    'PrimitiveSchemaDefinitionSchema',
-    'ProgressSchema',
-    'ProgressNotificationSchema',
-    'ProgressNotificationParamsSchema',
-    'ProgressTokenSchema',
-    'PromptSchema',
-    'PromptArgumentSchema',
-    'PromptListChangedNotificationSchema',
-    'PromptMessageSchema',
-    'PromptReferenceSchema',
-    'ReadResourceRequestSchema',
-    'ReadResourceRequestParamsSchema',
-    'ReadResourceResultSchema',
-    'RelatedTaskMetadataSchema',
-    'RequestSchema',
-    'RequestIdSchema',
-    'RequestMetaSchema',
-    'ResourceSchema',
-    'ResourceContentsSchema',
-    'ResourceLinkSchema',
-    'ResourceListChangedNotificationSchema',
-    'ResourceRequestParamsSchema',
-    'ResourceTemplateSchema',
-    'ResourceTemplateReferenceSchema',
-    'ResourceUpdatedNotificationSchema',
-    'ResourceUpdatedNotificationParamsSchema',
-    'ResultSchema',
-    'RoleSchema',
-    'RootSchema',
-    'RootsListChangedNotificationSchema',
-    'SamplingContentSchema',
-    'SamplingMessageSchema',
-    'SamplingMessageContentBlockSchema',
-    'ServerCapabilitiesSchema',
-    'ServerNotificationSchema',
-    'ServerRequestSchema',
-    'ServerResultSchema',
-    'SetLevelRequestSchema',
-    'SetLevelRequestParamsSchema',
-    'SingleSelectEnumSchemaSchema',
-    'StringSchemaSchema',
-    'SubscribeRequestSchema',
-    'SubscribeRequestParamsSchema',
-    'TaskSchema',
-    'TaskAugmentedRequestParamsSchema',
-    'TaskCreationParamsSchema',
-    'TaskMetadataSchema',
-    'TaskStatusSchema',
-    'TaskStatusNotificationSchema',
-    'TaskStatusNotificationParamsSchema',
-    'TextContentSchema',
-    'TextResourceContentsSchema',
-    'TitledMultiSelectEnumSchemaSchema',
-    'TitledSingleSelectEnumSchemaSchema',
-    'ToolSchema',
-    'ToolAnnotationsSchema',
-    'ToolChoiceSchema',
-    'ToolExecutionSchema',
-    'ToolListChangedNotificationSchema',
-    'ToolResultContentSchema',
-    'ToolUseContentSchema',
-    'UnsubscribeRequestSchema',
-    'UnsubscribeRequestParamsSchema',
-    'UntitledMultiSelectEnumSchemaSchema',
-    'UntitledSingleSelectEnumSchemaSchema'
+	"AnnotationsSchema",
+	"AudioContentSchema",
+	"BaseMetadataSchema",
+	"BlobResourceContentsSchema",
+	"BooleanSchemaSchema",
+	"CallToolRequestSchema",
+	"CallToolRequestParamsSchema",
+	"CallToolResultSchema",
+	"CancelledNotificationSchema",
+	"CancelledNotificationParamsSchema",
+	"CancelTaskRequestSchema",
+	"CancelTaskResultSchema",
+	"ClientCapabilitiesSchema",
+	"ClientNotificationSchema",
+	"ClientRequestSchema",
+	"ClientResultSchema",
+	"CompatibilityCallToolResultSchema",
+	"CompleteRequestSchema",
+	"CompleteRequestParamsSchema",
+	"CompleteResultSchema",
+	"ContentBlockSchema",
+	"CreateMessageRequestSchema",
+	"CreateMessageRequestParamsSchema",
+	"CreateMessageResultSchema",
+	"CreateMessageResultWithToolsSchema",
+	"CreateTaskResultSchema",
+	"CursorSchema",
+	"ElicitationCompleteNotificationSchema",
+	"ElicitationCompleteNotificationParamsSchema",
+	"ElicitRequestSchema",
+	"ElicitRequestFormParamsSchema",
+	"ElicitRequestParamsSchema",
+	"ElicitRequestURLParamsSchema",
+	"ElicitResultSchema",
+	"EmbeddedResourceSchema",
+	"EmptyResultSchema",
+	"EnumSchemaSchema",
+	"GetPromptRequestSchema",
+	"GetPromptRequestParamsSchema",
+	"GetPromptResultSchema",
+	"GetTaskPayloadRequestSchema",
+	"GetTaskPayloadResultSchema",
+	"GetTaskRequestSchema",
+	"GetTaskResultSchema",
+	"IconSchema",
+	"IconsSchema",
+	"ImageContentSchema",
+	"ImplementationSchema",
+	"InitializedNotificationSchema",
+	"InitializeRequestSchema",
+	"InitializeRequestParamsSchema",
+	"InitializeResultSchema",
+	"JSONArraySchema",
+	"JSONObjectSchema",
+	"JSONRPCErrorResponseSchema",
+	"JSONRPCMessageSchema",
+	"JSONRPCNotificationSchema",
+	"JSONRPCRequestSchema",
+	"JSONRPCResponseSchema",
+	"JSONRPCResultResponseSchema",
+	"JSONValueSchema",
+	"LegacyTitledEnumSchemaSchema",
+	"ListPromptsRequestSchema",
+	"ListPromptsResultSchema",
+	"ListResourcesRequestSchema",
+	"ListResourcesResultSchema",
+	"ListResourceTemplatesRequestSchema",
+	"ListResourceTemplatesResultSchema",
+	"ListRootsRequestSchema",
+	"ListRootsResultSchema",
+	"ListTasksRequestSchema",
+	"ListTasksResultSchema",
+	"ListToolsRequestSchema",
+	"ListToolsResultSchema",
+	"LoggingLevelSchema",
+	"LoggingMessageNotificationSchema",
+	"LoggingMessageNotificationParamsSchema",
+	"ModelHintSchema",
+	"ModelPreferencesSchema",
+	"MultiSelectEnumSchemaSchema",
+	"NotificationSchema",
+	"NumberSchemaSchema",
+	"PaginatedRequestSchema",
+	"PaginatedRequestParamsSchema",
+	"PaginatedResultSchema",
+	"PingRequestSchema",
+	"PrimitiveSchemaDefinitionSchema",
+	"ProgressSchema",
+	"ProgressNotificationSchema",
+	"ProgressNotificationParamsSchema",
+	"ProgressTokenSchema",
+	"PromptSchema",
+	"PromptArgumentSchema",
+	"PromptListChangedNotificationSchema",
+	"PromptMessageSchema",
+	"PromptReferenceSchema",
+	"ReadResourceRequestSchema",
+	"ReadResourceRequestParamsSchema",
+	"ReadResourceResultSchema",
+	"RelatedTaskMetadataSchema",
+	"RequestSchema",
+	"RequestIdSchema",
+	"RequestMetaSchema",
+	"ResourceSchema",
+	"ResourceContentsSchema",
+	"ResourceLinkSchema",
+	"ResourceListChangedNotificationSchema",
+	"ResourceRequestParamsSchema",
+	"ResourceTemplateSchema",
+	"ResourceTemplateReferenceSchema",
+	"ResourceUpdatedNotificationSchema",
+	"ResourceUpdatedNotificationParamsSchema",
+	"ResultSchema",
+	"RoleSchema",
+	"RootSchema",
+	"RootsListChangedNotificationSchema",
+	"SamplingContentSchema",
+	"SamplingMessageSchema",
+	"SamplingMessageContentBlockSchema",
+	"ServerCapabilitiesSchema",
+	"ServerNotificationSchema",
+	"ServerRequestSchema",
+	"ServerResultSchema",
+	"SetLevelRequestSchema",
+	"SetLevelRequestParamsSchema",
+	"SingleSelectEnumSchemaSchema",
+	"StringSchemaSchema",
+	"SubscribeRequestSchema",
+	"SubscribeRequestParamsSchema",
+	"TaskSchema",
+	"TaskAugmentedRequestParamsSchema",
+	"TaskCreationParamsSchema",
+	"TaskMetadataSchema",
+	"TaskStatusSchema",
+	"TaskStatusNotificationSchema",
+	"TaskStatusNotificationParamsSchema",
+	"TextContentSchema",
+	"TextResourceContentsSchema",
+	"TitledMultiSelectEnumSchemaSchema",
+	"TitledSingleSelectEnumSchemaSchema",
+	"ToolSchema",
+	"ToolAnnotationsSchema",
+	"ToolChoiceSchema",
+	"ToolExecutionSchema",
+	"ToolListChangedNotificationSchema",
+	"ToolResultContentSchema",
+	"ToolUseContentSchema",
+	"UnsubscribeRequestSchema",
+	"UnsubscribeRequestParamsSchema",
+	"UntitledMultiSelectEnumSchemaSchema",
+	"UntitledSingleSelectEnumSchemaSchema",
 ] as const satisfies readonly (keyof typeof schemas)[];
 
 const authSchemas = {
-    OAuthClientInformationFullSchema,
-    OAuthClientInformationSchema,
-    OAuthClientMetadataSchema,
-    OAuthClientRegistrationErrorSchema,
-    OAuthErrorResponseSchema,
-    OAuthMetadataSchema,
-    OAuthProtectedResourceMetadataSchema,
-    OAuthTokenRevocationRequestSchema,
-    OAuthTokensSchema,
-    OpenIdProviderDiscoveryMetadataSchema,
-    OpenIdProviderMetadataSchema
+	OAuthClientInformationFullSchema,
+	OAuthClientInformationSchema,
+	OAuthClientMetadataSchema,
+	OAuthClientRegistrationErrorSchema,
+	OAuthErrorResponseSchema,
+	OAuthMetadataSchema,
+	OAuthProtectedResourceMetadataSchema,
+	OAuthTokenRevocationRequestSchema,
+	OAuthTokensSchema,
+	OpenIdProviderDiscoveryMetadataSchema,
+	OpenIdProviderMetadataSchema,
 } as const;
 
 type ProtocolSchemaKey = (typeof SPEC_SCHEMA_KEYS)[number];
@@ -203,10 +206,10 @@ type AuthSchemaKey = keyof typeof authSchemas;
 type SchemaKey = ProtocolSchemaKey | AuthSchemaKey;
 
 type SchemaFor<K extends SchemaKey> = K extends ProtocolSchemaKey
-    ? (typeof schemas)[K]
-    : K extends AuthSchemaKey
-      ? (typeof authSchemas)[K]
-      : never;
+	? (typeof schemas)[K]
+	: K extends AuthSchemaKey
+		? (typeof authSchemas)[K]
+		: never;
 
 type StripSchemaSuffix<K> = K extends `${infer N}Schema` ? N : never;
 
@@ -223,7 +226,9 @@ export type SpecTypeName = StripSchemaSuffix<SchemaKey>;
  * `SpecTypes['CallToolResult']` is equivalent to importing the `CallToolResult` type directly.
  */
 export type SpecTypes = {
-    [K in SchemaKey as StripSchemaSuffix<K>]: SchemaFor<K> extends z.ZodType ? z.output<SchemaFor<K>> : never;
+	[K in SchemaKey as StripSchemaSuffix<K>]: SchemaFor<K> extends z.ZodType
+		? z.output<SchemaFor<K>>
+		: never;
 };
 
 /**
@@ -232,25 +237,34 @@ export type SpecTypes = {
  * resulting output type.
  */
 type SpecTypeInputs = {
-    [K in SchemaKey as StripSchemaSuffix<K>]: SchemaFor<K> extends z.ZodType ? z.input<SchemaFor<K>> : never;
+	[K in SchemaKey as StripSchemaSuffix<K>]: SchemaFor<K> extends z.ZodType
+		? z.input<SchemaFor<K>>
+		: never;
 };
 
-type SchemaRecord = { readonly [K in SpecTypeName]: StandardSchemaV1Sync<SpecTypeInputs[K], SpecTypes[K]> };
-type GuardRecord = { readonly [K in SpecTypeName]: (value: unknown) => value is SpecTypeInputs[K] };
+type SchemaRecord = {
+	readonly [K in SpecTypeName]: StandardSchemaV1Sync<
+		SpecTypeInputs[K],
+		SpecTypes[K]
+	>;
+};
+type GuardRecord = {
+	readonly [K in SpecTypeName]: (value: unknown) => value is SpecTypeInputs[K];
+};
 
 const _specTypeSchemas: Record<string, StandardSchemaV1> = {};
 const _isSpecType: Record<string, (value: unknown) => boolean> = {};
 function register(key: string, schema: z.ZodType): void {
-    const name = key.slice(0, -'Schema'.length);
-    _specTypeSchemas[name] = schema;
-    _isSpecType[name] = (v: unknown) => schema.safeParse(v).success;
+	const name = key.slice(0, -"Schema".length);
+	_specTypeSchemas[name] = schema;
+	_isSpecType[name] = (v: unknown) => schema.safeParse(v).success;
 }
 for (const key of SPEC_SCHEMA_KEYS) {
-    // eslint-disable-next-line import/namespace -- key is constrained to keyof typeof schemas via the satisfies clause above
-    register(key, schemas[key]);
+	// eslint-disable-next-line import/namespace -- key is constrained to keyof typeof schemas via the satisfies clause above
+	register(key, schemas[key]);
 }
 for (const [key, schema] of Object.entries(authSchemas)) {
-    register(key, schema);
+	register(key, schema);
 }
 
 /**
@@ -271,7 +285,9 @@ for (const [key, schema] of Object.entries(authSchemas)) {
  * }
  * ```
  */
-export const specTypeSchemas: SchemaRecord = Object.freeze(_specTypeSchemas as SchemaRecord);
+export const specTypeSchemas: SchemaRecord = Object.freeze(
+	_specTypeSchemas as SchemaRecord,
+);
 
 /**
  * Type predicates for every MCP spec type, keyed by type name.
@@ -293,4 +309,6 @@ export const specTypeSchemas: SchemaRecord = Object.freeze(_specTypeSchemas as S
  * const blocks = mixed.filter(isSpecType.ContentBlock);
  * ```
  */
-export const isSpecType: GuardRecord = Object.freeze(_isSpecType as GuardRecord);
+export const isSpecType: GuardRecord = Object.freeze(
+	_isSpecType as GuardRecord,
+);

@@ -26,7 +26,7 @@ import { type PageAudit } from "../src/google/mass-scanner.ts";
 
 async function main() {
 	console.log("🌌 Waking up! Mapping finished. Building Google Atlas...");
-	
+
 	const jsonPath = join(process.cwd(), "google-ecosystem-map.json");
 	let raw: string;
 	try {
@@ -41,7 +41,7 @@ async function main() {
 
 	// 1. Generate src/google/atlas.ts
 	const atlasPath = join(process.cwd(), "src/google/atlas.ts");
-	
+
 	const domains = new Map<string, { framework: string; count: number }>();
 	for (const p of data) {
 		try {
@@ -73,13 +73,15 @@ export interface AtlasRoute {
 export const GOOGLE_ATLAS: Record<string, AtlasRoute> = {\n`;
 
 	let added = 0;
-	for (const [host, info] of Array.from(domains.entries()).sort((a, b) => b[1].count - a[1].count)) {
+	for (const [host, info] of Array.from(domains.entries()).sort(
+		(a, b) => b[1].count - a[1].count,
+	)) {
 		if (added > 200) break; // Only keep top 200 to keep bundle small
 		atlasContent += `\t"${host}": { hostname: "${host}", framework: "${info.framework}", trafficWeight: ${info.count} },\n`;
 		added++;
 	}
 	atlasContent += `};\n\n`;
-	
+
 	atlasContent += `export function resolveAtlasRoute(hostname: string): AtlasRoute | null {
 	return GOOGLE_ATLAS[hostname] ?? null;
 }\n`;

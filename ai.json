@@ -1,56 +1,56 @@
 {
-  "project": "Bxc",
-  "version": "1.0.0",
-  "agents": {
-    "GeminiCLI": {
-      "role": "Lead Orchestrator & Autonomous Developer",
-      "specialties": [
-        "System Architecture",
-        "Rust/Zig FFI",
-        "Windows Cross-Compilation",
-        "Native MCP Extensions",
-        "Memory Consolidation (bun-dream)"
-      ],
-      "config": "GEMINI.md",
-      "memory": "/home/ubuntu/.gemini/tmp/bxc/memory/MEMORY.md",
-      "extension": "bxc-native"
-    },
-    "ClaudeCode": {
-      "role": "Code Quality & Subagent Specialist",
-      "specialties": [
-        "TypeScript/React",
-        "Scraping Debugging",
-        "Oxlint/Biome enforcement",
-        "Claude-native Skills & Agents",
-        "Security Hooks"
-      ],
-      "config": "CLAUDE.md",
-      "settings": ".claude/settings.json",
-      "hooks": {
-        "PreToolUse": "Blocks .env access",
-        "PostToolUse": "Auto-oxlint --fix on .ts/.tsx"
-      }
-    }
-  },
-  "shared_rules": [
-    "Runtime: Bun-only (preference). Exception: packages/bxc-extension for MCP SDK compatibility.",
-    "Autonomy: Extreme YOLO Mode enabled. 100% autonomous, zero confirmation for commands/deployments.",
-    "Deep Think: Mandatory use of 'mcp_sequentialthinking' for complex tasks (>3 tools) or refactoring.",
-    "Security: .env files are strictly read-only for users, blocked for agents. Use .env.example for templates.",
-    "FFI Architecture: Async-first via thread pool. Avoid blocking the main event loop.",
-    "Tooling: Oxlint for linting, Biome for formatting. No Prettier/ESLint except in vendored sources.",
-    "Commits: Conventional 1-line commits (feat|fix|chore|refactor|docs).",
-    "Vendoring: MCP SDK is now local at vendor/mcp-sdk-typescript. Avoid external npm @modelcontextprotocol/sdk updates."
-  ],
-  "collaboration_protocol": {
-    "state_sync": "Check MEMORY.md and MEGA-PLAN.md before major refactors.",
-    "resource_ownership": "Gemini handles low-level FFI and Windows build; Claude handles Scraping recipes and UI.",
-    "conflict_resolution": "Project-local GEMINI.md/CLAUDE.md takes precedence over global settings.",
-    "handover": "Record significant architectural milestones in MEGA-PLAN.md."
-  },
-  "active_context": {
-    "last_major_change": "MCP SDK vendoring & Bun-native migration (May 17, 2026)",
-    "current_focus": "Workspace documentation & Agent Synchronization",
-    "status": "Healthy (0-error Oxlint compliance)"
-  }
+	"project": "Bxc",
+	"version": "1.0.0",
+	"agents": {
+		"GeminiCLI": {
+			"role": "Lead Orchestrator & Autonomous Developer",
+			"specialties": [
+				"System Architecture",
+				"Rust/Zig FFI",
+				"Windows Cross-Compilation",
+				"Native MCP Extensions",
+				"Memory Consolidation (bun-dream)"
+			],
+			"config": "GEMINI.md",
+			"memory": "/home/ubuntu/.gemini/tmp/bxc/memory/MEMORY.md",
+			"extension": "bxc-native"
+		},
+		"ClaudeCode": {
+			"role": "Code Quality & Subagent Specialist",
+			"specialties": [
+				"TypeScript/React",
+				"Scraping Debugging",
+				"Oxlint/Biome enforcement",
+				"Claude-native Skills & Agents",
+				"Security Hooks"
+			],
+			"config": "CLAUDE.md",
+			"settings": ".claude/settings.json",
+			"hooks": {
+				"PreToolUse": "Blocks .env access",
+				"PostToolUse": "Auto-oxlint --fix on .ts/.tsx"
+			}
+		}
+	},
+	"shared_rules": [
+		"Runtime: Bun-only (preference). Exception: packages/bxc-extension for MCP SDK compatibility.",
+		"Autonomy: Extreme YOLO Mode enabled. 100% autonomous, zero confirmation for commands/deployments.",
+		"Deep Think: Mandatory use of 'mcp_sequentialthinking' for complex tasks (>3 tools) or refactoring.",
+		"Security: .env files are strictly read-only for users, blocked for agents. Use .env.example for templates.",
+		"FFI Architecture: Async-first via thread pool. Avoid blocking the main event loop.",
+		"Tooling: Oxlint for linting, Biome for formatting. No Prettier/ESLint except in vendored sources.",
+		"Commits: Conventional 1-line commits (feat|fix|chore|refactor|docs).",
+		"Vendoring: MCP SDK is now local at vendor/mcp-sdk-typescript. Avoid external npm @modelcontextprotocol/sdk updates."
+	],
+	"collaboration_protocol": {
+		"state_sync": "Check MEMORY.md and MEGA-PLAN.md before major refactors.",
+		"resource_ownership": "Gemini handles low-level FFI and Windows build; Claude handles Scraping recipes and UI.",
+		"conflict_resolution": "Project-local GEMINI.md/CLAUDE.md takes precedence over global settings.",
+		"handover": "Record significant architectural milestones in MEGA-PLAN.md."
+	},
+	"active_context": {
+		"last_major_change": "MCP SDK vendoring & Bun-native migration (May 17, 2026)",
+		"current_focus": "Workspace documentation & Agent Synchronization",
+		"status": "Healthy (0-error Oxlint compliance)"
+	}
 }

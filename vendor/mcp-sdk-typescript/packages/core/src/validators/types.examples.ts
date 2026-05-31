@@ -7,7 +7,11 @@
  * @module
  */
 
-import type { JsonSchemaType, JsonSchemaValidator, jsonSchemaValidator } from './types.js';
+import type {
+	JsonSchemaType,
+	JsonSchemaValidator,
+	jsonSchemaValidator,
+} from "./types.js";
 
 // Stub for hypothetical schema validation function
 declare function isValid(schema: JsonSchemaType, input: unknown): boolean;
@@ -16,16 +20,16 @@ declare function isValid(schema: JsonSchemaType, input: unknown): boolean;
  * Example: Implementing the jsonSchemaValidator interface.
  */
 function jsonSchemaValidator_implementation() {
-    //#region jsonSchemaValidator_implementation
-    class MyValidatorProvider implements jsonSchemaValidator {
-        getValidator<T>(schema: JsonSchemaType): JsonSchemaValidator<T> {
-            // Compile/cache validator from schema
-            return (input: unknown) =>
-                isValid(schema, input)
-                    ? { valid: true, data: input as T, errorMessage: undefined }
-                    : { valid: false, data: undefined, errorMessage: 'Error details' };
-        }
-    }
-    //#endregion jsonSchemaValidator_implementation
-    return MyValidatorProvider;
+	//#region jsonSchemaValidator_implementation
+	class MyValidatorProvider implements jsonSchemaValidator {
+		getValidator<T>(schema: JsonSchemaType): JsonSchemaValidator<T> {
+			// Compile/cache validator from schema
+			return (input: unknown) =>
+				isValid(schema, input)
+					? { valid: true, data: input as T, errorMessage: undefined }
+					: { valid: false, data: undefined, errorMessage: "Error details" };
+		}
+	}
+	//#endregion jsonSchemaValidator_implementation
+	return MyValidatorProvider;
 }

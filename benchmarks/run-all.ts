@@ -55,7 +55,9 @@ function getEnvironment(): BenchmarkReport["environment"] {
 
 	const totalRam = (() => {
 		try {
-			const result = Bun.spawnSync(["grep", "MemTotal", "/proc/meminfo"], { stdout: "pipe" });
+			const result = Bun.spawnSync(["grep", "MemTotal", "/proc/meminfo"], {
+				stdout: "pipe",
+			});
 			const match = result.stdout.toString().match(/(\d+)/);
 			return match ? Math.round(Number(match[1]) / 1024) : 0;
 		} catch {
@@ -136,15 +138,25 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 
 		// Add honest interpretation
 		if (scenarioId === "static-simple") {
-			sections.push("**Interpretation**: All runners operate on pre-fetched static HTML.");
-			sections.push("bxc-static uses an in-process DOM transport (no spawn, no WebSocket).");
+			sections.push(
+				"**Interpretation**: All runners operate on pre-fetched static HTML.",
+			);
+			sections.push(
+				"bxc-static uses an in-process DOM transport (no spawn, no WebSocket).",
+			);
 			sections.push(
 				"fetch-native is the raw HTTP baseline. cheerio and jsdom add parsing overhead.",
 			);
-			sections.push("For pure static HTML, the fastest option is the one closest to raw fetch.");
+			sections.push(
+				"For pure static HTML, the fastest option is the one closest to raw fetch.",
+			);
 		} else if (scenarioId === "spa-react") {
-			sections.push("**Interpretation**: SPAs require JS execution to render content.");
-			sections.push("bxc-static and fetch-native return the HTML skeleton only (~500 bytes).");
+			sections.push(
+				"**Interpretation**: SPAs require JS execution to render content.",
+			);
+			sections.push(
+				"bxc-static and fetch-native return the HTML skeleton only (~500 bytes).",
+			);
 			sections.push(
 				"bxc-fast (Lightpanda) executes the page JS and returns the rendered content.",
 			);
@@ -155,7 +167,9 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 			sections.push(
 				"**Interpretation**: Success here means 'got a network response', NOT 'bypassed Cloudflare'.",
 			);
-			sections.push("The mock server always returns CF challenge HTML (HTTP 403).");
+			sections.push(
+				"The mock server always returns CF challenge HTML (HTTP 403).",
+			);
 			sections.push(
 				"Real Cloudflare bypass requires profile 'stealth' (patchright) or 'max' (Camoufox).",
 			);
@@ -163,9 +177,15 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 				"bxc-fast uses Lightpanda UA='Lightpanda/1.0' which is detected by real Cloudflare.",
 			);
 		} else if (scenarioId === "parallel-100") {
-			sections.push("**Interpretation**: 100 requests in parallel against localhost mock server.");
-			sections.push("bxc-static uses the shared in-process transport (no per-request spawn).");
-			sections.push("fetch-native tests raw Bun.fetch concurrency at different batch sizes.");
+			sections.push(
+				"**Interpretation**: 100 requests in parallel against localhost mock server.",
+			);
+			sections.push(
+				"bxc-static uses the shared in-process transport (no per-request spawn).",
+			);
+			sections.push(
+				"fetch-native tests raw Bun.fetch concurrency at different batch sizes.",
+			);
 			sections.push(
 				"Both should be fast against localhost — bottleneck is CPU + memory, not network.",
 			);
@@ -176,15 +196,27 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 
 	sections.push("## Methodology");
 	sections.push("");
-	sections.push("- All benchmarks use a **local mock HTTP server** (Bun.serve on :9999)");
-	sections.push("- This avoids rate-limiting, flaky networks, and spam of real websites");
-	sections.push("- Latency includes network RTT to localhost, HTML parse, and any JS execution");
+	sections.push(
+		"- All benchmarks use a **local mock HTTP server** (Bun.serve on :9999)",
+	);
+	sections.push(
+		"- This avoids rate-limiting, flaky networks, and spam of real websites",
+	);
+	sections.push(
+		"- Latency includes network RTT to localhost, HTML parse, and any JS execution",
+	);
 	sections.push(
 		"- RAM is measured via `process.memoryUsage().rss` (Bun process + any sub-processes)",
 	);
-	sections.push("- First run = cold start (includes warmup costs); subsequent runs = warm");
-	sections.push("- p50/p95 computed across all runs for a given runner/scenario pair");
-	sections.push("- Puppeteer/playwright runners are skipped if Chromium is not installed");
+	sections.push(
+		"- First run = cold start (includes warmup costs); subsequent runs = warm",
+	);
+	sections.push(
+		"- p50/p95 computed across all runs for a given runner/scenario pair",
+	);
+	sections.push(
+		"- Puppeteer/playwright runners are skipped if Chromium is not installed",
+	);
 	sections.push(
 		"- bxc-fast runner is skipped if lightpanda binary is not in PATH or BXC_LIGHTPANDA_BIN",
 	);
@@ -212,14 +244,22 @@ function generateMarkdownReport(report: BenchmarkReport): string {
 	sections.push(
 		"- Cloudflare bypass rates are from docs/PROFILES.md estimates, not measured in this suite",
 	);
-	sections.push("  (measuring requires real Cloudflare-protected URLs, risking rate limits)");
+	sections.push(
+		"  (measuring requires real Cloudflare-protected URLs, risking rate limits)",
+	);
 	sections.push(
 		"- bxc-fast (Lightpanda) cold start includes process spawn; warm-path is ~50-100 ms",
 	);
-	sections.push("- Chromium runners were not measured due to missing binary in test environment");
+	sections.push(
+		"- Chromium runners were not measured due to missing binary in test environment",
+	);
 	sections.push("  (add PUPPETEER_EXECUTABLE_PATH to include them)");
-	sections.push("- jsdom is not available in this environment (no node_modules/jsdom)");
-	sections.push("- All fast-profile SPA metrics come from docs/PROFILE-FAST-RESULTS.md");
+	sections.push(
+		"- jsdom is not available in this environment (no node_modules/jsdom)",
+	);
+	sections.push(
+		"- All fast-profile SPA metrics come from docs/PROFILE-FAST-RESULTS.md",
+	);
 
 	return sections.join("\n");
 }
@@ -264,7 +304,9 @@ async function main(): Promise<void> {
 			}
 
 			allResults.push(...results);
-			console.log(`Scenario ${scenarioName} done in ${Math.round(Bun.nanoseconds() / 1e6 - t0)}ms`);
+			console.log(
+				`Scenario ${scenarioName} done in ${Math.round(Bun.nanoseconds() / 1e6 - t0)}ms`,
+			);
 		} catch (err) {
 			console.error(`Scenario ${scenarioName} failed:`, err);
 		}
@@ -297,8 +339,12 @@ async function main(): Promise<void> {
 
 	// Print summary to stdout
 	console.log("\n=== SUMMARY ===");
-	console.log("| Scenario | Runner | p50 (ms) | p95 (ms) | Peak RAM | Success |");
-	console.log("|----------|--------|----------|----------|----------|---------|");
+	console.log(
+		"| Scenario | Runner | p50 (ms) | p95 (ms) | Peak RAM | Success |",
+	);
+	console.log(
+		"|----------|--------|----------|----------|----------|---------|",
+	);
 	for (const s of allResults) {
 		console.log(
 			`| ${s.scenario.padEnd(20)} | ${s.runner.padEnd(18)} | ${String(s.p50Ms).padStart(8)} | ${String(s.p95Ms).padStart(8)} | ${String(s.peakRamMb).padStart(6)} MB | ${s.successRate}% |`,

@@ -1,36 +1,39 @@
-import type { Express } from 'express';
-import express from 'express';
+import type { Express } from "express";
+import express from "express";
 
-import { hostHeaderValidation, localhostHostValidation } from './middleware/hostHeaderValidation.js';
+import {
+	hostHeaderValidation,
+	localhostHostValidation,
+} from "./middleware/hostHeaderValidation.js";
 
 /**
  * Options for creating an MCP Express application.
  */
 export interface CreateMcpExpressAppOptions {
-    /**
-     * The hostname to bind to. Defaults to `'127.0.0.1'`.
-     * When set to `'127.0.0.1'`, `'localhost'`, or `'::1'`, DNS rebinding protection is automatically enabled.
-     */
-    host?: string;
+	/**
+	 * The hostname to bind to. Defaults to `'127.0.0.1'`.
+	 * When set to `'127.0.0.1'`, `'localhost'`, or `'::1'`, DNS rebinding protection is automatically enabled.
+	 */
+	host?: string;
 
-    /**
-     * List of allowed hostnames for DNS rebinding protection.
-     * If provided, host header validation will be applied using this list.
-     * For IPv6, provide addresses with brackets (e.g., `'[::1]'`).
-     *
-     * This is useful when binding to `'0.0.0.0'` or `'::'` but still wanting
-     * to restrict which hostnames are allowed.
-     */
-    allowedHosts?: string[];
+	/**
+	 * List of allowed hostnames for DNS rebinding protection.
+	 * If provided, host header validation will be applied using this list.
+	 * For IPv6, provide addresses with brackets (e.g., `'[::1]'`).
+	 *
+	 * This is useful when binding to `'0.0.0.0'` or `'::'` but still wanting
+	 * to restrict which hostnames are allowed.
+	 */
+	allowedHosts?: string[];
 
-    /**
-     * Controls the maximum request body size for the JSON body parser.
-     * Passed directly to Express's `express.json({ limit })` option.
-     * Defaults to Express's built-in default of `'100kb'`.
-     *
-     * @example '1mb', '500kb', '10mb'
-     */
-    jsonLimit?: string;
+	/**
+	 * Controls the maximum request body size for the JSON body parser.
+	 * Passed directly to Express's `express.json({ limit })` option.
+	 * Defaults to Express's built-in default of `'100kb'`.
+	 *
+	 * @example '1mb', '500kb', '10mb'
+	 */
+	jsonLimit?: string;
 }
 
 /**
@@ -59,30 +62,32 @@ export interface CreateMcpExpressAppOptions {
  * const app = createMcpExpressApp({ host: '0.0.0.0', allowedHosts: ['myapp.local', 'localhost'] });
  * ```
  */
-export function createMcpExpressApp(options: CreateMcpExpressAppOptions = {}): Express {
-    const { host = '127.0.0.1', allowedHosts, jsonLimit } = options;
+export function createMcpExpressApp(
+	options: CreateMcpExpressAppOptions = {},
+): Express {
+	const { host = "127.0.0.1", allowedHosts, jsonLimit } = options;
 
-    const app = express();
-    app.use(express.json(jsonLimit ? { limit: jsonLimit } : undefined));
+	const app = express();
+	app.use(express.json(jsonLimit ? { limit: jsonLimit } : undefined));
 
-    // If allowedHosts is explicitly provided, use that for validation
-    if (allowedHosts) {
-        app.use(hostHeaderValidation(allowedHosts));
-    } else {
-        // Apply DNS rebinding protection automatically for localhost hosts
-        const localhostHosts = ['127.0.0.1', 'localhost', '::1'];
-        if (localhostHosts.includes(host)) {
-            app.use(localhostHostValidation());
-        } else if (host === '0.0.0.0' || host === '::') {
-            // Warn when binding to all interfaces without DNS rebinding protection
-            // eslint-disable-next-line no-console
-            console.warn(
-                `Warning: Server is binding to ${host} without DNS rebinding protection. ` +
-                    'Consider using the allowedHosts option to restrict allowed hosts, ' +
-                    'or use authentication to protect your server.'
-            );
-        }
-    }
+	// If allowedHosts is explicitly provided, use that for validation
+	if (allowedHosts) {
+		app.use(hostHeaderValidation(allowedHosts));
+	} else {
+		// Apply DNS rebinding protection automatically for localhost hosts
+		const localhostHosts = ["127.0.0.1", "localhost", "::1"];
+		if (localhostHosts.includes(host)) {
+			app.use(localhostHostValidation());
+		} else if (host === "0.0.0.0" || host === "::") {
+			// Warn when binding to all interfaces without DNS rebinding protection
+			// eslint-disable-next-line no-console
+			console.warn(
+				`Warning: Server is binding to ${host} without DNS rebinding protection. ` +
+					"Consider using the allowedHosts option to restrict allowed hosts, " +
+					"or use authentication to protect your server.",
+			);
+		}
+	}
 
-    return app;
+	return app;
 }

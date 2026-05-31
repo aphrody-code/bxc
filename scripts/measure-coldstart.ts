@@ -65,10 +65,16 @@ const runs = Number.parseInt(
 	10,
 );
 const timeoutMs = Number.parseInt(
-	argValue("--timeout-ms", String(Bun.env.COLDSTART_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS)),
+	argValue(
+		"--timeout-ms",
+		String(Bun.env.COLDSTART_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
+	),
 	10,
 );
-const rawProfiles = argValue("--profiles", Bun.env.COLDSTART_PROFILES ?? "static,fast");
+const rawProfiles = argValue(
+	"--profiles",
+	Bun.env.COLDSTART_PROFILES ?? "static,fast",
+);
 const profiles = rawProfiles.split(",").map((p) => p.trim()) as Profile[];
 
 // ---------------------------------------------------------------------------
@@ -80,7 +86,11 @@ async function findFreePort(): Promise<number> {
 	for (let attempt = 0; attempt < 32; attempt++) {
 		const port = 49152 + Math.floor(Math.random() * (65535 - 49152));
 		try {
-			const srv = Bun.serve({ port, hostname: "127.0.0.1", fetch: () => new Response(null) });
+			const srv = Bun.serve({
+				port,
+				hostname: "127.0.0.1",
+				fetch: () => new Response(null),
+			});
 			srv.stop(true);
 			return port;
 		} catch {
@@ -91,7 +101,11 @@ async function findFreePort(): Promise<number> {
 }
 
 /** Probe /json/version until it returns 200 or the deadline passes. */
-async function waitForVersion(host: string, port: number, deadline: number): Promise<boolean> {
+async function waitForVersion(
+	host: string,
+	port: number,
+	deadline: number,
+): Promise<boolean> {
 	while (Date.now() < deadline) {
 		try {
 			const res = await fetch(`http://${host}:${port}/json/version`, {
@@ -208,7 +222,9 @@ async function runProfile(profile: Profile): Promise<ProfileResult> {
 			Bun.stderr.write(`  run ${i + 1}/${runs}: TIMEOUT\n`);
 		} else {
 			samples.push(s.elapsedMs);
-			Bun.stderr.write(`  run ${i + 1}/${runs}: ${s.elapsedMs.toFixed(1)} ms\n`);
+			Bun.stderr.write(
+				`  run ${i + 1}/${runs}: ${s.elapsedMs.toFixed(1)} ms\n`,
+			);
 		}
 		// Brief cooldown between runs to avoid port reuse races.
 		await new Promise((r) => setTimeout(r, 80));
@@ -230,7 +246,16 @@ async function runProfile(profile: Profile): Promise<ProfileResult> {
 
 function printTable(results: ProfileResult[]): void {
 	const targets: Record<string, number> = { static: 50, fast: 80 };
-	const cols = ["profile", "p50", "p95", "mean", "min", "max", "timeouts", "target"];
+	const cols = [
+		"profile",
+		"p50",
+		"p95",
+		"mean",
+		"min",
+		"max",
+		"timeouts",
+		"target",
+	];
 	const widths = [10, 8, 8, 8, 8, 8, 10, 10];
 
 	const pad = (s: string, w: number) => s.padEnd(w);
@@ -242,7 +267,8 @@ function printTable(results: ProfileResult[]): void {
 	for (const r of results) {
 		const target = targets[r.profile];
 		const targetStr = target !== undefined ? `<${target} ms` : "n/a";
-		const p50Pass = target !== undefined ? (r.p50 < target ? "PASS" : "FAIL") : "";
+		const p50Pass =
+			target !== undefined ? (r.p50 < target ? "PASS" : "FAIL") : "";
 		const row = [
 			pad(r.profile, widths[0]),
 			pad(`${r.p50.toFixed(1)}`, widths[1]),
@@ -272,7 +298,9 @@ for (const profile of profiles) {
 		const r = await runProfile(profile);
 		results.push(r);
 	} catch (err) {
-		Bun.stderr.write(`[measure-coldstart] profile=${profile} error: ${String(err)}\n`);
+		Bun.stderr.write(
+			`[measure-coldstart] profile=${profile} error: ${String(err)}\n`,
+		);
 	}
 }
 
@@ -291,7 +319,9 @@ if (results.length > 0) {
 		);
 		process.exit(1);
 	} else {
-		Bun.stderr.write("[measure-coldstart] All measured profiles within target.\n");
+		Bun.stderr.write(
+			"[measure-coldstart] All measured profiles within target.\n",
+		);
 	}
 } else {
 	Bun.stderr.write("[measure-coldstart] No profiles measured.\n");

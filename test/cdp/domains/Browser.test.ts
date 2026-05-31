@@ -57,7 +57,11 @@ class TransportMux {
 		return () => this.#listeners.delete(fn);
 	}
 
-	call(method: string, params: Record<string, unknown> = {}, sessionId?: string): Promise<unknown> {
+	call(
+		method: string,
+		params: Record<string, unknown> = {},
+		sessionId?: string,
+	): Promise<unknown> {
 		return new Promise<unknown>((resolve, reject) => {
 			const id = Math.floor(Math.random() * 1_000_000) + 1;
 			const remove = this.addListener((raw) => {
@@ -101,7 +105,9 @@ describe("Browser domain — Phase 1 additions", () => {
 	// -------------------------------------------------------------------------
 
 	test("Browser.getVersion returns product string (regression)", async () => {
-		const result = (await mux.call("Browser.getVersion")) as { product: string };
+		const result = (await mux.call("Browser.getVersion")) as {
+			product: string;
+		};
 		expect(result.product).toMatch("Bxc");
 	});
 
@@ -224,7 +230,10 @@ describe("Browser domain — Phase 1 additions", () => {
 	// -------------------------------------------------------------------------
 
 	test("emitDownloadWillBegin fires Browser.downloadWillBegin event", () => {
-		const collectedEvents: Array<{ method: string; params: Record<string, unknown> }> = [];
+		const collectedEvents: Array<{
+			method: string;
+			params: Record<string, unknown>;
+		}> = [];
 
 		const mockCtx = {
 			emitEvent: (ev: { method: string; params: Record<string, unknown> }) => {
@@ -232,12 +241,15 @@ describe("Browser domain — Phase 1 additions", () => {
 			},
 		};
 
-		emitDownloadWillBegin(mockCtx as Parameters<typeof emitDownloadWillBegin>[0], {
-			guid: "test-guid-001",
-			url: "https://google.com/file.zip",
-			suggestedFilename: "file.zip",
-			frameId: "frame-1",
-		});
+		emitDownloadWillBegin(
+			mockCtx as Parameters<typeof emitDownloadWillBegin>[0],
+			{
+				guid: "test-guid-001",
+				url: "https://google.com/file.zip",
+				suggestedFilename: "file.zip",
+				frameId: "frame-1",
+			},
+		);
 
 		expect(collectedEvents.length).toBe(1);
 		expect(collectedEvents[0].method).toBe("Browser.downloadWillBegin");
@@ -246,7 +258,10 @@ describe("Browser domain — Phase 1 additions", () => {
 	});
 
 	test("emitDownloadProgress fires Browser.downloadProgress event", () => {
-		const collectedEvents: Array<{ method: string; params: Record<string, unknown> }> = [];
+		const collectedEvents: Array<{
+			method: string;
+			params: Record<string, unknown>;
+		}> = [];
 
 		const mockCtx = {
 			emitEvent: (ev: { method: string; params: Record<string, unknown> }) => {
@@ -254,12 +269,15 @@ describe("Browser domain — Phase 1 additions", () => {
 			},
 		};
 
-		emitDownloadProgress(mockCtx as Parameters<typeof emitDownloadProgress>[0], {
-			guid: "test-guid-001",
-			totalBytes: 1000,
-			receivedBytes: 500,
-			state: "inProgress",
-		});
+		emitDownloadProgress(
+			mockCtx as Parameters<typeof emitDownloadProgress>[0],
+			{
+				guid: "test-guid-001",
+				totalBytes: 1000,
+				receivedBytes: 500,
+				state: "inProgress",
+			},
+		);
 
 		expect(collectedEvents.length).toBe(1);
 		expect(collectedEvents[0].method).toBe("Browser.downloadProgress");

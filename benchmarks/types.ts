@@ -66,7 +66,10 @@ export function percentile(sorted: number[], p: number): number {
 
 export function summarise(
 	results: RunResult[],
-): Pick<ScenarioResult, "p50Ms" | "p95Ms" | "meanMs" | "peakRamMb" | "successRate"> {
+): Pick<
+	ScenarioResult,
+	"p50Ms" | "p95Ms" | "meanMs" | "peakRamMb" | "successRate"
+> {
 	const latencies = results.map((r) => r.latencyMs).sort((a, b) => a - b);
 	const rams = results.map((r) => r.ramMb);
 	const successCount = results.filter((r) => r.success).length;
@@ -79,7 +82,10 @@ export function summarise(
 				? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
 				: 0,
 		peakRamMb: Math.round(Math.max(0, ...rams) * 10) / 10,
-		successRate: results.length > 0 ? Math.round((successCount / results.length) * 1000) / 10 : 0,
+		successRate:
+			results.length > 0
+				? Math.round((successCount / results.length) * 1000) / 10
+				: 0,
 	};
 }
 

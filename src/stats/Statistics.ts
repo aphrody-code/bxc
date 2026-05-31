@@ -132,7 +132,7 @@ export class Statistics {
 	// Cumulative sum of ALL successful durations (never evicted — used for mean).
 	#totalDurationSum = 0;
 	// Sum of durations in the current sliding window (evicted when full).
-	
+
 	// Error breakdown
 	readonly #errorBreakdown: Map<string, number> = new Map();
 
@@ -216,14 +216,18 @@ export class Statistics {
 	 */
 	snapshot(): StatisticsSnapshot {
 		const total = this.#requestsFinished + this.#requestsFailed;
-		const avgMs = this.#requestsFinished > 0 ? this.#totalDurationSum / this.#requestsFinished : 0;
+		const avgMs =
+			this.#requestsFinished > 0
+				? this.#totalDurationSum / this.#requestsFinished
+				: 0;
 
 		const sorted = this.#durations.slice().sort((a, b) => a - b);
 		const p50 = percentileSorted(sorted, 50);
 		const p95 = percentileSorted(sorted, 95);
 
 		const runtimeMs = this.#runtimeMs();
-		const rpm = runtimeMs > 0 ? Math.round((total / runtimeMs) * 60_000 * 100) / 100 : 0;
+		const rpm =
+			runtimeMs > 0 ? Math.round((total / runtimeMs) * 60_000 * 100) / 100 : 0;
 
 		const breakdown: Record<string, number> = {};
 		for (const [k, v] of this.#errorBreakdown) {
@@ -283,10 +287,10 @@ export class Statistics {
 
 	#addDuration(ms: number): void {
 		this.#totalDurationSum += ms;
-				if (this.#durations.length >= this.#maxSamples) {
+		if (this.#durations.length >= this.#maxSamples) {
 			// Evict oldest sample from window sum only
 			this.#durations.shift();
-					}
+		}
 		this.#durations.push(ms);
 	}
 
@@ -361,8 +365,9 @@ export class Statistics {
 					this.#durations.push(snap.requestAvgFinishedDurationMs);
 				}
 				// Restore total sum for accurate mean computation
-				this.#totalDurationSum = snap.requestAvgFinishedDurationMs * snap.requestsFinished;
-							}
+				this.#totalDurationSum =
+					snap.requestAvgFinishedDurationMs * snap.requestsFinished;
+			}
 		} catch {
 			// Ignore malformed persisted data
 		}
