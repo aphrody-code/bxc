@@ -177,19 +177,34 @@ export async function scrapeFutGgPlayer(
 		/\bSkill\s+Moves\s*:\s*(\d)/i.exec(content) ||
 		/(\d)\s*(?:star|★)\s*Skill\s+Moves/i.exec(content) ||
 		/Skill\s+Moves\s*(\d)/i.exec(content);
-	const skillMoves = smMatch ? parseInt(smMatch[1], 10) : undefined;
+	let skillMoves = smMatch ? parseInt(smMatch[1], 10) : undefined;
+	if (skillMoves === undefined) {
+		const smSerMatch = /\bskillMoves\s*:\s*(\d+)/.exec(content);
+		if (smSerMatch) skillMoves = parseInt(smSerMatch[1], 10);
+	}
 
 	const wfMatch =
 		/\bWeak\s+Foot\s*:\s*(\d)/i.exec(content) ||
 		/(\d)\s*(?:star|★)\s*Weak\s+Foot/i.exec(content) ||
 		/Weak\s+Foot\s*(\d)/i.exec(content);
-	const weakFoot = wfMatch ? parseInt(wfMatch[1], 10) : undefined;
+	let weakFoot = wfMatch ? parseInt(wfMatch[1], 10) : undefined;
+	if (weakFoot === undefined) {
+		const wfSerMatch = /\bweakFoot\s*:\s*(\d+)/.exec(content);
+		if (wfSerMatch) weakFoot = parseInt(wfSerMatch[1], 10);
+	}
 
 	// 5. Extract Workrates
 	const wrMatch =
 		/Work\s*Rates?\s*:\s*([HLM][a-z]+)\s*\/\s*([HLM][a-z]+)/i.exec(content);
-	const workrateAttack = wrMatch ? wrMatch[1].trim() : undefined;
-	const workrateDefense = wrMatch ? wrMatch[2].trim() : undefined;
+	let workrateAttack = wrMatch ? wrMatch[1].trim() : undefined;
+	let workrateDefense = wrMatch ? wrMatch[2].trim() : undefined;
+	if (workrateAttack === undefined || workrateDefense === undefined) {
+		const wraSerMatch = /\battackingWorkrate\s*:\s*(?:"([^"]+)"|([a-z]+|null))/.exec(content);
+		const wrdSerMatch = /\bdefensiveWorkrate\s*:\s*(?:"([^"]+)"|([a-z]+|null))/.exec(content);
+		if (wraSerMatch && wraSerMatch[1]) workrateAttack = wraSerMatch[1];
+		if (wrdSerMatch && wrdSerMatch[1]) workrateDefense = wrdSerMatch[1];
+	}
+
 
 	// 6. Differentiate standard Playstyles and Playstyles+ (Plus)
 	const playstylesPlus: string[] = [];
@@ -233,6 +248,66 @@ export async function scrapeFutGgPlayer(
 		}
 	}
 
+	// 7. Parse Biology, Card Attributes, and Detailed Stats from serialized state
+	const overallMatch = /\boverall\s*:\s*(\d+)/.exec(content);
+	const overallRating = overallMatch ? parseInt(overallMatch[1], 10) : undefined;
+
+	const dobMatch = /\bdateOfBirth\s*:\s*"([^"]+)"/.exec(content);
+	const dateOfBirth = dobMatch ? dobMatch[1] : undefined;
+
+	const heightMatch = /\bheight\s*:\s*(\d+)/.exec(content);
+	const heightVal = heightMatch ? parseInt(heightMatch[1], 10) : undefined;
+
+	const weightMatch = /\bweight\s*:\s*(\d+)/.exec(content);
+	const weightVal = weightMatch ? parseInt(weightMatch[1], 10) : undefined;
+
+	const ageMatch = /\bage\s*:\s*(\d+)/.exec(content);
+	const age = ageMatch ? parseInt(ageMatch[1], 10) : undefined;
+
+	const footRawMatch = /\bfoot\s*:\s*(?:"([^"]+)"|(\d+))/.exec(content);
+	let foot: string | undefined = undefined;
+	if (footRawMatch) {
+		if (footRawMatch[1]) {
+			foot = footRawMatch[1];
+		} else if (footRawMatch[2]) {
+			foot = footRawMatch[2] === "2" ? "Left" : "Right";
+		}
+	}
+
+	const altPosMatch = /alternativePositions\s*:\s*(?:\$R\[\d+\]\s*=\s*)?(\[[^\]]*\])/.exec(content);
+	let alternativePositions: string[] = [];
+	if (altPosMatch && altPosMatch[1]) {
+		try {
+			alternativePositions = JSON.parse(altPosMatch[1].replace(/'/g, '"').replace(/!1/g, "false").replace(/!0/g, "true"));
+		} catch {}
+	}
+
+	const rarityMatch = /Rarity<\/span><span[^>]*>(?:<[^>]+>)*\s*([^<]+)\s*(?:<\/[^>]+>)*\s*<\/span>/i.exec(content);
+	const rarity = rarityMatch ? rarityMatch[1].trim() : undefined;
+
+	const accMatch = /AcceleRATE<\/span><span[^>]*>\s*([^<]+)\s*<\/span>/i.exec(content);
+	const accelerateType = accMatch ? accMatch[1].trim() : undefined;
+
+	const isWomenMatch = /\bisWomen\s*:\s*(![01]|true|false)/.exec(content);
+	const gender = isWomenMatch && (isWomenMatch[1] === "!0" || isWomenMatch[1] === "true") ? "Women" : "Men";
+
+	const subStats: Record<string, number> = {};
+	const subStatNames = [
+		"Acceleration", "SprintSpeed", "Agility", "Balance", "Reactions", "BallControl",
+		"Dribbling", "Composure", "Jumping", "Stamina", "Strength", "Aggression",
+		"Interceptions", "HeadingAccuracy", "DefensiveAwareness", "StandingTackle", "SlidingTackle",
+		"Vision", "Crossing", "FkAccuracy", "ShortPassing", "LongPassing", "Curve",
+		"Positioning", "Finishing", "ShotPower", "LongShots", "Volleys", "Penalties",
+		"GkDiving", "GkHandling", "GkKicking", "GkReflexes", "GkPositioning", "GkSpeed"
+	];
+	for (const statName of subStatNames) {
+		const match = new RegExp(`\\battribute${statName}\\s*:\\s*(\\d+)`, "i").exec(content);
+		if (match && match[1]) {
+			const key = statName.charAt(0).toLowerCase() + statName.slice(1);
+			subStats[key] = parseInt(match[1], 10);
+		}
+	}
+
 	return {
 		name,
 		rating,
@@ -259,5 +334,55 @@ export async function scrapeFutGgPlayer(
 		workrateAttack,
 		workrateDefense,
 		isGeneric,
+
+		// New expanded biology/card properties
+		overallRating,
+		dateOfBirth,
+		height: heightVal,
+		weight: weightVal,
+		foot,
+		age,
+		rarity,
+		accelerateType,
+		gender,
+		alternativePositions,
+
+		// Detailed stats
+		acceleration: subStats.acceleration,
+		sprintSpeed: subStats.sprintSpeed,
+		agility: subStats.agility,
+		balance: subStats.balance,
+		reactions: subStats.reactions,
+		ballControl: subStats.ballControl,
+		dribbling: subStats.dribbling,
+		composure: subStats.composure,
+		jumping: subStats.jumping,
+		stamina: subStats.stamina,
+		strength: subStats.strength,
+		aggression: subStats.aggression,
+		interceptions: subStats.interceptions,
+		headingAccuracy: subStats.headingAccuracy,
+		defensiveAwareness: subStats.defensiveAwareness,
+		standingTackle: subStats.standingTackle,
+		slidingTackle: subStats.slidingTackle,
+		vision: subStats.vision,
+		crossing: subStats.crossing,
+		fkAccuracy: subStats.fkAccuracy,
+		shortPassing: subStats.shortPassing,
+		longPassing: subStats.longPassing,
+		curve: subStats.curve,
+		positioning: subStats.positioning,
+		finishing: subStats.finishing,
+		shotPower: subStats.shotPower,
+		longShots: subStats.longShots,
+		volleys: subStats.volleys,
+		penalties: subStats.penalties,
+		gkDiving: subStats.gkDiving,
+		gkHandling: subStats.gkHandling,
+		gkKicking: subStats.gkKicking,
+		gkReflexes: subStats.gkReflexes,
+		gkPositioning: subStats.gkPositioning,
+		gkSpeed: subStats.gkSpeed,
 	};
 }
+

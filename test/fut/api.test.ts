@@ -25,41 +25,91 @@ describe("FUT Scraper Unit Validation", () => {
 		// Test regex parsing using local HTML
 		const mockHtml = `
 			<html>
-				<head><title>Cristiano Ronaldo - FUT.gg</title></head>
+				<head><title>Kylian Mbappé - FUT.gg</title></head>
 				<body>
-					<h1>Cristiano Ronaldo</h1>
-					<span class="rating">86</span>
-					<span class="position">ST</span>
-					<div class="playstyle-name">Power Header</div>
-					<div class="playstyle-name">Rapid</div>
+					<h1>Kylian Mbappé</h1>
+					<div class="player-item-rating">91</div>
+					<div class="player-item-position">ST</div>
+					
+					<!-- Mocking Rarity, AcceleRATE, and Playstyles -->
+					<div class="playstyle-item">Rapid</div>
+					<div class="playstyle-item">Finesse Shot</div>
+					
+					Rarity</span><span class="text-white"><a href="/rarities/rare/"><span class="truncate">Rare</span></a></span>
+					AcceleRATE</span><span>Controlled Lengthy</span>
+
+					<!-- Mocking serialized state -->
+					<script>
+						const data = {
+							overall:91,
+							dateOfBirth:"1998-12-20",
+							height:182,
+							weight:75,
+							age:27,
+							foot:1,
+							skillMoves:5,
+							weakFoot:4,
+							alternativePositions:$R[644]=["CF","LW"],
+							isWomen:!1,
+							attributeAcceleration:97,
+							attributeSprintSpeed:97,
+							attributeAgility:92,
+							attributeBalance:83,
+							attributeReactions:93,
+							attributeBallControl:92,
+							attributeDribbling:93,
+							attributeComposure:89,
+							attributeJumping:78,
+							attributeStamina:88,
+							attributeStrength:77,
+							attributeAggression:64,
+							attributeInterceptions:38,
+							attributeHeadingAccuracy:73,
+							attributeDefensiveAwareness:26,
+							attributeStandingTackle:34,
+							attributeSlidingTackle:32,
+							attributeVision:83,
+							attributeCrossing:78,
+							attributeFkAccuracy:69,
+							attributeShortPassing:85,
+							attributeLongPassing:71,
+							attributeCurve:80,
+							attributePositioning:93,
+							attributeFinishing:90,
+							attributeShotPower:89,
+							attributeLongShots:82,
+							attributeVolleys:84,
+							attributePenalties:80
+						};
+					</script>
 				</body>
 			</html>
 		`;
 
-		// To test the parser locally, we can override or extract using our logic
-		const nameMatch = /<h1[^>]*>([^<]*)<\/h1>/i.exec(mockHtml);
-		const name = nameMatch ? nameMatch[1].trim() : "Unknown";
-		expect(name).toBe("Cristiano Ronaldo");
+		const player = await scrapeFutGgPlayer(mockHtml, "static");
+		expect(player.name).toBe("Kylian Mbappé");
+		expect(player.rating).toBe(91);
+		expect(player.position).toBe("ST");
+		expect(player.overallRating).toBe(91);
+		expect(player.dateOfBirth).toBe("1998-12-20");
+		expect(player.height).toBe(182);
+		expect(player.weight).toBe(75);
+		expect(player.age).toBe(27);
+		expect(player.foot).toBe("Right");
+		expect(player.skillMoves).toBe(5);
+		expect(player.weakFoot).toBe(4);
+		expect(player.alternativePositions).toEqual(["CF", "LW"]);
+		expect(player.rarity).toBe("Rare");
+		expect(player.accelerateType).toBe("Controlled Lengthy");
+		expect(player.gender).toBe("Men");
 
-		const ratingMatch = /class="[^"]*rating[^"]*"[^>]*>(\d+)<\/span>/i.exec(
-			mockHtml,
-		);
-		const rating = ratingMatch ? parseInt(ratingMatch[1], 10) : 0;
-		expect(rating).toBe(86);
-
-		const posMatch =
-			/class="[^"]*position[^"]*"[^>]*>([A-Z]{2,3})<\/span>/i.exec(mockHtml);
-		const position = posMatch ? posMatch[1] : "N/A";
-		expect(position).toBe("ST");
-
-		const playstyles: string[] = [];
-		const playstyleRegex =
-			/class="[^"]*playstyle-name[^"]*"[^>]*>([^<]*)<\/div>/gi;
-		let match;
-		while ((match = playstyleRegex.exec(mockHtml)) !== null) {
-			if (match[1]) playstyles.push(match[1].trim());
-		}
-		expect(playstyles).toEqual(["Power Header", "Rapid"]);
+		// Sub-stats
+		expect(player.acceleration).toBe(97);
+		expect(player.sprintSpeed).toBe(97);
+		expect(player.finishing).toBe(90);
+		expect(player.dribbling).toBe(93);
+		expect(player.stamina).toBe(88);
+		expect(player.defensiveAwareness).toBe(26);
 	});
 
 	test("scrapeFutBinPrice parses mock flat prices list", async () => {
