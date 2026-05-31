@@ -20,7 +20,7 @@ export default {
 			ok: true,
 			runtime: "bun",
 			version: Bun.version,
-			timestamp: Date.now()
+			timestamp: Date.now(),
 		});
-	}
+	},
 };

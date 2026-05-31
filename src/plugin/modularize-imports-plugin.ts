@@ -120,30 +120,35 @@ function rewriteImports(
 	const importRe =
 		/^\s*import\s*(?:type\s+)?\{\s*([^}]+)\s*\}\s*from\s*["']([^"']+)["']\s*;?\s*$/gm;
 	let changed = false;
-	const code = source.replace(importRe, (full, names: string, source: string) => {
-		const rule = rules[source];
-		if (!rule) return full;
-		const transform = rule.transform ?? `${source}/{{member}}`;
-		const members = names
-			.split(",")
-			.map((n) => n.trim())
-			.filter(Boolean);
-		const lines: string[] = [];
-		for (const raw of members) {
-			// Handle `{ original as alias }`
-			const aliasMatch = raw.match(/^([A-Za-z_$][\w$]*)\s+as\s+([A-Za-z_$][\w$]*)$/);
-			const original = aliasMatch?.[1] ?? raw;
-			const alias = aliasMatch?.[2] ?? raw;
-			const target = applyTemplate(transform, original);
-			if (rule.skipDefaultConversion) {
-				lines.push(`import { ${original} as ${alias} } from "${target}";`);
-			} else {
-				lines.push(`import ${alias} from "${target}";`);
+	const code = source.replace(
+		importRe,
+		(full, names: string, source: string) => {
+			const rule = rules[source];
+			if (!rule) return full;
+			const transform = rule.transform ?? `${source}/{{member}}`;
+			const members = names
+				.split(",")
+				.map((n) => n.trim())
+				.filter(Boolean);
+			const lines: string[] = [];
+			for (const raw of members) {
+				// Handle `{ original as alias }`
+				const aliasMatch = raw.match(
+					/^([A-Za-z_$][\w$]*)\s+as\s+([A-Za-z_$][\w$]*)$/,
+				);
+				const original = aliasMatch?.[1] ?? raw;
+				const alias = aliasMatch?.[2] ?? raw;
+				const target = applyTemplate(transform, original);
+				if (rule.skipDefaultConversion) {
+					lines.push(`import { ${original} as ${alias} } from "${target}";`);
+				} else {
+					lines.push(`import ${alias} from "${target}";`);
+				}
 			}
-		}
-		changed = true;
-		return lines.join("\n");
-	});
+			changed = true;
+			return lines.join("\n");
+		},
+	);
 	return { code, changed };
 }
 
@@ -151,7 +156,9 @@ function rewriteImports(
 // Plugin factory
 // ---------------------------------------------------------------------------
 
-export function modularizeImportsPlugin(options: ModularizeImportsPluginOptions = {}): BunPlugin {
+export function modularizeImportsPlugin(
+	options: ModularizeImportsPluginOptions = {},
+): BunPlugin {
 	const rules = { ...DEFAULT_RULES, ...options.rules };
 	const filter = options.filter ?? /\.[mc]?[jt]sx?$/;
 
@@ -162,7 +169,9 @@ export function modularizeImportsPlugin(options: ModularizeImportsPluginOptions 
 				const source = await Bun.file(args.path).text();
 				// Cheap pre-filter: skip files without any of the targeted package names
 				if (
-					!Object.keys(rules).some((p) => source.includes(`"${p}"`) || source.includes(`'${p}'`))
+					!Object.keys(rules).some(
+						(p) => source.includes(`"${p}"`) || source.includes(`'${p}'`),
+					)
 				) {
 					return undefined;
 				}
@@ -176,7 +185,8 @@ export function modularizeImportsPlugin(options: ModularizeImportsPluginOptions 
 
 function pickLoader(path: string): "ts" | "tsx" | "js" | "jsx" {
 	if (path.endsWith(".tsx")) return "tsx";
-	if (path.endsWith(".ts") || path.endsWith(".mts") || path.endsWith(".cts")) return "ts";
+	if (path.endsWith(".ts") || path.endsWith(".mts") || path.endsWith(".cts"))
+		return "ts";
 	if (path.endsWith(".jsx")) return "jsx";
 	return "js";
 }

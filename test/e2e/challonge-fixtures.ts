@@ -192,7 +192,8 @@ export const CHALLONGE_PATTERNS: readonly ChallongePattern[] = [
 		urlBuilder: (slug) => `https://challonge.com/${slug}/standings`,
 		expectedMinBytes: 1_000,
 		signalCheck: (body) =>
-			(/standing|rank|participant/i.test(body) || /data-react-class/i.test(body)) &&
+			(/standing|rank|participant/i.test(body) ||
+				/data-react-class/i.test(body)) &&
 			!isCloudflareWall(body),
 		category: "standings",
 	},
@@ -203,7 +204,8 @@ export const CHALLONGE_PATTERNS: readonly ChallongePattern[] = [
 		urlBuilder: (slug) => `https://challonge.com/${slug}/participants`,
 		expectedMinBytes: 1_000,
 		signalCheck: (body) =>
-			(/participant|player|seed/i.test(body) || /data-react-class/i.test(body)) &&
+			(/participant|player|seed/i.test(body) ||
+				/data-react-class/i.test(body)) &&
 			!isCloudflareWall(body),
 		category: "participants",
 	},
@@ -214,7 +216,9 @@ export const CHALLONGE_PATTERNS: readonly ChallongePattern[] = [
 		urlBuilder: (user) => `https://challonge.com/users/${user}`,
 		expectedMinBytes: 1_000,
 		signalCheck: (body) =>
-			(/data-react-class="UserProfile"|data-react-class="Profile"/i.test(body) ||
+			(/data-react-class="UserProfile"|data-react-class="Profile"/i.test(
+				body,
+			) ||
 				/user|profile|tournaments/i.test(body)) &&
 			!isCloudflareWall(body),
 		category: "user",
@@ -227,7 +231,8 @@ export const CHALLONGE_PATTERNS: readonly ChallongePattern[] = [
 		urlBuilder: (user) => `https://challonge.com/fr/users/${user}/tournaments`,
 		expectedMinBytes: 500,
 		signalCheck: (body) =>
-			(/tournament|hosted|participant/i.test(body) || /data-react-class/i.test(body)) &&
+			(/tournament|hosted|participant/i.test(body) ||
+				/data-react-class/i.test(body)) &&
 			!isCloudflareWall(body),
 		category: "user-list",
 		requiresUser: true,
@@ -236,10 +241,12 @@ export const CHALLONGE_PATTERNS: readonly ChallongePattern[] = [
 	// 9. Community page (bonus — SATR community)
 	{
 		name: "community-satr",
-		urlBuilder: (_unused) => `https://challonge.com/fr/communities/sunafterthereign`,
+		urlBuilder: (_unused) =>
+			`https://challonge.com/fr/communities/sunafterthereign`,
 		expectedMinBytes: 1_000,
 		signalCheck: (body) =>
-			(/community|tournament|sunafterthereign/i.test(body) || /data-react-class/i.test(body)) &&
+			(/community|tournament|sunafterthereign/i.test(body) ||
+				/data-react-class/i.test(body)) &&
 			!isCloudflareWall(body),
 		category: "community",
 	},

@@ -203,7 +203,9 @@ export class ProxyPool {
 			if (this.#isHealthy(e)) return e;
 		}
 		// Last-resort: pick the one with the soonest cooldown expiry.
-		const sorted = [...this.#entries].sort((a, b) => a.disabledUntil - b.disabledUntil);
+		const sorted = [...this.#entries].sort(
+			(a, b) => a.disabledUntil - b.disabledUntil,
+		);
 		const chosen = sorted[0];
 		if (!chosen) throw new Error("ProxyPool: no proxies configured");
 		return chosen;

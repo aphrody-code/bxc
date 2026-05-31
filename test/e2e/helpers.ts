@@ -75,7 +75,9 @@ async function fileExists(path: string): Promise<boolean> {
 	}
 }
 
-async function anyExists(candidates: readonly string[]): Promise<string | null> {
+async function anyExists(
+	candidates: readonly string[],
+): Promise<string | null> {
 	for (const c of candidates) {
 		if (!c) continue;
 		if (await fileExists(c)) return c;
@@ -110,7 +112,10 @@ export async function resolveLightpandaBin(): Promise<string | null> {
 async function lightpandaAvailable(): Promise<boolean> {
 	if (await resolveLightpandaBin()) return true;
 	try {
-		const r = Bun.spawnSync(["lightpanda", "--version"], { stdout: "pipe", stderr: "pipe" });
+		const r = Bun.spawnSync(["lightpanda", "--version"], {
+			stdout: "pipe",
+			stderr: "pipe",
+		});
 		return r.exitCode === 0;
 	} catch {
 		return false;
@@ -122,18 +127,26 @@ async function chromiumAvailable(): Promise<boolean> {
 	// A bare `/usr/local/bin/chromium` is not enough — patchright drives only
 	// the playwright-managed binary. So we ONLY look in the ms-playwright cache.
 	const playwrightCacheDir = `${HOME}/.cache/ms-playwright`;
-	const cacheCandidates: string[] = [Bun.env.PLAYWRIGHT_CHROMIUM_PATH ?? ""].filter(Boolean);
+	const cacheCandidates: string[] = [
+		Bun.env.PLAYWRIGHT_CHROMIUM_PATH ?? "",
+	].filter(Boolean);
 
 	// Glob-scan the cache for any installed chromium bundle.
 	try {
 		const glob = new Bun.Glob("chromium*/chrome-linux/chrome");
-		for await (const rel of glob.scan({ cwd: playwrightCacheDir, onlyFiles: true })) {
+		for await (const rel of glob.scan({
+			cwd: playwrightCacheDir,
+			onlyFiles: true,
+		})) {
 			cacheCandidates.push(`${playwrightCacheDir}/${rel}`);
 		}
 		const headless = new Bun.Glob(
 			"chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
 		);
-		for await (const rel of headless.scan({ cwd: playwrightCacheDir, onlyFiles: true })) {
+		for await (const rel of headless.scan({
+			cwd: playwrightCacheDir,
+			onlyFiles: true,
+		})) {
 			cacheCandidates.push(`${playwrightCacheDir}/${rel}`);
 		}
 	} catch {
@@ -153,7 +166,10 @@ async function camoufoxAvailable(): Promise<boolean> {
 	const playwrightCacheDir = `${HOME}/.cache/ms-playwright`;
 	try {
 		const glob = new Bun.Glob("firefox-*/firefox/firefox");
-		for await (const rel of glob.scan({ cwd: playwrightCacheDir, onlyFiles: true })) {
+		for await (const rel of glob.scan({
+			cwd: playwrightCacheDir,
+			onlyFiles: true,
+		})) {
 			if (await fileExists(`${playwrightCacheDir}/${rel}`)) return true;
 		}
 	} catch {
@@ -197,7 +213,9 @@ export interface ProfileProbe {
 	reason: string;
 }
 
-export async function checkProfile(profile: ProfileName): Promise<ProfileProbe> {
+export async function checkProfile(
+	profile: ProfileName,
+): Promise<ProfileProbe> {
 	switch (profile) {
 		case "static":
 			return (await zigqueryAvailable())
@@ -210,7 +228,11 @@ export async function checkProfile(profile: ProfileName): Promise<ProfileProbe> 
 		case "fast":
 			return (await lightpandaAvailable())
 				? { profile, available: true, reason: "" }
-				: { profile, available: false, reason: "lightpanda binary not found on PATH or vendor/" };
+				: {
+						profile,
+						available: false,
+						reason: "lightpanda binary not found on PATH or vendor/",
+					};
 		case "http":
 			return (await curlImpersonateAvailable())
 				? { profile, available: true, reason: "" }
@@ -225,7 +247,8 @@ export async function checkProfile(profile: ProfileName): Promise<ProfileProbe> 
 				: {
 						profile,
 						available: false,
-						reason: "Chromium binary not found (run `bunx patchright install chromium`)",
+						reason:
+							"Chromium binary not found (run `bunx patchright install chromium`)",
 					};
 		case "max":
 			return (await camoufoxAvailable())
@@ -233,7 +256,8 @@ export async function checkProfile(profile: ProfileName): Promise<ProfileProbe> 
 				: {
 						profile,
 						available: false,
-						reason: "Camoufox/Firefox bundle not present (run `python -m camoufox fetch`)",
+						reason:
+							"Camoufox/Firefox bundle not present (run `python -m camoufox fetch`)",
 					};
 	}
 }
@@ -263,21 +287,36 @@ function fmtMb(value: number | undefined): string {
 	return `${value.toFixed(1)} MB`;
 }
 
-export async function writeReport(target: string, input: ReportInput): Promise<void> {
-	const { origin, date, discoveredCount, discoverySource, results, summary, profiles } = input;
+export async function writeReport(
+	target: string,
+	input: ReportInput,
+): Promise<void> {
+	const {
+		origin,
+		date,
+		discoveredCount,
+		discoverySource,
+		results,
+		summary,
+		profiles,
+	} = input;
 
 	const lines: string[] = [];
 	lines.push(`# E2E full-crawl report — ${origin}`);
 	lines.push("");
 	lines.push(`Date: ${date}`);
-	lines.push(`Pages discovered: ${discoveredCount}  (source: ${discoverySource})`);
+	lines.push(
+		`Pages discovered: ${discoveredCount}  (source: ${discoverySource})`,
+	);
 	lines.push(`Total samples: ${results.length}`);
 	lines.push("");
 
 	// Per-profile summary table
 	lines.push("## Per-profile summary");
 	lines.push("");
-	lines.push("| Profile | Pass | Fail | Skip | Pass rate | Avg goto | Peak RSS |");
+	lines.push(
+		"| Profile | Pass | Fail | Skip | Pass rate | Avg goto | Peak RSS |",
+	);
 	lines.push("|---|---|---|---|---|---|---|");
 	for (const p of profiles) {
 		const s = summary[p];
@@ -300,7 +339,9 @@ export async function writeReport(target: string, input: ReportInput): Promise<v
 		lines.push("|---|---|---|---|");
 		for (const r of failures) {
 			const err = (r.error ?? "").replace(/\|/g, "/").replace(/\n/g, " ");
-			lines.push(`| ${r.url} | ${r.profile} | ${err} | ${fmtBytes(r.contentBytes)} |`);
+			lines.push(
+				`| ${r.url} | ${r.profile} | ${err} | ${fmtBytes(r.contentBytes)} |`,
+			);
 		}
 	}
 	lines.push("");

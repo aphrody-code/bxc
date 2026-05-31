@@ -16,13 +16,17 @@
 
 /**
  * @module bxc/google/mass-scanner
- * 
+ *
  * Massive Google Stealth Crawler: 5656+ pages audit with real-time DNS/CDN analysis.
  * Optimized for high-concurrency and resilience.
  */
 
 import { Browser, Page } from "../api/browser.ts";
-import { auditNetwork, identifyInfraFromHeaders, type NetworkAuditResult } from "../utils/network-auditor.ts";
+import {
+	auditNetwork,
+	identifyInfraFromHeaders,
+	type NetworkAuditResult,
+} from "../utils/network-auditor.ts";
 import { detectGoogleSpecifics, type GoogleDetection } from "./detector.ts";
 import { sharedCache } from "./cache.ts";
 
@@ -46,11 +50,13 @@ export class GoogleMassScanner {
 	#maxPages: number;
 	#onProgress?: (audit: PageAudit, current: number, total: number) => void;
 
-	constructor(opts: { 
-		concurrency?: number; 
-		maxPages?: number; 
-		onProgress?: (audit: PageAudit, current: number, total: number) => void 
-	} = {}) {
+	constructor(
+		opts: {
+			concurrency?: number;
+			maxPages?: number;
+			onProgress?: (audit: PageAudit, current: number, total: number) => void;
+		} = {},
+	) {
 		this.#concurrency = opts.concurrency ?? 24;
 		this.#maxPages = opts.maxPages ?? 5656;
 		this.#onProgress = opts.onProgress;
@@ -58,7 +64,9 @@ export class GoogleMassScanner {
 
 	async scan(seeds: string[]): Promise<PageAudit[]> {
 		this.#queue = [...seeds];
-		const workers = Array.from({ length: this.#concurrency }).map(() => this.#worker());
+		const workers = Array.from({ length: this.#concurrency }).map(() =>
+			this.#worker(),
+		);
 		await Promise.all(workers);
 		return Array.from(this.#results.values());
 	}
@@ -91,7 +99,7 @@ export class GoogleMassScanner {
 					this.#results.set(url, audit);
 					sharedCache().set(url, audit); // Cache result
 					this.#onProgress?.(audit, this.#results.size, this.#maxPages);
-					
+
 					// Discover more links
 					if (this.#results.size < this.#maxPages && audit.links) {
 						for (const link of audit.links) {
@@ -107,7 +115,10 @@ export class GoogleMassScanner {
 		}
 	}
 
-	async #auditPageWithRetry(url: string, attempts = 3): Promise<PageAudit | null> {
+	async #auditPageWithRetry(
+		url: string,
+		attempts = 3,
+	): Promise<PageAudit | null> {
 		let lastError: any;
 		for (let i = 0; i < attempts; i++) {
 			try {
@@ -119,42 +130,66 @@ export class GoogleMassScanner {
 				}
 			}
 		}
-		console.error(`[error] Failed to audit ${url} after ${attempts} attempts:`, lastError?.message || lastError);
+		console.error(
+			`[error] Failed to audit ${url} after ${attempts} attempts:`,
+			lastError?.message || lastError,
+		);
 		return null;
 	}
 
 	async #auditPage(url: string): Promise<PageAudit> {
-		const page = (await Browser.newPage({ 
+		const page = (await Browser.newPage({
 			profile: "stealth",
 			spawnOpts: {
 				readyTimeoutMs: 15000,
-			}
+			},
 		})) as Page;
-		
+
 		try {
-			const resp = await page.goto(url, { waitUntil: "domcontentloaded", timeoutMs: 30000 });
+			const resp = await page.goto(url, {
+				waitUntil: "domcontentloaded",
+				timeoutMs: 30000,
+			});
 			const title = await page.title();
 			const content = await page.content();
 			const hostname = new URL(url).hostname;
-			
+
 			const dnsResult = await auditNetwork(hostname);
 			const infra = identifyInfraFromHeaders((resp as any).headers ?? {});
-			const googleDet = detectGoogleSpecifics(url, new Headers((resp as any).headers), content);
+			const googleDet = detectGoogleSpecifics(
+				url,
+				new Headers((resp as any).headers),
+				content,
+			);
 
 			// Extract links for discovery
-			const links = await page.evaluate(() => {
+			const links = (await page.evaluate(() => {
 				const googleSubstrings = [
-					'google', 'material.io', 'web.dev', 'angular', 'flutter', 'dart.dev', 
-					'firebase', 'tensorflow', 'go.dev', 'chrome', 'android', 'lit.dev',
-					'gwtproject.org', 'polymer-project.org'
+					"google",
+					"material.io",
+					"web.dev",
+					"angular",
+					"flutter",
+					"dart.dev",
+					"firebase",
+					"tensorflow",
+					"go.dev",
+					"chrome",
+					"android",
+					"lit.dev",
+					"gwtproject.org",
+					"polymer-project.org",
 				];
-				return Array.from(document.querySelectorAll('a[href]'))
-					.map(a => (a as HTMLAnchorElement).href)
-					.filter(href => {
+				return Array.from(document.querySelectorAll("a[href]"))
+					.map((a) => (a as HTMLAnchorElement).href)
+					.filter((href) => {
 						const l = href.toLowerCase();
-						return l.startsWith('http') && googleSubstrings.some(s => l.includes(s));
+						return (
+							l.startsWith("http") &&
+							googleSubstrings.some((s) => l.includes(s))
+						);
 					});
-			}) as string[];
+			})) as string[];
 
 			return {
 				url,
@@ -177,11 +212,12 @@ export class GoogleMassScanner {
 	}
 
 	generateSitemap(): string {
-		let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+		let xml =
+			'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 		for (const audit of this.#results.values()) {
-			xml += `  <url>\n    <loc>${Bun.escapeHTML(audit.url)}</loc>\n    <lastmod>${audit.timestamp.split('T')[0]}</lastmod>\n  </url>\n`;
+			xml += `  <url>\n    <loc>${Bun.escapeHTML(audit.url)}</loc>\n    <lastmod>${audit.timestamp.split("T")[0]}</lastmod>\n  </url>\n`;
 		}
-		xml += '</urlset>';
+		xml += "</urlset>";
 		return xml;
 	}
 }

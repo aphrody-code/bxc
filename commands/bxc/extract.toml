@@ -1,16 +1,10 @@
-# /bxc:extract command
 description = "Extract structured data from a URL using local AI"
 
-[[parameters]]
-name = "url"
-description = "The target URL to extract data from"
-required = true
+prompt = """
+I will extract structured data from the URL using the Bxc engine and local AI.
+Usage: /bxc:extract <url> <schema>
 
-[[parameters]]
-name = "schema"
-description = "JSON schema or Zod-like description of the data"
-required = true
+!{bxc-mcp call bxc_extract_structured '{"url": "{{args}}", "schema": "JSON"}'}
 
-[execution]
-command = "bxc-mcp"
-args = ["call", "bxc_extract_structured", "{\"url\":\"{{url}}\", \"schema\": \"{{schema}}\"}"]
+(Note: Ensure bxc-mcp is installed and configured in your PATH)
+"""

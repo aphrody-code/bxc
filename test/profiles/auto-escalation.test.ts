@@ -75,7 +75,8 @@ describe("auto-escalation: signal detection", () => {
 	});
 
 	it("should detect Turnstile CAPTCHA", () => {
-		const html = '<iframe id="cf-challenge" src="...">Turnstile CAPTCHA</iframe>';
+		const html =
+			'<iframe id="cf-challenge" src="...">Turnstile CAPTCHA</iframe>';
 		const signal = detectEscalationSignal(html, 200);
 		expect(signal).toBeTruthy();
 		expect(signal?.reason).toBe("turnstile");
@@ -89,7 +90,8 @@ describe("auto-escalation: signal detection", () => {
 	});
 
 	it("should return null for successful response", () => {
-		const html = "<html><body><h1>Welcome</h1><p>Real content</p></body></html>";
+		const html =
+			"<html><body><h1>Welcome</h1><p>Real content</p></body></html>";
 		const signal = detectEscalationSignal(html, 200);
 		expect(signal).toBeNull();
 	});

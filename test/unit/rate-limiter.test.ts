@@ -36,13 +36,20 @@
  */
 
 import { beforeEach, describe, expect, it } from "bun:test";
-import { RateLimitError, RateLimiter, type RobotRules } from "../../src/throttling/RateLimiter.ts";
+import {
+	RateLimitError,
+	RateLimiter,
+	type RobotRules,
+} from "../../src/throttling/RateLimiter.ts";
 
 // ---------------------------------------------------------------------------
 // Helper: build a RobotRules object inline (no network)
 // ---------------------------------------------------------------------------
 
-function makeRules(opts: { crawlDelay?: number; disallowed?: string[] }): RobotRules {
+function makeRules(opts: {
+	crawlDelay?: number;
+	disallowed?: string[];
+}): RobotRules {
 	const disallowed = opts.disallowed ?? [];
 	return {
 		crawlDelay: opts.crawlDelay,
@@ -197,7 +204,10 @@ describe("disallowed paths", () => {
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: true,
 		});
-		l.setRobotsRules("blocked.google.com", makeRules({ disallowed: ["/private/"] }));
+		l.setRobotsRules(
+			"blocked.google.com",
+			makeRules({ disallowed: ["/private/"] }),
+		);
 
 		let thrown = false;
 		try {
@@ -216,7 +226,10 @@ describe("disallowed paths", () => {
 			maxRequestsPerMinute: 1000,
 			respectRobotsTxt: true,
 		});
-		l.setRobotsRules("blocked.google.com", makeRules({ disallowed: ["/private/"] }));
+		l.setRobotsRules(
+			"blocked.google.com",
+			makeRules({ disallowed: ["/private/"] }),
+		);
 		// Should not throw
 		await l.acquire("https://blocked.google.com/public/page");
 	});
@@ -308,8 +321,14 @@ describe("getHostStats", () => {
 
 describe("setRobotsRules", () => {
 	it("injects rules that take effect immediately", async () => {
-		const l = new RateLimiter({ respectRobotsTxt: true, googleAutoThrottle: false });
-		l.setRobotsRules("inject.google.com", makeRules({ disallowed: ["/blocked/"] }));
+		const l = new RateLimiter({
+			respectRobotsTxt: true,
+			googleAutoThrottle: false,
+		});
+		l.setRobotsRules(
+			"inject.google.com",
+			makeRules({ disallowed: ["/blocked/"] }),
+		);
 
 		let threw = false;
 		try {
@@ -327,8 +346,14 @@ describe("setRobotsRules", () => {
 
 describe("respectRobotsTxt = false", () => {
 	it("does not apply disallow rules", async () => {
-		const l = new RateLimiter({ respectRobotsTxt: false, googleAutoThrottle: false });
-		l.setRobotsRules("norobots.google.com", makeRules({ disallowed: ["/everything/"] }));
+		const l = new RateLimiter({
+			respectRobotsTxt: false,
+			googleAutoThrottle: false,
+		});
+		l.setRobotsRules(
+			"norobots.google.com",
+			makeRules({ disallowed: ["/everything/"] }),
+		);
 		// Should not throw even though path is disallowed
 		await l.acquire("https://norobots.google.com/everything/secret");
 	});
@@ -384,7 +409,10 @@ describe("RateLimitError", () => {
 
 describe("robots cache", () => {
 	it("reuses cached rules without refetching", async () => {
-		const l = new RateLimiter({ respectRobotsTxt: true, googleAutoThrottle: false });
+		const l = new RateLimiter({
+			respectRobotsTxt: true,
+			googleAutoThrottle: false,
+		});
 		const rules = allowAllRules();
 		l.setRobotsRules("cached.google.com", rules);
 
@@ -449,7 +477,11 @@ describe("concurrent same-host", () => {
 		const host = "concurrent.google.com";
 		// Fire 5 concurrent requests (all should fit in the window)
 		const start = Date.now();
-		await Promise.all(Array.from({ length: 5 }, (_, i) => l.acquire(`https://${host}/page${i}`)));
+		await Promise.all(
+			Array.from({ length: 5 }, (_, i) =>
+				l.acquire(`https://${host}/page${i}`),
+			),
+		);
 		const elapsed = Date.now() - start;
 		// 5 requests fit within maxRequestsPerSecond=5: should complete quickly
 		expect(elapsed).toBeLessThan(200);

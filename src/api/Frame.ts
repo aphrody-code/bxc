@@ -39,9 +39,15 @@ export class Frame {
 		this.#parentId = parentId;
 	}
 
-	get id(): string { return this.#id; }
-	get name(): string | undefined { return this.#name; }
-	get parentId(): string | undefined { return this.#parentId; }
+	get id(): string {
+		return this.#id;
+	}
+	get name(): string | undefined {
+		return this.#name;
+	}
+	get parentId(): string | undefined {
+		return this.#parentId;
+	}
 
 	/**
 	 * Returns the parent frame, if any.
@@ -82,7 +88,8 @@ export class Frame {
 	 */
 	async content(): Promise<string> {
 		const { outerHTML } = (await this.#page._send("DOM.getOuterHTML", {
-			nodeId: (await this.#page._send("DOM.getDocument", { depth: 0 }) as any).root.nodeId,
+			nodeId: ((await this.#page._send("DOM.getDocument", { depth: 0 })) as any)
+				.root.nodeId,
 		})) as { outerHTML: string };
 		return outerHTML;
 	}

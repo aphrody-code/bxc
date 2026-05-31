@@ -45,7 +45,11 @@ function cdpCall(
 
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { id?: number; result?: unknown; error?: { code: number; message: string } };
+			let msg: {
+				id?: number;
+				result?: unknown;
+				error?: { code: number; message: string };
+			};
 			try {
 				msg = JSON.parse(raw);
 			} catch {
@@ -133,8 +137,16 @@ describe("DOM.getBoxModel", () => {
 	afterEach(() => transport.close());
 
 	test("returns zero-dimension model when no layout info is available", async () => {
-		const { sessionId } = await setupPage(transport, "<div id='box'>content</div>");
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const { sessionId } = await setupPage(
+			transport,
+			"<div id='box'>content</div>",
+		);
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -161,7 +173,12 @@ describe("DOM.getBoxModel", () => {
 	test("reads width and height from inline style", async () => {
 		const html = `<div id="styled" style="width:300px;height:150px">box</div>`;
 		const { sessionId } = await setupPage(transport, html);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -185,7 +202,12 @@ describe("DOM.getBoxModel", () => {
 	test("reads width and height from HTML attributes (img)", async () => {
 		const html = `<img id="img" src="x.png" width="640" height="480" alt="pic">`;
 		const { sessionId } = await setupPage(transport, html);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -216,7 +238,12 @@ describe("DOM.getBoxModel", () => {
 	test("quad has 8 elements representing the 4 corners", async () => {
 		const html = `<div id="q" style="width:100px;height:50px;left:10px;top:20px">q</div>`;
 		const { sessionId } = await setupPage(transport, html);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -231,7 +258,14 @@ describe("DOM.getBoxModel", () => {
 			"DOM.getBoxModel",
 			{ nodeId: nodeResult.nodeId },
 			sessionId,
-		)) as { model: { content: number[]; padding: number[]; border: number[]; margin: number[] } };
+		)) as {
+			model: {
+				content: number[];
+				padding: number[];
+				border: number[];
+				margin: number[];
+			};
+		};
 
 		expect(result.model.content.length).toBe(8);
 		expect(result.model.padding.length).toBe(8);
@@ -255,7 +289,12 @@ describe("DOM.resolveNode", () => {
 
 	test("returns a RemoteObject with type=object subtype=node", async () => {
 		const { sessionId } = await setupPage(transport, "<p id='para'>text</p>");
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -279,7 +318,12 @@ describe("DOM.resolveNode", () => {
 
 	test("objectId is JSON-encoded and contains the nodeId", async () => {
 		const { sessionId } = await setupPage(transport, "<span id='sp'>x</span>");
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -322,8 +366,16 @@ describe("DOM.setFileInputFiles", () => {
 	afterEach(() => transport.close());
 
 	test("throws CDPError with a clear message about static profile", async () => {
-		const { sessionId } = await setupPage(transport, `<input type="file" id="fi">`);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const { sessionId } = await setupPage(
+			transport,
+			`<input type="file" id="fi">`,
+		);
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const nodeResult = (await cdpCall(
@@ -359,7 +411,12 @@ describe("DOM regression: existing methods", () => {
 
 	test("DOM.getDocument still returns root node", async () => {
 		const { sessionId } = await setupPage(transport, "<h1>hi</h1>");
-		const result = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number; nodeName: string };
 		};
 		expect(result.root.nodeId).toBeGreaterThan(0);
@@ -367,8 +424,16 @@ describe("DOM regression: existing methods", () => {
 	});
 
 	test("DOM.querySelectorAll still works", async () => {
-		const { sessionId } = await setupPage(transport, "<ul><li>a</li><li>b</li></ul>");
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const { sessionId } = await setupPage(
+			transport,
+			"<ul><li>a</li><li>b</li></ul>",
+		);
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const result = (await cdpCall(
@@ -381,8 +446,16 @@ describe("DOM regression: existing methods", () => {
 	});
 
 	test("DOM.describeNode still returns node info", async () => {
-		const { sessionId } = await setupPage(transport, "<button id='btn'>click</button>");
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const { sessionId } = await setupPage(
+			transport,
+			"<button id='btn'>click</button>",
+		);
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const { nodeId } = (await cdpCall(
@@ -391,7 +464,12 @@ describe("DOM regression: existing methods", () => {
 			{ nodeId: doc.root.nodeId, selector: "#btn" },
 			sessionId,
 		)) as { nodeId: number };
-		const result = (await cdpCall(transport, "DOM.describeNode", { nodeId }, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"DOM.describeNode",
+			{ nodeId },
+			sessionId,
+		)) as {
 			node: { localName: string };
 		};
 		expect(result.node.localName.toLowerCase()).toBe("button");

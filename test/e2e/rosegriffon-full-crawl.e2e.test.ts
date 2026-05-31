@@ -60,7 +60,13 @@ const REPORT_PATH = `${import.meta.dir}/results/${REPORT_DATE}-rosegriffon.md`;
 const PER_TEST_TIMEOUT_MS = 60_000;
 const NAV_TIMEOUT_MS = 25_000;
 
-const PROFILES: readonly ProfileName[] = ["static", "fast", "http", "stealth", "max"];
+const PROFILES: readonly ProfileName[] = [
+	"static",
+	"fast",
+	"http",
+	"stealth",
+	"max",
+];
 
 let discovery: DiscoverResult;
 let online = true;
@@ -76,7 +82,14 @@ const summary: Record<ProfileName, ProfileSummary> = {
 };
 
 function emptySummary(): ProfileSummary {
-	return { pass: 0, fail: 0, skip: 0, totalGotoMs: 0, peakRssMb: 0, gotoCount: 0 };
+	return {
+		pass: 0,
+		fail: 0,
+		skip: 0,
+		totalGotoMs: 0,
+		peakRssMb: 0,
+		gotoCount: 0,
+	};
 }
 
 async function isOnline(): Promise<boolean> {
@@ -94,7 +107,9 @@ async function isOnline(): Promise<boolean> {
 beforeAll(async () => {
 	online = await isOnline();
 	if (!online) {
-		console.log("[rosegriffon] SKIP: gemini.google.com unreachable, running cache-only mode");
+		console.log(
+			"[rosegriffon] SKIP: gemini.google.com unreachable, running cache-only mode",
+		);
 	}
 	lightpandaBin = await resolveLightpandaBin();
 	discovery = await discoverPages(ORIGIN, {
@@ -213,7 +228,8 @@ function recordResult(profile: ProfileName, r: SiteResult): void {
 		s.totalGotoMs += r.gotoMs;
 		s.gotoCount++;
 	}
-	if (typeof r.rssMb === "number" && r.rssMb > s.peakRssMb) s.peakRssMb = r.rssMb;
+	if (typeof r.rssMb === "number" && r.rssMb > s.peakRssMb)
+		s.peakRssMb = r.rssMb;
 }
 
 // ---------------------------------------------------------------------------
@@ -252,9 +268,16 @@ for (const profile of PROFILES) {
 				for (const url of discovery.urls) {
 					const r = await runOne(profile, url);
 					recordResult(profile, r);
-					const tag = r.status === "pass" ? "PASS" : r.status === "skip" ? "SKIP" : "FAIL";
+					const tag =
+						r.status === "pass"
+							? "PASS"
+							: r.status === "skip"
+								? "SKIP"
+								: "FAIL";
 					const ms = r.gotoMs ? `${r.gotoMs.toFixed(0)}ms` : "-";
-					const kb = r.contentBytes ? `${(r.contentBytes / 1024).toFixed(1)}KB` : "-";
+					const kb = r.contentBytes
+						? `${(r.contentBytes / 1024).toFixed(1)}KB`
+						: "-";
 					console.log(
 						`[${profile}] ${tag} ${url} goto=${ms} content=${kb}${r.error ? " err=" + r.error : ""}`,
 					);
@@ -264,7 +287,8 @@ for (const profile of PROFILES) {
 				await Browser.close().catch(() => {});
 
 				// At least one URL must have produced a result.
-				const total = summary[profile].pass + summary[profile].fail + summary[profile].skip;
+				const total =
+					summary[profile].pass + summary[profile].fail + summary[profile].skip;
 				expect(total).toBeGreaterThan(0);
 
 				// For the primary fast profile the suite enforces the 95% pass rate
@@ -278,7 +302,10 @@ for (const profile of PROFILES) {
 			},
 			{
 				timeout: discovery?.urls.length
-					? Math.max(PER_TEST_TIMEOUT_MS, discovery.urls.length * NAV_TIMEOUT_MS + 30_000)
+					? Math.max(
+							PER_TEST_TIMEOUT_MS,
+							discovery.urls.length * NAV_TIMEOUT_MS + 30_000,
+						)
 					: PER_TEST_TIMEOUT_MS,
 			},
 		);

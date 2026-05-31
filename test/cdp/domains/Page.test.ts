@@ -45,7 +45,11 @@ import {
 	emitDownloadWillBegin,
 	PageHandler,
 } from "../../../src/cdp/domains/Page.ts";
-import type { CDPHandlerResult, DispatchContext, PageState } from "../../../src/cdp/types.ts";
+import type {
+	CDPHandlerResult,
+	DispatchContext,
+	PageState,
+} from "../../../src/cdp/types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -96,7 +100,10 @@ function makePageState(overrides: Partial<PageState> = {}): PageState {
 }
 
 /** Builds a minimal DispatchContext that does not hit any transport or FFI. */
-function makeCtx(page: PageState, emittedEvents: Array<{ method: string; params: unknown }> = []) {
+function makeCtx(
+	page: PageState,
+	emittedEvents: Array<{ method: string; params: unknown }> = [],
+) {
 	const ctx: DispatchContext = {
 		pageBySession: (_sid) => page,
 		pageBySessionSoft: (_sid) => page,
@@ -173,7 +180,9 @@ describe("no-op stubs", () => {
 	}
 
 	it("Page.createIsolatedWorld returns executionContextId", async () => {
-		const result = await call("Page.createIsolatedWorld", { worldName: "test" });
+		const result = await call("Page.createIsolatedWorld", {
+			worldName: "test",
+		});
 		expect(result).toEqual({ executionContextId: expect.any(Number) });
 	});
 });
@@ -184,9 +193,13 @@ describe("no-op stubs", () => {
 
 describe("Page.addScriptToEvaluateOnNewDocument", () => {
 	it("returns an identifier string", async () => {
-		const result = await call("Page.addScriptToEvaluateOnNewDocument", { source: "window.x=1" });
+		const result = await call("Page.addScriptToEvaluateOnNewDocument", {
+			source: "window.x=1",
+		});
 		expect(result).toHaveProperty("identifier");
-		expect(typeof (result as Record<string, unknown>).identifier).toBe("string");
+		expect(typeof (result as Record<string, unknown>).identifier).toBe(
+			"string",
+		);
 	});
 
 	it("tracks the script on the page state", async () => {
@@ -267,7 +280,10 @@ describe("Page.removeScriptToEvaluateOnNewDocument", () => {
 describe("Page.getFrameTree", () => {
 	it("returns a frameTree with correct id and loaderId", async () => {
 		const page = makePageState({ url: "https://google.com/" });
-		const result = (await call("Page.getFrameTree", {}, page)) as Record<string, unknown>;
+		const result = (await call("Page.getFrameTree", {}, page)) as Record<
+			string,
+			unknown
+		>;
 		const tree = result.frameTree as Record<string, unknown>;
 		const frame = tree.frame as Record<string, unknown>;
 		expect(frame.id).toBe("frame-1");
@@ -277,8 +293,14 @@ describe("Page.getFrameTree", () => {
 
 	it("sets securityOrigin to null for about:blank", async () => {
 		const page = makePageState({ url: "about:blank" });
-		const result = (await call("Page.getFrameTree", {}, page)) as Record<string, unknown>;
-		const frame = (result.frameTree as Record<string, unknown>).frame as Record<string, unknown>;
+		const result = (await call("Page.getFrameTree", {}, page)) as Record<
+			string,
+			unknown
+		>;
+		const frame = (result.frameTree as Record<string, unknown>).frame as Record<
+			string,
+			unknown
+		>;
 		expect(frame.securityOrigin).toBe("null");
 	});
 });
@@ -292,7 +314,12 @@ describe("Page.navigate lifecycle events", () => {
 		const page = makePageState();
 		const events: Array<{ method: string; params: unknown }> = [];
 		const ctx = makeCtx(page, events);
-		await PageHandler("Page.navigate", { url: "about:blank" }, ctx, "session-1");
+		await PageHandler(
+			"Page.navigate",
+			{ url: "about:blank" },
+			ctx,
+			"session-1",
+		);
 		const methods = events.map((e) => e.method);
 		expect(methods).toContain("Page.domContentEventFired");
 	});
@@ -301,7 +328,12 @@ describe("Page.navigate lifecycle events", () => {
 		const page = makePageState();
 		const events: Array<{ method: string; params: unknown }> = [];
 		const ctx = makeCtx(page, events);
-		await PageHandler("Page.navigate", { url: "about:blank" }, ctx, "session-1");
+		await PageHandler(
+			"Page.navigate",
+			{ url: "about:blank" },
+			ctx,
+			"session-1",
+		);
 		const methods = events.map((e) => e.method);
 		expect(methods).toContain("Page.loadEventFired");
 	});
@@ -310,7 +342,12 @@ describe("Page.navigate lifecycle events", () => {
 		const page = makePageState();
 		const events: Array<{ method: string; params: unknown }> = [];
 		const ctx = makeCtx(page, events);
-		await PageHandler("Page.navigate", { url: "about:blank" }, ctx, "session-1");
+		await PageHandler(
+			"Page.navigate",
+			{ url: "about:blank" },
+			ctx,
+			"session-1",
+		);
 		const methods = events.map((e) => e.method);
 		const dcIdx = methods.indexOf("Page.domContentEventFired");
 		const loadIdx = methods.indexOf("Page.loadEventFired");
@@ -464,7 +501,12 @@ describe("Page.startScreencast / stopScreencast", () => {
 	it("stopScreencast clears screencastActive", async () => {
 		const page = makePageState({ screencastActive: true });
 		const ctx = makeCtx(page);
-		const result = await PageHandler("Page.stopScreencast", {}, ctx, "session-1");
+		const result = await PageHandler(
+			"Page.stopScreencast",
+			{},
+			ctx,
+			"session-1",
+		);
 		expect(result).toEqual({});
 		expect(page.screencastActive).toBe(false);
 	});
@@ -472,7 +514,12 @@ describe("Page.startScreencast / stopScreencast", () => {
 	it("stopScreencast is a no-op when not active", async () => {
 		const page = makePageState({ screencastActive: false });
 		const ctx = makeCtx(page);
-		const result = await PageHandler("Page.stopScreencast", {}, ctx, "session-1");
+		const result = await PageHandler(
+			"Page.stopScreencast",
+			{},
+			ctx,
+			"session-1",
+		);
 		expect(result).toEqual({});
 		expect(page.screencastActive).toBe(false);
 	});
@@ -495,7 +542,10 @@ describe("Page.screencastFrameAck", () => {
 
 describe("Page.getLayoutMetrics", () => {
 	it("returns synthetic viewport and content size metrics", async () => {
-		const result = (await call("Page.getLayoutMetrics", {})) as Record<string, unknown>;
+		const result = (await call("Page.getLayoutMetrics", {})) as Record<
+			string,
+			unknown
+		>;
 		expect(result).toHaveProperty("layoutViewport");
 		expect(result).toHaveProperty("visualViewport");
 		expect(result).toHaveProperty("contentSize");

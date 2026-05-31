@@ -117,7 +117,12 @@ describe("Fetch domain handler", () => {
 		const sessionId = await createSession(transport);
 
 		// Enable interception for all URLs
-		await cdpCall(transport, "Fetch.enable", { patterns: [{ urlPattern: "*" }] }, sessionId);
+		await cdpCall(
+			transport,
+			"Fetch.enable",
+			{ patterns: [{ urlPattern: "*" }] },
+			sessionId,
+		);
 
 		// Collect requestPaused events and immediately fulfill them
 		let pausedRequestId: string | null = null;
@@ -125,7 +130,11 @@ describe("Fetch domain handler", () => {
 		const prev = transport.onmessage;
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { method?: string; params?: Record<string, unknown>; sessionId?: string };
+			let msg: {
+				method?: string;
+				params?: Record<string, unknown>;
+				sessionId?: string;
+			};
 			try {
 				msg = JSON.parse(raw) as typeof msg;
 			} catch {
@@ -154,7 +163,12 @@ describe("Fetch domain handler", () => {
 		};
 
 		// Navigate to a URL that will be intercepted
-		await cdpCall(transport, "Page.navigate", { url: "https://google.com" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "https://google.com" },
+			sessionId,
+		);
 		transport.onmessage = prev;
 
 		expect(pausedRequestId).not.toBeNull();
@@ -177,13 +191,22 @@ describe("Fetch domain handler", () => {
 		const sessionId = await createSession(transport);
 
 		// Enable interception
-		await cdpCall(transport, "Fetch.enable", { patterns: [{ urlPattern: "*" }] }, sessionId);
+		await cdpCall(
+			transport,
+			"Fetch.enable",
+			{ patterns: [{ urlPattern: "*" }] },
+			sessionId,
+		);
 
 		// Fail any paused request
 		const prev = transport.onmessage;
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { method?: string; params?: Record<string, unknown>; sessionId?: string };
+			let msg: {
+				method?: string;
+				params?: Record<string, unknown>;
+				sessionId?: string;
+			};
 			try {
 				msg = JSON.parse(raw) as typeof msg;
 			} catch {
@@ -204,7 +227,12 @@ describe("Fetch domain handler", () => {
 
 		// The navigate should fail (transport re-throws the error from #navigate)
 		await expect(
-			cdpCall(transport, "Page.navigate", { url: "https://google.com" }, sessionId),
+			cdpCall(
+				transport,
+				"Page.navigate",
+				{ url: "https://google.com" },
+				sessionId,
+			),
 		).rejects.toThrow();
 		transport.onmessage = prev;
 	});
@@ -217,13 +245,22 @@ describe("Fetch domain handler", () => {
 		const sessionId = await createSession(transport);
 
 		// Enable interception
-		await cdpCall(transport, "Fetch.enable", { patterns: [{ urlPattern: "*" }] }, sessionId);
+		await cdpCall(
+			transport,
+			"Fetch.enable",
+			{ patterns: [{ urlPattern: "*" }] },
+			sessionId,
+		);
 
 		// Continue any paused request
 		const prev = transport.onmessage;
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { method?: string; params?: Record<string, unknown>; sessionId?: string };
+			let msg: {
+				method?: string;
+				params?: Record<string, unknown>;
+				sessionId?: string;
+			};
 			try {
 				msg = JSON.parse(raw) as typeof msg;
 			} catch {
@@ -232,14 +269,24 @@ describe("Fetch domain handler", () => {
 			if (msg.method === "Fetch.requestPaused" && msg.sessionId === sessionId) {
 				const reqId = msg.params?.requestId as string | undefined;
 				if (reqId) {
-					void cdpCall(transport, "Fetch.continueRequest", { requestId: reqId }, sessionId);
+					void cdpCall(
+						transport,
+						"Fetch.continueRequest",
+						{ requestId: reqId },
+						sessionId,
+					);
 				}
 			}
 		};
 
 		// Navigate with a data: URI (data: URIs skip fetch interception so no pause fires)
 		// This tests that disabling interception doesn't break navigation
-		await cdpCall(transport, "Page.navigate", { url: "data:text/html,<p>hi</p>" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "data:text/html,<p>hi</p>" },
+			sessionId,
+		);
 		transport.onmessage = prev;
 
 		// If we get here without error the test passes
@@ -254,7 +301,11 @@ describe("Fetch domain handler", () => {
 		// continueWithAuth with an unknown requestId must be a no-op
 		const result = await cdpCall(transport, "Fetch.continueWithAuth", {
 			requestId: "non-existent",
-			authChallengeResponse: { response: "ProvideCredentials", username: "u", password: "p" },
+			authChallengeResponse: {
+				response: "ProvideCredentials",
+				username: "u",
+				password: "p",
+			},
 		});
 		expect(result).toEqual({});
 	});
@@ -267,13 +318,22 @@ describe("Fetch domain handler", () => {
 		const sessionId = await createSession(transport);
 
 		// Enable interception only for /api/* paths
-		await cdpCall(transport, "Fetch.enable", { patterns: [{ urlPattern: "*/api/*" }] }, sessionId);
+		await cdpCall(
+			transport,
+			"Fetch.enable",
+			{ patterns: [{ urlPattern: "*/api/*" }] },
+			sessionId,
+		);
 
 		let intercepted = false;
 		const prev = transport.onmessage;
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { method?: string; params?: Record<string, unknown>; sessionId?: string };
+			let msg: {
+				method?: string;
+				params?: Record<string, unknown>;
+				sessionId?: string;
+			};
 			try {
 				msg = JSON.parse(raw) as typeof msg;
 			} catch {
@@ -284,13 +344,23 @@ describe("Fetch domain handler", () => {
 				const reqId = msg.params?.requestId as string | undefined;
 				if (reqId) {
 					// Continue immediately to avoid hanging
-					void cdpCall(transport, "Fetch.continueRequest", { requestId: reqId }, sessionId);
+					void cdpCall(
+						transport,
+						"Fetch.continueRequest",
+						{ requestId: reqId },
+						sessionId,
+					);
 				}
 			}
 		};
 
 		// Navigate to a data: URI — should NOT be intercepted (not matching pattern)
-		await cdpCall(transport, "Page.navigate", { url: "data:text/html,<p>test</p>" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "data:text/html,<p>test</p>" },
+			sessionId,
+		);
 		transport.onmessage = prev;
 
 		expect(intercepted).toBe(false);
@@ -303,12 +373,21 @@ describe("Fetch domain handler", () => {
 	test("Fetch.fulfillRequest with 404 code delivers body to page", async () => {
 		const sessionId = await createSession(transport);
 
-		await cdpCall(transport, "Fetch.enable", { patterns: [{ urlPattern: "*" }] }, sessionId);
+		await cdpCall(
+			transport,
+			"Fetch.enable",
+			{ patterns: [{ urlPattern: "*" }] },
+			sessionId,
+		);
 
 		const prev = transport.onmessage;
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { method?: string; params?: Record<string, unknown>; sessionId?: string };
+			let msg: {
+				method?: string;
+				params?: Record<string, unknown>;
+				sessionId?: string;
+			};
 			try {
 				msg = JSON.parse(raw) as typeof msg;
 			} catch {
@@ -317,9 +396,9 @@ describe("Fetch domain handler", () => {
 			if (msg.method === "Fetch.requestPaused" && msg.sessionId === sessionId) {
 				const reqId = msg.params?.requestId as string | undefined;
 				if (reqId) {
-					const b64 = Buffer.from("<html><head><title>Not Found</title></head></html>").toString(
-						"base64",
-					);
+					const b64 = Buffer.from(
+						"<html><head><title>Not Found</title></head></html>",
+					).toString("base64");
 					void cdpCall(
 						transport,
 						"Fetch.fulfillRequest",
@@ -335,7 +414,12 @@ describe("Fetch domain handler", () => {
 			}
 		};
 
-		await cdpCall(transport, "Page.navigate", { url: "https://google.com/missing" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "https://google.com/missing" },
+			sessionId,
+		);
 		transport.onmessage = prev;
 
 		const { result } = (await cdpCall(

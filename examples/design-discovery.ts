@@ -18,14 +18,14 @@ import { GoogleMassScanner } from "../src/google/mass-scanner.ts";
 
 /**
  * Targeted Discovery: Google Design & UI Ecosystem
- * 
+ *
  * Starts from Material Design and Google Design to map the ecosystem.
  */
 
 async function main() {
 	const scanner = new GoogleMassScanner({
 		concurrency: 5,
-		maxPages: 50 // Limit for this discovery task
+		maxPages: 50, // Limit for this discovery task
 	});
 
 	const seeds = [
@@ -40,12 +40,14 @@ async function main() {
 		"https://go.dev/",
 	];
 
-	console.log(`🔍 Mapping Google Design & UI Ecosystem starting from ${seeds.length} seeds...`);
-	
+	console.log(
+		`🔍 Mapping Google Design & UI Ecosystem starting from ${seeds.length} seeds...`,
+	);
+
 	const results = await scanner.scan(seeds);
 
 	console.log("\n✨ Discovery Complete!");
-	
+
 	// Filter and group by domain to find unique official properties
 	const uniqueDomains = new Set<string>();
 	for (const r of results) {
@@ -56,12 +58,17 @@ async function main() {
 	}
 
 	console.log("\n🌐 Official Google Design/UI/Framework Hostnames Found:");
-	Array.from(uniqueDomains).sort().forEach(domain => {
-		console.log(`  - ${domain}`);
-	});
+	Array.from(uniqueDomains)
+		.sort()
+		.forEach((domain) => {
+			console.log(`  - ${domain}`);
+		});
 
 	// Save results
-	await Bun.write("discovery-design-results.json", JSON.stringify(results, null, 2));
+	await Bun.write(
+		"discovery-design-results.json",
+		JSON.stringify(results, null, 2),
+	);
 }
 
 main().catch(console.error);

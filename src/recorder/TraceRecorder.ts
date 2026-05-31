@@ -67,9 +67,9 @@ export class TraceRecorder {
 	async stopAndSave(path: string): Promise<void> {
 		if (!this.#recording) return;
 		this.#recording = false;
-		
+
 		const har = this.#harRecorder.stop();
-		
+
 		const trace: BxcTrace = {
 			version: "1.0",
 			creator: "bxc",
@@ -81,7 +81,7 @@ export class TraceRecorder {
 		const jsonBuffer = Buffer.from(JSON.stringify(trace));
 		// Use Bun's native ZSTD compression
 		const compressed = Bun.zstdCompressSync(jsonBuffer);
-		
+
 		await Bun.write(path, compressed);
 	}
 

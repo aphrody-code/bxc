@@ -49,19 +49,38 @@ function resolveBinPath(): string | null {
 /**
  * CLI Entry point for `bxc chrome ...`
  */
-export async function main(args: string[], _opts: CommonOptions): Promise<void> {
+export async function main(
+	args: string[],
+	_opts: CommonOptions,
+): Promise<void> {
 	const subcommand = args[0];
 	const bin = resolveBinPath();
 
 	switch (subcommand) {
 		case "fetch": {
-			const url = args[1] ?? Bun.env["BXC_CHROME_FETCH_URL"] ?? "https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1399999/chrome-linux.zip";
+			const url =
+				args[1] ??
+				Bun.env["BXC_CHROME_FETCH_URL"] ??
+				"https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1399999/chrome-linux.zip";
 			logger.log(`[chrome] fetching native Chromium from ${url}...`);
-			const spawnArgs = bin 
+			const spawnArgs = bin
 				? [bin, "fetch", url]
-				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "fetch", url];
+				: [
+						"cargo",
+						"run",
+						"--manifest-path",
+						CARGO_TOML,
+						"--bin",
+						"bxc-engine",
+						"--",
+						"fetch",
+						url,
+					];
 
-			const proc = Bun.spawn(spawnArgs, { stdout: "inherit", stderr: "inherit" });
+			const proc = Bun.spawn(spawnArgs, {
+				stdout: "inherit",
+				stderr: "inherit",
+			});
 			const exitCode = await proc.exited;
 			if (exitCode !== 0) {
 				process.exit(exitCode);
@@ -71,7 +90,8 @@ export async function main(args: string[], _opts: CommonOptions): Promise<void> 
 
 		case "launch": {
 			const pathIdx = args.indexOf("--path");
-			let chromePath = pathIdx !== -1 ? args[pathIdx + 1] : Bun.env["BXC_CHROME_BIN"];
+			let chromePath =
+				pathIdx !== -1 ? args[pathIdx + 1] : Bun.env["BXC_CHROME_BIN"];
 
 			if (!chromePath) {
 				chromePath = Bun.env["CHROME_PATH"];
@@ -80,10 +100,24 @@ export async function main(args: string[], _opts: CommonOptions): Promise<void> 
 			if (!chromePath) {
 				const pathArgs = bin
 					? [bin, "chrome-path"]
-					: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "chrome-path"];
+					: [
+							"cargo",
+							"run",
+							"--manifest-path",
+							CARGO_TOML,
+							"--bin",
+							"bxc-engine",
+							"--",
+							"chrome-path",
+						];
 
 				const pathProc = Bun.spawnSync(pathArgs, { env: Bun.env });
-				chromePath = pathProc.stdout.toString().trim().split("\n").pop()?.trim();
+				chromePath = pathProc.stdout
+					.toString()
+					.trim()
+					.split("\n")
+					.pop()
+					?.trim();
 			}
 
 			if (!chromePath) {
@@ -94,9 +128,22 @@ export async function main(args: string[], _opts: CommonOptions): Promise<void> 
 			logger.log(`[chrome] launching native Chromium from ${chromePath}...`);
 			const launchArgs = bin
 				? [bin, "launch", chromePath]
-				: ["cargo", "run", "--manifest-path", CARGO_TOML, "--bin", "bxc-engine", "--", "launch", chromePath];
+				: [
+						"cargo",
+						"run",
+						"--manifest-path",
+						CARGO_TOML,
+						"--bin",
+						"bxc-engine",
+						"--",
+						"launch",
+						chromePath,
+					];
 
-			const proc = Bun.spawn(launchArgs, { stdout: "inherit", stderr: "inherit" });
+			const proc = Bun.spawn(launchArgs, {
+				stdout: "inherit",
+				stderr: "inherit",
+			});
 
 			process.on("SIGINT", () => proc.kill());
 			process.on("SIGTERM", () => proc.kill());

@@ -46,7 +46,12 @@ type LightpandaPlatform =
 
 type DetectedPlatform = {
 	id: LightpandaPlatform;
-	dirName: "linux-x64" | "linux-arm64" | "darwin-x64" | "darwin-arm64" | "windows-x64";
+	dirName:
+		| "linux-x64"
+		| "linux-arm64"
+		| "darwin-x64"
+		| "darwin-arm64"
+		| "windows-x64";
 	assetName: string;
 };
 

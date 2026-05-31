@@ -18,7 +18,7 @@
  * @module bxc/google/cache
  *
  * Reinforced SQLite-backed cache for Google SERP / fetch results.
- * 
+ *
  * Features:
  * - High-performance Bun native SQLite driver (Zig-powered).
  * - WAL (Write-Ahead Logging) enabled for concurrent read/write.
@@ -32,8 +32,8 @@ import { join } from "node:path";
 import { mkdirSync } from "node:fs";
 
 export interface CacheOptions {
-	/** 
-	 * Path to sqlite file. 
+	/**
+	 * Path to sqlite file.
 	 * Defaults to `~/.bxc/cache.sqlite` or `:memory:`.
 	 */
 	path?: string;
@@ -52,7 +52,7 @@ export class GoogleCache {
 	readonly #db: Database;
 	readonly #ttl: number;
 	readonly #max: number;
-	
+
 	// Prepared statements for maximum speed (compiled once)
 	readonly #getStmt: any;
 	readonly #setStmt: any;
@@ -63,7 +63,7 @@ export class GoogleCache {
 
 	constructor(opts: CacheOptions = {}) {
 		let dbPath = opts.path;
-		
+
 		if (!dbPath && process.env.HOME) {
 			const dir = join(process.env.HOME, ".bxc");
 			try {
@@ -74,14 +74,14 @@ export class GoogleCache {
 			}
 		}
 
-		this.#db = new Database(dbPath ?? ":memory:", { 
+		this.#db = new Database(dbPath ?? ":memory:", {
 			create: true,
-			strict: opts.strict ?? true 
+			strict: opts.strict ?? true,
 		});
 
 		// WAL mode is crucial for performance on VPS with multiple workers
 		this.#db.exec("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
-		
+
 		this.#db.exec(`
 			CREATE TABLE IF NOT EXISTS cache (
 				key TEXT PRIMARY KEY,
@@ -127,7 +127,10 @@ export class GoogleCache {
 		if (row.is_json === 1) {
 			try {
 				// Bun handles Uint8Array -> string conversion efficiently
-				const text = typeof row.payload === "string" ? row.payload : new TextDecoder().decode(row.payload);
+				const text =
+					typeof row.payload === "string"
+						? row.payload
+						: new TextDecoder().decode(row.payload);
 				return JSON.parse(text) as T;
 			} catch {
 				return null;
@@ -144,7 +147,7 @@ export class GoogleCache {
 	set<T>(key: string, value: T, ttlMs?: number): void {
 		const now = Date.now();
 		const expires = now + (ttlMs ?? this.#ttl);
-		
+
 		let payload: Uint8Array | string;
 		let isJson = 0;
 

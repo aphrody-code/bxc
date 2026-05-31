@@ -44,7 +44,9 @@ function makeFakeTarget(initialUrl: string) {
 		url: () => initialUrl,
 		async addCookies(rows) {
 			for (const r of rows) cookies.push(r);
-			log.push(`addCookies(${rows.map((r) => `${r.name}@${r.domain ?? "?"}`).join(",")})`);
+			log.push(
+				`addCookies(${rows.map((r) => `${r.name}@${r.domain ?? "?"}`).join(",")})`,
+			);
 		},
 		async clearCookies(filter) {
 			const before = cookies.length;
@@ -54,7 +56,9 @@ function makeFakeTarget(initialUrl: string) {
 			} else {
 				cookies.length = 0;
 			}
-			log.push(`clearCookies(${filter?.name ?? "all"})=${before - cookies.length}`);
+			log.push(
+				`clearCookies(${filter?.name ?? "all"})=${before - cookies.length}`,
+			);
 		},
 	};
 	return { target, log, cookies };
@@ -109,7 +113,9 @@ describe("instant()", () => {
 	test("re-entrance guard rejects nested instant() calls", async () => {
 		const { target } = makeFakeTarget("http://localhost:3000/");
 		await instant(target, async () => {
-			await expect(instant(target, async () => undefined)).rejects.toThrow(/already running/);
+			await expect(instant(target, async () => undefined)).rejects.toThrow(
+				/already running/,
+			);
 		});
 	});
 });

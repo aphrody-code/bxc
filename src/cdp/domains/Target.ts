@@ -39,7 +39,12 @@ const BROWSER_SESSION_ID = "browserTargetSessionId";
 const browserContextIds = new Set<string>([BROWSER_CONTEXT_ID]);
 let browserContextCounter = 0;
 
-export const TargetHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const TargetHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		case "Target.getBrowserContexts":
 			return { browserContextIds: [BROWSER_CONTEXT_ID] };
@@ -112,9 +117,13 @@ export const TargetHandler: DomainHandler = async (method, params, ctx, sessionI
 			// (root → browser-session → page-session).
 			// Do NOT emit on the root (empty sessionId) to avoid duplicate processing
 			// by the TargetManager.
-			const nonRootSessions = [...ctx.autoAttachSessions].filter((s) => s !== "");
+			const nonRootSessions = [...ctx.autoAttachSessions].filter(
+				(s) => s !== "",
+			);
 			const emitSessions =
-				nonRootSessions.length > 0 ? nonRootSessions : [...ctx.autoAttachSessions];
+				nonRootSessions.length > 0
+					? nonRootSessions
+					: [...ctx.autoAttachSessions];
 			for (const attachingSession of emitSessions) {
 				ctx.emitEvent({
 					method: "Target.attachedToTarget",
@@ -189,7 +198,9 @@ export const TargetHandler: DomainHandler = async (method, params, ctx, sessionI
 
 		case "Target.getTargets": {
 			// Return all known page targets.
-			const targetInfos = [...ctx.pages.values()].map((page) => ctx.pageTargetInfo(page));
+			const targetInfos = [...ctx.pages.values()].map((page) =>
+				ctx.pageTargetInfo(page),
+			);
 			// Also include the browser target itself.
 			targetInfos.unshift({
 				targetId: BROWSER_TARGET_ID,

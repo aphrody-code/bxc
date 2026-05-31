@@ -7,25 +7,25 @@
  * @module
  */
 
-import { AjvJsonSchemaValidator } from './validators/ajvProvider.js';
-import { CfWorkerJsonSchemaValidator } from './validators/cfWorkerProvider.js';
+import { AjvJsonSchemaValidator } from "./validators/ajvProvider.js";
+import { CfWorkerJsonSchemaValidator } from "./validators/cfWorkerProvider.js";
 
 /**
  * Example: AJV validator for Node.js.
  */
 function validation_ajv() {
-    //#region validation_ajv
-    const validator = new AjvJsonSchemaValidator();
-    //#endregion validation_ajv
-    return validator;
+	//#region validation_ajv
+	const validator = new AjvJsonSchemaValidator();
+	//#endregion validation_ajv
+	return validator;
 }
 
 /**
  * Example: CfWorker validator for edge runtimes.
  */
 function validation_cfWorker() {
-    //#region validation_cfWorker
-    const validator = new CfWorkerJsonSchemaValidator();
-    //#endregion validation_cfWorker
-    return validator;
+	//#region validation_cfWorker
+	const validator = new CfWorkerJsonSchemaValidator();
+	//#endregion validation_cfWorker
+	return validator;
 }

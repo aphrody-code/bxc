@@ -83,7 +83,9 @@ function compilePattern(raw: string): RegExp {
 	const anchored = raw.endsWith("$");
 	const base = anchored ? raw.slice(0, -1) : raw;
 
-	const escaped = base.replace(/[.+?^{}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+	const escaped = base
+		.replace(/[.+?^{}()|[\]\\]/g, "\\$&")
+		.replace(/\*/g, ".*");
 
 	return new RegExp("^" + escaped + (anchored ? "$" : ""), "i");
 }
@@ -92,7 +94,10 @@ function compilePattern(raw: string): RegExp {
 // Parser
 // ---------------------------------------------------------------------------
 
-function parseRobotsTxt(content: string): { groups: RobotsGroup[]; sitemaps: string[] } {
+function parseRobotsTxt(content: string): {
+	groups: RobotsGroup[];
+	sitemaps: string[];
+} {
 	const lines = content.split(/\r?\n/);
 	const groups: RobotsGroup[] = [];
 	const sitemaps: string[] = [];
@@ -205,7 +210,10 @@ export class RobotsFile {
 	 * Fetch robots.txt for the given URL's origin and parse it.
 	 * Returns a permissive (allow-all) instance if the file cannot be fetched.
 	 */
-	static async fetch(url: string, opts: RobotsFileOptions = {}): Promise<RobotsFile> {
+	static async fetch(
+		url: string,
+		opts: RobotsFileOptions = {},
+	): Promise<RobotsFile> {
 		const origin = new URL(url);
 		const robotsUrl = `${origin.protocol}//${origin.host}/robots.txt`;
 		const ua = opts.userAgent ?? "Bxc/1.0";
@@ -277,8 +285,11 @@ export class RobotsFile {
 		);
 
 		// Prefer exact agent match over wildcard
-		const specificGroups = matchedGroups.filter((g) => g.agents.includes(agentLower));
-		const activeGroups = specificGroups.length > 0 ? specificGroups : matchedGroups;
+		const specificGroups = matchedGroups.filter((g) =>
+			g.agents.includes(agentLower),
+		);
+		const activeGroups =
+			specificGroups.length > 0 ? specificGroups : matchedGroups;
 
 		// Collect all matching rules across groups
 		interface MatchedRule {

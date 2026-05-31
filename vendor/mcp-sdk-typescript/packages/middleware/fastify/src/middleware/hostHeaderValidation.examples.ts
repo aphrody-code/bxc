@@ -7,24 +7,30 @@
  * @module
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from "fastify";
 
-import { hostHeaderValidation, localhostHostValidation } from './hostHeaderValidation.js';
+import {
+	hostHeaderValidation,
+	localhostHostValidation,
+} from "./hostHeaderValidation.js";
 
 /**
  * Example: Using hostHeaderValidation hook with custom allowed hosts.
  */
 function hostHeaderValidation_basicUsage(app: FastifyInstance) {
-    //#region hostHeaderValidation_basicUsage
-    app.addHook('onRequest', hostHeaderValidation(['localhost', '127.0.0.1', '[::1]']));
-    //#endregion hostHeaderValidation_basicUsage
+	//#region hostHeaderValidation_basicUsage
+	app.addHook(
+		"onRequest",
+		hostHeaderValidation(["localhost", "127.0.0.1", "[::1]"]),
+	);
+	//#endregion hostHeaderValidation_basicUsage
 }
 
 /**
  * Example: Using localhostHostValidation convenience hook.
  */
 function localhostHostValidation_basicUsage(app: FastifyInstance) {
-    //#region localhostHostValidation_basicUsage
-    app.addHook('onRequest', localhostHostValidation());
-    //#endregion localhostHostValidation_basicUsage
+	//#region localhostHostValidation_basicUsage
+	app.addHook("onRequest", localhostHostValidation());
+	//#endregion localhostHostValidation_basicUsage
 }

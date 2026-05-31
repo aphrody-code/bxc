@@ -19,24 +19,24 @@ import { $ } from "bun";
 console.log("🧹 Cleaning repository...");
 
 const patterns = [
-    "dist",
-    ".turbo",
-    "node_modules",
-    "**/*.log",
-    "**/tmp",
-    "**/temp",
-    "**/.DS_Store",
-    "coverage",
-    "screenshots/*.png",
+	"dist",
+	".turbo",
+	"node_modules",
+	"**/*.log",
+	"**/tmp",
+	"**/temp",
+	"**/.DS_Store",
+	"coverage",
+	"screenshots/*.png",
 ];
 
 for (const pattern of patterns) {
-    try {
-        await $`rm -rf ${pattern}`.quiet();
-        console.log(`  - Removed ${pattern}`);
-    } catch {
-        // Skip if not found
-    }
+	try {
+		await $`rm -rf ${pattern}`.quiet();
+		console.log(`  - Removed ${pattern}`);
+	} catch {
+		// Skip if not found
+	}
 }
 
 console.log("✨ Repository cleaned.");

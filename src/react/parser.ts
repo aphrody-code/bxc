@@ -96,7 +96,8 @@ export interface HydrationSignal {
 // Next.js — __NEXT_DATA__
 // ---------------------------------------------------------------------------
 
-const NEXT_DATA_RE = /<script[^>]+id=["']__NEXT_DATA__["'][^>]*>\s*([\s\S]*?)\s*<\/script>/i;
+const NEXT_DATA_RE =
+	/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>\s*([\s\S]*?)\s*<\/script>/i;
 
 /** Extracts the `__NEXT_DATA__` JSON payload from server-rendered HTML. */
 export function parseNextData(html: string): NextDataPayload | null {
@@ -108,10 +109,16 @@ export function parseNextData(html: string): NextDataPayload | null {
 		const raw = JSON.parse(json) as Record<string, unknown>;
 		const props = raw["props"] as Record<string, unknown> | undefined;
 		return {
-			page: typeof raw["page"] === "string" ? (raw["page"] as string) : undefined,
-			query: (raw["query"] as Record<string, string | string[]> | undefined) ?? undefined,
+			page:
+				typeof raw["page"] === "string" ? (raw["page"] as string) : undefined,
+			query:
+				(raw["query"] as Record<string, string | string[]> | undefined) ??
+				undefined,
 			props,
-			buildId: typeof raw["buildId"] === "string" ? (raw["buildId"] as string) : undefined,
+			buildId:
+				typeof raw["buildId"] === "string"
+					? (raw["buildId"] as string)
+					: undefined,
 			isFallback: raw["isFallback"] as boolean | undefined,
 			dev: raw["dev"] as boolean | undefined,
 			locale: raw["locale"] as string | undefined,
@@ -228,7 +235,10 @@ export function findReactRoots(html: string): ReactRootInfo[] {
 	const roots: ReactRootInfo[] = [];
 	const candidates = ["__next", "__nuxt", "root", "app", "react-root"];
 	for (const id of candidates) {
-		const re = new RegExp(`<([a-z]+)[^>]+id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/\\1>`, "i");
+		const re = new RegExp(
+			`<([a-z]+)[^>]+id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/\\1>`,
+			"i",
+		);
 		const m = html.match(re);
 		if (!m) continue;
 		const inner = m[2];
@@ -261,7 +271,10 @@ export function detectHydration(html: string): HydrationSignal {
 		};
 	}
 	if (APP_FLIGHT_RE.test(html)) {
-		return { framework: "next-app", hydrated: html.includes("self.__next_f.push") };
+		return {
+			framework: "next-app",
+			hydrated: html.includes("self.__next_f.push"),
+		};
 	}
 	if (/window\.__NUXT__/i.test(html)) {
 		return { framework: "nuxt", hydrated: true };
@@ -355,7 +368,9 @@ export async function fetchNextData(
 		},
 	});
 	if (!r.ok) {
-		throw new Error(`/_next/data/ fetch returned HTTP ${r.status} for ${url.href}`);
+		throw new Error(
+			`/_next/data/ fetch returned HTTP ${r.status} for ${url.href}`,
+		);
 	}
 	return r.json();
 }

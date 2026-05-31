@@ -25,7 +25,12 @@
 
 import type { DomainHandler } from "../types.js";
 
-export const SecurityHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const SecurityHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		// -----------------------------------------------------------------------
 		// setIgnoreCertificateErrors — propagate to next fetch as TLS override
@@ -33,7 +38,8 @@ export const SecurityHandler: DomainHandler = async (method, params, ctx, sessio
 		case "Security.setIgnoreCertificateErrors": {
 			const page = ctx.pageBySession(sessionId);
 			const p = params as { ignore?: boolean };
-			page.security.ignoreCertificateErrors = typeof p.ignore === "boolean" ? p.ignore : false;
+			page.security.ignoreCertificateErrors =
+				typeof p.ignore === "boolean" ? p.ignore : false;
 			return {};
 		}
 

@@ -1,0 +1,34 @@
+{
+	"futgg": {
+		"homepage": "https://www.fut.gg/",
+		"domains": [
+			"www.fut.gg",
+			"media.fut.gg",
+			"game-assets.fut.gg",
+			"logo.fut.gg",
+			"assets.fut.gg"
+		],
+		"cdn": "Cloudflare",
+		"apis": [],
+		"seed_urls": [
+			"https://www.fut.gg/players/170890-blaise-matuidi/26-50502538/",
+			"https://www.fut.gg/sbc/players/26-921-blaise-matuidi/"
+		]
+	},
+	"futbin": {
+		"homepage": "https://www.futbin.com/",
+		"domains": ["www.futbin.com"],
+		"cdn": "Cloudflare",
+		"apis": [],
+		"seed_urls": ["https://www.futbin.com/26/player/20801/cristiano-ronaldo"]
+	},
+	"ea_fc": {
+		"homepage": "https://www.ea.com/fr-fr/ea-sports-fc/ultimate-team/",
+		"domains": ["www.ea.com", "media.contentapi.ea.com", "pl.ea.com"],
+		"cdn": "Akamai Technologies",
+		"apis": [],
+		"seed_urls": [
+			"https://www.ea.com/fr-fr/ea-sports-fc/ultimate-team/web-app/"
+		]
+	}
+}

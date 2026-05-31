@@ -1,0 +1,44 @@
+{
+	"extracted_at": "2026-05-31T15:47:57.587Z",
+	"state": {
+		"success": 50,
+		"errors": 0
+	},
+	"players": [
+		{
+			"name": "Blaise Matuidi - Ultimate Scream Hero 87 OVR",
+			"rating": 85,
+			"position": "CM",
+			"nation": "France",
+			"league": "Ligue 1 McDonald's",
+			"playstyles": [
+				"Jockey",
+				"Intercept",
+				"Anticipate",
+				"Block",
+				"Slide Tackle",
+				"Pinged Pass",
+				"Press Proven",
+				"Quick Step",
+				"Relentless"
+			],
+			"playstylesPlus": [],
+			"pac": 84,
+			"sho": 73,
+			"pas": 80,
+			"dri": 80,
+			"def": 85,
+			"phy": 87,
+			"skillMoves": 3,
+			"weakFoot": 3,
+			"isGeneric": false
+		}
+	],
+	"prices": [
+		{
+			"url": "https://www.futbin.com/26/player/20801/cristiano-ronaldo",
+			"price": "15,000",
+			"lastUpdated": "2026-05-31T15:47:07.002Z"
+		}
+	]
+}

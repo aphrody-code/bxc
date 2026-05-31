@@ -56,7 +56,9 @@ try {
 	}> = [];
 
 	for (const p of info.players) {
-		console.error(`[RESOLVER] Scrape/Test du lecteur : ${p.name} (${p.provider})...`);
+		console.error(
+			`[RESOLVER] Scrape/Test du lecteur : ${p.name} (${p.provider})...`,
+		);
 		try {
 			const s = await va.resolveSource(p);
 			if ((s.type === "hls" || s.type === "mp4") && s.url) {
@@ -83,7 +85,9 @@ try {
 				}
 
 				if (testOk) {
-					console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : VALIDE (${s.type}, HTTP ${testStatus})`);
+					console.error(
+						`[RESOLVER] Lecteur ${p.name} (${p.provider}) : VALIDE (${s.type}, HTTP ${testStatus})`,
+					);
 					candidates.push({
 						type: s.type,
 						url: s.url,
@@ -91,24 +95,35 @@ try {
 						provider: p.provider,
 					});
 				} else {
-					console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : INVALIDE ou INJOIGNABLE (HTTP ${testStatus})`);
+					console.error(
+						`[RESOLVER] Lecteur ${p.name} (${p.provider}) : INVALIDE ou INJOIGNABLE (HTTP ${testStatus})`,
+					);
 				}
 			} else {
-				console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : ECHEC (Résolution: ${s.error ?? "format non supporté"})`);
+				console.error(
+					`[RESOLVER] Lecteur ${p.name} (${p.provider}) : ECHEC (Résolution: ${s.error ?? "format non supporté"})`,
+				);
 			}
 		} catch (err) {
-			console.error(`[RESOLVER] Lecteur ${p.name} (${p.provider}) : ERREUR :`, err);
+			console.error(
+				`[RESOLVER] Lecteur ${p.name} (${p.provider}) : ERREUR :`,
+				err,
+			);
 		}
 	}
 
 	if (candidates.length > 0) {
 		// Prefer HLS over MP4 if any exists
-		const chosen = candidates.find(c => c.type === "hls") ?? candidates[0];
-		console.error(`[RESOLVER] Succès : lecteur retenu = ${chosen.provider} (${chosen.type})`);
+		const chosen = candidates.find((c) => c.type === "hls") ?? candidates[0];
+		console.error(
+			`[RESOLVER] Succès : lecteur retenu = ${chosen.provider} (${chosen.type})`,
+		);
 		console.log(JSON.stringify(chosen));
 		process.exit(0);
 	}
-	console.log(JSON.stringify({ error: "aucun lecteur fonctionnel résolu en HLS/MP4" }));
+	console.log(
+		JSON.stringify({ error: "aucun lecteur fonctionnel résolu en HLS/MP4" }),
+	);
 } catch (e) {
 	console.log(JSON.stringify({ error: String(e).slice(0, 200) }));
 } finally {

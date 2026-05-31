@@ -190,7 +190,6 @@ const CURLOPT = {
 	ACCEPT_ENCODING: 102,
 } as const;
 
-
 /** CURLcode success value. */
 const CURLE_OK = 0;
 

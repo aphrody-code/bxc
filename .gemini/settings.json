@@ -5,10 +5,6 @@
 		}
 	},
 	"mcpServers": {
-		"fetch": {
-			"command": "bunx",
-			"args": ["--bun", "@modelcontextprotocol/server-fetch"]
-		},
 		"memory": {
 			"command": "bunx",
 			"args": ["--bun", "@modelcontextprotocol/server-memory"]
@@ -21,17 +17,9 @@
 				"/home/ubuntu/bxc"
 			]
 		},
-		"git": {
-			"command": "bunx",
-			"args": ["--bun", "@modelcontextprotocol/server-git"]
-		},
 		"sequentialthinking": {
 			"command": "bunx",
 			"args": ["--bun", "@modelcontextprotocol/server-sequential-thinking"]
-		},
-		"time": {
-			"command": "bunx",
-			"args": ["--bun", "@modelcontextprotocol/server-time"]
 		}
 	},
 	"tools": {

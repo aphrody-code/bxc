@@ -46,7 +46,10 @@ async function runConcurrentBatch<T>(
 		}
 	}
 
-	const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker());
+	const workers = Array.from(
+		{ length: Math.min(concurrency, tasks.length) },
+		() => worker(),
+	);
 	await Promise.all(workers);
 	return results;
 }
@@ -122,7 +125,12 @@ export async function run(): Promise<ScenarioResult[]> {
 
 	// --- fetch-native: 25 concurrent ---
 	console.log(`[${SCENARIO_ID}] fetch-native: 25 concurrent...`);
-	const fetchBatch25 = await runParallelScenario("fetch-native", fetchNative.run, urls, 25);
+	const fetchBatch25 = await runParallelScenario(
+		"fetch-native",
+		fetchNative.run,
+		urls,
+		25,
+	);
 	results.push({ ...fetchBatch25, scenario: `${SCENARIO_ID} (conc=25)` });
 	console.log(
 		`[${SCENARIO_ID}] fetch-native batched-25: total=${fetchBatch25.totalMs}ms p50=${fetchBatch25.p50Ms}ms p95=${fetchBatch25.p95Ms}ms`,
@@ -132,7 +140,12 @@ export async function run(): Promise<ScenarioResult[]> {
 
 	// --- fetch-native: 100 concurrent ---
 	console.log(`[${SCENARIO_ID}] fetch-native: 100 concurrent...`);
-	const fetchConc100 = await runParallelScenario("fetch-native", fetchNative.run, urls, 100);
+	const fetchConc100 = await runParallelScenario(
+		"fetch-native",
+		fetchNative.run,
+		urls,
+		100,
+	);
 	results.push({ ...fetchConc100, scenario: `${SCENARIO_ID} (conc=100)` });
 	console.log(
 		`[${SCENARIO_ID}] fetch-native concurrent-100: total=${fetchConc100.totalMs}ms p50=${fetchConc100.p50Ms}ms p95=${fetchConc100.p95Ms}ms`,

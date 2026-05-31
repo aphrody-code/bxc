@@ -22,7 +22,13 @@
 
 import { Browser, type Page } from "../api/browser.ts";
 import { detectFrameworks } from "../detect.ts";
-import { EXIT, type CommonOptions, bxcFetch, logger, parseCommonArgs } from "./shared.ts";
+import {
+	EXIT,
+	type CommonOptions,
+	bxcFetch,
+	logger,
+	parseCommonArgs,
+} from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -284,7 +290,8 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	let screenshotBytes: number | undefined;
 	let screenshotPath: string | undefined;
 
-	const needsBrowser = opts.screenshot || opts.profile === "fast" || opts.profile === "static";
+	const needsBrowser =
+		opts.screenshot || opts.profile === "fast" || opts.profile === "static";
 	let browserError: string | null = null;
 	if (needsBrowser) {
 		let page: Page | undefined;
@@ -293,13 +300,18 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 			page = (await Browser.newPage({
 				profile: opts.profile,
 				spawnOpts:
-					opts.profile === "fast" ? { logLevel: "error", readyTimeoutMs: 10_000 } : undefined,
+					opts.profile === "fast"
+						? { logLevel: "error", readyTimeoutMs: 10_000 }
+						: undefined,
 			})) as Page;
 
 			await Promise.race([
 				page.goto(opts.url, { timeoutMs: opts.timeoutMs }),
 				new Promise<never>((_, rej) =>
-					setTimeout(() => rej(new Error("navigation timeout")), opts.timeoutMs),
+					setTimeout(
+						() => rej(new Error("navigation timeout")),
+						opts.timeoutMs,
+					),
 				),
 			]);
 			gotoMs = (Bun.nanoseconds() - t1) / 1e6;
@@ -329,24 +341,32 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	}
 
 	if (browserError && !opts.quiet) {
-		logger.warn(`browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.`);
+		logger.warn(
+			`browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.`,
+		);
 	}
 
 	const [assets, cssSelectors, frameworks] = await Promise.all([
 		Promise.resolve(extractAssets(body, opts.url)),
 		extractCssSelectors(body, opts.url, opts),
-		detectFrameworks({ html: body, headers: {} }, { insecure: opts.insecure, timeoutMs: 10_000 }).catch(() => []),
+		detectFrameworks(
+			{ html: body, headers: {} },
+			{ insecure: opts.insecure, timeoutMs: 10_000 },
+		).catch(() => []),
 	]);
 
 	if (opts.snapshotDir) {
-		await Bun.write(`${opts.snapshotDir}/${opts.profile}.html`, body).catch(() => {});
+		await Bun.write(`${opts.snapshotDir}/${opts.profile}.html`, body).catch(
+			() => {},
+		);
 		await Bun.write(
 			`${opts.snapshotDir}/headers.json`,
 			JSON.stringify(fetched.headers, null, 2),
 		).catch(() => {});
-		await Bun.write(`${opts.snapshotDir}/css-selectors.txt`, cssSelectors.join("\n")).catch(
-			() => {},
-		);
+		await Bun.write(
+			`${opts.snapshotDir}/css-selectors.txt`,
+			cssSelectors.join("\n"),
+		).catch(() => {});
 	}
 
 	return {
@@ -394,7 +414,8 @@ export function renderPlain(r: ReconResult): string {
 	}
 	for (const a of r.assets) lines.push(`asset:${a.type} ${a.url}`);
 	for (const s of r.cssSelectors) lines.push(`css_selector: ${s}`);
-	if (r.screenshotPath) lines.push(`screenshot: ${r.screenshotPath} ${r.screenshotBytes ?? 0}b`);
+	if (r.screenshotPath)
+		lines.push(`screenshot: ${r.screenshotPath} ${r.screenshotBytes ?? 0}b`);
 	return lines.join("\n");
 }
 
@@ -402,7 +423,9 @@ export function renderMarkdown(r: ReconResult): string {
 	const lines: string[] = [];
 	lines.push(`# Recon report — ${r.url}`);
 	lines.push("");
-	lines.push(`Date: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
+	lines.push(
+		`Date: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
+	);
 	if (r.url !== r.finalUrl) {
 		lines.push(`Final URL: ${r.finalUrl}`);
 	}
@@ -412,7 +435,9 @@ export function renderMarkdown(r: ReconResult): string {
 	lines.push(`## HTTP & CDN`);
 	lines.push("");
 	lines.push(`- **HTTP status**: ${r.httpStatus}`);
-	lines.push(`- **Body bytes**: ${r.bytes} (${(r.bytes / 1024).toFixed(0)} KB)`);
+	lines.push(
+		`- **Body bytes**: ${r.bytes} (${(r.bytes / 1024).toFixed(0)} KB)`,
+	);
 	lines.push(`- **goto duration**: ${r.gotoMs.toFixed(0)} ms`);
 	lines.push(`- **Server**: \`${r.headers.server ?? "n/a"}\``);
 	lines.push(`- **X-Powered-By**: \`${r.headers.xPoweredBy ?? "n/a"}\``);
@@ -461,7 +486,13 @@ export function renderMarkdown(r: ReconResult): string {
 		arr.push(a);
 		byType.set(a.type, arr);
 	}
-	for (const t of ["stylesheet", "script", "image", "font", "iframe"] as const) {
+	for (const t of [
+		"stylesheet",
+		"script",
+		"image",
+		"font",
+		"iframe",
+	] as const) {
 		const list = byType.get(t) ?? [];
 		if (list.length === 0) continue;
 		lines.push(`### ${t} (${list.length})`);
@@ -471,7 +502,9 @@ export function renderMarkdown(r: ReconResult): string {
 		lines.push("");
 	}
 
-	lines.push(`## CSS selectors (${r.cssSelectors.length} total) — sample top 50`);
+	lines.push(
+		`## CSS selectors (${r.cssSelectors.length} total) — sample top 50`,
+	);
 	lines.push("");
 	lines.push("```css");
 	for (const s of r.cssSelectors.slice(0, 50)) lines.push(`${s} {}`);
@@ -518,7 +551,10 @@ Options:
 	);
 }
 
-function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ReconCliOptions | null {
+function parseArgs(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): ReconCliOptions | null {
 	const opts: ReconCliOptions = {
 		...baseOpts,
 		url: "",
@@ -574,7 +610,10 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): ReconCliOp
 	return opts;
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		process.exit(EXIT.MISUSE);
@@ -614,7 +653,8 @@ export async function main(argv: readonly string[], baseOpts: CommonOptions): Pr
 
 	if (opts.outputPath) {
 		await Bun.write(opts.outputPath, rendered);
-		if (!opts.quiet) logger.log(`wrote ${rendered.length} bytes to ${opts.outputPath}`);
+		if (!opts.quiet)
+			logger.log(`wrote ${rendered.length} bytes to ${opts.outputPath}`);
 	} else {
 		Bun.stdout.write(rendered + "\n");
 	}

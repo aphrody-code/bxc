@@ -7,35 +7,35 @@
  * JSON-RPC error responses.
  */
 export enum SdkErrorCode {
-    // State errors
-    /** Transport is not connected */
-    NotConnected = 'NOT_CONNECTED',
-    /** Transport is already connected */
-    AlreadyConnected = 'ALREADY_CONNECTED',
-    /** Protocol is not initialized */
-    NotInitialized = 'NOT_INITIALIZED',
+	// State errors
+	/** Transport is not connected */
+	NotConnected = "NOT_CONNECTED",
+	/** Transport is already connected */
+	AlreadyConnected = "ALREADY_CONNECTED",
+	/** Protocol is not initialized */
+	NotInitialized = "NOT_INITIALIZED",
 
-    // Capability errors
-    /** Required capability is not supported by the remote side */
-    CapabilityNotSupported = 'CAPABILITY_NOT_SUPPORTED',
+	// Capability errors
+	/** Required capability is not supported by the remote side */
+	CapabilityNotSupported = "CAPABILITY_NOT_SUPPORTED",
 
-    // Transport errors
-    /** Request timed out waiting for response */
-    RequestTimeout = 'REQUEST_TIMEOUT',
-    /** Connection was closed */
-    ConnectionClosed = 'CONNECTION_CLOSED',
-    /** Failed to send message */
-    SendFailed = 'SEND_FAILED',
-    /** Response result failed local schema validation */
-    InvalidResult = 'INVALID_RESULT',
+	// Transport errors
+	/** Request timed out waiting for response */
+	RequestTimeout = "REQUEST_TIMEOUT",
+	/** Connection was closed */
+	ConnectionClosed = "CONNECTION_CLOSED",
+	/** Failed to send message */
+	SendFailed = "SEND_FAILED",
+	/** Response result failed local schema validation */
+	InvalidResult = "INVALID_RESULT",
 
-    // Transport errors
-    ClientHttpNotImplemented = 'CLIENT_HTTP_NOT_IMPLEMENTED',
-    ClientHttpAuthentication = 'CLIENT_HTTP_AUTHENTICATION',
-    ClientHttpForbidden = 'CLIENT_HTTP_FORBIDDEN',
-    ClientHttpUnexpectedContent = 'CLIENT_HTTP_UNEXPECTED_CONTENT',
-    ClientHttpFailedToOpenStream = 'CLIENT_HTTP_FAILED_TO_OPEN_STREAM',
-    ClientHttpFailedToTerminateSession = 'CLIENT_HTTP_FAILED_TO_TERMINATE_SESSION'
+	// Transport errors
+	ClientHttpNotImplemented = "CLIENT_HTTP_NOT_IMPLEMENTED",
+	ClientHttpAuthentication = "CLIENT_HTTP_AUTHENTICATION",
+	ClientHttpForbidden = "CLIENT_HTTP_FORBIDDEN",
+	ClientHttpUnexpectedContent = "CLIENT_HTTP_UNEXPECTED_CONTENT",
+	ClientHttpFailedToOpenStream = "CLIENT_HTTP_FAILED_TO_OPEN_STREAM",
+	ClientHttpFailedToTerminateSession = "CLIENT_HTTP_FAILED_TO_TERMINATE_SESSION",
 }
 
 /**
@@ -57,12 +57,12 @@ export enum SdkErrorCode {
  * ```
  */
 export class SdkError extends Error {
-    constructor(
-        public readonly code: SdkErrorCode,
-        message: string,
-        public readonly data?: unknown
-    ) {
-        super(message);
-        this.name = 'SdkError';
-    }
+	constructor(
+		public readonly code: SdkErrorCode,
+		message: string,
+		public readonly data?: unknown,
+	) {
+		super(message);
+		this.name = "SdkError";
+	}
 }

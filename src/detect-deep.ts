@@ -329,13 +329,31 @@ const CDN_IP_PREFIXES: Array<{ name: string; prefixes: string[] }> = [
 	},
 	{
 		name: "Azure Front Door",
-		prefixes: ["13.107.21.", "13.107.42.", "13.107.213.", "20.36.", "40.90.", "40.93.", "40.95."],
+		prefixes: [
+			"13.107.21.",
+			"13.107.42.",
+			"13.107.213.",
+			"20.36.",
+			"40.90.",
+			"40.93.",
+			"40.95.",
+		],
 	},
 	{
 		name: "Google Developers Pages",
 		prefixes: ["185.199.108.", "185.199.109.", "185.199.110.", "185.199.111."],
 	},
-	{ name: "Heroku", prefixes: ["54.144.", "54.158.", "54.159.", "54.161.", "54.165.", "54.166."] },
+	{
+		name: "Heroku",
+		prefixes: [
+			"54.144.",
+			"54.158.",
+			"54.159.",
+			"54.161.",
+			"54.165.",
+			"54.166.",
+		],
+	},
 ];
 
 function ipToCdn(ip: string): string | null {
@@ -352,7 +370,10 @@ function ipToCdn(ip: string): string | null {
 // ---------------------------------------------------------------------------
 
 const NS_PATTERNS: Array<{ name: string; matches: RegExp }> = [
-	{ name: "Cloudflare DNS", matches: /\.cloudflare\.com$|\.ns\.cloudflare\.com$/i },
+	{
+		name: "Cloudflare DNS",
+		matches: /\.cloudflare\.com$|\.ns\.cloudflare\.com$/i,
+	},
 	{ name: "AWS Route 53", matches: /\.awsdns-/i },
 	{
 		name: "Google Cloud DNS",
@@ -377,28 +398,66 @@ function nsToProvider(ns: string): string | null {
 	return null;
 }
 
-const CNAME_HOSTING_PATTERNS: Array<{ name: string; bucket: DetectionBucket; matches: RegExp }> = [
-	{ name: "Vercel", bucket: "hosting", matches: /\.vercel-dns\.com$|\.vercel\.app$|\.now\.sh$/i },
-	{ name: "Netlify", bucket: "hosting", matches: /\.netlify\.com$|\.netlify\.app$/i },
-	{ name: "Google Developers Pages", bucket: "hosting", matches: /\.github\.io$/i },
+const CNAME_HOSTING_PATTERNS: Array<{
+	name: string;
+	bucket: DetectionBucket;
+	matches: RegExp;
+}> = [
+	{
+		name: "Vercel",
+		bucket: "hosting",
+		matches: /\.vercel-dns\.com$|\.vercel\.app$|\.now\.sh$/i,
+	},
+	{
+		name: "Netlify",
+		bucket: "hosting",
+		matches: /\.netlify\.com$|\.netlify\.app$/i,
+	},
+	{
+		name: "Google Developers Pages",
+		bucket: "hosting",
+		matches: /\.github\.io$/i,
+	},
 	{ name: "GitLab Pages", bucket: "hosting", matches: /\.gitlab\.io$/i },
-	{ name: "Heroku", bucket: "hosting", matches: /\.herokuapp\.com$|\.herokudns\.com$/i },
+	{
+		name: "Heroku",
+		bucket: "hosting",
+		matches: /\.herokuapp\.com$|\.herokudns\.com$/i,
+	},
 	{ name: "Render", bucket: "hosting", matches: /\.onrender\.com$/i },
 	{ name: "Fly.io", bucket: "hosting", matches: /\.fly\.dev$|\.fly\.io$/i },
-	{ name: "Railway", bucket: "hosting", matches: /\.railway\.app$|\.up\.railway\.app$/i },
+	{
+		name: "Railway",
+		bucket: "hosting",
+		matches: /\.railway\.app$|\.up\.railway\.app$/i,
+	},
 	{
 		name: "Google Cloud Run",
 		bucket: "hosting",
 		matches: /\.appspot\.com$|\.run\.app$|\.googleapis\.com$/i,
 	},
-	{ name: "AWS S3", bucket: "hosting", matches: /\.s3\.amazonaws\.com$|\.s3-website/i },
+	{
+		name: "AWS S3",
+		bucket: "hosting",
+		matches: /\.s3\.amazonaws\.com$|\.s3-website/i,
+	},
 	{ name: "AWS CloudFront", bucket: "cdn", matches: /\.cloudfront\.net$/i },
 	{ name: "Cloudflare Pages", bucket: "hosting", matches: /\.pages\.dev$/i },
-	{ name: "Shopify", bucket: "hosting", matches: /\.myshopify\.com$|shopify\.com$/i },
-	{ name: "Webflow", bucket: "hosting", matches: /\.webflow\.io$|\.webflow\.com$/i },
+	{
+		name: "Shopify",
+		bucket: "hosting",
+		matches: /\.myshopify\.com$|shopify\.com$/i,
+	},
+	{
+		name: "Webflow",
+		bucket: "hosting",
+		matches: /\.webflow\.io$|\.webflow\.com$/i,
+	},
 ];
 
-function cnameToProvider(cname: string): { name: string; bucket: DetectionBucket } | null {
+function cnameToProvider(
+	cname: string,
+): { name: string; bucket: DetectionBucket } | null {
 	for (const p of CNAME_HOSTING_PATTERNS) {
 		if (p.matches.test(cname)) return { name: p.name, bucket: p.bucket };
 	}
@@ -425,12 +484,24 @@ const HEADER_FINGERPRINTS: Array<{
 	{ name: "nginx", bucket: "server", header: "server", match: /nginx/i },
 	{ name: "Apache", bucket: "server", header: "server", match: /apache/i },
 	{ name: "Caddy", bucket: "server", header: "server", match: /caddy/i },
-	{ name: "Next.js", bucket: "backend", header: "x-powered-by", match: /next\.js/i },
+	{
+		name: "Next.js",
+		bucket: "backend",
+		header: "x-powered-by",
+		match: /next\.js/i,
+	},
 	{ name: "PHP", bucket: "language", header: "x-powered-by", match: /php\//i },
-	{ name: "Wordpress", bucket: "cms", header: "x-powered-by", match: /wp-engine|wordpress/i },
+	{
+		name: "Wordpress",
+		bucket: "cms",
+		header: "x-powered-by",
+		match: /wp-engine|wordpress/i,
+	},
 ];
 
-function fingerprintHeaders(headers: Record<string, string>): DetectionEvidence[] {
+function fingerprintHeaders(
+	headers: Record<string, string>,
+): DetectionEvidence[] {
 	const out: DetectionEvidence[] = [];
 	for (const fp of HEADER_FINGERPRINTS) {
 		const v = headers[fp.header.toLowerCase()];
@@ -462,11 +533,31 @@ const BODY_SIGNATURES: Array<{
 		pattern: /\/_next\/static\//,
 		versionPattern: /Next\.js v(\d+\.\d+\.\d+)/,
 	},
-	{ name: "Nuxt.js", bucket: "frontend", pattern: /\/_nuxt\/|window\.__NUXT__/ },
-	{ name: "Astro", bucket: "frontend", pattern: /<astro-island|astro-slot|data-astro-/ },
-	{ name: "WordPress", bucket: "cms", pattern: /\/wp-content\/|\/wp-includes\// },
-	{ name: "Shopify", bucket: "cms", pattern: /cdn\.shopify\.com|window\.Shopify/ },
-	{ name: "Tailwind CSS", bucket: "library", pattern: /tailwindcss|tw-elements/ },
+	{
+		name: "Nuxt.js",
+		bucket: "frontend",
+		pattern: /\/_nuxt\/|window\.__NUXT__/,
+	},
+	{
+		name: "Astro",
+		bucket: "frontend",
+		pattern: /<astro-island|astro-slot|data-astro-/,
+	},
+	{
+		name: "WordPress",
+		bucket: "cms",
+		pattern: /\/wp-content\/|\/wp-includes\//,
+	},
+	{
+		name: "Shopify",
+		bucket: "cms",
+		pattern: /cdn\.shopify\.com|window\.Shopify/,
+	},
+	{
+		name: "Tailwind CSS",
+		bucket: "library",
+		pattern: /tailwindcss|tw-elements/,
+	},
 ];
 
 function bodySignatures(html: string): DetectionEvidence[] {
@@ -493,7 +584,10 @@ function bodySignatures(html: string): DetectionEvidence[] {
 // Main logic
 // ---------------------------------------------------------------------------
 
-export async function deepDetect(url: string, insecure = false): Promise<DeepDetectionResult> {
+export async function deepDetect(
+	url: string,
+	insecure = false,
+): Promise<DeepDetectionResult> {
 	const target = new URL(url);
 	const hostname = target.hostname;
 
@@ -516,7 +610,10 @@ export async function deepDetect(url: string, insecure = false): Promise<DeepDet
 	});
 	await Promise.all(ptrPromises);
 
-	const wapp = await detectFrameworks({ html: body, headers: {} }, { insecure }).catch(() => []);
+	const wapp = await detectFrameworks(
+		{ html: body, headers: {} },
+		{ insecure },
+	).catch(() => []);
 
 	const result: DeepDetectionResult = {
 		url,
@@ -550,23 +647,31 @@ export async function deepDetect(url: string, insecure = false): Promise<DeepDet
 	};
 
 	for (const ev of fingerprintHeaders(headers)) {
-		const bucket = HEADER_FINGERPRINTS.find((f) => f.name === ev.name)?.bucket ?? "other";
+		const bucket =
+			HEADER_FINGERPRINTS.find((f) => f.name === ev.name)?.bucket ?? "other";
 		push(bucket, ev);
 	}
 	for (const ns of nsRecords) {
 		const provider = nsToProvider(ns);
-		if (provider) push("dns", { name: provider, evidence: `ns:${ns}`, source: "dns" });
+		if (provider)
+			push("dns", { name: provider, evidence: `ns:${ns}`, source: "dns" });
 	}
 	for (const cname of cnames) {
 		const m = cnameToProvider(cname);
-		if (m) push(m.bucket, { name: m.name, evidence: `cname:${cname}`, source: "dns" });
+		if (m)
+			push(m.bucket, {
+				name: m.name,
+				evidence: `cname:${cname}`,
+				source: "dns",
+			});
 	}
 	for (const ip of ips) {
 		const cdn = ipToCdn(ip);
 		if (cdn) push("cdn", { name: cdn, evidence: `ip:${ip}`, source: "ip" });
 	}
 	for (const ev of bodySignatures(body)) {
-		const bucket = BODY_SIGNATURES.find((s) => s.name === ev.name)?.bucket ?? "other";
+		const bucket =
+			BODY_SIGNATURES.find((s) => s.name === ev.name)?.bucket ?? "other";
 		push(bucket, ev);
 	}
 	for (const w of wapp) {
@@ -581,21 +686,37 @@ export async function deepDetect(url: string, insecure = false): Promise<DeepDet
 	return result;
 }
 
-function bucketArray(r: DeepDetectionResult, bucket: DetectionBucket): DetectionEvidence[] {
+function bucketArray(
+	r: DeepDetectionResult,
+	bucket: DetectionBucket,
+): DetectionEvidence[] {
 	switch (bucket) {
-		case "frontend": return r.frontend;
-		case "backend": return r.backend;
-		case "cdn": return r.cdn;
-		case "dns": return r.dns;
-		case "hosting": return r.hosting;
-		case "server": return r.server;
-		case "language": return r.language;
-		case "cms": return r.cms;
-		case "analytics": return r.analytics;
-		case "tag-manager": return r.tagManagers;
-		case "framework": return r.framework;
-		case "library": return r.library;
-		default: return r.other;
+		case "frontend":
+			return r.frontend;
+		case "backend":
+			return r.backend;
+		case "cdn":
+			return r.cdn;
+		case "dns":
+			return r.dns;
+		case "hosting":
+			return r.hosting;
+		case "server":
+			return r.server;
+		case "language":
+			return r.language;
+		case "cms":
+			return r.cms;
+		case "analytics":
+			return r.analytics;
+		case "tag-manager":
+			return r.tagManagers;
+		case "framework":
+			return r.framework;
+		case "library":
+			return r.library;
+		default:
+			return r.other;
 	}
 }
 

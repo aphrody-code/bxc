@@ -40,7 +40,10 @@ function logSkip(reason: string): void {
 
 /** Create a unique temp dir for a test run. */
 function tempVendorDir(): string {
-	return join(tmpdir(), `bxc-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	return join(
+		tmpdir(),
+		`bxc-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -88,7 +91,10 @@ describe("detectLightpandaPlatform", () => {
 	});
 
 	test("returns null for unsupported arch (ia32 on linux)", () => {
-		const result = detectLightpandaPlatform("linux", "ia32" as NodeJS.Architecture);
+		const result = detectLightpandaPlatform(
+			"linux",
+			"ia32" as NodeJS.Architecture,
+		);
 		expect(result).toBeNull();
 	});
 });
@@ -141,7 +147,9 @@ describe("installLightpanda idempotency", () => {
 		const vendorDir = tempVendorDir();
 		const platform = detectLightpandaPlatform();
 		if (!platform) {
-			logSkip(`unsupported platform ${process.platform}/${process.arch} for this test`);
+			logSkip(
+				`unsupported platform ${process.platform}/${process.arch} for this test`,
+			);
 			return;
 		}
 

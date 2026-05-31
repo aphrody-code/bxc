@@ -105,7 +105,27 @@ async function runRecursiveScraper() {
 			name TEXT NOT NULL,
 			rating INTEGER NOT NULL,
 			position TEXT NOT NULL,
+			club TEXT,
+			nation TEXT,
+			league TEXT,
 			playstyles TEXT NOT NULL,
+			playstyles_plus TEXT,
+			pac INTEGER,
+			sho INTEGER,
+			pas INTEGER,
+			dri INTEGER,
+			def INTEGER,
+			phy INTEGER,
+			div INTEGER,
+			han INTEGER,
+			kic INTEGER,
+			ref INTEGER,
+			spd INTEGER,
+			pos INTEGER,
+			skill_moves INTEGER,
+			weak_foot INTEGER,
+			workrate_attack TEXT,
+			workrate_defense TEXT,
 			url TEXT NOT NULL
 		);
 		
@@ -142,7 +162,27 @@ async function runRecursiveScraper() {
 			name: p.name,
 			rating: p.rating,
 			position: p.position,
+			club: p.club,
+			nation: p.nation,
+			league: p.league,
 			playstyles: JSON.parse(p.playstyles),
+			playstylesPlus: p.playstyles_plus ? JSON.parse(p.playstyles_plus) : [],
+			pac: p.pac,
+			sho: p.sho,
+			pas: p.pas,
+			dri: p.dri,
+			def: p.def,
+			phy: p.phy,
+			div: p.div,
+			han: p.han,
+			kic: p.kic,
+			ref: p.ref,
+			spd: p.spd,
+			pos: p.pos,
+			skillMoves: p.skill_moves,
+			weakFoot: p.weak_foot,
+			workrateAttack: p.workrate_attack,
+			workrateDefense: p.workrate_defense,
 			url: p.url,
 		});
 	}
@@ -167,7 +207,7 @@ async function runRecursiveScraper() {
 		"INSERT OR REPLACE INTO visited_urls (url_hash, url, crawled_at, status) VALUES ($hash, $url, $crawled_at, $status)",
 	);
 	const insertPlayer = db.prepare(
-		"INSERT OR REPLACE INTO players (id, name, rating, position, playstyles, url) VALUES ($id, $name, $rating, $position, $playstyles, $url)",
+		"INSERT OR REPLACE INTO players (id, name, rating, position, club, nation, league, playstyles, playstyles_plus, pac, sho, pas, dri, def, phy, div, han, kic, ref, spd, pos, skill_moves, weak_foot, workrate_attack, workrate_defense, url) VALUES ($id, $name, $rating, $position, $club, $nation, $league, $playstyles, $playstyles_plus, $pac, $sho, $pas, $dri, $def, $phy, $div, $han, $kic, $ref, $spd, $pos, $skill_moves, $weak_foot, $workrate_attack, $workrate_defense, $url)",
 	);
 	const insertPrice = db.prepare(
 		"INSERT OR REPLACE INTO prices (url, price, last_updated) VALUES ($url, $price, $last_updated)",
@@ -218,20 +258,48 @@ async function runRecursiveScraper() {
 						await page.goto(current.url);
 						content = await page.content();
 						state.success++;
-						
-						const player = await scrapeFutGgPlayer(content, "static");
-						state.players.push(player);
-						console.log(`  -> Extracted Player details:\n${Bun.inspect(player)}`);
 
-						// Persist to SQLite
-						insertPlayer.run({
-							$id: getPlayerIdFromUrl(current.url),
-							$name: player.name,
-							$rating: player.rating,
-							$position: player.position,
-							$playstyles: JSON.stringify(player.playstyles),
-							$url: current.url,
-						});
+						const player = await scrapeFutGgPlayer(content, "static");
+						if (player.isGeneric) {
+							console.log(
+								`  -> Skipping generic hub/listing page: ${player.name}`,
+							);
+						} else {
+							state.players.push(player);
+							console.log(
+								`  -> Extracted Player details:\n${Bun.inspect(player)}`,
+							);
+
+							// Persist to SQLite
+							insertPlayer.run({
+								$id: getPlayerIdFromUrl(current.url),
+								$name: player.name,
+								$rating: player.rating,
+								$position: player.position,
+								$club: player.club,
+								$nation: player.nation,
+								$league: player.league,
+								$playstyles: JSON.stringify(player.playstyles),
+								$playstyles_plus: JSON.stringify(player.playstylesPlus || []),
+								$pac: player.pac,
+								$sho: player.sho,
+								$pas: player.pas,
+								$dri: player.dri,
+								$def: player.def,
+								$phy: player.phy,
+								$div: player.div,
+								$han: player.han,
+								$kic: player.kic,
+								$ref: player.ref,
+								$spd: player.spd,
+								$pos: player.pos,
+								$skill_moves: player.skillMoves,
+								$weak_foot: player.weakFoot,
+								$workrate_attack: player.workrateAttack,
+								$workrate_defense: player.workrateDefense,
+								$url: current.url,
+							});
+						}
 					} finally {
 						await page.close();
 					}
@@ -253,7 +321,11 @@ async function runRecursiveScraper() {
 						content = await page.content();
 						state.success++;
 
-						const price = await scrapeFutBinPrice(content, "ghost", current.url);
+						const price = await scrapeFutBinPrice(
+							content,
+							"ghost",
+							current.url,
+						);
 						state.prices.push(price);
 						console.log(`  -> Extracted Price details:\n${Bun.inspect(price)}`);
 

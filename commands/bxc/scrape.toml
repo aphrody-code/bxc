@@ -1,14 +1,9 @@
-# /scrape command
 description = "Quickly scrape a URL to Markdown"
 
-[options]
-insecure = { type = "boolean", description = "Ignore TLS errors", default = false }
+prompt = """
+I will scrape the provided URL and return the content as Markdown.
 
-[[parameters]]
-name = "url"
-description = "The target URL to scrape"
-required = true
+!{./bin/bxc scrape {{args}} --markdown}
 
-[execution]
-command = "bxc"
-args = ["scrape", "{{url}}", "--markdown", "{% if insecure %}--insecure{% endif %}"]
+Please review the scraped content and provide a summary if requested.
+"""

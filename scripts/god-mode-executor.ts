@@ -22,7 +22,7 @@ async function run() {
 
 	let attempts = 0;
 	while (!existsSync("src/google/atlas.ts") && attempts < 60) {
-		await new Promise(r => setTimeout(r, 5000));
+		await new Promise((r) => setTimeout(r, 5000));
 		attempts++;
 	}
 
@@ -41,7 +41,7 @@ async function run() {
 			content = "import { resolveAtlasRoute } from './atlas.ts';\n" + content;
 			content = content.replace(
 				/async open\(url: string, opts: any = {}\) \{/,
-				"async open(url: string, opts: any = {}) {\n\t\tconst hostname = new URL(url).hostname;\n\t\tconst route = resolveAtlasRoute(hostname);\n\t\tif (route) {\n\t\t\topts.profile = route.framework === 'wiz' ? 'stealth-wiz' : (route.framework === 'angular' ? 'stealth-spa' : 'stealth');\n\t\t}"
+				"async open(url: string, opts: any = {}) {\n\t\tconst hostname = new URL(url).hostname;\n\t\tconst route = resolveAtlasRoute(hostname);\n\t\tif (route) {\n\t\t\topts.profile = route.framework === 'wiz' ? 'stealth-wiz' : (route.framework === 'angular' ? 'stealth-spa' : 'stealth');\n\t\t}",
 			);
 			await Bun.write(clientPath, content);
 		}

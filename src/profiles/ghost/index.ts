@@ -68,7 +68,12 @@ import {
 	type FingerprintOptions,
 	generateFingerprint,
 } from "../fingerprint.ts";
-import { moveMouse, randomWait, scrollHuman, typeNatural } from "../humanize.ts";
+import {
+	moveMouse,
+	randomWait,
+	scrollHuman,
+	typeNatural,
+} from "../humanize.ts";
 import { buildStealthScript } from "./stealth-patches.ts";
 
 // ---------------------------------------------------------------------------
@@ -109,7 +114,9 @@ export interface GhostBrowser {
 // Launch
 // ---------------------------------------------------------------------------
 
-export async function launchGhostBrowser(options: GhostOptions = {}): Promise<GhostBrowser> {
+export async function launchGhostBrowser(
+	options: GhostOptions = {},
+): Promise<GhostBrowser> {
 	const log = options.log ?? (() => {});
 
 	// 1. Coherent fingerprint generation (defaults : Linux + Chrome 131)
@@ -127,7 +134,10 @@ export async function launchGhostBrowser(options: GhostOptions = {}): Promise<Gh
 	const page = (await Browser.newPage({
 		profile: "fast",
 		userAgent: fingerprint.userAgent,
-		viewport: { width: fingerprint.screen.width, height: fingerprint.screen.height },
+		viewport: {
+			width: fingerprint.screen.width,
+			height: fingerprint.screen.height,
+		},
 		cookies: options.cookies,
 		spawnOpts: {
 			logLevel: options.logLevel ?? "error",
@@ -155,11 +165,15 @@ export async function launchGhostBrowser(options: GhostOptions = {}): Promise<Gh
 		});
 
 		try {
-			await sendCdp(page, "Page.addScriptToEvaluateOnNewDocument", { source: script });
+			await sendCdp(page, "Page.addScriptToEvaluateOnNewDocument", {
+				source: script,
+			});
 			log(`[ghost] stealth script injected (${script.length} bytes)`);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
-			log(`[ghost] stealth inject failed (${msg.slice(0, 80)}); continuing without`);
+			log(
+				`[ghost] stealth inject failed (${msg.slice(0, 80)}); continuing without`,
+			);
 		}
 	}
 
@@ -167,15 +181,17 @@ export async function launchGhostBrowser(options: GhostOptions = {}): Promise<Gh
 	// + Date.prototype.toLocaleString + Intl.DateTimeFormat. Without these
 	// the geo IP / locale mismatch is itself an anti-bot signal.
 	if (options.locale) {
-		await sendCdp(page, "Emulation.setLocaleOverride", { locale: options.locale }).catch(() => {});
+		await sendCdp(page, "Emulation.setLocaleOverride", {
+			locale: options.locale,
+		}).catch(() => {});
 		await sendCdp(page, "Network.setExtraHTTPHeaders", {
 			headers: { "Accept-Language": `${options.locale},en-US;q=0.9,en;q=0.8` },
 		}).catch(() => {});
 	}
 	if (options.timezone) {
-		await sendCdp(page, "Emulation.setTimezoneOverride", { timezoneId: options.timezone }).catch(
-			() => {},
-		);
+		await sendCdp(page, "Emulation.setTimezoneOverride", {
+			timezoneId: options.timezone,
+		}).catch(() => {});
 	}
 
 	// 5. Override User Agent since Page.create currently ignores opts.userAgent
@@ -214,10 +230,14 @@ async function sendCdp(
 ): Promise<unknown> {
 	const transport = (
 		page as unknown as {
-			_internalTransport: { send: (raw: string) => void; onmessage?: (raw: string) => void };
+			_internalTransport: {
+				send: (raw: string) => void;
+				onmessage?: (raw: string) => void;
+			};
 		}
 	)._internalTransport;
-	const sessionId = (page as unknown as { _internalSessionId: string })._internalSessionId;
+	const sessionId = (page as unknown as { _internalSessionId: string })
+		._internalSessionId;
 	const id = Math.floor(Math.random() * 1_000_000_000);
 	return new Promise<unknown>((resolve, reject) => {
 		const prev = transport.onmessage;
@@ -236,7 +256,8 @@ async function sendCdp(
 			if (msg.id !== id) return;
 			clearTimeout(timeout);
 			transport.onmessage = prev;
-			if (msg.error) reject(new Error(`CDP ${method} failed: ${msg.error.message}`));
+			if (msg.error)
+				reject(new Error(`CDP ${method} failed: ${msg.error.message}`));
 			else resolve(msg.result);
 		};
 		transport.send(JSON.stringify({ id, method, params, sessionId }));

@@ -39,7 +39,11 @@ export type EscalationStep = "static" | "fast" | "ghost";
 /**
  * Order of escalation: start with the fastest, escalate to slower profiles on failure.
  */
-export const ESCALATION_ORDER: readonly EscalationStep[] = ["static", "fast", "ghost"];
+export const ESCALATION_ORDER: readonly EscalationStep[] = [
+	"static",
+	"fast",
+	"ghost",
+];
 
 /**
  * Signals that trigger escalation to the next profile.
@@ -80,7 +84,10 @@ export interface EscalationSignal {
  *
  * Returns null if the response looks successful (no escalation needed).
  */
-export function detectEscalationSignal(body: string, status: number): EscalationSignal | null {
+export function detectEscalationSignal(
+	body: string,
+	status: number,
+): EscalationSignal | null {
 	// HTTP 403 Forbidden — likely protection
 	if (status === 403) {
 		return { reason: "status_403", detectedFromStatus: status };
@@ -124,13 +131,19 @@ export function detectEscalationSignal(body: string, status: number): Escalation
 	// SPA placeholder: <noscript> in a small HTML with 200 status (NOT error codes)
 	// This is a strong signal that the page needs JavaScript to render.
 	if (status === 200 && /<noscript>/i.test(body) && body.length < 1000) {
-		return { reason: "spa_placeholder", detectedFromBody: "<noscript> placeholder" };
+		return {
+			reason: "spa_placeholder",
+			detectedFromBody: "<noscript> placeholder",
+		};
 	}
 
 	// Very small response (< 50 bytes) with 200 status AND no content
 	// Excludes error pages (they have 4xx/5xx status and actual error HTML)
 	if (status === 200 && body.length < 50 && body.trim().length < 30) {
-		return { reason: "empty_body", detectedFromBody: `Body length: ${body.length}` };
+		return {
+			reason: "empty_body",
+			detectedFromBody: `Body length: ${body.length}`,
+		};
 	}
 
 	// No signals detected — response looks good
@@ -162,7 +175,11 @@ export async function autoEscalate(
 		maxAttempts?: number;
 		log?: (msg: string) => void;
 	} = {},
-): Promise<{ profile: EscalationStep; page: Page; attempts: EscalationStep[] }> {
+): Promise<{
+	profile: EscalationStep;
+	page: Page;
+	attempts: EscalationStep[];
+}> {
 	let profile = options.startProfile ?? "static";
 	const maxAttempts = options.maxAttempts ?? 4;
 	const log = options.log ?? (() => {});
@@ -170,7 +187,9 @@ export async function autoEscalate(
 
 	for (let attempt = 0; attempt < maxAttempts; attempt++) {
 		attempts.push(profile);
-		log(`[escalation] Attempt ${attempt + 1}/${maxAttempts}: profile=${profile}`);
+		log(
+			`[escalation] Attempt ${attempt + 1}/${maxAttempts}: profile=${profile}`,
+		);
 
 		let page: Page;
 		try {
@@ -209,7 +228,9 @@ export async function autoEscalate(
 
 			const next = nextProfile(profile);
 			if (!next) {
-				throw new Error(`All profiles exhausted. Last navigation error: ${msg}`);
+				throw new Error(
+					`All profiles exhausted. Last navigation error: ${msg}`,
+				);
 			}
 			profile = next;
 			continue;
@@ -238,5 +259,7 @@ export async function autoEscalate(
 		profile = next;
 	}
 
-	throw new Error(`Auto-escalation max attempts (${maxAttempts}) reached without success`);
+	throw new Error(
+		`Auto-escalation max attempts (${maxAttempts}) reached without success`,
+	);
 }

@@ -53,7 +53,11 @@ class TransportMux {
 		return () => this.#listeners.delete(fn);
 	}
 
-	call(method: string, params: Record<string, unknown> = {}, sessionId?: string): Promise<unknown> {
+	call(
+		method: string,
+		params: Record<string, unknown> = {},
+		sessionId?: string,
+	): Promise<unknown> {
 		return new Promise<unknown>((resolve, reject) => {
 			const id = Math.floor(Math.random() * 1_000_000) + 1;
 			const remove = this.addListener((raw) => {
@@ -81,13 +85,21 @@ class TransportMux {
 		timeoutMs = 3000,
 	): Promise<Array<{ method: string; params: Record<string, unknown> }>> {
 		return new Promise((resolve, reject) => {
-			const events: Array<{ method: string; params: Record<string, unknown> }> = [];
+			const events: Array<{ method: string; params: Record<string, unknown> }> =
+				[];
 			const timer = setTimeout(
-				() => reject(new Error(`Timeout collecting events until ${stopEventMethod}`)),
+				() =>
+					reject(
+						new Error(`Timeout collecting events until ${stopEventMethod}`),
+					),
 				timeoutMs,
 			);
 			const remove = this.addListener((raw) => {
-				let msg: { id?: number; method?: string; params?: Record<string, unknown> };
+				let msg: {
+					id?: number;
+					method?: string;
+					params?: Record<string, unknown>;
+				};
 				try {
 					msg = JSON.parse(raw);
 				} catch {
@@ -162,7 +174,9 @@ describe("Tracing domain", () => {
 		await mux.call("Tracing.end");
 		const events = await collectPromise;
 
-		const dataCollected = events.filter((e) => e.method === "Tracing.dataCollected");
+		const dataCollected = events.filter(
+			(e) => e.method === "Tracing.dataCollected",
+		);
 		expect(dataCollected.length).toBeGreaterThan(0);
 		const value = dataCollected[0].params.value as unknown[];
 		expect(Array.isArray(value)).toBe(true);
@@ -205,7 +219,10 @@ describe("Tracing domain", () => {
 	// -------------------------------------------------------------------------
 
 	test("emitDataCollected sends correct event structure", () => {
-		const collectedEvents: Array<{ method: string; params: Record<string, unknown> }> = [];
+		const collectedEvents: Array<{
+			method: string;
+			params: Record<string, unknown>;
+		}> = [];
 
 		const mockCtx = {
 			emitEvent: (ev: { method: string; params: Record<string, unknown> }) => {
@@ -213,18 +230,28 @@ describe("Tracing domain", () => {
 			},
 		};
 
-		const traceEvents = [{ pid: 1, tid: 1, ph: "M", cat: "meta", name: "test", ts: 0 }];
-		emitDataCollected(mockCtx as Parameters<typeof emitDataCollected>[0], traceEvents);
+		const traceEvents = [
+			{ pid: 1, tid: 1, ph: "M", cat: "meta", name: "test", ts: 0 },
+		];
+		emitDataCollected(
+			mockCtx as Parameters<typeof emitDataCollected>[0],
+			traceEvents,
+		);
 
 		expect(collectedEvents.length).toBe(1);
 		expect(collectedEvents[0].method).toBe("Tracing.dataCollected");
-		const value = collectedEvents[0].params.value as Array<Record<string, unknown>>;
+		const value = collectedEvents[0].params.value as Array<
+			Record<string, unknown>
+		>;
 		expect(Array.isArray(value)).toBe(true);
 		expect(value[0].name).toBe("test");
 	});
 
 	test("emitTracingComplete sends correct event structure", () => {
-		const collectedEvents: Array<{ method: string; params: Record<string, unknown> }> = [];
+		const collectedEvents: Array<{
+			method: string;
+			params: Record<string, unknown>;
+		}> = [];
 
 		const mockCtx = {
 			emitEvent: (ev: { method: string; params: Record<string, unknown> }) => {

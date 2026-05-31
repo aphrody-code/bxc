@@ -145,7 +145,11 @@ export type FetchAction =
 	  }
 	| {
 			type: "auth";
-			authChallengeResponse: { response: string; username?: string; password?: string };
+			authChallengeResponse: {
+				response: string;
+				username?: string;
+				password?: string;
+			};
 	  };
 
 /**

@@ -28,7 +28,12 @@
 
 import type { DomainHandler } from "../types.js";
 
-export const EmulationHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const EmulationHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		// -----------------------------------------------------------------------
 		// setDeviceMetricsOverride — store viewport dimensions + scale factor
@@ -44,7 +49,8 @@ export const EmulationHandler: DomainHandler = async (method, params, ctx, sessi
 			page.emulation.deviceMetrics = {
 				width: typeof p.width === "number" ? p.width : 1280,
 				height: typeof p.height === "number" ? p.height : 720,
-				deviceScaleFactor: typeof p.deviceScaleFactor === "number" ? p.deviceScaleFactor : 1,
+				deviceScaleFactor:
+					typeof p.deviceScaleFactor === "number" ? p.deviceScaleFactor : 1,
 				mobile: typeof p.mobile === "boolean" ? p.mobile : false,
 			};
 			return {};
@@ -125,7 +131,9 @@ export const EmulationHandler: DomainHandler = async (method, params, ctx, sessi
 			const page = ctx.pageBySession(sessionId);
 			const p = params as { locale?: string };
 			page.emulation.locale =
-				typeof p.locale === "string" && p.locale.length > 0 ? p.locale : undefined;
+				typeof p.locale === "string" && p.locale.length > 0
+					? p.locale
+					: undefined;
 			return {};
 		}
 
@@ -136,7 +144,9 @@ export const EmulationHandler: DomainHandler = async (method, params, ctx, sessi
 			const page = ctx.pageBySession(sessionId);
 			const p = params as { timezoneId?: string };
 			page.emulation.timezone =
-				typeof p.timezoneId === "string" && p.timezoneId.length > 0 ? p.timezoneId : undefined;
+				typeof p.timezoneId === "string" && p.timezoneId.length > 0
+					? p.timezoneId
+					: undefined;
 			return {};
 		}
 

@@ -114,7 +114,10 @@ export function destroyTree(tree: DomTreePtr): void {
 	symbols().bxc_tree_destroy(tree as any);
 }
 
-export function querySelector(tree: DomTreePtr, selector: string): string | null {
+export function querySelector(
+	tree: DomTreePtr,
+	selector: string,
+): string | null {
 	const sym = symbols();
 	const selPtr = ptr(Buffer.from(selector + "\0"));
 	const resultPtr = sym.bxc_query_selector(tree as any, selPtr);

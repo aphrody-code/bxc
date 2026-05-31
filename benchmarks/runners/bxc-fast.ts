@@ -43,7 +43,10 @@ function locateLightpanda(): string | null {
 	}
 	// Fall back to PATH
 	try {
-		const result = Bun.spawnSync(["which", "lightpanda"], { stdout: "pipe", stderr: "pipe" });
+		const result = Bun.spawnSync(["which", "lightpanda"], {
+			stdout: "pipe",
+			stderr: "pipe",
+		});
 		if (result.exitCode === 0) return result.stdout.toString().trim();
 	} catch {
 		// continue

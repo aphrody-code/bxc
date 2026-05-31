@@ -66,7 +66,11 @@ async function findFreePort(): Promise<number> {
 	for (let attempt = 0; attempt < 32; attempt++) {
 		const port = 49152 + Math.floor(Math.random() * (65535 - 49152));
 		try {
-			const srv = Bun.serve({ port, hostname: "127.0.0.1", fetch: () => new Response(null) });
+			const srv = Bun.serve({
+				port,
+				hostname: "127.0.0.1",
+				fetch: () => new Response(null),
+			});
 			srv.stop(true);
 			return port;
 		} catch {
@@ -76,7 +80,11 @@ async function findFreePort(): Promise<number> {
 	throw new Error("coldstart.test: could not find a free port");
 }
 
-async function waitForVersion(host: string, port: number, deadlineMs: number): Promise<boolean> {
+async function waitForVersion(
+	host: string,
+	port: number,
+	deadlineMs: number,
+): Promise<boolean> {
 	const deadline = Date.now() + deadlineMs;
 	while (Date.now() < deadline) {
 		try {
@@ -97,7 +105,10 @@ interface MeasureResult {
 	timedOut: boolean;
 }
 
-async function measureColdStart(profile: string, logLevel = "silent"): Promise<MeasureResult> {
+async function measureColdStart(
+	profile: string,
+	logLevel = "silent",
+): Promise<MeasureResult> {
 	const port = await findFreePort();
 
 	const t0 = Bun.nanoseconds();
@@ -199,7 +210,9 @@ describe("cold start performance", () => {
 			for (let i = 0; i < N_RUNS; i++) {
 				const result = await measureColdStart("static");
 				if (result.timedOut) {
-					throw new Error(`profile=static run ${i + 1} timed out after ${RUN_TIMEOUT_MS}ms`);
+					throw new Error(
+						`profile=static run ${i + 1} timed out after ${RUN_TIMEOUT_MS}ms`,
+					);
 				}
 				samples.push(result.elapsedMs);
 				console.log(
@@ -212,7 +225,9 @@ describe("cold start performance", () => {
 			const p50 = computeP50(samples);
 			const target = TARGET_STATIC_MS * CI_HEADROOM;
 
-			console.log(`[coldstart.test] profile=static p50=${p50.toFixed(1)}ms target=<${target}ms`);
+			console.log(
+				`[coldstart.test] profile=static p50=${p50.toFixed(1)}ms target=<${target}ms`,
+			);
 
 			expect(p50).toBeLessThan(target);
 		},
@@ -235,7 +250,9 @@ describe("cold start performance", () => {
 			for (let i = 0; i < N_RUNS; i++) {
 				const result = await measureColdStart("fast");
 				if (result.timedOut) {
-					throw new Error(`profile=fast run ${i + 1} timed out after ${RUN_TIMEOUT_MS}ms`);
+					throw new Error(
+						`profile=fast run ${i + 1} timed out after ${RUN_TIMEOUT_MS}ms`,
+					);
 				}
 				samples.push(result.elapsedMs);
 				console.log(
@@ -247,7 +264,9 @@ describe("cold start performance", () => {
 			const p50 = computeP50(samples);
 			const target = TARGET_FAST_MS * CI_HEADROOM;
 
-			console.log(`[coldstart.test] profile=fast p50=${p50.toFixed(1)}ms target=<${target}ms`);
+			console.log(
+				`[coldstart.test] profile=fast p50=${p50.toFixed(1)}ms target=<${target}ms`,
+			);
 
 			expect(p50).toBeLessThan(target);
 		},

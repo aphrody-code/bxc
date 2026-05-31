@@ -25,8 +25,9 @@ export async function scrapeFutBinPrice(
 ): Promise<FutPrice> {
 	let content = "";
 
-	const isUrl = urlOrHtml.startsWith("http://") || urlOrHtml.startsWith("https://");
-	const finalUrl = isUrl ? urlOrHtml : (urlFallback || "unknown");
+	const isUrl =
+		urlOrHtml.startsWith("http://") || urlOrHtml.startsWith("https://");
+	const finalUrl = isUrl ? urlOrHtml : urlFallback || "unknown";
 
 	if (isUrl) {
 		if (profile === "ghost") {

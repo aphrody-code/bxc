@@ -101,7 +101,8 @@ const REDDIT_HEADERS: Record<string, string> = {
 	"accept-language": "en-US,en;q=0.9",
 	// Reddit requires a descriptive UA for API access — generic browser UA
 	// is rejected by the JSON API with a 429; identify as a bot script.
-	"user-agent": "bxc-example/0.1 (educational scraping demo; contact: dev@google.com)",
+	"user-agent":
+		"bxc-example/0.1 (educational scraping demo; contact: dev@google.com)",
 };
 
 async function fetchJson<T>(page: HttpPage, url: string): Promise<T> {
@@ -129,7 +130,10 @@ console.log("Fetching /r/programming top 25...");
 
 let listing: RedditListing;
 try {
-	listing = await fetchJson<RedditListing>(page, `${BASE}/r/programming/top.json?limit=25&t=day`);
+	listing = await fetchJson<RedditListing>(
+		page,
+		`${BASE}/r/programming/top.json?limit=25&t=day`,
+	);
 } catch (err) {
 	console.error("Failed to fetch subreddit listing:", String(err));
 	await page.close();
@@ -180,11 +184,15 @@ for (let i = 0; i < posts.length; i++) {
 	};
 
 	await dataset.pushData(record);
-	console.log(`  [${i + 1}/${posts.length}] score=${post.score} "${post.title.slice(0, 60)}"`);
+	console.log(
+		`  [${i + 1}/${posts.length}] score=${post.score} "${post.title.slice(0, 60)}"`,
+	);
 }
 
 const count = dataset.getItemCount();
 await dataset.close();
 await page.close();
 
-console.log(`\nDone. ${count} posts saved to storage/datasets/reddit-programming/data.jsonl`);
+console.log(
+	`\nDone. ${count} posts saved to storage/datasets/reddit-programming/data.jsonl`,
+);

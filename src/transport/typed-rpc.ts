@@ -57,7 +57,9 @@ type BaseRPCRequestsSchema = {
 	[key: string]: { params: unknown; response: unknown };
 };
 
-export type RPCRequestsSchema<T extends BaseRPCRequestsSchema = BaseRPCRequestsSchema> = T;
+export type RPCRequestsSchema<
+	T extends BaseRPCRequestsSchema = BaseRPCRequestsSchema,
+> = T;
 
 type RPCRequestParams<
 	RS extends RPCRequestsSchema,
@@ -71,9 +73,14 @@ type RPCRequestResponse<
 
 type BaseRPCMessagesSchema = Record<never, unknown>;
 
-export type RPCMessagesSchema<T extends BaseRPCMessagesSchema = BaseRPCMessagesSchema> = T;
+export type RPCMessagesSchema<
+	T extends BaseRPCMessagesSchema = BaseRPCMessagesSchema,
+> = T;
 
-type RPCMessagePayload<MS extends RPCMessagesSchema, N extends keyof MS = keyof MS> = MS[N];
+type RPCMessagePayload<
+	MS extends RPCMessagesSchema,
+	N extends keyof MS = keyof MS,
+> = MS[N];
 
 // ---- Composite schema ----
 
@@ -83,40 +90,49 @@ type InputRPCSchema = {
 };
 
 type ResolvedRPCSchema<I extends InputRPCSchema> = {
-	requests: undefined extends I["requests"] ? BaseRPCRequestsSchema : NonNullable<I["requests"]>;
-	messages: undefined extends I["messages"] ? BaseRPCMessagesSchema : NonNullable<I["messages"]>;
+	requests: undefined extends I["requests"]
+		? BaseRPCRequestsSchema
+		: NonNullable<I["requests"]>;
+	messages: undefined extends I["messages"]
+		? BaseRPCMessagesSchema
+		: NonNullable<I["messages"]>;
 };
 
-export type RPCSchema<I extends InputRPCSchema | void = InputRPCSchema> = ResolvedRPCSchema<
-	I extends InputRPCSchema ? I : InputRPCSchema
->;
+export type RPCSchema<I extends InputRPCSchema | void = InputRPCSchema> =
+	ResolvedRPCSchema<I extends InputRPCSchema ? I : InputRPCSchema>;
 
 // ---- Handler types ----
 
-type RPCRequestHandlerFn<RS extends RPCRequestsSchema = RPCRequestsSchema> = <M extends keyof RS>(
+type RPCRequestHandlerFn<RS extends RPCRequestsSchema = RPCRequestsSchema> = <
+	M extends keyof RS,
+>(
 	method: M,
 	params: RPCRequestParams<RS, M>,
 ) => any | Promise<any>;
 
-type RPCRequestHandlerObject<RS extends RPCRequestsSchema = RPCRequestsSchema> = {
-	[M in keyof RS]?: (
-		...args: "params" extends keyof RS[M]
-			? undefined extends RS[M]["params"]
-				? [params?: RS[M]["params"]]
-				: [params: RS[M]["params"]]
-			: []
-	) => Awaited<RPCRequestResponse<RS, M>> | Promise<Awaited<RPCRequestResponse<RS, M>>>;
-} & {
-	_?: (method: keyof RS, params: RPCRequestParams<RS>) => any;
-};
+type RPCRequestHandlerObject<RS extends RPCRequestsSchema = RPCRequestsSchema> =
+	{
+		[M in keyof RS]?: (
+			...args: "params" extends keyof RS[M]
+				? undefined extends RS[M]["params"]
+					? [params?: RS[M]["params"]]
+					: [params: RS[M]["params"]]
+				: []
+		) =>
+			| Awaited<RPCRequestResponse<RS, M>>
+			| Promise<Awaited<RPCRequestResponse<RS, M>>>;
+	} & {
+		_?: (method: keyof RS, params: RPCRequestParams<RS>) => any;
+	};
 
-export type RPCRequestHandler<RS extends RPCRequestsSchema = RPCRequestsSchema> =
-	| RPCRequestHandlerFn<RS>
-	| RPCRequestHandlerObject<RS>;
+export type RPCRequestHandler<
+	RS extends RPCRequestsSchema = RPCRequestsSchema,
+> = RPCRequestHandlerFn<RS> | RPCRequestHandlerObject<RS>;
 
-export type RPCMessageHandlerFn<MS extends RPCMessagesSchema, N extends keyof MS> = (
-	payload: RPCMessagePayload<MS, N>,
-) => void;
+export type RPCMessageHandlerFn<
+	MS extends RPCMessagesSchema,
+	N extends keyof MS,
+> = (payload: RPCMessagePayload<MS, N>) => void;
 
 export type WildcardRPCMessageHandlerFn<MS extends RPCMessagesSchema> = (
 	messageName: keyof MS,
@@ -217,11 +233,16 @@ export function createRPC<
 			return;
 		}
 		requestHandler = (method, params) => {
-			const handlerFn = (h as RPCRequestHandlerObject<Schema["requests"]>)[method];
+			const handlerFn = (h as RPCRequestHandlerObject<Schema["requests"]>)[
+				method
+			];
 			if (handlerFn) return (handlerFn as any)(params);
-			const fallbackHandler = (h as RPCRequestHandlerObject<Schema["requests"]>)._;
+			const fallbackHandler = (h as RPCRequestHandlerObject<Schema["requests"]>)
+				._;
 			if (!fallbackHandler)
-				throw new Error(`The requested method has no handler: ${String(method)}`);
+				throw new Error(
+					`The requested method has no handler: ${String(method)}`,
+				);
 			return fallbackHandler(method, params as any);
 		};
 	}
@@ -257,7 +278,8 @@ export function createRPC<
 	): Promise<RPCRequestResponse<RemoteSchema["requests"], M>> {
 		const params = args[0];
 		return new Promise((resolve, reject) => {
-			if (!transport.send) throw missingTransportMethodError(["send"], "make requests");
+			if (!transport.send)
+				throw missingTransportMethodError(["send"], "make requests");
 			const requestId = getRequestId();
 			const request: _RPCRequestPacket = {
 				type: "request",
@@ -287,7 +309,9 @@ export function createRPC<
 		},
 	}) as typeof requestFn & RPCRequestsProxy<RemoteSchema["requests"]>;
 
-	const requestProxy = request as unknown as RPCRequestsProxy<RemoteSchema["requests"]>;
+	const requestProxy = request as unknown as RPCRequestsProxy<
+		RemoteSchema["requests"]
+	>;
 
 	// ---- outgoing messages ----
 
@@ -300,7 +324,8 @@ export function createRPC<
 				: [payload: RPCMessagePayload<Schema["messages"], M>]
 	) {
 		const payload = args[0];
-		if (!transport.send) throw missingTransportMethodError(["send"], "send messages");
+		if (!transport.send)
+			throw missingTransportMethodError(["send"], "send messages");
 		const rpcMessage: _RPCMessagePacket = {
 			type: "message",
 			id: message as string,
@@ -334,12 +359,16 @@ export function createRPC<
 	): void;
 	function addMessageListener(message: any, listener: any) {
 		if (!transport.registerHandler)
-			throw missingTransportMethodError(["registerHandler"], "register message listeners");
+			throw missingTransportMethodError(
+				["registerHandler"],
+				"register message listeners",
+			);
 		if (message === "*") {
 			wildcardMessageListeners.add(listener);
 			return;
 		}
-		if (!messageListeners.has(message)) messageListeners.set(message, new Set());
+		if (!messageListeners.has(message))
+			messageListeners.set(message, new Set());
 		messageListeners.get(message)!.add(listener);
 	}
 
@@ -357,18 +386,23 @@ export function createRPC<
 			return;
 		}
 		messageListeners.get(message)?.delete(listener);
-		if (messageListeners.get(message)?.size === 0) messageListeners.delete(message);
+		if (messageListeners.get(message)?.size === 0)
+			messageListeners.delete(message);
 	}
 
 	// ---- incoming packet handler ----
 
 	async function handler(message: _RPCPacket) {
 		debugHooks.onReceive?.(message);
-		if (!("type" in message)) throw new Error("Message does not contain a type.");
+		if (!("type" in message))
+			throw new Error("Message does not contain a type.");
 
 		if (message.type === "request") {
 			if (!transport.send || !requestHandler)
-				throw missingTransportMethodError(["send", "requestHandler"], "handle requests");
+				throw missingTransportMethodError(
+					["send", "requestHandler"],
+					"handle requests",
+				);
 			const { id, method, params } = message;
 			let response: _RPCResponsePacket;
 			try {
@@ -398,7 +432,10 @@ export function createRPC<
 			requestTimeouts.delete(message.id);
 			const { resolve, reject } = requestListeners.get(message.id) ?? {};
 			requestListeners.delete(message.id);
-			if (!message.success) reject?.(new Error((message as { success: false; error: string }).error));
+			if (!message.success)
+				reject?.(
+					new Error((message as { success: false; error: string }).error),
+				);
 			else resolve?.(message.payload);
 			return;
 		}
@@ -449,7 +486,10 @@ export type ElectrobunRPCConfig<
 	handlers: {
 		requests?: RPCRequestHandler<Schema[Side]["requests"]>;
 		messages?: {
-			[K in keyof Schema[Side]["messages"]]?: RPCMessageHandlerFn<Schema[Side]["messages"], K>;
+			[K in keyof Schema[Side]["messages"]]?: RPCMessageHandlerFn<
+				Schema[Side]["messages"],
+				K
+			>;
 		} & {
 			"*"?: WildcardRPCMessageHandlerFn<Schema[Side]["messages"]>;
 		};

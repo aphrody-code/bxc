@@ -90,11 +90,17 @@ describe("parseRemixContext", () => {
 
 describe("parseInitialState", () => {
 	test("falls back across __INITIAL_STATE__ / __PRELOADED_STATE__ / __APOLLO_STATE__", () => {
-		expect(parseInitialState(`<script>window.__APOLLO_STATE__={"q":1}</script>`)).toEqual({ q: 1 });
-		expect(parseInitialState(`<script>window.__PRELOADED_STATE__={"y":2}</script>`)).toEqual({
+		expect(
+			parseInitialState(`<script>window.__APOLLO_STATE__={"q":1}</script>`),
+		).toEqual({ q: 1 });
+		expect(
+			parseInitialState(`<script>window.__PRELOADED_STATE__={"y":2}</script>`),
+		).toEqual({
 			y: 2,
 		});
-		expect(parseInitialState(`<script>window.__INITIAL_STATE__={"z":3}</script>`)).toEqual({
+		expect(
+			parseInitialState(`<script>window.__INITIAL_STATE__={"z":3}</script>`),
+		).toEqual({
 			z: 3,
 		});
 		expect(parseInitialState("<html></html>")).toBeNull();

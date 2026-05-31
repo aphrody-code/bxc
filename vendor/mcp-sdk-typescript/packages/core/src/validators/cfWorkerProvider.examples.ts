@@ -7,27 +7,27 @@
  * @module
  */
 
-import { CfWorkerJsonSchemaValidator } from './cfWorkerProvider.js';
+import { CfWorkerJsonSchemaValidator } from "./cfWorkerProvider.js";
 
 /**
  * Example: Default configuration.
  */
 function CfWorkerJsonSchemaValidator_default() {
-    //#region CfWorkerJsonSchemaValidator_default
-    const validator = new CfWorkerJsonSchemaValidator();
-    //#endregion CfWorkerJsonSchemaValidator_default
-    return validator;
+	//#region CfWorkerJsonSchemaValidator_default
+	const validator = new CfWorkerJsonSchemaValidator();
+	//#endregion CfWorkerJsonSchemaValidator_default
+	return validator;
 }
 
 /**
  * Example: Custom configuration with all errors reported.
  */
 function CfWorkerJsonSchemaValidator_customConfig() {
-    //#region CfWorkerJsonSchemaValidator_customConfig
-    const validator = new CfWorkerJsonSchemaValidator({
-        draft: '2020-12',
-        shortcircuit: false // Report all errors
-    });
-    //#endregion CfWorkerJsonSchemaValidator_customConfig
-    return validator;
+	//#region CfWorkerJsonSchemaValidator_customConfig
+	const validator = new CfWorkerJsonSchemaValidator({
+		draft: "2020-12",
+		shortcircuit: false, // Report all errors
+	});
+	//#endregion CfWorkerJsonSchemaValidator_customConfig
+	return validator;
 }

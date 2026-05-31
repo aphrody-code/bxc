@@ -58,7 +58,10 @@ let _streamCounter = 0;
  * return { stream: handle };
  * ```
  */
-export function registerIOStream(streams: Map<string, IOStream>, data: Uint8Array): string {
+export function registerIOStream(
+	streams: Map<string, IOStream>,
+	data: Uint8Array,
+): string {
 	const handle = `io-${++_streamCounter}`;
 	streams.set(handle, { handle, data, position: 0 });
 	return handle;
@@ -68,7 +71,12 @@ export function registerIOStream(streams: Map<string, IOStream>, data: Uint8Arra
 // Handler
 // ---------------------------------------------------------------------------
 
-export const IOHandler: DomainHandler = async (method, params, ctx, _sessionId) => {
+export const IOHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	_sessionId,
+) => {
 	const streams = ctx.networkCtx.ioStreams;
 
 	switch (method) {
@@ -88,7 +96,8 @@ export const IOHandler: DomainHandler = async (method, params, ctx, _sessionId) 
 				stream.position = p.offset;
 			}
 
-			const chunkSize = typeof p.size === "number" && p.size > 0 ? p.size : DEFAULT_CHUNK_SIZE;
+			const chunkSize =
+				typeof p.size === "number" && p.size > 0 ? p.size : DEFAULT_CHUNK_SIZE;
 			const remaining = stream.data.byteLength - stream.position;
 
 			if (remaining <= 0) {
@@ -96,7 +105,10 @@ export const IOHandler: DomainHandler = async (method, params, ctx, _sessionId) 
 				return { data: "", base64Encoded: false, eof: true };
 			}
 
-			const sliceEnd = Math.min(stream.position + chunkSize, stream.data.byteLength);
+			const sliceEnd = Math.min(
+				stream.position + chunkSize,
+				stream.data.byteLength,
+			);
 			const chunk = stream.data.slice(stream.position, sliceEnd);
 			stream.position = sliceEnd;
 

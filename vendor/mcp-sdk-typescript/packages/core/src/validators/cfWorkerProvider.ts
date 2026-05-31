@@ -8,14 +8,19 @@
  * @see {@linkcode AjvJsonSchemaValidator} for the Node.js alternative
  */
 
-import { Validator } from '@cfworker/json-schema';
+import { Validator } from "@cfworker/json-schema";
 
-import type { JsonSchemaType, JsonSchemaValidator, jsonSchemaValidator, JsonSchemaValidatorResult } from './types.js';
+import type {
+	JsonSchemaType,
+	JsonSchemaValidator,
+	jsonSchemaValidator,
+	JsonSchemaValidatorResult,
+} from "./types.js";
 
 /**
  * JSON Schema draft version supported by @cfworker/json-schema
  */
-export type CfWorkerSchemaDraft = '4' | '7' | '2019-09' | '2020-12';
+export type CfWorkerSchemaDraft = "4" | "7" | "2019-09" | "2020-12";
 
 /**
  *
@@ -33,47 +38,56 @@ export type CfWorkerSchemaDraft = '4' | '7' | '2019-09' | '2020-12';
  * ```
  */
 export class CfWorkerJsonSchemaValidator implements jsonSchemaValidator {
-    private shortcircuit: boolean;
-    private draft: CfWorkerSchemaDraft;
+	private shortcircuit: boolean;
+	private draft: CfWorkerSchemaDraft;
 
-    /**
-     * Create a validator
-     *
-     * @param options - Configuration options
-     * @param options.shortcircuit - If `true`, stop validation after first error (default: `true`)
-     * @param options.draft - JSON Schema draft version to use (default: `'2020-12'`)
-     */
-    constructor(options?: { shortcircuit?: boolean; draft?: CfWorkerSchemaDraft }) {
-        this.shortcircuit = options?.shortcircuit ?? true;
-        this.draft = options?.draft ?? '2020-12';
-    }
+	/**
+	 * Create a validator
+	 *
+	 * @param options - Configuration options
+	 * @param options.shortcircuit - If `true`, stop validation after first error (default: `true`)
+	 * @param options.draft - JSON Schema draft version to use (default: `'2020-12'`)
+	 */
+	constructor(options?: {
+		shortcircuit?: boolean;
+		draft?: CfWorkerSchemaDraft;
+	}) {
+		this.shortcircuit = options?.shortcircuit ?? true;
+		this.draft = options?.draft ?? "2020-12";
+	}
 
-    /**
-     * Create a validator for the given JSON Schema
-     *
-     * Unlike AJV, this validator is not cached internally
-     *
-     * @param schema - Standard JSON Schema object
-     * @returns A validator function that validates input data
-     */
-    getValidator<T>(schema: JsonSchemaType): JsonSchemaValidator<T> {
-        // Cast to the cfworker Schema type - our JsonSchemaType is structurally compatible
-        const validator = new Validator(schema as ConstructorParameters<typeof Validator>[0], this.draft, this.shortcircuit);
+	/**
+	 * Create a validator for the given JSON Schema
+	 *
+	 * Unlike AJV, this validator is not cached internally
+	 *
+	 * @param schema - Standard JSON Schema object
+	 * @returns A validator function that validates input data
+	 */
+	getValidator<T>(schema: JsonSchemaType): JsonSchemaValidator<T> {
+		// Cast to the cfworker Schema type - our JsonSchemaType is structurally compatible
+		const validator = new Validator(
+			schema as ConstructorParameters<typeof Validator>[0],
+			this.draft,
+			this.shortcircuit,
+		);
 
-        return (input: unknown): JsonSchemaValidatorResult<T> => {
-            const result = validator.validate(input);
+		return (input: unknown): JsonSchemaValidatorResult<T> => {
+			const result = validator.validate(input);
 
-            return result.valid
-                ? {
-                      valid: true,
-                      data: input as T,
-                      errorMessage: undefined
-                  }
-                : {
-                      valid: false,
-                      data: undefined,
-                      errorMessage: result.errors.map(err => `${err.instanceLocation}: ${err.error}`).join('; ')
-                  };
-        };
-    }
+			return result.valid
+				? {
+						valid: true,
+						data: input as T,
+						errorMessage: undefined,
+					}
+				: {
+						valid: false,
+						data: undefined,
+						errorMessage: result.errors
+							.map((err) => `${err.instanceLocation}: ${err.error}`)
+							.join("; "),
+					};
+		};
+	}
 }

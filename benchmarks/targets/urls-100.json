@@ -7,50 +7,146 @@
 	"google_core": {
 		"description": "Core Google services and landing pages",
 		"urls": [
-			{ "id": "google-home", "url": "https://www.google.com", "expect": "Google" },
-			{ "id": "google-search", "url": "https://www.google.com/search?q=bxc", "expect": "Google" },
-			{ "id": "google-news", "url": "https://news.google.com", "expect": "Google" },
-			{ "id": "google-maps", "url": "https://maps.google.com", "expect": "Google" },
-			{ "id": "google-photos", "url": "https://photos.google.com", "expect": "Google" },
-			{ "id": "google-drive", "url": "https://drive.google.com", "expect": "Google" },
-			{ "id": "google-docs", "url": "https://docs.google.com", "expect": "Google" },
-			{ "id": "google-mail", "url": "https://mail.google.com", "expect": "Gmail" },
-			{ "id": "google-calendar", "url": "https://calendar.google.com", "expect": "Google" }
+			{
+				"id": "google-home",
+				"url": "https://www.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "google-search",
+				"url": "https://www.google.com/search?q=bxc",
+				"expect": "Google"
+			},
+			{
+				"id": "google-news",
+				"url": "https://news.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "google-maps",
+				"url": "https://maps.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "google-photos",
+				"url": "https://photos.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "google-drive",
+				"url": "https://drive.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "google-docs",
+				"url": "https://docs.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "google-mail",
+				"url": "https://mail.google.com",
+				"expect": "Gmail"
+			},
+			{
+				"id": "google-calendar",
+				"url": "https://calendar.google.com",
+				"expect": "Google"
+			}
 		]
 	},
 	"gemini_ai": {
 		"description": "Gemini AI ecosystem",
 		"urls": [
-			{ "id": "gemini-home", "url": "https://gemini.google.com", "expect": "Gemini" },
-			{ "id": "gemini-app", "url": "https://gemini.google", "expect": "Gemini" },
-			{ "id": "gemini-cli", "url": "https://geminicli.com/", "expect": "Gemini" },
-			{ "id": "antigravity", "url": "https://antigravity.google/", "expect": "Antigravity" },
-			{ "id": "vertex-ai", "url": "https://cloud.google.com/vertex-ai", "expect": "Vertex" }
+			{
+				"id": "gemini-home",
+				"url": "https://gemini.google.com",
+				"expect": "Gemini"
+			},
+			{
+				"id": "gemini-app",
+				"url": "https://gemini.google",
+				"expect": "Gemini"
+			},
+			{
+				"id": "gemini-cli",
+				"url": "https://geminicli.com/",
+				"expect": "Gemini"
+			},
+			{
+				"id": "antigravity",
+				"url": "https://antigravity.google/",
+				"expect": "Antigravity"
+			},
+			{
+				"id": "vertex-ai",
+				"url": "https://cloud.google.com/vertex-ai",
+				"expect": "Vertex"
+			}
 		]
 	},
 	"developer_design": {
 		"description": "Developer and Design portals",
 		"urls": [
-			{ "id": "design-google", "url": "https://design.google/", "expect": "Google" },
-			{ "id": "material-io", "url": "https://m3.material.io/", "expect": "Material" },
-			{ "id": "developers-home", "url": "https://developers.google.com", "expect": "Google" },
-			{ "id": "cloud-home", "url": "https://cloud.google.com", "expect": "Google" },
-			{ "id": "firebase-home", "url": "https://firebase.google.com", "expect": "Firebase" },
-			{ "id": "android-home", "url": "https://www.android.com", "expect": "Android" },
-			{ "id": "chrome-home", "url": "https://www.google.com/chrome/", "expect": "Chrome" }
+			{
+				"id": "design-google",
+				"url": "https://design.google/",
+				"expect": "Google"
+			},
+			{
+				"id": "material-io",
+				"url": "https://m3.material.io/",
+				"expect": "Material"
+			},
+			{
+				"id": "developers-home",
+				"url": "https://developers.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "cloud-home",
+				"url": "https://cloud.google.com",
+				"expect": "Google"
+			},
+			{
+				"id": "firebase-home",
+				"url": "https://firebase.google.com",
+				"expect": "Firebase"
+			},
+			{
+				"id": "android-home",
+				"url": "https://www.android.com",
+				"expect": "Android"
+			},
+			{
+				"id": "chrome-home",
+				"url": "https://www.google.com/chrome/",
+				"expect": "Chrome"
+			}
 		]
 	},
 	"open_source": {
 		"description": "Google-led Open Source projects",
 		"urls": [
 			{ "id": "angular-io", "url": "https://angular.dev", "expect": "Angular" },
-			{ "id": "flutter-dev", "url": "https://flutter.dev", "expect": "Flutter" },
+			{
+				"id": "flutter-dev",
+				"url": "https://flutter.dev",
+				"expect": "Flutter"
+			},
 			{ "id": "dart-dev", "url": "https://dart.dev", "expect": "Dart" },
 			{ "id": "golang-org", "url": "https://go.dev", "expect": "Go" },
-			{ "id": "tensorflow-org", "url": "https://www.tensorflow.org", "expect": "TensorFlow" },
+			{
+				"id": "tensorflow-org",
+				"url": "https://www.tensorflow.org",
+				"expect": "TensorFlow"
+			},
 			{ "id": "lit-dev", "url": "https://lit.dev", "expect": "Lit" },
 			{ "id": "web-dev", "url": "https://web.dev", "expect": "web.dev" },
-			{ "id": "chromium-org", "url": "https://www.chromium.org", "expect": "Chromium" }
+			{
+				"id": "chromium-org",
+				"url": "https://www.chromium.org",
+				"expect": "Chromium"
+			}
 		]
 	}
 }

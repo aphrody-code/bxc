@@ -7,25 +7,28 @@
  * @module
  */
 
-import type { Express } from 'express';
+import type { Express } from "express";
 
-import { hostHeaderValidation, localhostHostValidation } from './hostHeaderValidation.js';
+import {
+	hostHeaderValidation,
+	localhostHostValidation,
+} from "./hostHeaderValidation.js";
 
 /**
  * Example: Using hostHeaderValidation middleware with custom allowed hosts.
  */
 function hostHeaderValidation_basicUsage(app: Express) {
-    //#region hostHeaderValidation_basicUsage
-    const middleware = hostHeaderValidation(['localhost', '127.0.0.1', '[::1]']);
-    app.use(middleware);
-    //#endregion hostHeaderValidation_basicUsage
+	//#region hostHeaderValidation_basicUsage
+	const middleware = hostHeaderValidation(["localhost", "127.0.0.1", "[::1]"]);
+	app.use(middleware);
+	//#endregion hostHeaderValidation_basicUsage
 }
 
 /**
  * Example: Using localhostHostValidation convenience middleware.
  */
 function localhostHostValidation_basicUsage(app: Express) {
-    //#region localhostHostValidation_basicUsage
-    app.use(localhostHostValidation());
-    //#endregion localhostHostValidation_basicUsage
+	//#region localhostHostValidation_basicUsage
+	app.use(localhostHostValidation());
+	//#endregion localhostHostValidation_basicUsage
 }

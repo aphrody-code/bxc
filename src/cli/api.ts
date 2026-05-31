@@ -50,7 +50,11 @@ const DEFAULTS: Omit<ApiServerOptions, keyof CommonOptions> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}): Response {
+function jsonResponse(
+	status: number,
+	body: unknown,
+	headers: Record<string, string> = {},
+): Response {
 	return new Response(JSON.stringify(body, null, 2), {
 		status,
 		headers: { "content-type": "application/json", ...headers },
@@ -82,7 +86,9 @@ async function readUrlParam(
 		try {
 			const body = (await req.json()) as Record<string, unknown>;
 			if (typeof body["url"] === "string") urlValue = body["url"] as string;
-		} catch { /* ignore */ }
+		} catch {
+			/* ignore */
+		}
 	}
 
 	return { url: urlValue };
@@ -92,7 +98,10 @@ async function readUrlParam(
 // Handlers
 // ---------------------------------------------------------------------------
 
-async function handleRecon(url: string, opts: CommonOptions): Promise<ReconResult> {
+async function handleRecon(
+	url: string,
+	opts: CommonOptions,
+): Promise<ReconResult> {
 	return recon({
 		...opts,
 		url,
@@ -104,7 +113,10 @@ async function handleRecon(url: string, opts: CommonOptions): Promise<ReconResul
 	});
 }
 
-async function handleDetect(url: string, opts: CommonOptions): Promise<DeepDetectionResult> {
+async function handleDetect(
+	url: string,
+	opts: CommonOptions,
+): Promise<DeepDetectionResult> {
 	return deepDetect(url, opts.insecure);
 }
 
@@ -128,25 +140,32 @@ export async function startApiServer(options: ApiServerOptions): Promise<{
 				"x-bxc-version": VERSION,
 			};
 
-			if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: baseHeaders });
-			if (!isAuthorized(req, options)) return jsonResponse(401, { error: "unauthorized" }, baseHeaders);
+			if (req.method === "OPTIONS")
+				return new Response(null, { status: 204, headers: baseHeaders });
+			if (!isAuthorized(req, options))
+				return jsonResponse(401, { error: "unauthorized" }, baseHeaders);
 
 			try {
 				if (u.pathname === "/" || u.pathname === "") {
-					return new Response("<h1>bxc API</h1>", { headers: { "content-type": "text/html", ...baseHeaders } });
+					return new Response("<h1>bxc API</h1>", {
+						headers: { "content-type": "text/html", ...baseHeaders },
+					});
 				}
-				if (u.pathname === "/healthz") return jsonResponse(200, { ok: true }, baseHeaders);
+				if (u.pathname === "/healthz")
+					return jsonResponse(200, { ok: true }, baseHeaders);
 
 				if (u.pathname === "/api/recon") {
 					const { url } = await readUrlParam(req, {});
-					if (!url) return jsonResponse(400, { error: "missing url" }, baseHeaders);
+					if (!url)
+						return jsonResponse(400, { error: "missing url" }, baseHeaders);
 					const r = await handleRecon(url, options);
 					return jsonResponse(200, r, baseHeaders);
 				}
 
 				if (u.pathname === "/api/detect") {
 					const { url } = await readUrlParam(req, {});
-					if (!url) return jsonResponse(400, { error: "missing url" }, baseHeaders);
+					if (!url)
+						return jsonResponse(400, { error: "missing url" }, baseHeaders);
 					const r = await handleDetect(url, options);
 					return jsonResponse(200, r, baseHeaders);
 				}
@@ -183,15 +202,27 @@ Options:
 	);
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts: ApiServerOptions = { ...baseOpts, ...DEFAULTS };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
-			case "--port": opts.port = parseInt(argv[++i], 10); break;
-			case "--host": opts.hostname = argv[++i]; break;
-			case "--auth": opts.authToken = argv[++i]; break;
-			case "--help": case "-h": printUsage(); return;
+			case "--port":
+				opts.port = parseInt(argv[++i], 10);
+				break;
+			case "--host":
+				opts.hostname = argv[++i];
+				break;
+			case "--auth":
+				opts.authToken = argv[++i];
+				break;
+			case "--help":
+			case "-h":
+				printUsage();
+				return;
 		}
 	}
 	await startApiServer(opts);

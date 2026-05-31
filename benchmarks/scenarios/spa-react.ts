@@ -41,9 +41,13 @@ interface SpaRunResult extends RunResult {
 	jsRendered: boolean;
 }
 
-async function runSpa(runner: typeof bxcStatic, url: string): Promise<SpaRunResult> {
+async function runSpa(
+	runner: typeof bxcStatic,
+	url: string,
+): Promise<SpaRunResult> {
 	const base = await runner.run(url);
-	const jsRendered = base.success && base.contentLength > 0 && base.contentLength > 500;
+	const jsRendered =
+		base.success && base.contentLength > 0 && base.contentLength > 500;
 	// Note: for mock SPA, static runners return ~600 bytes (skeleton),
 	// fast profile with Lightpanda returns >1 KB (after setTimeout hydration).
 	// We document this difference honestly.
@@ -95,7 +99,9 @@ export async function run(): Promise<ScenarioResult[]> {
 
 	for (const runner of runners) {
 		if (runner.SKIP_REASON) {
-			console.log(`[${SCENARIO_ID}] SKIP ${runner.RUNNER_ID}: ${runner.SKIP_REASON}`);
+			console.log(
+				`[${SCENARIO_ID}] SKIP ${runner.RUNNER_ID}: ${runner.SKIP_REASON}`,
+			);
 			continue;
 		}
 		console.log(`[${SCENARIO_ID}] running ${runner.RUNNER_ID}...`);

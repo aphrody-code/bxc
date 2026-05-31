@@ -23,7 +23,12 @@
 
 import type { DomainHandler } from "../types.js";
 
-export const LogHandler: DomainHandler = async (method, _params, _ctx, _sessionId) => {
+export const LogHandler: DomainHandler = async (
+	method,
+	_params,
+	_ctx,
+	_sessionId,
+) => {
 	switch (method) {
 		case "Log.enable":
 			return {};

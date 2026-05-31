@@ -53,7 +53,11 @@ class TransportMux {
 		return () => this.#listeners.delete(fn);
 	}
 
-	call(method: string, params: Record<string, unknown> = {}, sessionId?: string): Promise<unknown> {
+	call(
+		method: string,
+		params: Record<string, unknown> = {},
+		sessionId?: string,
+	): Promise<unknown> {
 		return new Promise<unknown>((resolve, reject) => {
 			const id = Math.floor(Math.random() * 1_000_000) + 1;
 			const remove = this.addListener((raw) => {
@@ -72,7 +76,10 @@ class TransportMux {
 		});
 	}
 
-	waitForEvent(eventMethod: string, timeoutMs = 2000): Promise<Record<string, unknown>> {
+	waitForEvent(
+		eventMethod: string,
+		timeoutMs = 2000,
+	): Promise<Record<string, unknown>> {
 		return new Promise((resolve, reject) => {
 			const timer = setTimeout(
 				() => reject(new Error(`Timeout waiting for ${eventMethod}`)),

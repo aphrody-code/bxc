@@ -3,7 +3,7 @@
  * These are used internally by the SDK for protocol message validation.
  */
 
-import * as z from 'zod/v4';
+import * as z from "zod/v4";
 
 /**
  * Base type for any Zod schema.
@@ -25,8 +25,10 @@ export type SchemaOutput<T extends AnySchema> = z.output<T>;
  * Returns a discriminated union with success/error.
  */
 export function parseSchema<T extends AnySchema>(
-    schema: T,
-    data: unknown
-): { success: true; data: z.output<T> } | { success: false; error: z.core.$ZodError } {
-    return z.safeParse(schema, data);
+	schema: T,
+	data: unknown,
+):
+	| { success: true; data: z.output<T> }
+	| { success: false; error: z.core.$ZodError } {
+	return z.safeParse(schema, data);
 }

@@ -1,30 +1,30 @@
 import {
-    CallToolResultSchema,
-    InitializedNotificationSchema,
-    InitializeRequestSchema,
-    JSONRPCErrorResponseSchema,
-    JSONRPCMessageSchema,
-    JSONRPCNotificationSchema,
-    JSONRPCRequestSchema,
-    JSONRPCResponseSchema,
-    JSONRPCResultResponseSchema,
-    TaskAugmentedRequestParamsSchema
-} from './schemas.js';
+	CallToolResultSchema,
+	InitializedNotificationSchema,
+	InitializeRequestSchema,
+	JSONRPCErrorResponseSchema,
+	JSONRPCMessageSchema,
+	JSONRPCNotificationSchema,
+	JSONRPCRequestSchema,
+	JSONRPCResponseSchema,
+	JSONRPCResultResponseSchema,
+	TaskAugmentedRequestParamsSchema,
+} from "./schemas.js";
 import type {
-    CallToolResult,
-    CompleteRequest,
-    CompleteRequestPrompt,
-    CompleteRequestResourceTemplate,
-    InitializedNotification,
-    InitializeRequest,
-    JSONRPCErrorResponse,
-    JSONRPCMessage,
-    JSONRPCNotification,
-    JSONRPCRequest,
-    JSONRPCResponse,
-    JSONRPCResultResponse,
-    TaskAugmentedRequestParams
-} from './types.js';
+	CallToolResult,
+	CompleteRequest,
+	CompleteRequestPrompt,
+	CompleteRequestResourceTemplate,
+	InitializedNotification,
+	InitializeRequest,
+	JSONRPCErrorResponse,
+	JSONRPCMessage,
+	JSONRPCNotification,
+	JSONRPCRequest,
+	JSONRPCResponse,
+	JSONRPCResultResponse,
+	TaskAugmentedRequestParams,
+} from "./types.js";
 
 /**
  * Validates and parses an unknown value as a JSON-RPC message.
@@ -37,12 +37,16 @@ import type {
  * @throws If validation fails.
  */
 export function parseJSONRPCMessage(value: unknown): JSONRPCMessage {
-    return JSONRPCMessageSchema.parse(value);
+	return JSONRPCMessageSchema.parse(value);
 }
 
-export const isJSONRPCRequest = (value: unknown): value is JSONRPCRequest => JSONRPCRequestSchema.safeParse(value).success;
+export const isJSONRPCRequest = (value: unknown): value is JSONRPCRequest =>
+	JSONRPCRequestSchema.safeParse(value).success;
 
-export const isJSONRPCNotification = (value: unknown): value is JSONRPCNotification => JSONRPCNotificationSchema.safeParse(value).success;
+export const isJSONRPCNotification = (
+	value: unknown,
+): value is JSONRPCNotification =>
+	JSONRPCNotificationSchema.safeParse(value).success;
 
 /**
  * Checks if a value is a valid {@linkcode JSONRPCResultResponse}.
@@ -50,8 +54,10 @@ export const isJSONRPCNotification = (value: unknown): value is JSONRPCNotificat
  *
  * @returns True if the value is a valid {@linkcode JSONRPCResultResponse}, false otherwise.
  */
-export const isJSONRPCResultResponse = (value: unknown): value is JSONRPCResultResponse =>
-    JSONRPCResultResponseSchema.safeParse(value).success;
+export const isJSONRPCResultResponse = (
+	value: unknown,
+): value is JSONRPCResultResponse =>
+	JSONRPCResultResponseSchema.safeParse(value).success;
 
 /**
  * Checks if a value is a valid {@linkcode JSONRPCErrorResponse}.
@@ -59,8 +65,10 @@ export const isJSONRPCResultResponse = (value: unknown): value is JSONRPCResultR
  *
  * @returns True if the value is a valid {@linkcode JSONRPCErrorResponse}, false otherwise.
  */
-export const isJSONRPCErrorResponse = (value: unknown): value is JSONRPCErrorResponse =>
-    JSONRPCErrorResponseSchema.safeParse(value).success;
+export const isJSONRPCErrorResponse = (
+	value: unknown,
+): value is JSONRPCErrorResponse =>
+	JSONRPCErrorResponseSchema.safeParse(value).success;
 
 /**
  * Checks if a value is a valid {@linkcode JSONRPCResponse} (either a result or error response).
@@ -68,7 +76,8 @@ export const isJSONRPCErrorResponse = (value: unknown): value is JSONRPCErrorRes
  *
  * @returns True if the value is a valid {@linkcode JSONRPCResponse}, false otherwise.
  */
-export const isJSONRPCResponse = (value: unknown): value is JSONRPCResponse => JSONRPCResponseSchema.safeParse(value).success;
+export const isJSONRPCResponse = (value: unknown): value is JSONRPCResponse =>
+	JSONRPCResponseSchema.safeParse(value).success;
 
 /**
  * Checks if a value is a valid {@linkcode CallToolResult}.
@@ -77,8 +86,9 @@ export const isJSONRPCResponse = (value: unknown): value is JSONRPCResponse => J
  * @returns True if the value is a valid {@linkcode CallToolResult}, false otherwise.
  */
 export const isCallToolResult = (value: unknown): value is CallToolResult => {
-    if (typeof value !== 'object' || value === null || !('content' in value)) return false;
-    return CallToolResultSchema.safeParse(value).success;
+	if (typeof value !== "object" || value === null || !("content" in value))
+		return false;
+	return CallToolResultSchema.safeParse(value).success;
 };
 
 /**
@@ -87,24 +97,39 @@ export const isCallToolResult = (value: unknown): value is CallToolResult => {
  *
  * @returns True if the value is a valid {@linkcode TaskAugmentedRequestParams}, false otherwise.
  */
-export const isTaskAugmentedRequestParams = (value: unknown): value is TaskAugmentedRequestParams =>
-    TaskAugmentedRequestParamsSchema.safeParse(value).success;
+export const isTaskAugmentedRequestParams = (
+	value: unknown,
+): value is TaskAugmentedRequestParams =>
+	TaskAugmentedRequestParamsSchema.safeParse(value).success;
 
-export const isInitializeRequest = (value: unknown): value is InitializeRequest => InitializeRequestSchema.safeParse(value).success;
+export const isInitializeRequest = (
+	value: unknown,
+): value is InitializeRequest =>
+	InitializeRequestSchema.safeParse(value).success;
 
-export const isInitializedNotification = (value: unknown): value is InitializedNotification =>
-    InitializedNotificationSchema.safeParse(value).success;
+export const isInitializedNotification = (
+	value: unknown,
+): value is InitializedNotification =>
+	InitializedNotificationSchema.safeParse(value).success;
 
-export function assertCompleteRequestPrompt(request: CompleteRequest): asserts request is CompleteRequestPrompt {
-    if (request.params.ref.type !== 'ref/prompt') {
-        throw new TypeError(`Expected CompleteRequestPrompt, but got ${request.params.ref.type}`);
-    }
-    void (request as CompleteRequestPrompt);
+export function assertCompleteRequestPrompt(
+	request: CompleteRequest,
+): asserts request is CompleteRequestPrompt {
+	if (request.params.ref.type !== "ref/prompt") {
+		throw new TypeError(
+			`Expected CompleteRequestPrompt, but got ${request.params.ref.type}`,
+		);
+	}
+	void (request as CompleteRequestPrompt);
 }
 
-export function assertCompleteRequestResourceTemplate(request: CompleteRequest): asserts request is CompleteRequestResourceTemplate {
-    if (request.params.ref.type !== 'ref/resource') {
-        throw new TypeError(`Expected CompleteRequestResourceTemplate, but got ${request.params.ref.type}`);
-    }
-    void (request as CompleteRequestResourceTemplate);
+export function assertCompleteRequestResourceTemplate(
+	request: CompleteRequest,
+): asserts request is CompleteRequestResourceTemplate {
+	if (request.params.ref.type !== "ref/resource") {
+		throw new TypeError(
+			`Expected CompleteRequestResourceTemplate, but got ${request.params.ref.type}`,
+		);
+	}
+	void (request as CompleteRequestResourceTemplate);
 }

@@ -7,33 +7,34 @@
  * @module
  */
 
-import { isSpecType, specTypeSchemas } from './specTypeSchema.js';
+import { isSpecType, specTypeSchemas } from "./specTypeSchema.js";
 
 declare const untrusted: unknown;
 declare const value: unknown;
 declare const mixed: unknown[];
 
 function specTypeSchemas_basicUsage() {
-    //#region specTypeSchemas_basicUsage
-    const result = specTypeSchemas.CallToolResult['~standard'].validate(untrusted);
-    if (result.issues === undefined) {
-        // result.value is CallToolResult
-    }
-    //#endregion specTypeSchemas_basicUsage
-    void result;
+	//#region specTypeSchemas_basicUsage
+	const result =
+		specTypeSchemas.CallToolResult["~standard"].validate(untrusted);
+	if (result.issues === undefined) {
+		// result.value is CallToolResult
+	}
+	//#endregion specTypeSchemas_basicUsage
+	void result;
 }
 
 function isSpecType_basicUsage() {
-    /* eslint-disable unicorn/no-array-callback-reference -- showcasing the guard-as-callback pattern */
-    //#region isSpecType_basicUsage
-    if (isSpecType.ContentBlock(value)) {
-        // value is ContentBlock
-    }
+	/* eslint-disable unicorn/no-array-callback-reference -- showcasing the guard-as-callback pattern */
+	//#region isSpecType_basicUsage
+	if (isSpecType.ContentBlock(value)) {
+		// value is ContentBlock
+	}
 
-    const blocks = mixed.filter(isSpecType.ContentBlock);
-    //#endregion isSpecType_basicUsage
-    /* eslint-enable unicorn/no-array-callback-reference */
-    void blocks;
+	const blocks = mixed.filter(isSpecType.ContentBlock);
+	//#endregion isSpecType_basicUsage
+	/* eslint-enable unicorn/no-array-callback-reference */
+	void blocks;
 }
 
 void specTypeSchemas_basicUsage;

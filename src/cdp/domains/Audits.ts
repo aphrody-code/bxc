@@ -22,7 +22,12 @@
 
 import type { DomainHandler } from "../types.js";
 
-export const AuditsHandler: DomainHandler = async (method, _params, _ctx, _sessionId) => {
+export const AuditsHandler: DomainHandler = async (
+	method,
+	_params,
+	_ctx,
+	_sessionId,
+) => {
 	switch (method) {
 		case "Audits.enable":
 			return {};

@@ -61,7 +61,9 @@ export async function waitForHydration(
 	const deadline = Date.now() + timeoutMs;
 
 	while (Date.now() < deadline) {
-		const ready = await page.evaluate(predicateBody as () => boolean).catch(() => false);
+		const ready = await page
+			.evaluate(predicateBody as () => boolean)
+			.catch(() => false);
 		if (ready) {
 			if (graceMs > 0) await Bun.sleep(graceMs);
 			return (Bun.nanoseconds() - start) / 1e6;

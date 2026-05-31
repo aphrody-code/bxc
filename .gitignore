@@ -56,3 +56,15 @@ mapping-and-atlas.log
 packages/bxc-extension/bxc-mcp
 **/bxc-memory.sqlite
 bxc-memory.sqlite
+data/wbo_scraped/
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/*.html
+data/worldbeyblade_*
+test-output*.txt
+test-recon/
+test-xcom-recon/
+x-profile.*
+xcom-deep-report.json
+scratch/

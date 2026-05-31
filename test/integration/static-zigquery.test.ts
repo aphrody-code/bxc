@@ -210,11 +210,15 @@ describeIfZig("Browser.newPage with static profile uses zigquery", async () => {
 			await page.goto(`data:text/html,${encodeURIComponent(WIKIPEDIA_LIKE)}`);
 			expect(await page.title()).toBe("Bun (software) - Google");
 
-			const heading = await page.$<{ textContent(): Promise<string> }>("h1#firstHeading");
+			const heading = await page.$<{ textContent(): Promise<string> }>(
+				"h1#firstHeading",
+			);
 			expect(heading).not.toBeNull();
 			expect((await heading!.textContent()).trim()).toBe("Bun (software)");
 
-			const paras = await page.$$<{ textContent(): Promise<string> }>("#mw-content-text p");
+			const paras = await page.$$<{ textContent(): Promise<string> }>(
+				"#mw-content-text p",
+			);
 			expect(paras.length).toBe(2);
 			const text0 = await paras[0].textContent();
 			expect(text0).toContain("JavaScript runtime");
@@ -227,7 +231,9 @@ describeIfZig("Browser.newPage with static profile uses zigquery", async () => {
 		const page = await Browser.newPage({ profile: "static" });
 		try {
 			await page.goto(`data:text/html,${encodeURIComponent(BLOG_POST_LIKE)}`);
-			const tagHandles = await page.$$<{ textContent(): Promise<string> }>("ul.tags li a.tag");
+			const tagHandles = await page.$$<{ textContent(): Promise<string> }>(
+				"ul.tags li a.tag",
+			);
 			const tags = await Promise.all(tagHandles.map((h) => h.textContent()));
 			expect(tags).toEqual(["bun", "zig", "perf"]);
 		} finally {

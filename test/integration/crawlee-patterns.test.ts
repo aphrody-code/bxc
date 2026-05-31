@@ -123,7 +123,10 @@ describe("RequestQueue", () => {
 	});
 
 	test("recoverStaleLocks re-queues timed-out locked requests", async () => {
-		const shortQ = RequestQueue.open(":memory:", { maxRetries: 1, lockTimeoutMs: 10 });
+		const shortQ = RequestQueue.open(":memory:", {
+			maxRetries: 1,
+			lockTimeoutMs: 10,
+		});
 		shortQ.addRequest("https://google.com/stale");
 		shortQ.fetchBatch(1); // locks it
 		await Bun.sleep(20); // let lock expire
@@ -305,7 +308,9 @@ https://google.com/c`;
 					const url = new URL(req.url);
 					const body = routes[url.pathname];
 					if (!body) return new Response("Not Found", { status: 404 });
-					const ct = url.pathname.endsWith(".xml") ? "application/xml" : "text/plain";
+					const ct = url.pathname.endsWith(".xml")
+						? "application/xml"
+						: "text/plain";
 					return new Response(body, { headers: { "Content-Type": ct } });
 				},
 			});
@@ -336,14 +341,21 @@ https://google.com/c`;
 
 	test("parseSitemap yields correct URLs from XML urlset", async () => {
 		const urls: string[] = [];
-		for await (const u of parseSitemap(`http://localhost:${port}/sitemap.xml`)) {
+		for await (const u of parseSitemap(
+			`http://localhost:${port}/sitemap.xml`,
+		)) {
 			urls.push(u.loc);
 		}
-		expect(urls).toEqual(["https://google.com/page1", "https://google.com/page2"]);
+		expect(urls).toEqual([
+			"https://google.com/page1",
+			"https://google.com/page2",
+		]);
 	});
 
 	test("parseSitemap parses metadata (lastmod, priority, changefreq)", async () => {
-		const [first] = await collectSitemapUrls(`http://localhost:${port}/sitemap.xml`);
+		const [first] = await collectSitemapUrls(
+			`http://localhost:${port}/sitemap.xml`,
+		);
 		expect(first.priority).toBe(0.8);
 		expect(first.changefreq).toBe("weekly");
 		expect(first.lastmod instanceof Date).toBe(true);
@@ -351,7 +363,9 @@ https://google.com/c`;
 	});
 
 	test("parseSitemap handles .txt format", async () => {
-		const urls = await collectSitemapUrls(`http://localhost:${port}/sitemap.txt`);
+		const urls = await collectSitemapUrls(
+			`http://localhost:${port}/sitemap.txt`,
+		);
 		expect(urls.map((u) => u.loc)).toEqual([
 			"https://google.com/a",
 			"https://google.com/b",
@@ -361,20 +375,27 @@ https://google.com/c`;
 
 	test("parseSitemap follows sitemapindex recursively", async () => {
 		// routes["/sitemap-index.xml"] already references localhost:port/sitemap-posts.xml
-		const urls = await collectSitemapUrls(`http://localhost:${port}/sitemap-index.xml`);
+		const urls = await collectSitemapUrls(
+			`http://localhost:${port}/sitemap-index.xml`,
+		);
 		expect(urls.length).toBe(2);
 	});
 
 	test("parseSitemap respects maxUrls limit", async () => {
-		const urls = await collectSitemapUrls(`http://localhost:${port}/sitemap.xml`, {
-			maxUrls: 1,
-		});
+		const urls = await collectSitemapUrls(
+			`http://localhost:${port}/sitemap.xml`,
+			{
+				maxUrls: 1,
+			},
+		);
 		expect(urls.length).toBe(1);
 	});
 
 	test("discoverSitemapsFromRobots finds Sitemap: directives", async () => {
 		// routes["/robots.txt"] already has a Sitemap: directive pointing to localhost
-		const sitemaps = await discoverSitemapsFromRobots(`http://localhost:${port}`);
+		const sitemaps = await discoverSitemapsFromRobots(
+			`http://localhost:${port}`,
+		);
 		expect(sitemaps.length).toBeGreaterThan(0);
 		expect(sitemaps[0]).toContain("sitemap.xml");
 		// Cleanup server after last sitemap test
@@ -405,50 +426,83 @@ Disallow: /
 `;
 
 	test("isAllowed returns true for unrestricted paths", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
 		expect(robots.isAllowed("https://google.com/public/page", "*")).toBe(true);
 		expect(robots.isAllowed("https://google.com/about", "*")).toBe(true);
 	});
 
 	test("isAllowed returns false for disallowed paths", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.isAllowed("https://google.com/private/data", "*")).toBe(false);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
+		expect(robots.isAllowed("https://google.com/private/data", "*")).toBe(
+			false,
+		);
 		expect(robots.isAllowed("https://google.com/admin/", "*")).toBe(false);
 	});
 
 	test("Allow rule wins over Disallow when more specific (longer match)", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
 		// /admin/ is disallowed but /admin/public/ is allowed (more specific)
-		expect(robots.isAllowed("https://google.com/admin/public/index.html", "*")).toBe(true);
+		expect(
+			robots.isAllowed("https://google.com/admin/public/index.html", "*"),
+		).toBe(true);
 	});
 
 	test("BadBot is blocked from everything", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
 		expect(robots.isAllowed("https://google.com/", "BadBot")).toBe(false);
 		expect(robots.isAllowed("https://google.com/public", "BadBot")).toBe(false);
 	});
 
 	test("Googlebot has its own rules", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
-		expect(robots.isAllowed("https://google.com/noindex/page", "Googlebot")).toBe(false);
-		expect(robots.isAllowed("https://google.com/noindex/allowed/", "Googlebot")).toBe(true);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
+		expect(
+			robots.isAllowed("https://google.com/noindex/page", "Googlebot"),
+		).toBe(false);
+		expect(
+			robots.isAllowed("https://google.com/noindex/allowed/", "Googlebot"),
+		).toBe(true);
 	});
 
 	test("crawlDelay returns correct values", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
 		expect(robots.crawlDelay("*")).toBe(2);
 	});
 
 	test("sitemaps directive is extracted", () => {
-		const robots = RobotsFile.parse("https://google.com/robots.txt", ROBOTS_CONTENT);
+		const robots = RobotsFile.parse(
+			"https://google.com/robots.txt",
+			ROBOTS_CONTENT,
+		);
 		expect(robots.sitemaps).toContain("https://google.com/sitemap.xml");
 	});
 
 	test("wildcard patterns (* and $) work correctly", () => {
 		const content = `User-agent: *\nDisallow: /cache/*.html\nDisallow: /page$`;
 		const robots = RobotsFile.parse("https://google.com/robots.txt", content);
-		expect(robots.isAllowed("https://google.com/cache/index.html", "*")).toBe(false);
-		expect(robots.isAllowed("https://google.com/cache/index.json", "*")).toBe(true);
+		expect(robots.isAllowed("https://google.com/cache/index.html", "*")).toBe(
+			false,
+		);
+		expect(robots.isAllowed("https://google.com/cache/index.json", "*")).toBe(
+			true,
+		);
 		expect(robots.isAllowed("https://google.com/page", "*")).toBe(false);
 		expect(robots.isAllowed("https://google.com/page/sub", "*")).toBe(true);
 	});
@@ -561,7 +615,9 @@ describe("Dataset", () => {
 	});
 
 	test("rejects non-object items", async () => {
-		await expect(ds.pushData("string" as unknown as Record<string, unknown>)).rejects.toThrow();
+		await expect(
+			ds.pushData("string" as unknown as Record<string, unknown>),
+		).rejects.toThrow();
 	});
 });
 
@@ -575,7 +631,9 @@ describe("KeyValueStore", () => {
 
 	beforeEach(() => {
 		tmpDir = makeTmpDir("kv");
-		kv = KeyValueStore.open(join(tmpDir, "store.db"), { inlineThresholdBytes: 512 });
+		kv = KeyValueStore.open(join(tmpDir, "store.db"), {
+			inlineThresholdBytes: 512,
+		});
 	});
 
 	afterEach(() => {

@@ -42,13 +42,22 @@
  * Page.navigate call, only one request can be paused at a time per session.
  */
 
-import type { DomainHandler, FetchAction, FetchInterceptionState } from "../types.js";
+import type {
+	DomainHandler,
+	FetchAction,
+	FetchInterceptionState,
+} from "../types.js";
 
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 
-export const FetchHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const FetchHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	const net = ctx.networkCtx;
 	const sid = sessionId ?? "";
 
@@ -217,7 +226,10 @@ export const FetchHandler: DomainHandler = async (method, params, ctx, sessionId
  * Searches all fetch sessions for a pending request with the given requestId.
  * Returns the PausedRequest if found, or undefined.
  */
-function findPendingRequest(fetchSessions: Map<string, FetchInterceptionState>, requestId: string) {
+function findPendingRequest(
+	fetchSessions: Map<string, FetchInterceptionState>,
+	requestId: string,
+) {
 	for (const state of fetchSessions.values()) {
 		const req = state.pendingRequests.get(requestId);
 		if (req) return req;

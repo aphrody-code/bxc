@@ -25,7 +25,12 @@
 
 import type { DomainHandler } from "../types.js";
 
-export const WebMCPHandler: DomainHandler = async (method, _params, _ctx, _sessionId) => {
+export const WebMCPHandler: DomainHandler = async (
+	method,
+	_params,
+	_ctx,
+	_sessionId,
+) => {
 	switch (method) {
 		case "WebMCP.enable":
 			return {};

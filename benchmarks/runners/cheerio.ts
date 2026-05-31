@@ -26,7 +26,9 @@ async function loadCheerio(): Promise<void> {
 	if (cheerioLoad !== null) return;
 	try {
 		const mod = await import("cheerio");
-		cheerioLoad = mod.load as unknown as (html: string) => { text: () => string };
+		cheerioLoad = mod.load as unknown as (html: string) => {
+			text: () => string;
+		};
 		SKIP_REASON = null;
 	} catch {
 		SKIP_REASON = "cheerio not installed — run: bun add cheerio";

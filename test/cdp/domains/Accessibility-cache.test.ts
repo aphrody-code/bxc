@@ -48,7 +48,11 @@ function cdpCall(
 
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { id?: number; result?: unknown; error?: { code: number; message: string } };
+			let msg: {
+				id?: number;
+				result?: unknown;
+				error?: { code: number; message: string };
+			};
 			try {
 				msg = JSON.parse(raw);
 			} catch {
@@ -153,17 +157,29 @@ describe("AX cache — hit returns same content", () => {
 	test("two consecutive getFullAXTree calls return identical node arrays", async () => {
 		const { sessionId } = await setupPage(transport, MEDIUM_HTML);
 
-		const first = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const first = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
-		const second = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const second = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
 		// Same number of nodes
 		expect(second.nodes.length).toBe(first.nodes.length);
 		// Same nodeIds in same order
-		expect(second.nodes.map((n) => n.nodeId)).toEqual(first.nodes.map((n) => n.nodeId));
+		expect(second.nodes.map((n) => n.nodeId)).toEqual(
+			first.nodes.map((n) => n.nodeId),
+		);
 	});
 });
 
@@ -208,7 +224,12 @@ describe("AX cache — performance", () => {
 	test("cache miss on new navigation rebuilds the tree (different loaderId)", async () => {
 		const { sessionId } = await setupPage(transport, MEDIUM_HTML);
 
-		const before = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const before = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -222,7 +243,12 @@ describe("AX cache — performance", () => {
 			sessionId,
 		);
 
-		const after = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const after = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -250,10 +276,17 @@ describe("AX cache — invalidation", () => {
 			"<h1>Page A</h1><nav aria-label='Nav A'></nav>",
 		);
 
-		const treeA = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const treeA = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
-		const navA = treeA.nodes.filter((n) => !n.ignored && n.role?.value === "navigation");
+		const navA = treeA.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "navigation",
+		);
 		expect(navA.length).toBeGreaterThan(0);
 
 		// Navigate to a page without a <nav>.
@@ -264,19 +297,34 @@ describe("AX cache — invalidation", () => {
 			sessionId,
 		);
 
-		const treeB = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const treeB = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
-		const navB = treeB.nodes.filter((n) => !n.ignored && n.role?.value === "navigation");
+		const navB = treeB.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "navigation",
+		);
 		// After navigating away, there should be no <nav> in the AX tree.
 		expect(navB.length).toBe(0);
 	});
 
 	test("reload invalidates cache: tree reflects current URL re-fetch", async () => {
-		const { sessionId } = await setupPage(transport, "<button>Original</button>");
+		const { sessionId } = await setupPage(
+			transport,
+			"<button>Original</button>",
+		);
 
 		// Warm the cache.
-		const before = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const before = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		expect(before.nodes.length).toBeGreaterThan(0);
@@ -285,7 +333,12 @@ describe("AX cache — invalidation", () => {
 		await cdpCall(transport, "Page.reload", {}, sessionId);
 
 		// After reload the cache should have been invalidated; a fresh call must succeed.
-		const after = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const after = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		expect(Array.isArray(after.nodes)).toBe(true);
@@ -303,7 +356,12 @@ describe("AX cache — invalidation", () => {
 		await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId);
 
 		// Get the frameId to pass to setDocumentContent.
-		const frameTree = (await cdpCall(transport, "Page.getFrameTree", {}, sessionId)) as {
+		const frameTree = (await cdpCall(
+			transport,
+			"Page.getFrameTree",
+			{},
+			sessionId,
+		)) as {
 			frameTree: { frame: { id: string } };
 		};
 		const frameId = frameTree.frameTree.frame.id;
@@ -318,12 +376,19 @@ describe("AX cache — invalidation", () => {
 			sessionId,
 		);
 
-		const fresh = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const fresh = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
 		// The injected document has a <main> element mapped to role=main.
-		const mainNode = fresh.nodes.find((n) => !n.ignored && n.role?.value === "main");
+		const mainNode = fresh.nodes.find(
+			(n) => !n.ignored && n.role?.value === "main",
+		);
 		expect(mainNode).toBeDefined();
 	});
 });
@@ -342,8 +407,14 @@ describe("AX cache — session isolation", () => {
 	afterEach(() => transport.close());
 
 	test("two sessions have independent AX caches", async () => {
-		const pageA = await setupPage(transport, "<nav aria-label='A Nav'><a href='/a'>A</a></nav>");
-		const pageB = await setupPage(transport, "<section><h1>B Only</h1></section>");
+		const pageA = await setupPage(
+			transport,
+			"<nav aria-label='A Nav'><a href='/a'>A</a></nav>",
+		);
+		const pageB = await setupPage(
+			transport,
+			"<section><h1>B Only</h1></section>",
+		);
 
 		const treeA = (await cdpCall(
 			transport,
@@ -358,8 +429,12 @@ describe("AX cache — session isolation", () => {
 			pageB.sessionId,
 		)) as { nodes: AXNode[] };
 
-		const navInA = treeA.nodes.filter((n) => !n.ignored && n.role?.value === "navigation");
-		const navInB = treeB.nodes.filter((n) => !n.ignored && n.role?.value === "navigation");
+		const navInA = treeA.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "navigation",
+		);
+		const navInB = treeB.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "navigation",
+		);
 
 		// Session A has a nav; session B does not.
 		expect(navInA.length).toBeGreaterThan(0);

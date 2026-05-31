@@ -171,7 +171,8 @@ function resolveHref(href: string, base: string): string | null {
 
 	try {
 		const resolved = new URL(href, base);
-		if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return null;
+		if (resolved.protocol !== "http:" && resolved.protocol !== "https:")
+			return null;
 		// Strip fragment — fragments are never meaningful for crawling
 		resolved.hash = "";
 		return resolved.href;
@@ -224,7 +225,9 @@ interface ElementHandle {
  *
  * @returns An object `{ added, skipped }` with the enqueue outcome counts.
  */
-export async function enqueueLinks(opts: EnqueueLinksOptions): Promise<EnqueueLinksResult> {
+export async function enqueueLinks(
+	opts: EnqueueLinksOptions,
+): Promise<EnqueueLinksResult> {
 	const {
 		page,
 		queue,

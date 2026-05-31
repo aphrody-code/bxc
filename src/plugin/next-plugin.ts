@@ -264,7 +264,10 @@ export function nextShimsPlugin(options: NextPluginOptions = {}): BunPlugin {
 		async setup(build) {
 			const cwd = options.cwd ?? process.cwd();
 			const realNextAvailable =
-				!force && (await Bun.file(resolvePath(cwd, "node_modules/next/package.json")).exists());
+				!force &&
+				(await Bun.file(
+					resolvePath(cwd, "node_modules/next/package.json"),
+				).exists());
 
 			build.onResolve(
 				{
@@ -336,7 +339,9 @@ function snifDirective(source: string): "use client" | "use server" | null {
  * Detects `"use client"` / `"use server"` directives in TS/TSX files
  * and accumulates a manifest accessible after build.
  */
-export function nextDirectivesPlugin(options: NextPluginOptions = {}): BunPlugin {
+export function nextDirectivesPlugin(
+	options: NextPluginOptions = {},
+): BunPlugin {
 	return {
 		name: "next-directives",
 		setup(build) {
@@ -441,7 +446,8 @@ function appPathToPattern(rel: string): string {
 		// Parallel routes @slot — invisible.
 		if (p.startsWith("@")) continue;
 		// Intercepting routes — strip leading dots.
-		if (p.startsWith("(.)") || p.startsWith("(..)") || p.startsWith("(...)")) continue;
+		if (p.startsWith("(.)") || p.startsWith("(..)") || p.startsWith("(...)"))
+			continue;
 		// Catch-all `[...slug]` and optional `[[...slug]]` and dynamic `[id]` kept verbatim.
 		segments.push(p);
 	}
@@ -508,7 +514,11 @@ async function scanRootSpecials(cwd: string): Promise<NextRoute[]> {
 	for (const [filename, kind] of ROUTE_FILES_ROOT) {
 		const p = resolvePath(cwd, filename);
 		if (await Bun.file(p).exists()) {
-			out.push({ pattern: kind === "middleware" ? "/*" : "_root", file: filename, kind });
+			out.push({
+				pattern: kind === "middleware" ? "/*" : "_root",
+				file: filename,
+				kind,
+			});
 		}
 	}
 	return out;
@@ -533,23 +543,26 @@ export function nextRouterPlugin(options: NextPluginOptions = {}): BunPlugin {
 				namespace: "next-router-manifest",
 			}));
 
-			build.onLoad({ filter: /.*/, namespace: "next-router-manifest" }, async () => {
-				const [app, pages, root] = await Promise.all([
-					scanAppDir(cwd, appDir),
-					scanPagesDir(cwd, pagesDir),
-					scanRootSpecials(cwd),
-				]);
-				const manifest: NextRouteManifest = {
-					app: [...app, ...root],
-					pages,
-					scannedAt: new Date().toISOString(),
-				};
-				routerState.manifest = manifest;
-				return {
-					contents: `export default ${JSON.stringify(manifest)};`,
-					loader: "js",
-				};
-			});
+			build.onLoad(
+				{ filter: /.*/, namespace: "next-router-manifest" },
+				async () => {
+					const [app, pages, root] = await Promise.all([
+						scanAppDir(cwd, appDir),
+						scanPagesDir(cwd, pagesDir),
+						scanRootSpecials(cwd),
+					]);
+					const manifest: NextRouteManifest = {
+						app: [...app, ...root],
+						pages,
+						scannedAt: new Date().toISOString(),
+					};
+					routerState.manifest = manifest;
+					return {
+						contents: `export default ${JSON.stringify(manifest)};`,
+						loader: "js",
+					};
+				},
+			);
 
 			if (options.emitManifest) {
 				build.onEnd(async () => {
@@ -582,7 +595,12 @@ export function getNextRouteManifest(): NextRouteManifest {
 // 4. .env loader — exposes NEXT_PUBLIC_* vars at build time
 // ---------------------------------------------------------------------------
 
-const ENV_FILES = [".env", ".env.local", ".env.production", ".env.development"] as const;
+const ENV_FILES = [
+	".env",
+	".env.local",
+	".env.production",
+	".env.development",
+] as const;
 
 async function readEnvFile(path: string): Promise<Record<string, string>> {
 	const file = Bun.file(path);

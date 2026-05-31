@@ -30,7 +30,10 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { createInputHandler, InputHandler } from "../../../src/cdp/domains/Input.ts";
+import {
+	createInputHandler,
+	InputHandler,
+} from "../../../src/cdp/domains/Input.ts";
 import type { DispatchContext } from "../../../src/cdp/types.ts";
 import { CDPError } from "../../../src/transport/InProcessTransport.ts";
 
@@ -51,7 +54,6 @@ const INPUT_METHODS = [
 	"Input.dispatchTouchEvent",
 	"Input.insertText",
 ] as const;
-
 
 /** Invokes a handler and returns the rejection reason if it rejects. */
 async function callHandler(
@@ -87,7 +89,10 @@ describe("InputHandler static profile", () => {
 	}
 
 	test("exported InputHandler is equivalent to createInputHandler('static')", async () => {
-		const { thrown } = await callHandler(InputHandler, "Input.dispatchKeyEvent");
+		const { thrown } = await callHandler(
+			InputHandler,
+			"Input.dispatchKeyEvent",
+		);
 		expect(thrown).toBeInstanceOf(CDPError);
 		expect(thrown!.message).toContain("static profile");
 	});
@@ -135,7 +140,10 @@ describe("InputHandler stealth profile delegation", () => {
 	const handler = createInputHandler("stealth");
 
 	test("Input.dispatchKeyEvent in stealth returns null", async () => {
-		const { thrown, result } = await callHandler(handler, "Input.dispatchKeyEvent");
+		const { thrown, result } = await callHandler(
+			handler,
+			"Input.dispatchKeyEvent",
+		);
 		expect(thrown).toBeNull();
 		expect(result).toBeNull();
 	});
@@ -188,7 +196,9 @@ describe("InputHandler ignores non-Input methods", () => {
 
 describe("StaticDomTransport Input.* integration", () => {
 	test("Input.dispatchKeyEvent via StaticDomTransport returns CDPError in response", async () => {
-		const { StaticDomTransport } = await import("../../../src/transport/StaticDomTransport.ts");
+		const { StaticDomTransport } = await import(
+			"../../../src/transport/StaticDomTransport.ts"
+		);
 		const transport = StaticDomTransport.create();
 
 		const response = await new Promise<{
@@ -219,7 +229,9 @@ describe("StaticDomTransport Input.* integration", () => {
 	});
 
 	test("Input.dispatchMouseEvent via StaticDomTransport returns CDPError in response", async () => {
-		const { StaticDomTransport } = await import("../../../src/transport/StaticDomTransport.ts");
+		const { StaticDomTransport } = await import(
+			"../../../src/transport/StaticDomTransport.ts"
+		);
 		const transport = StaticDomTransport.create();
 
 		const response = await new Promise<{

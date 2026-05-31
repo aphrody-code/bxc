@@ -172,7 +172,9 @@ async function postJson<TReq, TRes>(url: string, body: TReq): Promise<TRes> {
  * console.log(result.token); // submit to form
  * ```
  */
-export async function solve(opts: CapSolverTaskOptions): Promise<CapSolverResult> {
+export async function solve(
+	opts: CapSolverTaskOptions,
+): Promise<CapSolverResult> {
 	const apiKey = opts.apiKey ?? Bun.env.CAPSOLVER_API_KEY ?? "";
 
 	if (!apiKey) {
@@ -203,10 +205,10 @@ export async function solve(opts: CapSolverTaskOptions): Promise<CapSolverResult
 		},
 	};
 
-	const createResp = await postJson<CapSolverCreateTaskBody, CapSolverCreateTaskResponse>(
-		`${CAPSOLVER_BASE_URL}/createTask`,
-		createBody,
-	);
+	const createResp = await postJson<
+		CapSolverCreateTaskBody,
+		CapSolverCreateTaskResponse
+	>(`${CAPSOLVER_BASE_URL}/createTask`, createBody);
 
 	if (createResp.errorId !== 0 || !createResp.taskId) {
 		throw new Error(
@@ -223,10 +225,10 @@ export async function solve(opts: CapSolverTaskOptions): Promise<CapSolverResult
 	for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
 		await Bun.sleep(POLL_INTERVAL_MS);
 
-		const result = await postJson<CapSolverGetResultBody, CapSolverGetResultResponse>(
-			`${CAPSOLVER_BASE_URL}/getTaskResult`,
-			getBody,
-		);
+		const result = await postJson<
+			CapSolverGetResultBody,
+			CapSolverGetResultResponse
+		>(`${CAPSOLVER_BASE_URL}/getTaskResult`, getBody);
 
 		if (result.errorId !== 0) {
 			throw new Error(
@@ -242,7 +244,9 @@ export async function solve(opts: CapSolverTaskOptions): Promise<CapSolverResult
 				result.solution?.userResponse;
 
 			if (!rawToken) {
-				throw new Error("CapSolver returned status=ready but solution token is missing");
+				throw new Error(
+					"CapSolver returned status=ready but solution token is missing",
+				);
 			}
 
 			return {
@@ -279,7 +283,12 @@ export function solveTurnstile(
 ): Promise<CapSolverResult> {
 	return solve({
 		taskType: "AntiTurnstileTaskProxyLess",
-		website: { url: websiteUrl, siteKey, action: opts?.action, cData: opts?.cData },
+		website: {
+			url: websiteUrl,
+			siteKey,
+			action: opts?.action,
+			cData: opts?.cData,
+		},
 		apiKey: opts?.apiKey,
 	});
 }
@@ -339,10 +348,10 @@ export async function getBalance(apiKey?: string): Promise<number> {
 	const key = apiKey ?? Bun.env.CAPSOLVER_API_KEY ?? "";
 	if (!key) return 0;
 
-	const resp = await postJson<{ clientKey: string }, { balance?: number; errorId: number }>(
-		`${CAPSOLVER_BASE_URL}/getBalance`,
-		{ clientKey: key },
-	);
+	const resp = await postJson<
+		{ clientKey: string },
+		{ balance?: number; errorId: number }
+	>(`${CAPSOLVER_BASE_URL}/getBalance`, { clientKey: key });
 
 	if (resp.errorId !== 0) return 0;
 	return resp.balance ?? 0;

@@ -111,7 +111,9 @@ describe("resolveTargetPath", () => {
 		const p = detectPlatform("linux", "x64");
 		expect(p).not.toBeNull();
 		const target = resolveTargetPath(p!, "/abs/scripts");
-		expect(target).toBe("/abs/scripts/../vendor/lightpanda-bin/linux-x64/lightpanda");
+		expect(target).toBe(
+			"/abs/scripts/../vendor/lightpanda-bin/linux-x64/lightpanda",
+		);
 	});
 
 	test("BXC_VENDOR_DIR override is honored", () => {

@@ -50,7 +50,11 @@ function cdpCall(
 
 		transport.onmessage = (raw: string) => {
 			prev?.call(transport, raw);
-			let msg: { id?: number; result?: unknown; error?: { code: number; message: string } };
+			let msg: {
+				id?: number;
+				result?: unknown;
+				error?: { code: number; message: string };
+			};
 			try {
 				msg = JSON.parse(raw);
 			} catch {
@@ -129,7 +133,12 @@ describe("Accessibility.enable", () => {
 
 	test("returns empty object (no-op)", async () => {
 		const { sessionId } = await setupPage(transport, "<p>hi</p>");
-		const result = await cdpCall(transport, "Accessibility.enable", {}, sessionId);
+		const result = await cdpCall(
+			transport,
+			"Accessibility.enable",
+			{},
+			sessionId,
+		);
 		expect(result).toEqual({});
 	});
 });
@@ -149,7 +158,12 @@ describe("Accessibility.getFullAXTree — basic", () => {
 
 	test("returns nodes array for a simple page", async () => {
 		const { sessionId } = await setupPage(transport, "<p>Hello World</p>");
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		expect(Array.isArray(result.nodes)).toBe(true);
@@ -166,17 +180,35 @@ describe("Accessibility.getFullAXTree — basic", () => {
 		})) as { sessionId: string };
 
 		// Navigate to about:blank to clear the doc
-		await cdpCall(transport, "Page.navigate", { url: "about:blank" }, sessionId);
+		await cdpCall(
+			transport,
+			"Page.navigate",
+			{ url: "about:blank" },
+			sessionId,
+		);
 
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		expect(Array.isArray(result.nodes)).toBe(true);
 	});
 
 	test("each AXNode has nodeId, ignored, and role", async () => {
-		const { sessionId } = await setupPage(transport, "<button>Click me</button>");
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const { sessionId } = await setupPage(
+			transport,
+			"<button>Click me</button>",
+		);
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		for (const node of result.nodes) {
@@ -205,46 +237,76 @@ describe("Accessibility.getFullAXTree — HN-style page", () => {
 	test("AX tree contains nodes with role=link", async () => {
 		const html = await readFixture("hn-style.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const links = result.nodes.filter((n) => !n.ignored && n.role?.value === "link");
+		const links = result.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "link",
+		);
 		expect(links.length).toBeGreaterThan(0);
 	});
 
 	test("link nodes have an accessible name", async () => {
 		const html = await readFixture("hn-style.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const links = result.nodes.filter((n) => !n.ignored && n.role?.value === "link");
+		const links = result.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "link",
+		);
 		// At least one link should have a non-empty name.
-		const namedLinks = links.filter((n) => n.name && n.name.value.trim() !== "");
+		const namedLinks = links.filter(
+			(n) => n.name && n.name.value.trim() !== "",
+		);
 		expect(namedLinks.length).toBeGreaterThan(0);
 	});
 
 	test("nav element has role=navigation", async () => {
 		const html = await readFixture("hn-style.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const navNode = result.nodes.find((n) => !n.ignored && n.role?.value === "navigation");
+		const navNode = result.nodes.find(
+			(n) => !n.ignored && n.role?.value === "navigation",
+		);
 		expect(navNode).toBeDefined();
 	});
 
 	test("nav has accessible name from aria-label", async () => {
 		const html = await readFixture("hn-style.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const navNode = result.nodes.find((n) => !n.ignored && n.role?.value === "navigation");
+		const navNode = result.nodes.find(
+			(n) => !n.ignored && n.role?.value === "navigation",
+		);
 		expect(navNode?.name?.value).toBe("Main navigation");
 	});
 });
@@ -265,18 +327,30 @@ describe("Accessibility.getFullAXTree — login form", () => {
 	test("input[type=email] has role=textbox", async () => {
 		const html = await readFixture("login-form.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const textboxes = result.nodes.filter((n) => !n.ignored && n.role?.value === "textbox");
+		const textboxes = result.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "textbox",
+		);
 		expect(textboxes.length).toBeGreaterThan(0);
 	});
 
 	test("email textbox has accessible name 'Email' via <label for>", async () => {
 		const html = await readFixture("login-form.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -293,18 +367,30 @@ describe("Accessibility.getFullAXTree — login form", () => {
 	test("submit button has role=button", async () => {
 		const html = await readFixture("login-form.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const buttons = result.nodes.filter((n) => !n.ignored && n.role?.value === "button");
+		const buttons = result.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "button",
+		);
 		expect(buttons.length).toBeGreaterThan(0);
 	});
 
 	test("password input has role=textbox (password type maps to textbox)", async () => {
 		const html = await readFixture("login-form.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -335,18 +421,30 @@ describe("Accessibility.getFullAXTree — headings", () => {
 	test("h1 and h2 nodes have role=heading", async () => {
 		const html = await readFixture("headings.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const headings = result.nodes.filter((n) => !n.ignored && n.role?.value === "heading");
+		const headings = result.nodes.filter(
+			(n) => !n.ignored && n.role?.value === "heading",
+		);
 		expect(headings.length).toBeGreaterThanOrEqual(2);
 	});
 
 	test("h1 has level property = 1", async () => {
 		const html = await readFixture("headings.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -362,7 +460,12 @@ describe("Accessibility.getFullAXTree — headings", () => {
 	test("h2 has level property = 2", async () => {
 		const html = await readFixture("headings.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -378,7 +481,12 @@ describe("Accessibility.getFullAXTree — headings", () => {
 	test("h1 has accessible name from text content", async () => {
 		const html = await readFixture("headings.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -409,11 +517,18 @@ describe("Accessibility.getFullAXTree — hidden elements", () => {
 	test("aria-hidden=true node is marked ignored", async () => {
 		const html = `<div aria-hidden="true"><button>Hidden btn</button></div><button>Visible btn</button>`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
-		const ariaHiddenNode = result.nodes.find((n) => n.ignored && n.role?.value !== "none");
+		const ariaHiddenNode = result.nodes.find(
+			(n) => n.ignored && n.role?.value !== "none",
+		);
 		// At least one node should be ignored due to aria-hidden or style.
 		expect(ariaHiddenNode).toBeDefined();
 	});
@@ -421,7 +536,12 @@ describe("Accessibility.getFullAXTree — hidden elements", () => {
 	test("checkbox in hidden checkbox fixture has role=checkbox", async () => {
 		const html = await readFixture("hidden-checkbox.html");
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -433,12 +553,19 @@ describe("Accessibility.getFullAXTree — hidden elements", () => {
 	test("display:none element is marked ignored", async () => {
 		const html = `<div style="display:none"><p>hidden</p></div><p>visible</p>`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
 		const hiddenNode = result.nodes.find(
-			(n) => n.ignored && n.ignoredReasons?.some((r: any) => r.value === "ariaHiddenElement"),
+			(n) =>
+				n.ignored &&
+				n.ignoredReasons?.some((r: any) => r.value === "ariaHiddenElement"),
 		);
 		// display:none sets isHidden which adds ariaHiddenElement reason.
 		expect(hiddenNode).toBeDefined();
@@ -447,12 +574,19 @@ describe("Accessibility.getFullAXTree — hidden elements", () => {
 	test("role=none makes node ignored with presentationalRole reason", async () => {
 		const html = `<div role="none"><span>decorative</span></div>`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
 		const noneNode = result.nodes.find(
-			(n) => n.ignored && n.ignoredReasons?.some((r: any) => r.value === "presentationalRole"),
+			(n) =>
+				n.ignored &&
+				n.ignoredReasons?.some((r: any) => r.value === "presentationalRole"),
 		);
 		expect(noneNode).toBeDefined();
 	});
@@ -480,7 +614,12 @@ describe("Accessibility.getPartialAXTree", () => {
 			</nav>
 		`;
 		const { sessionId } = await setupPage(transport, html);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const navNode = (await cdpCall(
@@ -511,7 +650,12 @@ describe("Accessibility.getPartialAXTree", () => {
 			</section>
 		`;
 		const { sessionId } = await setupPage(transport, html);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const sectionNode = (await cdpCall(
@@ -528,7 +672,12 @@ describe("Accessibility.getPartialAXTree", () => {
 			sessionId,
 		)) as { nodes: AXNode[] };
 
-		const full = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const full = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 
@@ -539,14 +688,24 @@ describe("Accessibility.getPartialAXTree", () => {
 	test("throws CDPError for non-existent nodeId", async () => {
 		const { sessionId } = await setupPage(transport, "<p>hi</p>");
 		await expect(
-			cdpCall(transport, "Accessibility.getPartialAXTree", { nodeId: 99999 }, sessionId),
+			cdpCall(
+				transport,
+				"Accessibility.getPartialAXTree",
+				{ nodeId: 99999 },
+				sessionId,
+			),
 		).rejects.toBeInstanceOf(CDPError);
 	});
 
 	test("partial tree links, nav from login form (scoped to form element)", async () => {
 		const html = await readFixture("login-form.html");
 		const { sessionId } = await setupPage(transport, html);
-		const doc = (await cdpCall(transport, "DOM.getDocument", { depth: 0 }, sessionId)) as {
+		const doc = (await cdpCall(
+			transport,
+			"DOM.getDocument",
+			{ depth: 0 },
+			sessionId,
+		)) as {
 			root: { nodeId: number };
 		};
 		const formNode = (await cdpCall(
@@ -585,7 +744,12 @@ describe("AX role derivation", () => {
 	test("explicit role attribute overrides tag mapping", async () => {
 		const html = `<div role="button" id="d">click</div>`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		const btnNode = result.nodes.find((n) => n.role?.value === "button");
@@ -595,7 +759,12 @@ describe("AX role derivation", () => {
 	test("input[type=checkbox] has role=checkbox with checked property", async () => {
 		const html = `<input type="checkbox" id="c" checked>`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		const checkbox = result.nodes.find((n) => n.role?.value === "checkbox");
@@ -607,7 +776,12 @@ describe("AX role derivation", () => {
 	test("input[type=radio] has role=radio", async () => {
 		const html = `<input type="radio" name="opt" value="a">`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		const radio = result.nodes.find((n) => n.role?.value === "radio");
@@ -617,7 +791,12 @@ describe("AX role derivation", () => {
 	test("disabled button has disabled property", async () => {
 		const html = `<button disabled>Can't click</button>`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		const btn = result.nodes.find((n) => n.role?.value === "button");
@@ -628,7 +807,12 @@ describe("AX role derivation", () => {
 	test("img with alt has role=img and name from alt", async () => {
 		const html = `<img src="logo.png" alt="Company Logo">`;
 		const { sessionId } = await setupPage(transport, html);
-		const result = (await cdpCall(transport, "Accessibility.getFullAXTree", {}, sessionId)) as {
+		const result = (await cdpCall(
+			transport,
+			"Accessibility.getFullAXTree",
+			{},
+			sessionId,
+		)) as {
 			nodes: AXNode[];
 		};
 		const imgNode = result.nodes.find((n) => n.role?.value === "img");

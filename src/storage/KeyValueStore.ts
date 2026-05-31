@@ -173,7 +173,11 @@ export class KeyValueStore {
 	 * Store a JSON-serializable value under `key`.
 	 * The value is serialized to UTF-8 JSON and stored according to size policy.
 	 */
-	async set<T>(key: string, value: T, contentType = "application/json"): Promise<void> {
+	async set<T>(
+		key: string,
+		value: T,
+		contentType = "application/json",
+	): Promise<void> {
 		const serialized = JSON.stringify(value);
 		const bytes = new TextEncoder().encode(serialized);
 		await this.#store(key, bytes, contentType);
@@ -250,13 +254,16 @@ export class KeyValueStore {
 	 * Returns `true` if the key existed.
 	 */
 	async delete(key: string): Promise<boolean> {
-		const rows = this.#stmtDelete.all({ $key: key }) as Array<{ value_path: string | null }>;
+		const rows = this.#stmtDelete.all({ $key: key }) as Array<{
+			value_path: string | null;
+		}>;
 		if (rows.length === 0) return false;
 		const row = rows[0];
 		if (row.value_path !== null) {
 			// Remove the blob file (best-effort, don't throw)
 			try {
-				if (await Bun.file(row.value_path).exists()) await Bun.write(row.value_path, new Uint8Array(0));
+				if (await Bun.file(row.value_path).exists())
+					await Bun.write(row.value_path, new Uint8Array(0));
 			} catch {
 				/* ignore */
 			}
@@ -294,7 +301,11 @@ export class KeyValueStore {
 	// Private
 	// ---------------------------------------------------------------------------
 
-	async #store(key: string, data: Uint8Array, contentType: string): Promise<void> {
+	async #store(
+		key: string,
+		data: Uint8Array,
+		contentType: string,
+	): Promise<void> {
 		const now = Date.now();
 		const size = data.byteLength;
 

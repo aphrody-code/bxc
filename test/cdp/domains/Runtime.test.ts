@@ -84,7 +84,9 @@ describe("Runtime domain — Phase 1 additions", () => {
 	// -------------------------------------------------------------------------
 
 	test("Runtime.addBinding returns empty object", async () => {
-		const result = await cdpCall(transport, "Runtime.addBinding", { name: "myBinding" });
+		const result = await cdpCall(transport, "Runtime.addBinding", {
+			name: "myBinding",
+		});
 		expect(result).toEqual({});
 	});
 
@@ -105,7 +107,10 @@ describe("Runtime domain — Phase 1 additions", () => {
 	// -------------------------------------------------------------------------
 
 	test("emitConsoleAPICalled emits Runtime.consoleAPICalled event", () => {
-		const collectedEvents: Array<{ method: string; params: Record<string, unknown> }> = [];
+		const collectedEvents: Array<{
+			method: string;
+			params: Record<string, unknown>;
+		}> = [];
 
 		const mockCtx = {
 			emitEvent: (ev: { method: string; params: Record<string, unknown> }) => {
@@ -113,12 +118,16 @@ describe("Runtime domain — Phase 1 additions", () => {
 			},
 		};
 
-		emitConsoleAPICalled(mockCtx as Parameters<typeof emitConsoleAPICalled>[0], "session-1", {
-			type: "log",
-			args: [{ type: "string", value: "hello" }],
-			executionContextId: 1,
-			timestamp: Date.now(),
-		});
+		emitConsoleAPICalled(
+			mockCtx as Parameters<typeof emitConsoleAPICalled>[0],
+			"session-1",
+			{
+				type: "log",
+				args: [{ type: "string", value: "hello" }],
+				executionContextId: 1,
+				timestamp: Date.now(),
+			},
+		);
 
 		expect(collectedEvents.length).toBe(1);
 		expect(collectedEvents[0].method).toBe("Runtime.consoleAPICalled");
@@ -130,7 +139,10 @@ describe("Runtime domain — Phase 1 additions", () => {
 	// -------------------------------------------------------------------------
 
 	test("emitExceptionThrown emits Runtime.exceptionThrown event", () => {
-		const collectedEvents: Array<{ method: string; params: Record<string, unknown> }> = [];
+		const collectedEvents: Array<{
+			method: string;
+			params: Record<string, unknown>;
+		}> = [];
 
 		const mockCtx = {
 			emitEvent: (ev: { method: string; params: Record<string, unknown> }) => {
@@ -138,20 +150,30 @@ describe("Runtime domain — Phase 1 additions", () => {
 			},
 		};
 
-		emitExceptionThrown(mockCtx as Parameters<typeof emitExceptionThrown>[0], "session-2", {
-			timestamp: Date.now(),
-			exceptionDetails: {
-				exceptionId: 1,
-				text: "ReferenceError: foo is not defined",
-				lineNumber: 5,
-				columnNumber: 10,
-				exception: { type: "object", description: "ReferenceError: foo is not defined" },
+		emitExceptionThrown(
+			mockCtx as Parameters<typeof emitExceptionThrown>[0],
+			"session-2",
+			{
+				timestamp: Date.now(),
+				exceptionDetails: {
+					exceptionId: 1,
+					text: "ReferenceError: foo is not defined",
+					lineNumber: 5,
+					columnNumber: 10,
+					exception: {
+						type: "object",
+						description: "ReferenceError: foo is not defined",
+					},
+				},
 			},
-		});
+		);
 
 		expect(collectedEvents.length).toBe(1);
 		expect(collectedEvents[0].method).toBe("Runtime.exceptionThrown");
-		const details = collectedEvents[0].params.exceptionDetails as Record<string, unknown>;
+		const details = collectedEvents[0].params.exceptionDetails as Record<
+			string,
+			unknown
+		>;
 		expect(details.text).toBe("ReferenceError: foo is not defined");
 	});
 });

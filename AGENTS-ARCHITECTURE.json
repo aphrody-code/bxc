@@ -1,56 +1,56 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "name": "Bxc Architecture Blueprint",
-  "version": "1.0.0",
-  "description": "Strict architectural mapping of responsibilities across Bun, Rust, and Zig domains.",
-  "domains": {
-    "bun": {
-      "layer": "High-Level Orchestration & API",
-      "language": "TypeScript (Bun runtime)",
-      "responsibilities": [
-        "Public API surface (Browser, Page, Locator, Frame)",
-        "Transport management (WebSocketTransport, StaticDomTransport)",
-        "God Mode CLI & Serverless routing",
-        "Stealth profiles & Cookie injection",
-        "Google Ecosystem Atlas (Smart Routing & Discovery)"
-      ],
-      "forbidden": [
-        "Heavy DOM parsing/querying",
-        "Raw TCP socket manipulation for CDP (delegated to standard ws)",
-        "Intensive regex parsing of large HTML strings"
-      ]
-    },
-    "rust": {
-      "layer": "System FFI & Chromium Subprocess Control",
-      "language": "Rust (cdylib & executable)",
-      "responsibilities": [
-        "Headless / Native Chrome Process Spawning (bxc-engine)",
-        "DOM Parsing and CSS Selectors via lol_html (libbxc_rust_bridge)",
-        "High-performance HTML to Markdown conversion (AI token reduction)",
-        "OS-level signal handling and process reaping",
-        "CDP Websocket raw proxying (when applicable)"
-      ],
-      "forbidden": [
-        "Business logic concerning scraping strategies",
-        "Framework detection (Wiz, Angular, Lit)"
-      ]
-    },
-    "zig": {
-      "layer": "Legacy DOM Core (Transitioned)",
-      "language": "Zig",
-      "responsibilities": [
-        "Historical static DOM parsing (Now entirely wrapped/replaced by Rust lol_html bridge for safety and speed)"
-      ],
-      "status": "Deprecated/Replaced by Rust bridge (`src/ffi/zigquery.ts` acts as a polyfill interface to Rust)."
-    }
-  },
-  "integration": {
-    "ffi": "bun:ffi dynamically links to libbxc_rust_bridge.so/dll",
-    "subprocess": "WebSocketTransport spawns bxc-engine or local Chrome via Bun.spawn"
-  },
-  "guidance_for_agents": [
-    "NEVER write slow Regex parsing for HTML in TypeScript. Port it to the Rust bridge.",
-    "NEVER use child_process; use Bun.spawn.",
-    "ALWAYS compile Windows Rust targets with MSVC, static CRT, and Fat LTO."
-  ]
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"name": "Bxc Architecture Blueprint",
+	"version": "1.0.0",
+	"description": "Strict architectural mapping of responsibilities across Bun, Rust, and Zig domains.",
+	"domains": {
+		"bun": {
+			"layer": "High-Level Orchestration & API",
+			"language": "TypeScript (Bun runtime)",
+			"responsibilities": [
+				"Public API surface (Browser, Page, Locator, Frame)",
+				"Transport management (WebSocketTransport, StaticDomTransport)",
+				"God Mode CLI & Serverless routing",
+				"Stealth profiles & Cookie injection",
+				"Google Ecosystem Atlas (Smart Routing & Discovery)"
+			],
+			"forbidden": [
+				"Heavy DOM parsing/querying",
+				"Raw TCP socket manipulation for CDP (delegated to standard ws)",
+				"Intensive regex parsing of large HTML strings"
+			]
+		},
+		"rust": {
+			"layer": "System FFI & Chromium Subprocess Control",
+			"language": "Rust (cdylib & executable)",
+			"responsibilities": [
+				"Headless / Native Chrome Process Spawning (bxc-engine)",
+				"DOM Parsing and CSS Selectors via lol_html (libbxc_rust_bridge)",
+				"High-performance HTML to Markdown conversion (AI token reduction)",
+				"OS-level signal handling and process reaping",
+				"CDP Websocket raw proxying (when applicable)"
+			],
+			"forbidden": [
+				"Business logic concerning scraping strategies",
+				"Framework detection (Wiz, Angular, Lit)"
+			]
+		},
+		"zig": {
+			"layer": "Legacy DOM Core (Transitioned)",
+			"language": "Zig",
+			"responsibilities": [
+				"Historical static DOM parsing (Now entirely wrapped/replaced by Rust lol_html bridge for safety and speed)"
+			],
+			"status": "Deprecated/Replaced by Rust bridge (`src/ffi/zigquery.ts` acts as a polyfill interface to Rust)."
+		}
+	},
+	"integration": {
+		"ffi": "bun:ffi dynamically links to libbxc_rust_bridge.so/dll",
+		"subprocess": "WebSocketTransport spawns bxc-engine or local Chrome via Bun.spawn"
+	},
+	"guidance_for_agents": [
+		"NEVER write slow Regex parsing for HTML in TypeScript. Port it to the Rust bridge.",
+		"NEVER use child_process; use Bun.spawn.",
+		"ALWAYS compile Windows Rust targets with MSVC, static CRT, and Fat LTO."
+	]
 }

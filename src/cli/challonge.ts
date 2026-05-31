@@ -52,7 +52,10 @@ Options:
 	);
 }
 
-function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions | null {
+function parseArgs(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): CliOptions | null {
 	const opts: CliOptions = {
 		...baseOpts,
 		target: "",
@@ -87,7 +90,9 @@ function parseArgs(argv: readonly string[], baseOpts: CommonOptions): CliOptions
 	return opts;
 }
 
-async function loadFromTarget(opts: CliOptions): Promise<ChallongeTournamentSnapshot> {
+async function loadFromTarget(
+	opts: CliOptions,
+): Promise<ChallongeTournamentSnapshot> {
 	if (/^https?:\/\//.test(opts.target)) {
 		const page = await Browser.newPage({
 			profile: "http",
@@ -99,7 +104,9 @@ async function loadFromTarget(opts: CliOptions): Promise<ChallongeTournamentSnap
 			const html = await page.content();
 			return extractChallongeTournament(html, { url: opts.target });
 		} finally {
-			try { await page.close(); } catch {}
+			try {
+				await page.close();
+			} catch {}
 			await Browser.close().catch(() => undefined);
 		}
 	}
@@ -131,16 +138,25 @@ function printSummary(snap: ChallongeTournamentSnapshot): void {
 	out.write(`Type        ${t.tournament_type}\n`);
 	out.write(`State       ${t.state} (${t.progress_meter}% complete)\n`);
 	out.write(`URL         ${t.full_url ?? "n/a"}\n`);
-	out.write(`Game        ${snap.gon.targeting.game ?? "?"} (${snap.gon.targeting.category ?? "?"})\n`);
+	out.write(
+		`Game        ${snap.gon.targeting.game ?? "?"} (${snap.gon.targeting.category ?? "?"})\n`,
+	);
 	out.write(`Participants ${snap.participants.length}\n`);
-	out.write(`Matches     ${snap.matches.length} across ${snap.rounds.length} rounds\n`);
+	out.write(
+		`Matches     ${snap.matches.length} across ${snap.rounds.length} rounds\n`,
+	);
 	out.write(`\n== Top 8 standings ==\n`);
 	for (const s of snap.standings.slice(0, 8)) {
-		out.write(`  rank ${s.rank.toString().padStart(2)}  ${pad(s.display_name, 22)} W${s.wins} L${s.losses}\n`);
+		out.write(
+			`  rank ${s.rank.toString().padStart(2)}  ${pad(s.display_name, 22)} W${s.wins} L${s.losses}\n`,
+		);
 	}
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();

@@ -7,14 +7,14 @@
  * @module
  */
 
-import { validateHostHeader } from './hostHeaderValidation.js';
+import { validateHostHeader } from "./hostHeaderValidation.js";
 
 /**
  * Example: Validating a host header against allowed hosts.
  */
 function hostHeaderValidationResponse_basicUsage(req: Request) {
-    //#region hostHeaderValidationResponse_basicUsage
-    const result = validateHostHeader(req.headers.get('host'), ['localhost']);
-    //#endregion hostHeaderValidationResponse_basicUsage
-    return result;
+	//#region hostHeaderValidationResponse_basicUsage
+	const result = validateHostHeader(req.headers.get("host"), ["localhost"]);
+	//#endregion hostHeaderValidationResponse_basicUsage
+	return result;
 }

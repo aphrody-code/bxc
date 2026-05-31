@@ -79,7 +79,13 @@ for (const url of urls) {
 			profileStats.max++;
 			// TODO: Add max profile logic back
 			const elapsedMs = (Bun.nanoseconds() - start) / 1e6;
-			results.push({ url, ok: true, title: "MAX PROFILE NOT IMPLEMENTED", profile, elapsedMs });
+			results.push({
+				url,
+				ok: true,
+				title: "MAX PROFILE NOT IMPLEMENTED",
+				profile,
+				elapsedMs,
+			});
 			console.log(
 				`[${results.length}/${urls.length}] max profile | "MAX PROFILE NOT IMPLEMENTED" (${elapsedMs.toFixed(0)}ms)`,
 			);
@@ -95,7 +101,9 @@ for (const url of urls) {
 	} catch (err) {
 		const elapsedMs = (Bun.nanoseconds() - start) / 1e6;
 		results.push({ url, ok: false, title: "", profile, elapsedMs });
-		console.error(`[${results.length}/${urls.length}] FAILED: ${url} — ${String(err)}`);
+		console.error(
+			`[${results.length}/${urls.length}] FAILED: ${url} — ${String(err)}`,
+		);
 	}
 }
 

@@ -79,7 +79,11 @@ async function openSession(transport: StaticDomTransport): Promise<string> {
  * resolves the promise with the request headers.  The server keeps accepting
  * connections (needed so the response can be fully sent before we stop).
  */
-function captureOneRequest(): { url: string; promise: Promise<Headers>; stop: () => void } {
+function captureOneRequest(): {
+	url: string;
+	promise: Promise<Headers>;
+	stop: () => void;
+} {
 	let resolveHeaders!: (h: Headers) => void;
 	const promise = new Promise<Headers>((resolve) => {
 		resolveHeaders = resolve;
@@ -155,13 +159,23 @@ describe("Emulation domain handler", () => {
 			{ width: 375, height: 812, deviceScaleFactor: 2, mobile: true },
 			sessionId,
 		);
-		const result = await cdpCall(transport, "Emulation.clearDeviceMetricsOverride", {}, sessionId);
+		const result = await cdpCall(
+			transport,
+			"Emulation.clearDeviceMetricsOverride",
+			{},
+			sessionId,
+		);
 		expect(result).toEqual({});
 	});
 
 	test("clearDeviceMetricsOverride without prior set is safe (no throw)", async () => {
 		const sessionId = await openSession(transport);
-		const result = await cdpCall(transport, "Emulation.clearDeviceMetricsOverride", {}, sessionId);
+		const result = await cdpCall(
+			transport,
+			"Emulation.clearDeviceMetricsOverride",
+			{},
+			sessionId,
+		);
 		expect(result).toEqual({});
 	});
 
@@ -202,7 +216,12 @@ describe("Emulation domain handler", () => {
 		const sessionId = await openSession(transport);
 		const customUA = "MyTestBot/2.0 (bxc-test)";
 
-		await cdpCall(transport, "Emulation.setUserAgentOverride", { userAgent: customUA }, sessionId);
+		await cdpCall(
+			transport,
+			"Emulation.setUserAgentOverride",
+			{ userAgent: customUA },
+			sessionId,
+		);
 
 		const { url, promise, stop } = captureOneRequest();
 		try {
@@ -225,7 +244,12 @@ describe("Emulation domain handler", () => {
 			sessionId,
 		);
 		// Clear it with empty string
-		await cdpCall(transport, "Emulation.setUserAgentOverride", { userAgent: "" }, sessionId);
+		await cdpCall(
+			transport,
+			"Emulation.setUserAgentOverride",
+			{ userAgent: "" },
+			sessionId,
+		);
 
 		const { url, promise, stop } = captureOneRequest();
 		try {
@@ -261,7 +285,12 @@ describe("Emulation domain handler", () => {
 			{ latitude: 37.7749, longitude: -122.4194 },
 			sessionId,
 		);
-		const result = await cdpCall(transport, "Emulation.setGeolocationOverride", {}, sessionId);
+		const result = await cdpCall(
+			transport,
+			"Emulation.setGeolocationOverride",
+			{},
+			sessionId,
+		);
 		expect(result).toEqual({});
 	});
 
@@ -271,7 +300,12 @@ describe("Emulation domain handler", () => {
 
 	test("setLocaleOverride injects Accept-Language into next Page.navigate headers", async () => {
 		const sessionId = await openSession(transport);
-		await cdpCall(transport, "Emulation.setLocaleOverride", { locale: "fr-FR" }, sessionId);
+		await cdpCall(
+			transport,
+			"Emulation.setLocaleOverride",
+			{ locale: "fr-FR" },
+			sessionId,
+		);
 
 		const { url, promise, stop } = captureOneRequest();
 		try {

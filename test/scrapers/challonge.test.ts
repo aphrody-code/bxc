@@ -36,7 +36,9 @@ const html = fixtureExists ? await Bun.file(FIXTURE).text() : "";
 
 describe.skipIf(!fixtureExists)("scrapers/challonge — B_TS5 mirror", () => {
 	test("tournament meta", () => {
-		const snap = extractChallongeTournament(html, { url: "https://challonge.com/fr/B_TS5" });
+		const snap = extractChallongeTournament(html, {
+			url: "https://challonge.com/fr/B_TS5",
+		});
 		expect(snap.tournament.id).toBe(17882054);
 		expect(snap.tournament.name).toBe("Bey-Tamashii Séries #5");
 		expect(snap.tournament.tournament_type).toBe("double elimination");
@@ -53,11 +55,21 @@ describe.skipIf(!fixtureExists)("scrapers/challonge — B_TS5 mirror", () => {
 	test("rounds — 17 total, signed integers, labelled", () => {
 		const snap = extractChallongeTournament(html);
 		expect(snap.rounds.length).toBe(17);
-		expect(snap.rounds.find((r) => r.round === 7)?.round_label).toBe("Grand Finals");
-		expect(snap.rounds.find((r) => r.round === 6)?.round_label).toBe("Winners Final");
-		expect(snap.rounds.find((r) => r.round === 5)?.round_label).toBe("Winners Semifinals");
-		expect(snap.rounds.find((r) => r.round === 4)?.round_label).toBe("Winners Quarterfinals");
-		expect(snap.rounds.find((r) => r.round === -10)?.round_label).toBe("Losers Round 10");
+		expect(snap.rounds.find((r) => r.round === 7)?.round_label).toBe(
+			"Grand Finals",
+		);
+		expect(snap.rounds.find((r) => r.round === 6)?.round_label).toBe(
+			"Winners Final",
+		);
+		expect(snap.rounds.find((r) => r.round === 5)?.round_label).toBe(
+			"Winners Semifinals",
+		);
+		expect(snap.rounds.find((r) => r.round === 4)?.round_label).toBe(
+			"Winners Quarterfinals",
+		);
+		expect(snap.rounds.find((r) => r.round === -10)?.round_label).toBe(
+			"Losers Round 10",
+		);
 		expect(snap.rounds.filter((r) => r.bracket === "winners").length).toBe(7);
 		expect(snap.rounds.filter((r) => r.bracket === "losers").length).toBe(10);
 	});
@@ -66,7 +78,9 @@ describe.skipIf(!fixtureExists)("scrapers/challonge — B_TS5 mirror", () => {
 		const snap = extractChallongeTournament(html);
 		expect(snap.matches.length).toBe(118);
 		expect(snap.matches.every((m) => m.state === "complete")).toBe(true);
-		expect(snap.matches.every((m) => m.player1 != null && m.player2 != null)).toBe(true);
+		expect(
+			snap.matches.every((m) => m.player1 != null && m.player2 != null),
+		).toBe(true);
 		expect(snap.matches.every((m) => m.winner_id != null)).toBe(true);
 
 		const grandFinals = snap.matches.find((m) => m.round === 7);
@@ -83,7 +97,9 @@ describe.skipIf(!fixtureExists)("scrapers/challonge — B_TS5 mirror", () => {
 		expect(snap.participants[snap.participants.length - 1].seed).toBe(60);
 		// All participants must have a portrait URL or fallback gravatar.
 		expect(
-			snap.participants.every((p) => p.portrait_url == null || p.portrait_url.startsWith("http")),
+			snap.participants.every(
+				(p) => p.portrait_url == null || p.portrait_url.startsWith("http"),
+			),
 		).toBe(true);
 	});
 
@@ -111,7 +127,9 @@ describe.skipIf(!fixtureExists)("scrapers/challonge — B_TS5 mirror", () => {
 	test("react mount — TournamentController + final-stage view", () => {
 		const snap = extractChallongeTournament(html);
 		expect(snap.react?.component).toBe("TournamentController");
-		expect((snap.react?.props as { initialView?: string })?.initialView).toBe("final-stage");
+		expect((snap.react?.props as { initialView?: string })?.initialView).toBe(
+			"final-stage",
+		);
 	});
 
 	test("performance — extracts under 50ms on a 230KB HTML", () => {
@@ -124,9 +142,9 @@ describe.skipIf(!fixtureExists)("scrapers/challonge — B_TS5 mirror", () => {
 
 describe("scrapers/challonge — error handling", () => {
 	test("throws when TournamentStore is absent", () => {
-		expect(() => extractChallongeTournament("<html><body>nope</body></html>")).toThrow(
-			"TournamentStore",
-		);
+		expect(() =>
+			extractChallongeTournament("<html><body>nope</body></html>"),
+		).toThrow("TournamentStore");
 	});
 
 	test("falls back to defaults when og:* meta tags are missing", () => {

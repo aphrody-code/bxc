@@ -54,7 +54,8 @@ const CONCURRENCY_MAX = parseInt(Bun.env.HN_CONCURRENCY_MAX ?? "10", 10);
 
 // HN Algolia API base
 const HN_ITEM_URL = "https://hacker-news.firebaseio.com/v0/item";
-const HN_TOPSTORIES_URL = "https://hacker-news.firebaseio.com/v0/topstories.json";
+const HN_TOPSTORIES_URL =
+	"https://hacker-news.firebaseio.com/v0/topstories.json";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -69,9 +70,12 @@ async function isNetworkAvailable(): Promise<boolean> {
 	try {
 		const ctrl = new AbortController();
 		const timer = setTimeout(() => ctrl.abort(), 3_000);
-		const res = await fetch("https://hacker-news.firebaseio.com/v0/maxitem.json", {
-			signal: ctrl.signal,
-		});
+		const res = await fetch(
+			"https://hacker-news.firebaseio.com/v0/maxitem.json",
+			{
+				signal: ctrl.signal,
+			},
+		);
 		clearTimeout(timer);
 		return res.ok;
 	} catch {
@@ -128,12 +132,17 @@ async function main(): Promise<void> {
 	}
 
 	// --- 2. Open persistent queue (resumes on restart) ---
-	const queue = RequestQueue.open(QUEUE_DB, { maxRetries: 2, lockTimeoutMs: 60_000 });
+	const queue = RequestQueue.open(QUEUE_DB, {
+		maxRetries: 2,
+		lockTimeoutMs: 60_000,
+	});
 
 	// --- 3. Open dataset (append-only, resumes on restart) ---
 	const dataset = await Dataset.open(DATASET_NAME);
 	const alreadyCrawled = dataset.getItemCount();
-	console.log(`[HN Crawler] Queue DB: ${QUEUE_DB}, dataset already has ${alreadyCrawled} items`);
+	console.log(
+		`[HN Crawler] Queue DB: ${QUEUE_DB}, dataset already has ${alreadyCrawled} items`,
+	);
 
 	// --- 4. Seed queue with top stories if not already seeded ---
 	const existingStats = queue.stats();
@@ -155,7 +164,9 @@ async function main(): Promise<void> {
 				opts: { uniqueKey: `hn-item-${id}`, userData: { hnId: id } },
 			})),
 		);
-		console.log(`[HN Crawler] Seeded queue: ${inserted}/${ids.length} new URLs (dedup applied)`);
+		console.log(
+			`[HN Crawler] Seeded queue: ${inserted}/${ids.length} new URLs (dedup applied)`,
+		);
 	} else {
 		console.log(
 			`[HN Crawler] Resuming existing queue: pending=${existingStats.pending} done=${existingStats.done} failed=${existingStats.failed}`,
@@ -170,7 +181,9 @@ async function main(): Promise<void> {
 	// Guard: if all done, report and exit
 	const statsAfterSeed = queue.stats();
 	if (statsAfterSeed.pending === 0 && statsAfterSeed.locked === 0) {
-		console.log(`[HN Crawler] All ${statsAfterSeed.done} articles already crawled. Nothing to do.`);
+		console.log(
+			`[HN Crawler] All ${statsAfterSeed.done} articles already crawled. Nothing to do.`,
+		);
 		await dataset.close();
 		queue.close();
 		await Browser.close();
@@ -188,7 +201,8 @@ async function main(): Promise<void> {
 	> | null = null;
 
 	// Current batch being processed
-	let currentBatch: import("../../src/queue/RequestQueue.ts").QueuedRequest[] = [];
+	let currentBatch: import("../../src/queue/RequestQueue.ts").QueuedRequest[] =
+		[];
 	let batchIndex = 0;
 	let drainExhausted = false;
 
@@ -236,7 +250,9 @@ async function main(): Promise<void> {
 
 		try {
 			// Fetch the HN item JSON metadata
-			const itemRes = await fetch(req.url, { signal: AbortSignal.timeout(10_000) });
+			const itemRes = await fetch(req.url, {
+				signal: AbortSignal.timeout(10_000),
+			});
 			if (!itemRes.ok) {
 				queue.markFailed(req.id, `HTTP ${itemRes.status} on ${req.url}`);
 				return;
@@ -272,7 +288,9 @@ async function main(): Promise<void> {
 
 					let detected: import("../../src/detect.ts").DetectedTech[] = [];
 					try {
-						detected = await detectFromPage(pageLike, { processTimeoutMs: 5_000 });
+						detected = await detectFromPage(pageLike, {
+							processTimeoutMs: 5_000,
+						});
 					} catch {
 						// wappalyzergo may not be available — continue without detection
 					}
@@ -361,9 +379,13 @@ async function main(): Promise<void> {
 	console.log(`  Queue failed    : ${finalStats.failed}`);
 	console.log(`  Pool completed  : ${poolStats.completedTasks} tasks`);
 	console.log(`  Pool failed     : ${poolStats.failedTasks} tasks`);
-	console.log(`  Dataset path    : ./storage/datasets/${DATASET_NAME}/data.jsonl`);
+	console.log(
+		`  Dataset path    : ./storage/datasets/${DATASET_NAME}/data.jsonl`,
+	);
 	console.log(`  Queue DB        : ${QUEUE_DB}`);
-	console.log(`\nRun again with SHOWCASE_LIMIT=${SHOWCASE_LIMIT} to resume from checkpoint.`);
+	console.log(
+		`\nRun again with SHOWCASE_LIMIT=${SHOWCASE_LIMIT} to resume from checkpoint.`,
+	);
 
 	// --- 8. Cleanup ---
 	await dataset.close();
@@ -372,6 +394,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-	console.error("[HN Crawler] Fatal error:", err instanceof Error ? err.message : err);
+	console.error(
+		"[HN Crawler] Fatal error:",
+		err instanceof Error ? err.message : err,
+	);
 	process.exit(1);
 });

@@ -1,5 +1,8 @@
-import { localhostAllowedHostnames, validateHostHeader } from '@modelcontextprotocol/server';
-import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import {
+	localhostAllowedHostnames,
+	validateHostHeader,
+} from "@modelcontextprotocol/server";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 /**
  * Express middleware for DNS rebinding protection.
@@ -20,22 +23,24 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
  * app.use(middleware);
  * ```
  */
-export function hostHeaderValidation(allowedHostnames: string[]): RequestHandler {
-    return (req: Request, res: Response, next: NextFunction) => {
-        const result = validateHostHeader(req.headers.host, allowedHostnames);
-        if (!result.ok) {
-            res.status(403).json({
-                jsonrpc: '2.0',
-                error: {
-                    code: -32_000,
-                    message: result.message
-                },
-                id: null
-            });
-            return;
-        }
-        next();
-    };
+export function hostHeaderValidation(
+	allowedHostnames: string[],
+): RequestHandler {
+	return (req: Request, res: Response, next: NextFunction) => {
+		const result = validateHostHeader(req.headers.host, allowedHostnames);
+		if (!result.ok) {
+			res.status(403).json({
+				jsonrpc: "2.0",
+				error: {
+					code: -32_000,
+					message: result.message,
+				},
+				id: null,
+			});
+			return;
+		}
+		next();
+	};
 }
 
 /**
@@ -48,5 +53,5 @@ export function hostHeaderValidation(allowedHostnames: string[]): RequestHandler
  * ```
  */
 export function localhostHostValidation(): RequestHandler {
-    return hostHeaderValidation(localhostAllowedHostnames());
+	return hostHeaderValidation(localhostAllowedHostnames());
 }

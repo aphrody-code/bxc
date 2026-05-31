@@ -27,7 +27,10 @@ export interface FetchOptions {
 	userAgent?: string;
 }
 
-export async function bxcFetch(url: string, opts: FetchOptions = {}): Promise<Response> {
+export async function bxcFetch(
+	url: string,
+	opts: FetchOptions = {},
+): Promise<Response> {
 	const fetchOpts: any = {
 		method: opts.method ?? "GET",
 		headers: {
@@ -48,7 +51,8 @@ export async function bxcFetch(url: string, opts: FetchOptions = {}): Promise<Re
 	}
 
 	if (opts.body) {
-		fetchOpts.body = typeof opts.body === "string" ? opts.body : JSON.stringify(opts.body);
+		fetchOpts.body =
+			typeof opts.body === "string" ? opts.body : JSON.stringify(opts.body);
 		if (typeof opts.body !== "string" && !fetchOpts.headers["Content-Type"]) {
 			fetchOpts.headers["Content-Type"] = "application/json";
 		}

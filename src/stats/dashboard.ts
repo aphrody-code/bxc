@@ -215,7 +215,10 @@ setInterval(refresh, 1000);
  * await dash.stop();
  * ```
  */
-export async function startDashboard(stats: Statistics, port = 9229): Promise<DashboardHandle> {
+export async function startDashboard(
+	stats: Statistics,
+	port = 9229,
+): Promise<DashboardHandle> {
 	const html = renderHtml();
 	const htmlBytes = new TextEncoder().encode(html);
 
@@ -248,7 +251,9 @@ export async function startDashboard(stats: Statistics, port = 9229): Promise<Da
 			return new Response("Method Not Allowed", { status: 405 });
 		},
 		error(err) {
-			return new Response(`Internal server error: ${err.message}`, { status: 500 });
+			return new Response(`Internal server error: ${err.message}`, {
+				status: 500,
+			});
 		},
 	});
 

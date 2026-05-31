@@ -56,6 +56,8 @@ export async function loadFastProfile(): Promise<
 }
 
 /** Lazily loads the ghost helper (Lightpanda + CDP stealth injects). */
-export async function loadGhostProfile(): Promise<typeof import("./ghost/index.ts")> {
+export async function loadGhostProfile(): Promise<
+	typeof import("./ghost/index.ts")
+> {
 	return import("./ghost/index.ts");
 }

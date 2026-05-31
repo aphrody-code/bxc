@@ -68,7 +68,9 @@ export function isTracingActive(): boolean {
  *
  * See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU
  */
-function buildSyntheticTrace(config: TracingConfig): Array<Record<string, unknown>> {
+function buildSyntheticTrace(
+	config: TracingConfig,
+): Array<Record<string, unknown>> {
 	const pid = 1;
 	const tid = 1;
 	const startTs = config.startedAt * 1000; // microseconds
@@ -174,7 +176,12 @@ function buildSyntheticTrace(config: TracingConfig): Array<Record<string, unknow
 // Handler
 // ---------------------------------------------------------------------------
 
-export const TracingHandler: DomainHandler = async (method, params, ctx, _sessionId) => {
+export const TracingHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	_sessionId,
+) => {
 	switch (method) {
 		case "Tracing.start": {
 			// If a trace is already active, starting a new one is a no-op

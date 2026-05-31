@@ -78,7 +78,10 @@ Examples:
 	);
 }
 
-function parseArgs(argv: readonly string[], baseOpts: CommonOptions): SearchCliOptions | null {
+function parseArgs(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): SearchCliOptions | null {
 	const opts: SearchCliOptions = {
 		...baseOpts,
 		query: "",
@@ -173,16 +176,20 @@ function toSearchOptions(opts: SearchCliOptions): SearchOptions {
 
 function renderMarkdown(r: RichSearchResult, query: string): string {
 	const lines: string[] = [`# Search: ${query}`, ""];
-	if (r.correctedQuery) lines.push(`> Showing results for **${r.correctedQuery}**`, "");
+	if (r.correctedQuery)
+		lines.push(`> Showing results for **${r.correctedQuery}**`, "");
 	if (r.featuredSnippet) {
 		lines.push(`## Featured snippet`, "", `**${r.featuredSnippet.title}**`, "");
 		if (r.featuredSnippet.content) lines.push(r.featuredSnippet.content, "");
-		if (r.featuredSnippet.url) lines.push(`Source: ${r.featuredSnippet.url}`, "");
+		if (r.featuredSnippet.url)
+			lines.push(`Source: ${r.featuredSnippet.url}`, "");
 	}
 	if (r.knowledgePanel?.title) {
 		lines.push(`## ${r.knowledgePanel.title}`, "");
-		if (r.knowledgePanel.description) lines.push(r.knowledgePanel.description, "");
-		for (const [k, v] of Object.entries(r.knowledgePanel.metadata)) lines.push(`- **${k}**: ${v}`);
+		if (r.knowledgePanel.description)
+			lines.push(r.knowledgePanel.description, "");
+		for (const [k, v] of Object.entries(r.knowledgePanel.metadata))
+			lines.push(`- **${k}**: ${v}`);
 		lines.push("");
 	}
 	lines.push(`## Results (${r.organic.length})`, "");
@@ -203,9 +210,14 @@ function renderMarkdown(r: RichSearchResult, query: string): string {
 
 function renderText(r: RichSearchResult): string {
 	const lines: string[] = [];
-	if (r.correctedQuery) lines.push(`(showing results for "${r.correctedQuery}")`, "");
+	if (r.correctedQuery)
+		lines.push(`(showing results for "${r.correctedQuery}")`, "");
 	if (r.featuredSnippet?.content) {
-		lines.push(`★ ${r.featuredSnippet.title}`, `  ${r.featuredSnippet.content}`, "");
+		lines.push(
+			`★ ${r.featuredSnippet.title}`,
+			`  ${r.featuredSnippet.content}`,
+			"",
+		);
 	}
 	for (const o of r.organic) {
 		lines.push(`${o.position}. ${o.title}`);
@@ -213,12 +225,19 @@ function renderText(r: RichSearchResult): string {
 		if (o.snippet) lines.push(`   ${o.snippet}`);
 		lines.push("");
 	}
-	const meta = r.totalResults ? `~${r.totalResults.toLocaleString()} results` : "";
-	lines.push(`[${r.organic.length} parsed${meta ? ` · ${meta}` : ""} · ${r.profileUsed}${r.authenticated ? " · auth" : ""}]`);
+	const meta = r.totalResults
+		? `~${r.totalResults.toLocaleString()} results`
+		: "";
+	lines.push(
+		`[${r.organic.length} parsed${meta ? ` · ${meta}` : ""} · ${r.profileUsed}${r.authenticated ? " · auth" : ""}]`,
+	);
 	return lines.join("\n") + "\n";
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();

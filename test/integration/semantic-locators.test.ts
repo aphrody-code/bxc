@@ -27,12 +27,12 @@ test("Semantic Locators > resolves @semantic query via native AI extractor", asy
 		</body>
 		</html>
 	`);
-	
+
 	const buttonLocator = page.locator("@semantic:the blue login button");
 	// Our mock semantic_resolver maps "button" keyword to "button" selector
 	const count = await buttonLocator.count();
 	expect(count).toBe(1);
-	
+
 	const linkLocator = page.locator("@semantic:the signup link");
 	// Maps "link" keyword to "a" selector
 	const aCount = await linkLocator.count();
