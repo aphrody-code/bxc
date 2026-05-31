@@ -7,6 +7,7 @@ Bxc (Browser-X) is a native, zero-spawn, high-performance web browser automation
 - **Stealth Profiles**: Automated Cloudflare and Turnstile bot bypass using Ghost browsers and automated click models.
 - **Google Atlas**: Deep scanning of Google domains, routing, and vertical parameters.
 - **WBO Metagame Tracking**: Automated parsing of tournament podium finishes and player standings from World Beyblade Organization forums.
+- **Standalone Portability & FFI Embedding**: Standalone builds (`bun scripts/build-standalone.ts`) embed all native shared libraries and binaries (`libbxc_rust_bridge`, `libcurl-impersonate`, `lightpanda`, `wappalyzergo-cli`) directly. On first run, Bxc extracts them to `~/.bxc/bin/` with proper executable permissions, providing a zero-dependency, single-file cross-platform distribution.
 
 ---
 
