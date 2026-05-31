@@ -19,28 +19,36 @@ import { launchGhostBrowser } from "../../profiles/ghost/index.ts";
 import type { FutPrice } from "./types.ts";
 
 export async function scrapeFutBinPrice(
-	url: string,
+	urlOrHtml: string,
 	profile: "http" | "ghost" = "ghost",
+	urlFallback?: string,
 ): Promise<FutPrice> {
 	let content = "";
 
-	if (profile === "ghost") {
-		const ghost = await launchGhostBrowser();
-		try {
-			await ghost.page.goto(url);
-			await Bun.sleep(2000);
-			content = await ghost.page.content();
-		} finally {
-			await ghost.close();
+	const isUrl = urlOrHtml.startsWith("http://") || urlOrHtml.startsWith("https://");
+	const finalUrl = isUrl ? urlOrHtml : (urlFallback || "unknown");
+
+	if (isUrl) {
+		if (profile === "ghost") {
+			const ghost = await launchGhostBrowser();
+			try {
+				await ghost.page.goto(urlOrHtml);
+				await Bun.sleep(2000);
+				content = await ghost.page.content();
+			} finally {
+				await ghost.close();
+			}
+		} else {
+			const page = await Browser.newPage({ profile });
+			try {
+				await page.goto(urlOrHtml);
+				content = await page.content();
+			} finally {
+				await page.close();
+			}
 		}
 	} else {
-		const page = await Browser.newPage({ profile });
-		try {
-			await page.goto(url);
-			content = await page.content();
-		} finally {
-			await page.close();
-		}
+		content = urlOrHtml;
 	}
 
 	let priceVal = "";
@@ -64,7 +72,7 @@ export async function scrapeFutBinPrice(
 	}
 
 	return {
-		url,
+		url: finalUrl,
 		price: priceVal,
 		lastUpdated: new Date().toISOString(),
 	};
