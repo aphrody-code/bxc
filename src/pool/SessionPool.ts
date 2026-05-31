@@ -45,6 +45,7 @@
  */
 
 import { join } from "node:path";
+import { mkdirSync, writeFileSync, renameSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -187,29 +188,19 @@ export class SessionPool {
 	constructor(opts: SessionPoolOptions) {
 		this.#jarPath = opts.jarPath;
 		// Ensure the jar directory exists synchronously at construction time.
-		// Bun.spawnSync is a Bun-native sync subprocess — avoids fs mkdirSync.
-		Bun.spawnSync(["mkdir", "-p", this.#jarPath], { stdin: "ignore" });
+		mkdirSync(this.#jarPath, { recursive: true });
 		if (opts.autoSaveOnExit !== false) {
 			process.on("exit", () => {
-				// On exit we can only do sync work. Use Bun.write (async) wrapped
-				// in a best-effort fire-and-forget via the process beforeExit event
-				// registered below if possible; here we at least attempt a sync flush
-				// via Bun.spawnSync to write each dirty jar.
+				// On exit we can only do sync work. Use writeFileSync + renameSync
+				// to write each dirty jar atomically without subprocess overhead.
 				for (const [host, jar] of this.#jars.entries()) {
 					if (!jar.dirty) continue;
 					const file = this.#jarFile(host);
 					try {
-						// Bun.write is async; for the exit handler we use spawnSync to
-						// write atomically via a shell redirect (POSIX mv is atomic).
 						const json = JSON.stringify(jar.toJSON(), null, 2);
-						Bun.spawnSync(
-							[
-								"sh",
-								"-c",
-								`cat > ${JSON.stringify(file + ".tmp")} && mv ${JSON.stringify(file + ".tmp")} ${JSON.stringify(file)}`,
-							],
-							{ stdin: new TextEncoder().encode(json) },
-						);
+						const tmpFile = file + ".tmp";
+						writeFileSync(tmpFile, json);
+						renameSync(tmpFile, file);
 						jar.markClean();
 					} catch {
 						/* swallow */
@@ -252,22 +243,16 @@ export class SessionPool {
 		await Promise.all([...this.#jars.keys()].map((host) => this.saveJar(host)));
 	}
 
-	/** @deprecated Use `flushAll()` — kept for back-compat call sites on process.exit. */
 	flushAllSync(): void {
-		// Best-effort sync flush via spawnSync — use flushAll() in async contexts.
+		// Best-effort sync flush via writeFileSync + renameSync — use flushAll() in async contexts.
 		for (const [host, jar] of this.#jars.entries()) {
 			if (!jar.dirty) continue;
 			const file = this.#jarFile(host);
 			try {
 				const json = JSON.stringify(jar.toJSON(), null, 2);
-				Bun.spawnSync(
-					[
-						"sh",
-						"-c",
-						`cat > ${JSON.stringify(file + ".tmp")} && mv ${JSON.stringify(file + ".tmp")} ${JSON.stringify(file)}`,
-					],
-					{ stdin: new TextEncoder().encode(json) },
-				);
+				const tmpFile = file + ".tmp";
+				writeFileSync(tmpFile, json);
+				renameSync(tmpFile, file);
 				jar.markClean();
 			} catch {
 				/* swallow */
