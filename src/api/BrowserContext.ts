@@ -32,7 +32,7 @@ export class BrowserContext implements AsyncDisposable {
 	readonly #pages: AnyPage[] = [];
 	readonly #cookies: Cookie[] = [];
 	#closed = false;
-	
+
 	#tracing = false;
 	readonly #traceRecorders = new Map<AnyPage, TraceRecorder>();
 
@@ -44,10 +44,10 @@ export class BrowserContext implements AsyncDisposable {
 	 */
 	async newPage(options: PageOptions = {}): Promise<AnyPage> {
 		this.#assertOpen();
-		
+
 		const page = await Browser.newPage(options, this);
 		this.#pages.push(page);
-		
+
 		// Inject context cookies
 		if (this.#cookies.length > 0) {
 			if ("addCookies" in page) {
@@ -98,7 +98,7 @@ export class BrowserContext implements AsyncDisposable {
 	pages(): AnyPage[] {
 		return [...this.#pages];
 	}
-	
+
 	/**
 	 * Tracing API (Phase 2): Records Network, Snapshots, and Actions
 	 * to a highly compressed `.trace.zst` archive.
@@ -124,7 +124,7 @@ export class BrowserContext implements AsyncDisposable {
 				}
 				await Promise.all(promises);
 				this.#traceRecorders.clear();
-			}
+			},
 		};
 	}
 
@@ -142,7 +142,7 @@ export class BrowserContext implements AsyncDisposable {
 	async close(): Promise<void> {
 		if (this.#closed) return;
 		this.#closed = true;
-		await Promise.all(this.#pages.map(p => p.close().catch(() => undefined)));
+		await Promise.all(this.#pages.map((p) => p.close().catch(() => undefined)));
 		this.#pages.length = 0;
 	}
 

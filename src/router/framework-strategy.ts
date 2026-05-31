@@ -37,10 +37,7 @@
  */
 
 import type { DetectedTech } from "../detect.ts";
-import {
-	isGoogleDomain,
-	suggestGoogleStrategy,
-} from "../google/index.ts";
+import { isGoogleDomain, suggestGoogleStrategy } from "../google/index.ts";
 
 // ---------------------------------------------------------------------------
 // Strategy types
@@ -129,9 +126,16 @@ const ANTI_BOT_VENDORS = new Set(
 
 /** Vendors / categories that *force* JS rendering (SSR shell may exist but full content needs hydration). */
 const SPA_FRAMEWORKS = new Set(
-	["React", "Vue.js", "Vue", "Angular", "Svelte", "Preact", "Ember.js", "Backbone.js"].map((s) =>
-		s.toLowerCase(),
-	),
+	[
+		"React",
+		"Vue.js",
+		"Vue",
+		"Angular",
+		"Svelte",
+		"Preact",
+		"Ember.js",
+		"Backbone.js",
+	].map((s) => s.toLowerCase()),
 );
 
 /** Frameworks that already serve a good static SSR shell. */
@@ -188,7 +192,8 @@ function pickShape(detected: DetectedTech[]): Strategy["hints"]["shape"] {
 	if (names.has("drupal")) return "drupal";
 	if (names.has("ghost")) return "ghost";
 	if (names.has("strapi")) return "strapi";
-	if (names.has("next.js") || (names.has("react") && names.has("node.js"))) return "ssr-react";
+	if (names.has("next.js") || (names.has("react") && names.has("node.js")))
+		return "ssr-react";
 	if (names.has("nuxt.js") || names.has("nuxt")) return "ssr-vue";
 	if (names.has("sveltekit")) return "ssr-svelte";
 	for (const f of SPA_FRAMEWORKS) {
@@ -213,7 +218,10 @@ function pickShape(detected: DetectedTech[]): Strategy["hints"]["shape"] {
  *  5. Else if a static-friendly CMS is detected → `static` profile.
  *  6. Else → default to `static` (cheapest), but suggest a re-detect.
  */
-export function suggestStrategy(detected: DetectedTech[], url?: string): Strategy {
+export function suggestStrategy(
+	detected: DetectedTech[],
+	url?: string,
+): Strategy {
 	const rationale: string[] = [];
 	const names = namesLower(detected);
 
@@ -222,7 +230,9 @@ export function suggestStrategy(detected: DetectedTech[], url?: string): Strateg
 		// Use Google-specific detection if we don't have it yet
 		// Note: in a real flow, we'd have body/headers here too.
 		// For now, we use what we have in 'detected'.
-		const googleHit = detected.find((t) => t.name === "Google" || t.name === "Material Design");
+		const googleHit = detected.find(
+			(t) => t.name === "Google" || t.name === "Material Design",
+		);
 		if (googleHit || isGoogleDomain(new URL(url).hostname)) {
 			// We synthesize a GoogleDetection from DetectedTech for the strategy suggester
 			const googleDetection = {
@@ -250,7 +260,13 @@ export function suggestStrategy(detected: DetectedTech[], url?: string): Strateg
 	const hasAntiBot = !!antiBotHit;
 
 	// "Hard" vendors → max profile.
-	const HARD_VENDORS = ["datadome", "akamai bot manager", "perimeterx", "kasada", "human"];
+	const HARD_VENDORS = [
+		"datadome",
+		"akamai bot manager",
+		"perimeterx",
+		"kasada",
+		"human",
+	];
 	const hardHit = [...names].find((n) => HARD_VENDORS.includes(n));
 
 	const shape = pickShape(detected);

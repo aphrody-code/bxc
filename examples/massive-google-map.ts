@@ -19,7 +19,7 @@ import { sharedCache } from "../src/google/cache.ts";
 
 /**
  * Massive Google Ecosystem Mapping (24/5656 Target)
- * 
+ *
  * This script maps the entire Google ecosystem, discovering links,
  * auditing DNS/CDN infrastructure, and extracting metadata.
  */
@@ -34,8 +34,10 @@ async function main() {
 		maxPages: 5656,
 		onProgress: (audit, current, total) => {
 			const progress = ((current / total) * 100).toFixed(1);
-			console.log(`[${progress}%] ${current}/${total} | ${audit.url} | ${audit.cdn ?? "GFE"}`);
-		}
+			console.log(
+				`[${progress}%] ${current}/${total} | ${audit.url} | ${audit.cdn ?? "GFE"}`,
+			);
+		},
 	});
 
 	// Expanded seeds for global coverage
@@ -77,7 +79,7 @@ async function main() {
 	for (const r of results) {
 		const host = new URL(r.url).hostname;
 		uniqueHostnames.add(host);
-		
+
 		cdnStats[r.cdn ?? "Other"] = (cdnStats[r.cdn ?? "Other"] || 0) + 1;
 		if (r.google?.framework !== "none") {
 			const fw = r.google?.framework ?? "unknown";
@@ -86,14 +88,18 @@ async function main() {
 	}
 
 	console.log("\n📊 Infrastructure Stats:");
-	Object.entries(cdnStats).sort((a, b) => b[1] - a[1]).forEach(([name, count]) => {
-		console.log(`  - ${name}: ${count}`);
-	});
+	Object.entries(cdnStats)
+		.sort((a, b) => b[1] - a[1])
+		.forEach(([name, count]) => {
+			console.log(`  - ${name}: ${count}`);
+		});
 
 	console.log("\n🛠️ Framework Usage:");
-	Object.entries(frameworkStats).sort((a, b) => b[1] - a[1]).forEach(([name, count]) => {
-		console.log(`  - ${name}: ${count}`);
-	});
+	Object.entries(frameworkStats)
+		.sort((a, b) => b[1] - a[1])
+		.forEach(([name, count]) => {
+			console.log(`  - ${name}: ${count}`);
+		});
 
 	console.log(`\n🌐 Unique Official Hostnames: ${uniqueHostnames.size}`);
 

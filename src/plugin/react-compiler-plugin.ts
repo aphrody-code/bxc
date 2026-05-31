@@ -122,7 +122,9 @@ async function loadBabelStack(): Promise<{
 // Plugin factory
 // ---------------------------------------------------------------------------
 
-export function reactCompilerPlugin(options: ReactCompilerPluginOptions = {}): BunPlugin {
+export function reactCompilerPlugin(
+	options: ReactCompilerPluginOptions = {},
+): BunPlugin {
 	const filter = options.filter ?? /\.[mc]?[jt]sx?$/;
 	const target = options.target ?? "19";
 	const annotationOnly = options.annotationOnly ?? false;
@@ -182,7 +184,9 @@ export function reactCompilerPlugin(options: ReactCompilerPluginOptions = {}): B
 					if (failOnError) {
 						throw new Error(`react-compiler failed for ${args.path}: ${msg}`);
 					}
-					Bun.stderr.write(`react-compiler-plugin: skip ${args.path} (${msg.slice(0, 200)})\n`);
+					Bun.stderr.write(
+						`react-compiler-plugin: skip ${args.path} (${msg.slice(0, 200)})\n`,
+					);
 					return undefined;
 				}
 			});
@@ -192,7 +196,8 @@ export function reactCompilerPlugin(options: ReactCompilerPluginOptions = {}): B
 
 function pickLoader(path: string): "ts" | "tsx" | "js" | "jsx" {
 	if (path.endsWith(".tsx")) return "tsx";
-	if (path.endsWith(".ts") || path.endsWith(".mts") || path.endsWith(".cts")) return "ts";
+	if (path.endsWith(".ts") || path.endsWith(".mts") || path.endsWith(".cts"))
+		return "ts";
 	if (path.endsWith(".jsx")) return "jsx";
 	return "js";
 }

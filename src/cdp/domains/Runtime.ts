@@ -94,7 +94,12 @@ export function emitExceptionThrown(
 	});
 }
 
-export const RuntimeHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const RuntimeHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		case "Runtime.enable": {
 			// Emit executionContextCreated for this page session so Puppeteer can
@@ -176,7 +181,8 @@ function evalExpression(
 	return {
 		result: {
 			type: "undefined",
-			description: "StaticDomTransport: expression not evaluated (no JS engine)",
+			description:
+				"StaticDomTransport: expression not evaluated (no JS engine)",
 		},
 	};
 }

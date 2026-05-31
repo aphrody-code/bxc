@@ -116,7 +116,9 @@ Outputs in dist/standalone/windows/.
 
 async function assertCmd(cmd: string, hint: string): Promise<string> {
 	try {
-		const text = await $`${cmd} version`.text().catch(() => $`${cmd} --version`.text());
+		const text = await $`${cmd} version`
+			.text()
+			.catch(() => $`${cmd} --version`.text());
 		return text.trim().split("\n")[0] ?? "";
 	} catch {
 		if (cmd === "zig") {
@@ -204,8 +206,10 @@ async function buildBxcExe(args: Args, distDir: string): Promise<void> {
 	const buildTime = new Date().toISOString();
 
 	console.log(`[bxc] bun build --compile --target=${target} (with bytecode)`);
-	
-	await $`bun build src/cli/index.ts --compile --target=${target} --minify --bytecode --sourcemap=linked --external electron --external playwright-core/lib/zipBundle --define __BXC_VERSION__="\"${pkg.version}\"" --define __BXC_BUILD_TIME__="\"${buildTime}\"" --outfile ${out}`.cwd(repoRoot);
+
+	await $`bun build src/cli/index.ts --compile --target=${target} --minify --bytecode --sourcemap=linked --external electron --external playwright-core/lib/zipBundle --define __BXC_VERSION__="\"${pkg.version}\"" --define __BXC_BUILD_TIME__="\"${buildTime}\"" --outfile ${out}`.cwd(
+		repoRoot,
+	);
 
 	const size = ((await Bun.file(out).stat()).size / 1024 / 1024).toFixed(2);
 	console.log(`[bxc] OK ${out} (${size} MB)`);
@@ -215,22 +219,27 @@ async function buildRustBridge(args: Args, distDir: string): Promise<void> {
 	const arch = args.arch === "arm64" ? "aarch64" : "x86_64";
 	const target = `${arch}-pc-windows-msvc`;
 	const repoRoot = `${import.meta.dir}/..`;
-	
-	console.log(`\n[rust] build rust-bridge for ${target} (VS 2026 Insider / MSVC ABI)`);
-	
+
+	console.log(
+		`\n[rust] build rust-bridge for ${target} (VS 2026 Insider / MSVC ABI)`,
+	);
+
 	// Explicitly build both the library and the binary
-	const result = await $`cargo xwin build --release --target=${target} --manifest-path rust-bridge/Cargo.toml --package bxc-rust-bridge --package bxc-engine`.nothrow();
-	
+	const result =
+		await $`cargo xwin build --release --target=${target} --manifest-path rust-bridge/Cargo.toml --package bxc-rust-bridge --package bxc-engine`.nothrow();
+
 	if (result.exitCode !== 0) {
-		console.error("[rust] VS 2026 MSVC build failed. Ensure cargo-xwin and Windows SDK are reachable.");
+		console.error(
+			"[rust] VS 2026 MSVC build failed. Ensure cargo-xwin and Windows SDK are reachable.",
+		);
 		process.exit(1);
 	}
 
 	const binName = "bxc-engine.exe";
 	const libName = "bxc_rust_bridge.dll";
-	
+
 	const targetDir = `${repoRoot}/rust-bridge/target/${target}/release`;
-	
+
 	await Bun.write(`${distDir}/${binName}`, Bun.file(`${targetDir}/${binName}`));
 	await Bun.write(`${distDir}/${libName}`, Bun.file(`${targetDir}/${libName}`));
 	console.log(`[rust] OK (Static CRT + LTO Fat) -> ${distDir}/${binName}`);

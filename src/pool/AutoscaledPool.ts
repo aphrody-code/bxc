@@ -252,11 +252,15 @@ export class AutoscaledPool {
 		const numCpus = cpus().length || 1;
 		const loadRatio = load1 / numCpus;
 
-		const overloaded = memRatio > this.#maxMemoryRatio || loadRatio > this.#maxLoadRatio;
+		const overloaded =
+			memRatio > this.#maxMemoryRatio || loadRatio > this.#maxLoadRatio;
 
 		if (overloaded) {
 			// Scale down
-			const step = Math.max(1, Math.floor(this.#desiredConcurrency * this.#scaleDownStepRatio));
+			const step = Math.max(
+				1,
+				Math.floor(this.#desiredConcurrency * this.#scaleDownStepRatio),
+			);
 			this.#desiredConcurrency = clamp(
 				this.#desiredConcurrency - step,
 				this.#minConcurrency,
@@ -264,7 +268,10 @@ export class AutoscaledPool {
 			);
 		} else if (this.#currentConcurrency >= this.#desiredConcurrency * 0.9) {
 			// At capacity and system is healthy — scale up
-			const step = Math.max(1, Math.floor(this.#desiredConcurrency * this.#scaleUpStepRatio));
+			const step = Math.max(
+				1,
+				Math.floor(this.#desiredConcurrency * this.#scaleUpStepRatio),
+			);
 			this.#desiredConcurrency = clamp(
 				this.#desiredConcurrency + step,
 				this.#minConcurrency,
@@ -311,7 +318,10 @@ export class AutoscaledPool {
 				taskPromise = Promise.race([
 					taskPromise,
 					new Promise<never>((_, reject) =>
-						setTimeout(() => reject(new Error("Task timeout")), this.#taskTimeoutMs),
+						setTimeout(
+							() => reject(new Error("Task timeout")),
+							this.#taskTimeoutMs,
+						),
 					),
 				]);
 			}

@@ -20,18 +20,22 @@ export default {
 	async fetch(req: Request) {
 		const u = new URL(req.url);
 		const q = u.searchParams.get("q");
-		if (!q) return Response.json({ ok: false, error: "missing 'q'" }, { status: 400 });
-		
+		if (!q)
+			return Response.json(
+				{ ok: false, error: "missing 'q'" },
+				{ status: 400 },
+			);
+
 		const hl = u.searchParams.get("hl") ?? "en";
 		const gl = u.searchParams.get("gl") ?? "US";
 		const cacheTtlMs = Number(u.searchParams.get("cacheTtlMs") ?? 300000);
 
 		const results = await google.search(q, { hl, gl, cacheTtlMs });
-		
+
 		return Response.json({
 			ok: true,
 			query: q,
-			results
+			results,
 		});
-	}
+	},
 };

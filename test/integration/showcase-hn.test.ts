@@ -95,11 +95,19 @@ const MOCK_ITEMS: Record<number, object> = {
 // Mock fetch
 // ---------------------------------------------------------------------------
 
-const HN_TOPSTORIES_URL = "https://hacker-news.firebaseio.com/v0/topstories.json";
+const HN_TOPSTORIES_URL =
+	"https://hacker-news.firebaseio.com/v0/topstories.json";
 
-function makeMockFetch(): (url: string | URL | Request, _init?: RequestInit) => Promise<Response> {
-	return async (url: string | URL | Request, _init?: RequestInit): Promise<Response> => {
-		const urlStr = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+function makeMockFetch(): (
+	url: string | URL | Request,
+	_init?: RequestInit,
+) => Promise<Response> {
+	return async (
+		url: string | URL | Request,
+		_init?: RequestInit,
+	): Promise<Response> => {
+		const urlStr =
+			typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
 
 		if (urlStr === HN_TOPSTORIES_URL) {
 			return new Response(JSON.stringify(MOCK_IDS), {
@@ -123,10 +131,13 @@ function makeMockFetch(): (url: string | URL | Request, _init?: RequestInit) => 
 		}
 
 		// Default: return empty HTML for any other URL
-		return new Response("<html><head><title>Mock Page</title></head><body>mock</body></html>", {
-			status: 200,
-			headers: { "content-type": "text/html" },
-		});
+		return new Response(
+			"<html><head><title>Mock Page</title></head><body>mock</body></html>",
+			{
+				status: 200,
+				headers: { "content-type": "text/html" },
+			},
+		);
 	};
 }
 
@@ -140,7 +151,8 @@ async function runMiniCrawl(
 	dataset: Dataset,
 	limit: number,
 ): Promise<{ crawled: number; failed: number }> {
-	let drainIterator: AsyncGenerator<QueuedRequest[], void, unknown> | null = null;
+	let drainIterator: AsyncGenerator<QueuedRequest[], void, unknown> | null =
+		null;
 	let currentBatch: QueuedRequest[] = [];
 	let batchIndex = 0;
 	let drainExhausted = false;
@@ -209,7 +221,10 @@ async function runMiniCrawl(
 			queue.markDone(req.id);
 			crawled++;
 		} catch (err) {
-			queue.markFailed(req.id, err instanceof Error ? err.message : String(err));
+			queue.markFailed(
+				req.id,
+				err instanceof Error ? err.message : String(err),
+			);
 			failed++;
 		}
 	}
@@ -324,7 +339,9 @@ describe("showcase-hn — HN crawler integration (mock fetch)", () => {
 
 	test("resume: adding new IDs to existing queue only inserts new ones", async () => {
 		const queue = RequestQueue.open(":memory:");
-		const dataset = await Dataset.open("hn-test-resume", { storageDir: tmpDir });
+		const dataset = await Dataset.open("hn-test-resume", {
+			storageDir: tmpDir,
+		});
 
 		const HN_ITEM_URL = "https://hacker-news.firebaseio.com/v0/item";
 
@@ -370,7 +387,9 @@ describe("showcase-hn — HN crawler integration (mock fetch)", () => {
 
 	test("dataset export: crawled items are valid JSON and contain expected fields", async () => {
 		const queue = RequestQueue.open(":memory:");
-		const dataset = await Dataset.open("hn-test-export", { storageDir: tmpDir });
+		const dataset = await Dataset.open("hn-test-export", {
+			storageDir: tmpDir,
+		});
 
 		const HN_ITEM_URL = "https://hacker-news.firebaseio.com/v0/item";
 		queue.addRequests(

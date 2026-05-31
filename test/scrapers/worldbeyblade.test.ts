@@ -321,8 +321,7 @@ describe("scrapers/worldbeyblade — offline parsing", () => {
 		expect(tournaments[0].podium.first_place[0].ratchet).toBe("3-60");
 		expect(tournaments[0].podium.first_place[0].bit).toBe("Flat");
 
-		const { partRankings } =
-			calculateMetagameAnalytics(tournaments);
+		const { partRankings } = calculateMetagameAnalytics(tournaments);
 		const wingRanking = partRankings.find((r) => r.part === "Phoenix Wing");
 		expect(wingRanking).toBeDefined();
 		expect(wingRanking?.average_score).toBe(3);

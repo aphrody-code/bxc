@@ -7,26 +7,26 @@
  * For production use, configure a proper database and authentication flow.
  */
 
-import { randomBytes } from 'node:crypto';
+import { randomBytes } from "node:crypto";
 
-import type { BetterAuthOptions } from 'better-auth';
-import { betterAuth } from 'better-auth';
-import { mcp } from 'better-auth/plugins';
-import Database from 'bun:sqlite';
+import type { BetterAuthOptions } from "better-auth";
+import { betterAuth } from "better-auth";
+import { mcp } from "better-auth/plugins";
+import Database from "bun:sqlite";
 
 // Generate a random password for the demo user (new each time the server starts)
-const DEMO_PASSWORD = randomBytes(16).toString('base64url');
+const DEMO_PASSWORD = randomBytes(16).toString("base64url");
 
 // Create the in-memory database once (module-level singleton)
 // This avoids the type export issue and ensures the same DB is used
 let _db: InstanceType<typeof Database> | null = null;
 
 function getDatabase(): InstanceType<typeof Database> {
-    if (!_db) {
-        _db = new Database(':memory:');
-        initializeSchema(_db);
-    }
-    return _db;
+	if (!_db) {
+		_db = new Database(":memory:");
+		initializeSchema(_db);
+	}
+	return _db;
 }
 
 /**
@@ -38,8 +38,8 @@ function getDatabase(): InstanceType<typeof Database> {
  * - https://www.better-auth.com/docs/plugins/oidc-provider#schema
  */
 function initializeSchema(db: InstanceType<typeof Database>): void {
-    // Core better-auth tables
-    db.exec(`
+	// Core better-auth tables
+	db.exec(`
         CREATE TABLE IF NOT EXISTS user (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -87,8 +87,8 @@ function initializeSchema(db: InstanceType<typeof Database>): void {
         );
     `);
 
-    // OIDC/MCP plugin tables
-    db.exec(`
+	// OIDC/MCP plugin tables
+	db.exec(`
         CREATE TABLE IF NOT EXISTS oauthApplication (
             id TEXT PRIMARY KEY,
             name TEXT,
@@ -151,12 +151,12 @@ function initializeSchema(db: InstanceType<typeof Database>): void {
         );
     `);
 
-    console.log('[Auth] In-memory database schema initialized');
-    console.log('[Auth] ========================================');
-    console.log('[Auth] Demo user credentials (auto-login):');
-    console.log(`[Auth]   Email:    ${DEMO_USER_CREDENTIALS.email}`);
-    console.log(`[Auth]   Password: ${DEMO_USER_CREDENTIALS.password}`);
-    console.log('[Auth] ========================================');
+	console.log("[Auth] In-memory database schema initialized");
+	console.log("[Auth] ========================================");
+	console.log("[Auth] Demo user credentials (auto-login):");
+	console.log(`[Auth]   Email:    ${DEMO_USER_CREDENTIALS.email}`);
+	console.log(`[Auth]   Password: ${DEMO_USER_CREDENTIALS.password}`);
+	console.log("[Auth] ========================================");
 }
 
 /**
@@ -165,16 +165,16 @@ function initializeSchema(db: InstanceType<typeof Database>): void {
  * Used by authServer.ts to create and sign in the demo user.
  */
 export const DEMO_USER_CREDENTIALS = {
-    email: 'demo@example.com',
-    password: DEMO_PASSWORD,
-    name: 'Demo User'
+	email: "demo@example.com",
+	password: DEMO_PASSWORD,
+	name: "Demo User",
 };
 
 export interface CreateDemoAuthOptions {
-    baseURL: string;
-    resource?: string;
-    loginPage?: string;
-    demoMode: boolean;
+	baseURL: string;
+	resource?: string;
+	loginPage?: string;
+	demoMode: boolean;
 }
 
 /**
@@ -188,58 +188,58 @@ export interface CreateDemoAuthOptions {
  * @see https://www.better-auth.com/docs/plugins/mcp
  */
 export function createDemoAuth(options: CreateDemoAuthOptions) {
-    const { baseURL, resource, loginPage = '/sign-in', demoMode } = options;
+	const { baseURL, resource, loginPage = "/sign-in", demoMode } = options;
 
-    // Use in-memory SQLite database for demo purposes
-    // Note: All data is lost on restart - demo only!
-    const db = getDatabase();
+	// Use in-memory SQLite database for demo purposes
+	// Note: All data is lost on restart - demo only!
+	const db = getDatabase();
 
-    // MCP plugin configuration
-    const mcpPlugin = mcp({
-        loginPage,
-        resource,
-        oidcConfig: {
-            loginPage,
-            codeExpiresIn: 600, // 10 minutes
-            accessTokenExpiresIn: 3600, // 1 hour
-            refreshTokenExpiresIn: 604_800, // 7 days
-            defaultScope: 'openid',
-            scopes: ['openid', 'profile', 'email', 'offline_access'],
-            allowDynamicClientRegistration: true,
-            metadata: {
-                scopes_supported: ['openid', 'profile', 'email', 'offline_access']
-            }
-        }
-    });
+	// MCP plugin configuration
+	const mcpPlugin = mcp({
+		loginPage,
+		resource,
+		oidcConfig: {
+			loginPage,
+			codeExpiresIn: 600, // 10 minutes
+			accessTokenExpiresIn: 3600, // 1 hour
+			refreshTokenExpiresIn: 604_800, // 7 days
+			defaultScope: "openid",
+			scopes: ["openid", "profile", "email", "offline_access"],
+			allowDynamicClientRegistration: true,
+			metadata: {
+				scopes_supported: ["openid", "profile", "email", "offline_access"],
+			},
+		},
+	});
 
-    return betterAuth({
-        baseURL,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        database: db as any, // Type cast to avoid exposing better-sqlite3 in exported types
-        trustedOrigins: [baseURL.toString()],
-        // Basic email+password for demo
-        emailAndPassword: {
-            enabled: true,
-            requireEmailVerification: false
-        },
-        plugins: [mcpPlugin],
-        // Enable verbose logging for demo/debugging
-        logger: demoMode
-            ? {
-                  disabled: false,
-                  level: 'debug',
-                  log: (level, message, ...args) => {
-                      const timestamp = new Date().toISOString();
-                      const prefix = `[Auth ${level.toUpperCase()}]`;
-                      if (args.length > 0) {
-                          console.log(`${timestamp} ${prefix} ${message}`, ...args);
-                      } else {
-                          console.log(`${timestamp} ${prefix} ${message}`);
-                      }
-                  }
-              }
-            : undefined
-    } satisfies BetterAuthOptions);
+	return betterAuth({
+		baseURL,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		database: db as any, // Type cast to avoid exposing better-sqlite3 in exported types
+		trustedOrigins: [baseURL.toString()],
+		// Basic email+password for demo
+		emailAndPassword: {
+			enabled: true,
+			requireEmailVerification: false,
+		},
+		plugins: [mcpPlugin],
+		// Enable verbose logging for demo/debugging
+		logger: demoMode
+			? {
+					disabled: false,
+					level: "debug",
+					log: (level, message, ...args) => {
+						const timestamp = new Date().toISOString();
+						const prefix = `[Auth ${level.toUpperCase()}]`;
+						if (args.length > 0) {
+							console.log(`${timestamp} ${prefix} ${message}`, ...args);
+						} else {
+							console.log(`${timestamp} ${prefix} ${message}`);
+						}
+					},
+				}
+			: undefined,
+	} satisfies BetterAuthOptions);
 }
 
 /**

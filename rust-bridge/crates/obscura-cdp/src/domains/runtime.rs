@@ -250,7 +250,8 @@ fn remote_object_from_info(info: &RemoteObjectInfo) -> Value {
         obj["objectId"] = json!(oid);
     }
 
-    if let value = &info.value {
+    let value = &info.value;
+    {
         obj["value"] = value.clone();
     }
 

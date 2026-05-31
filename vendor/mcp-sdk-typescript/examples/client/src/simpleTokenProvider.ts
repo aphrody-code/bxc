@@ -15,41 +15,54 @@
  *   MCP_TOKEN      - Bearer token to use for authentication (required)
  */
 
-import type { AuthProvider } from '@modelcontextprotocol/client';
-import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
+import type { AuthProvider } from "@modelcontextprotocol/client";
+import {
+	Client,
+	StreamableHTTPClientTransport,
+} from "@modelcontextprotocol/client";
 
-const DEFAULT_SERVER_URL = process.env.MCP_SERVER_URL || 'http://localhost:3000/mcp';
+const DEFAULT_SERVER_URL =
+	process.env.MCP_SERVER_URL || "http://localhost:3000/mcp";
 
 async function main() {
-    const token = process.env.MCP_TOKEN;
-    if (!token) {
-        console.error('MCP_TOKEN environment variable is required');
-        process.exit(1);
-    }
+	const token = process.env.MCP_TOKEN;
+	if (!token) {
+		console.error("MCP_TOKEN environment variable is required");
+		process.exit(1);
+	}
 
-    // AuthProvider with just token() — the simplest possible auth.
-    // token() is called before every request, so it can handle refresh internally.
-    // With no onUnauthorized(), a 401 throws UnauthorizedError immediately.
-    const authProvider: AuthProvider = {
-        token: async () => token
-    };
+	// AuthProvider with just token() — the simplest possible auth.
+	// token() is called before every request, so it can handle refresh internally.
+	// With no onUnauthorized(), a 401 throws UnauthorizedError immediately.
+	const authProvider: AuthProvider = {
+		token: async () => token,
+	};
 
-    const client = new Client({ name: 'auth-provider-example', version: '1.0.0' }, { capabilities: {} });
+	const client = new Client(
+		{ name: "auth-provider-example", version: "1.0.0" },
+		{ capabilities: {} },
+	);
 
-    const transport = new StreamableHTTPClientTransport(new URL(DEFAULT_SERVER_URL), { authProvider });
+	const transport = new StreamableHTTPClientTransport(
+		new URL(DEFAULT_SERVER_URL),
+		{ authProvider },
+	);
 
-    await client.connect(transport);
-    console.log('Connected successfully.');
+	await client.connect(transport);
+	console.log("Connected successfully.");
 
-    const tools = await client.listTools();
-    console.log('Available tools:', tools.tools.map(t => t.name).join(', ') || '(none)');
+	const tools = await client.listTools();
+	console.log(
+		"Available tools:",
+		tools.tools.map((t) => t.name).join(", ") || "(none)",
+	);
 
-    await transport.close();
+	await transport.close();
 }
 
 try {
-    await main();
+	await main();
 } catch (error) {
-    console.error('Error running client:', error);
-    process.exitCode = 1;
+	console.error("Error running client:", error);
+	process.exitCode = 1;
 }

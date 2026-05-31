@@ -82,9 +82,17 @@ function parseLine(line: string): CookieEntry | null {
 	// Split on TAB; tolerate runs of spaces if no TAB present.
 	const parts = line.includes("\t") ? line.split("\t") : line.split(/ {2,}/);
 	if (parts.length < 4) return null;
-	const [name, value, domain, path, expires, _size, httpOnly, secure, sameSite] = parts.map((s) =>
-		s.trim(),
-	);
+	const [
+		name,
+		value,
+		domain,
+		path,
+		expires,
+		_size,
+		httpOnly,
+		secure,
+		sameSite,
+	] = parts.map((s) => s.trim());
 	if (!name || !domain) return null;
 	const out: CookieEntry = {
 		name,
@@ -119,7 +127,10 @@ async function readSource(path: string): Promise<string> {
 	return f.text();
 }
 
-export async function importCookies(source: string, target: string): Promise<CookieEntry[]> {
+export async function importCookies(
+	source: string,
+	target: string,
+): Promise<CookieEntry[]> {
 	const raw = await readSource(source);
 	const cookies: CookieEntry[] = [];
 	for (const line of raw.split(/\r?\n/)) {

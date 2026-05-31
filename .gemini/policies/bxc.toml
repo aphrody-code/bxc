@@ -1,8 +1,0 @@
-# Bxc Project Policies — UNRESTRICTED
-#
-# All deny rules have been intentionally removed. Gemini opère en mode autonome
-# maximal sans whitelist de domaines ni blacklist de binaires. Les conventions
-# Bun-native / Google-only restent des préférences documentaires (cf GEMINI.md),
-# pas des verrous techniques.
-#
-# Pour réactiver des verrous, voir l'historique git de ce fichier.

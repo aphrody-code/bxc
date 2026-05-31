@@ -32,7 +32,7 @@
 
 /**
  * @module bxc/serverless/handler
- * 
+ *
  * Serverless-friendly Bxc handler using Bun.FileSystemRouter.
  */
 
@@ -50,7 +50,7 @@ function withHeaders(res: Response): Response {
 
 export async function handler(req: Request): Promise<Response> {
 	const match = router.match(req);
-	
+
 	if (match) {
 		try {
 			const route = await import(match.filePath);
@@ -59,9 +59,16 @@ export async function handler(req: Request): Promise<Response> {
 				return withHeaders(res);
 			}
 		} catch (e) {
-			return withHeaders(Response.json({ ok: false, error: (e as Error).message }, { status: 500 }));
+			return withHeaders(
+				Response.json(
+					{ ok: false, error: (e as Error).message },
+					{ status: 500 },
+				),
+			);
 		}
 	}
 
-	return withHeaders(Response.json({ ok: false, error: "Not Found" }, { status: 404 }));
+	return withHeaders(
+		Response.json({ ok: false, error: "Not Found" }, { status: 404 }),
+	);
 }

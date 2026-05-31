@@ -39,9 +39,14 @@ export interface DetectedTech {
 	icon?: string;
 }
 
-export type AnyHeaders = Headers | Map<string, string> | Record<string, string | string[]>;
+export type AnyHeaders =
+	| Headers
+	| Map<string, string>
+	| Record<string, string | string[]>;
 
-export type DetectInput = string | { url?: string; html: string; headers?: AnyHeaders };
+export type DetectInput =
+	| string
+	| { url?: string; html: string; headers?: AnyHeaders };
 
 export interface DetectOptions {
 	binaryPath?: string;
@@ -61,7 +66,13 @@ export async function resolveBinary(): Promise<string> {
 	const fromEnv = Bun.env.BXC_WAPPALYZERGO_BIN;
 	if (fromEnv && (await Bun.file(fromEnv).exists())) return fromEnv;
 
-	const candidate = resolve(HERE, "..", "vendor", "wappalyzergo", "wappalyzergo-cli");
+	const candidate = resolve(
+		HERE,
+		"..",
+		"vendor",
+		"wappalyzergo",
+		"wappalyzergo-cli",
+	);
 	if (await Bun.file(candidate).exists()) return candidate;
 
 	for (const rel of [
@@ -128,7 +139,9 @@ async function runCli(
 
 	const timeoutSignal = AbortSignal.timeout(timeoutMs);
 	const killOnTimeout = () => {
-		try { proc.kill(9); } catch {}
+		try {
+			proc.kill(9);
+		} catch {}
 	};
 	timeoutSignal.addEventListener("abort", killOnTimeout, { once: true });
 
@@ -184,7 +197,9 @@ export async function detectFrameworks(
 	}
 
 	if (result.code !== 0) {
-		throw new Error(`wappalyzergo-cli exited with code ${result.code}: ${result.stderr.trim()}`);
+		throw new Error(
+			`wappalyzergo-cli exited with code ${result.code}: ${result.stderr.trim()}`,
+		);
 	}
 
 	const trimmed = result.stdout.trim();
@@ -199,10 +214,11 @@ export async function detectFrameworks(
 	}
 
 	// Enrich with Google-specific signals
-	const url = typeof input === "string" ? input : input.url ?? "";
+	const url = typeof input === "string" ? input : (input.url ?? "");
 	const html = typeof input === "string" ? "" : input.html;
-	const headersObj = typeof input === "string" ? {} : normalizeHeaders(input.headers);
-	
+	const headersObj =
+		typeof input === "string" ? {} : normalizeHeaders(input.headers);
+
 	const googleSignals = detectGoogleSpecifics(
 		url,
 		new Map(Object.entries(headersObj).map(([k, v]) => [k, v.join(", ")])),
@@ -227,16 +243,27 @@ export async function detectFromPage(
 	page: PageLike,
 	opts: DetectOptions = {},
 ): Promise<DetectedTech[]> {
-	const [url, html] = await Promise.all([Promise.resolve(page.url()), page.content()]);
+	const [url, html] = await Promise.all([
+		Promise.resolve(page.url()),
+		page.content(),
+	]);
 	return detectFrameworks({ url, html, headers: {} }, opts);
 }
 
-export function hasAnyTech(detected: DetectedTech[], names: readonly string[]): boolean {
+export function hasAnyTech(
+	detected: DetectedTech[],
+	names: readonly string[],
+): boolean {
 	const wanted = new Set(names.map((n) => n.toLowerCase()));
 	return detected.some((t) => wanted.has(t.name.toLowerCase()));
 }
 
-export function hasAnyCategory(detected: DetectedTech[], categories: readonly string[]): boolean {
+export function hasAnyCategory(
+	detected: DetectedTech[],
+	categories: readonly string[],
+): boolean {
 	const wanted = new Set(categories.map((c) => c.toLowerCase()));
-	return detected.some((t) => t.categories.some((c) => wanted.has(c.toLowerCase())));
+	return detected.some((t) =>
+		t.categories.some((c) => wanted.has(c.toLowerCase())),
+	);
 }

@@ -56,7 +56,9 @@ export interface FetchOptions extends GoogleSessionOptions {
 /**
  * High-performance structured data extraction using ZigQuery.
  */
-export async function extractStructuredData(html: string): Promise<StructuredData> {
+export async function extractStructuredData(
+	html: string,
+): Promise<StructuredData> {
 	const out: StructuredData = {
 		jsonLd: [],
 		openGraph: {},
@@ -68,7 +70,9 @@ export async function extractStructuredData(html: string): Promise<StructuredDat
 	const doc = await parseHtml(html);
 	try {
 		// 1. JSON-LD
-		const scripts = await doc.querySelectorAll("script[type='application/ld+json']");
+		const scripts = await doc.querySelectorAll(
+			"script[type='application/ld+json']",
+		);
 		for (const s of scripts) {
 			try {
 				const parsed = JSON.parse(s.textContent().trim());
@@ -83,7 +87,7 @@ export async function extractStructuredData(html: string): Promise<StructuredDat
 			const prop = m.getAttribute("property") || m.getAttribute("name");
 			const content = m.getAttribute("content");
 			if (!prop || !content) continue;
-			
+
 			const key = prop.toLowerCase();
 			if (key.startsWith("og:")) out.openGraph[key.slice(3)] = content;
 			else if (key.startsWith("twitter:")) out.twitter[key.slice(8)] = content;
@@ -93,7 +97,6 @@ export async function extractStructuredData(html: string): Promise<StructuredDat
 		// 3. Canonical
 		const canon = await doc.querySelector("link[rel='canonical']");
 		out.canonical = canon?.getAttribute("href") || null;
-
 	} finally {
 		doc.destroy();
 	}
@@ -104,28 +107,37 @@ export async function extractStructuredData(html: string): Promise<StructuredDat
 /**
  * Fetch a URL with Google-specialized cleaning and challenge handling.
  */
-export async function googleWebFetch(url: string, opts: FetchOptions = {}): Promise<FetchResult> {
+export async function googleWebFetch(
+	url: string,
+	opts: FetchOptions = {},
+): Promise<FetchResult> {
 	const clean = opts.clean ?? true;
 	const isGoogle = isGoogleDomain(new URL(url).hostname);
 
 	try {
 		const { page } = await google.open(url);
-		
+
 		const title = await page.title();
 		let content = (await page.content()) || "";
 		let cleaned = false;
 
 		if (clean && content) {
 			content = await page.evaluate(() => {
-				const junkSelector = "nav, header, footer, aside, .ads, .advertisement, .social-share, script, style, iframe, noscript";
-				document.querySelectorAll(junkSelector).forEach(el => el.remove());
-				const main = document.querySelector("article, main, #main, .main-content, #content, .post-content");
+				const junkSelector =
+					"nav, header, footer, aside, .ads, .advertisement, .social-share, script, style, iframe, noscript";
+				document.querySelectorAll(junkSelector).forEach((el) => el.remove());
+				const main = document.querySelector(
+					"article, main, #main, .main-content, #content, .post-content",
+				);
 				return main ? main.innerHTML : document.body.innerHTML;
 			});
 			cleaned = true;
 		}
 
-		const structured = (opts.extractStructured ?? true) ? await extractStructuredData(content) : undefined;
+		const structured =
+			(opts.extractStructured ?? true)
+				? await extractStructuredData(content)
+				: undefined;
 
 		await page.close();
 
@@ -153,7 +165,10 @@ export async function googleWebFetch(url: string, opts: FetchOptions = {}): Prom
 /**
  * Parallel fetch for multiple URLs.
  */
-export async function googleWebFetchAll(urls: string[], opts: FetchOptions = {}): Promise<FetchResult[]> {
+export async function googleWebFetchAll(
+	urls: string[],
+	opts: FetchOptions = {},
+): Promise<FetchResult[]> {
 	if (urls.length === 0) return [];
 	const results: FetchResult[] = Array.from({ length: urls.length });
 	let nextIdx = 0;

@@ -22,7 +22,7 @@ export { bxcFetch };
 /** Root directory of the bxc project. */
 export const ROOT = join(import.meta.dir, "../..");
 
-/** 
+/**
  * Common CLI options shared across subcommands.
  */
 export interface CommonOptions {
@@ -37,7 +37,10 @@ export interface CommonOptions {
  * Parse common global flags from argv.
  * Returns the parsed options and a new argv with those flags removed.
  */
-export function parseCommonArgs(argv: string[]): { opts: CommonOptions; remaining: string[] } {
+export function parseCommonArgs(argv: string[]): {
+	opts: CommonOptions;
+	remaining: string[];
+} {
 	const opts: CommonOptions = {
 		insecure: Bun.env.BXC_INSECURE === "1",
 		quiet: Bun.env.BXC_QUIET === "1",

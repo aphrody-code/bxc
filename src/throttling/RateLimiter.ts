@@ -29,7 +29,10 @@ export interface RobotRules {
 }
 
 export class RateLimitError extends Error {
-	constructor(message: string, public readonly reason: "concurrency" | "rps" | "disallowed") {
+	constructor(
+		message: string,
+		public readonly reason: "concurrency" | "rps" | "disallowed",
+	) {
 		super(message);
 		this.name = "RateLimitError";
 	}
@@ -94,10 +97,14 @@ export class RateLimiter {
 		if (this.#obeyRobots) {
 			const rules = await this.getRobotsRules(host);
 			if (!rules.allowed(path)) {
-				throw new RateLimitError(`robots.txt disallows crawling ${path} on ${host}`, "disallowed");
+				throw new RateLimitError(
+					`robots.txt disallows crawling ${path} on ${host}`,
+					"disallowed",
+				);
 			}
 			if (rules.crawlDelay && state.lastRequestAt > 0) {
-				const waitMs = (rules.crawlDelay * 1000) - (Date.now() - state.lastRequestAt);
+				const waitMs =
+					rules.crawlDelay * 1000 - (Date.now() - state.lastRequestAt);
 				if (waitMs > 0) await Bun.sleep(waitMs);
 			}
 		}
@@ -137,17 +144,27 @@ export class RateLimiter {
 	#getOrCreateState(host: string): HostState {
 		let state = this.#hostStates.get(host);
 		if (!state) {
-			state = { lastRequestAt: 0, requestsInLastSecond: [], requestsInLastMinute: [] };
+			state = {
+				lastRequestAt: 0,
+				requestsInLastSecond: [],
+				requestsInLastMinute: [],
+			};
 			this.#hostStates.set(host, state);
 		}
 		return state;
 	}
 
 	#cleanState(state: HostState, now: number) {
-		while (state.requestsInLastSecond.length > 0 && state.requestsInLastSecond[0] < now - 1000) {
+		while (
+			state.requestsInLastSecond.length > 0 &&
+			state.requestsInLastSecond[0] < now - 1000
+		) {
 			state.requestsInLastSecond.shift();
 		}
-		while (state.requestsInLastMinute.length > 0 && state.requestsInLastMinute[0] < now - 60000) {
+		while (
+			state.requestsInLastMinute.length > 0 &&
+			state.requestsInLastMinute[0] < now - 60000
+		) {
 			state.requestsInLastMinute.shift();
 		}
 	}
@@ -176,7 +193,10 @@ export class RateLimiter {
 				return rules;
 			} catch {
 				const permissive: RobotRules = { allowed: () => true };
-				this.#robotsCache.set(host, { rules: permissive, fetchedAt: Date.now() });
+				this.#robotsCache.set(host, {
+					rules: permissive,
+					fetchedAt: Date.now(),
+				});
 				return permissive;
 			} finally {
 				this.#robotsFetching.delete(host);

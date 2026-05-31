@@ -1,14 +1,14 @@
 {
-  "origin": "https://www.gemini.google.com",
-  "discoveredAt": "2026-05-12T04:41:42.090Z",
-  "source": "sitemap",
-  "urls": [
-    "https://www.gemini.google.com",
-    "https://www.gemini.google.com/projets/nostalgie",
-    "https://www.gemini.google.com/association",
-    "https://www.gemini.google.com/apropos",
-    "https://www.gemini.google.com/evenements",
-    "https://www.gemini.google.com/contact",
-    "https://www.gemini.google.com/llm.txt"
-  ]
+	"origin": "https://www.gemini.google.com",
+	"discoveredAt": "2026-05-12T04:41:42.090Z",
+	"source": "sitemap",
+	"urls": [
+		"https://www.gemini.google.com",
+		"https://www.gemini.google.com/projets/nostalgie",
+		"https://www.gemini.google.com/association",
+		"https://www.gemini.google.com/apropos",
+		"https://www.gemini.google.com/evenements",
+		"https://www.gemini.google.com/contact",
+		"https://www.gemini.google.com/llm.txt"
+	]
 }

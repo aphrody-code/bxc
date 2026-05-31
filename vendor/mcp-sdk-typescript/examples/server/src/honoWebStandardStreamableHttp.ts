@@ -7,32 +7,40 @@
  * Run with: pnpm tsx src/honoWebStandardStreamableHttp.ts
  */
 
-import { serve } from '@hono/node-server';
-import type { CallToolResult } from '@modelcontextprotocol/server';
-import { McpServer, WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/server';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import * as z from 'zod/v4';
+import { serve } from "@hono/node-server";
+import type { CallToolResult } from "@modelcontextprotocol/server";
+import {
+	McpServer,
+	WebStandardStreamableHTTPServerTransport,
+} from "@modelcontextprotocol/server";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import * as z from "zod/v4";
 
 // Create the MCP server
 const server = new McpServer({
-    name: 'hono-webstandard-mcp-server',
-    version: '1.0.0'
+	name: "hono-webstandard-mcp-server",
+	version: "1.0.0",
 });
 
 // Register a simple greeting tool
 server.registerTool(
-    'greet',
-    {
-        title: 'Greeting Tool',
-        description: 'A simple greeting tool',
-        inputSchema: z.object({ name: z.string().describe('Name to greet') })
-    },
-    async ({ name }): Promise<CallToolResult> => {
-        return {
-            content: [{ type: 'text', text: `Hello, ${name}! (from Hono + WebStandard transport)` }]
-        };
-    }
+	"greet",
+	{
+		title: "Greeting Tool",
+		description: "A simple greeting tool",
+		inputSchema: z.object({ name: z.string().describe("Name to greet") }),
+	},
+	async ({ name }): Promise<CallToolResult> => {
+		return {
+			content: [
+				{
+					type: "text",
+					text: `Hello, ${name}! (from Hono + WebStandard transport)`,
+				},
+			],
+		};
+	},
 );
 
 // Create a stateless transport (no options = no session management)
@@ -43,23 +51,30 @@ const app = new Hono();
 
 // Enable CORS for all origins
 app.use(
-    '*',
-    cors({
-        origin: '*',
-        allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-        allowHeaders: ['Content-Type', 'mcp-session-id', 'Last-Event-ID', 'mcp-protocol-version'],
-        exposeHeaders: ['mcp-session-id', 'mcp-protocol-version']
-    })
+	"*",
+	cors({
+		origin: "*",
+		allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+		allowHeaders: [
+			"Content-Type",
+			"mcp-session-id",
+			"Last-Event-ID",
+			"mcp-protocol-version",
+		],
+		exposeHeaders: ["mcp-session-id", "mcp-protocol-version"],
+	}),
 );
 
 // Health check endpoint
-app.get('/health', c => c.json({ status: 'ok' }));
+app.get("/health", (c) => c.json({ status: "ok" }));
 
 // MCP endpoint
-app.all('/mcp', c => transport.handleRequest(c.req.raw));
+app.all("/mcp", (c) => transport.handleRequest(c.req.raw));
 
 // Start the server
-const PORT = process.env.MCP_PORT ? Number.parseInt(process.env.MCP_PORT, 10) : 3000;
+const PORT = process.env.MCP_PORT
+	? Number.parseInt(process.env.MCP_PORT, 10)
+	: 3000;
 
 await server.connect(transport);
 
@@ -68,6 +83,6 @@ console.log(`Health check: http://localhost:${PORT}/health`);
 console.log(`MCP endpoint: http://localhost:${PORT}/mcp`);
 
 serve({
-    fetch: app.fetch,
-    port: PORT
+	fetch: app.fetch,
+	port: PORT,
 });

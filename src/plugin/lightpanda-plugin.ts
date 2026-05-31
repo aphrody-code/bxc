@@ -101,7 +101,11 @@ function cacheGet(key: string): CacheEntry | null {
 	return e;
 }
 
-function cacheSet(key: string, entry: Omit<CacheEntry, "expiresAt">, ttlMs: number): void {
+function cacheSet(
+	key: string,
+	entry: Omit<CacheEntry, "expiresAt">,
+	ttlMs: number,
+): void {
 	if (ttlMs <= 0) return;
 	RENDER_CACHE.set(key, { ...entry, expiresAt: Date.now() + ttlMs });
 }
@@ -118,7 +122,9 @@ function cacheSet(key: string, entry: Omit<CacheEntry, "expiresAt">, ttlMs: numb
  */
 async function renderWithLightpanda(
 	url: string,
-	opts: Required<Pick<LightpandaPluginOptions, "navigationTimeoutMs" | "logLevel">> &
+	opts: Required<
+		Pick<LightpandaPluginOptions, "navigationTimeoutMs" | "logLevel">
+	> &
 		Pick<LightpandaPluginOptions, "binaryPath">,
 ): Promise<{ html: string; status: number; finalUrl: string; gotoMs: number }> {
 	const t0 = Bun.nanoseconds();
@@ -134,7 +140,9 @@ async function renderWithLightpanda(
 			},
 		});
 
-		const nav = (await page.goto(url, { timeoutMs: opts.navigationTimeoutMs })) as {
+		const nav = (await page.goto(url, {
+			timeoutMs: opts.navigationTimeoutMs,
+		})) as {
 			status?: number;
 		};
 		const html = await page.content().catch(() => "");
@@ -182,7 +190,9 @@ async function renderWithLightpanda(
  * HTML at module-load time. Supports both runtime (`Bun.plugin`) and build
  * (`Bun.build`) integration paths.
  */
-export function lightpandaPlugin(options: LightpandaPluginOptions = {}): BunPlugin {
+export function lightpandaPlugin(
+	options: LightpandaPluginOptions = {},
+): BunPlugin {
 	const navigationTimeoutMs = options.navigationTimeoutMs ?? 25_000;
 	const logLevel = options.logLevel ?? "error";
 	const cacheTtlMs = options.cacheTtlMs ?? 0;
@@ -254,7 +264,9 @@ export function lightpandaPlugin(options: LightpandaPluginOptions = {}): BunPlug
  * });
  * ```
  */
-export function registerLightpandaPlugin(options: LightpandaPluginOptions = {}): void {
+export function registerLightpandaPlugin(
+	options: LightpandaPluginOptions = {},
+): void {
 	// Bun.plugin is the runtime entry point — see https://bun.com/docs/runtime/plugins
 	Bun.plugin(lightpandaPlugin(options));
 }
@@ -300,7 +312,10 @@ export function clearLightpandaCache(): void {
 	RENDER_CACHE.clear();
 }
 
-export function lightpandaCacheStats(): { entries: number; oldest: number | null } {
+export function lightpandaCacheStats(): {
+	entries: number;
+	oldest: number | null;
+} {
 	let oldest: number | null = null;
 	for (const e of RENDER_CACHE.values()) {
 		if (oldest === null || e.expiresAt < oldest) oldest = e.expiresAt;

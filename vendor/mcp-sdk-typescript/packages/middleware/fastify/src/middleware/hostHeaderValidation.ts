@@ -1,5 +1,8 @@
-import { localhostAllowedHostnames, validateHostHeader } from '@modelcontextprotocol/server';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import {
+	localhostAllowedHostnames,
+	validateHostHeader,
+} from "@modelcontextprotocol/server";
+import type { FastifyReply, FastifyRequest } from "fastify";
 
 /**
  * Fastify onRequest hook for DNS rebinding protection.
@@ -20,19 +23,22 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
  * ```
  */
 export function hostHeaderValidation(allowedHostnames: string[]) {
-    return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-        const result = validateHostHeader(request.headers.host, allowedHostnames);
-        if (!result.ok) {
-            await reply.code(403).send({
-                jsonrpc: '2.0',
-                error: {
-                    code: -32_000,
-                    message: result.message
-                },
-                id: null
-            });
-        }
-    };
+	return async (
+		request: FastifyRequest,
+		reply: FastifyReply,
+	): Promise<void> => {
+		const result = validateHostHeader(request.headers.host, allowedHostnames);
+		if (!result.ok) {
+			await reply.code(403).send({
+				jsonrpc: "2.0",
+				error: {
+					code: -32_000,
+					message: result.message,
+				},
+				id: null,
+			});
+		}
+	};
 }
 
 /**
@@ -45,5 +51,5 @@ export function hostHeaderValidation(allowedHostnames: string[]) {
  * ```
  */
 export function localhostHostValidation() {
-    return hostHeaderValidation(localhostAllowedHostnames());
+	return hostHeaderValidation(localhostAllowedHostnames());
 }

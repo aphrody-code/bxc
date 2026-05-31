@@ -218,9 +218,14 @@ const NAMED_ENTITIES: Record<string, string> = {
 
 function decodeEntities(s: string): string {
 	return s
-		.replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+		.replace(/&#x([0-9a-f]+);/gi, (_, h) =>
+			String.fromCodePoint(parseInt(h, 16)),
+		)
 		.replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
-		.replace(/&([a-z]+);/gi, (m, name) => NAMED_ENTITIES[name.toLowerCase()] ?? m);
+		.replace(
+			/&([a-z]+);/gi,
+			(m, name) => NAMED_ENTITIES[name.toLowerCase()] ?? m,
+		);
 }
 
 function stripTags(s: string): string {
@@ -230,7 +235,13 @@ function stripTags(s: string): string {
 }
 
 function lastPathSegment(url: string): string {
-	return url.replace(/[?#].*$/, "").replace(/\/+$/, "").split("/").pop() ?? "";
+	return (
+		url
+			.replace(/[?#].*$/, "")
+			.replace(/\/+$/, "")
+			.split("/")
+			.pop() ?? ""
+	);
 }
 
 function episodeNumberFrom(label: string, slug: string): number | null {
@@ -279,7 +290,8 @@ const PROVIDER_MATCHERS: Array<[RegExp, string]> = [
 ];
 
 export function providerFromUrl(embedUrl: string): string {
-	for (const [re, name] of PROVIDER_MATCHERS) if (re.test(embedUrl)) return name;
+	for (const [re, name] of PROVIDER_MATCHERS)
+		if (re.test(embedUrl)) return name;
 	try {
 		return new URL(embedUrl).hostname.replace(/^www\./, "");
 	} catch {
@@ -309,7 +321,10 @@ function parseMetaRows(html: string): Record<string, string> {
 	return rows;
 }
 
-function pickRow(rows: Record<string, string>, ...keys: string[]): string | null {
+function pickRow(
+	rows: Record<string, string>,
+	...keys: string[]
+): string | null {
 	for (const k of keys) {
 		const v = rows[k.toLowerCase()];
 		if (v) return v;
@@ -331,17 +346,24 @@ export function parseAnimeMeta(html: string, url: string): AnimeMeta {
 			.trim() ||
 		slug;
 
-	const imgMatch = /<div class="summary_image">[\s\S]*?<img[^>]+src="([^"]+)"/i.exec(html);
-	const poster = imgMatch ? originalImage(imgMatch[1]) : metaContent(html, "og:image");
+	const imgMatch =
+		/<div class="summary_image">[\s\S]*?<img[^>]+src="([^"]+)"/i.exec(html);
+	const poster = imgMatch
+		? originalImage(imgMatch[1])
+		: metaContent(html, "og:image");
 
 	const synEl =
 		/<div class="(?:summary__content|manga-excerpt|description-summary)[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(
 			html,
 		);
-	const synopsis = synEl ? stripTags(synEl[1]) : metaContent(html, "og:description");
+	const synopsis = synEl
+		? stripTags(synEl[1])
+		: metaContent(html, "og:description");
 
 	const genres: string[] = [];
-	const genresBlock = /<div class="genres-content">([\s\S]*?)<\/div>/i.exec(html);
+	const genresBlock = /<div class="genres-content">([\s\S]*?)<\/div>/i.exec(
+		html,
+	);
 	if (genresBlock) {
 		for (const m of genresBlock[1].matchAll(/<a[^>]*>([^<]+)<\/a>/g)) {
 			genres.push(decodeEntities(m[1]).trim());
@@ -363,10 +385,17 @@ export function parseAnimeMeta(html: string, url: string): AnimeMeta {
 	})();
 
 	const declaredRaw = pickRow(rows, "episodes", "episode");
-	const declaredEpisodes = declaredRaw ? parseInt(declaredRaw.replace(/[^\d]/g, ""), 10) || null : null;
+	const declaredEpisodes = declaredRaw
+		? parseInt(declaredRaw.replace(/[^\d]/g, ""), 10) || null
+		: null;
 
 	const studiosRaw = pickRow(rows, "studios", "studio", "studio(s)");
-	const studios = studiosRaw ? studiosRaw.split(/,|·/).map((s) => s.trim()).filter(Boolean) : [];
+	const studios = studiosRaw
+		? studiosRaw
+				.split(/,|·/)
+				.map((s) => s.trim())
+				.filter(Boolean)
+		: [];
 
 	return {
 		title,
@@ -386,7 +415,13 @@ export function parseAnimeMeta(html: string, url: string): AnimeMeta {
 			english: pickRow(rows, "english") ?? undefined,
 		},
 		declaredEpisodes,
-		startDate: pickRow(rows, "start date", "date de sortie", "released", "aired"),
+		startDate: pickRow(
+			rows,
+			"start date",
+			"date de sortie",
+			"released",
+			"aired",
+		),
 		endDate: pickRow(rows, "end date"),
 		rating,
 		ratingCount,
@@ -460,17 +495,22 @@ export function parseEpisode(html: string, url: string): EpisodeInfo {
 		return m ? m[1] : null;
 	})();
 
-	const chap = /id="wp-manga-current-chap"\s+data-id="(\d+)"\s+value="([^"]*)"/.exec(html);
+	const chap =
+		/id="wp-manga-current-chap"\s+data-id="(\d+)"\s+value="([^"]*)"/.exec(html);
 	const mangaM = /class="c-selectpicker[^"]*"\s+data-manga="(\d+)"/.exec(html);
 
-	const defM = /id="chapter-video-frame"[\s\S]*?<iframe[^>]+src="([^"]+)"/i.exec(html);
+	const defM =
+		/id="chapter-video-frame"[\s\S]*?<iframe[^>]+src="([^"]+)"/i.exec(html);
 
 	const titleM =
 		/<h1[^>]+id="chapter-heading"[^>]*>([\s\S]*?)<\/h1>/i.exec(html) ??
-		/class="breadcrumb"[\s\S]*?<li[^>]*>\s*([^<]+?)\s*<\/li>\s*<\/ol>/i.exec(html);
+		/class="breadcrumb"[\s\S]*?<li[^>]*>\s*([^<]+?)\s*<\/li>\s*<\/ol>/i.exec(
+			html,
+		);
 
 	const nextM = /<a[^>]+href="([^"]+)"[^>]*>\s*(?:Next|Suivant)\b/i.exec(html);
-	const prevM = /<a[^>]+href="([^"]+)"[^>]*>\s*(?:Prev(?:ious)?|Précédent)\b/i.exec(html);
+	const prevM =
+		/<a[^>]+href="([^"]+)"[^>]*>\s*(?:Prev(?:ious)?|Précédent)\b/i.exec(html);
 
 	const label = chap ? chap[2] : slug;
 	return {
@@ -495,13 +535,18 @@ export function parseEpisode(html: string, url: string): EpisodeInfo {
 /** Unpack a Dean-Edwards `eval(function(p,a,c,k,e,d){…})` payload, if present. */
 export function unpackPacker(source: string): string {
 	const m =
-		/}\s*\(\s*'([\s\S]*?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]*?)'\s*\.split\('\|'\)/.exec(source);
+		/}\s*\(\s*'([\s\S]*?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]*?)'\s*\.split\('\|'\)/.exec(
+			source,
+		);
 	if (!m) return source;
 	let payload = m[1];
 	const a = parseInt(m[2], 10);
 	let c = parseInt(m[3], 10);
 	const k = m[4].split("|");
-	payload = payload.replace(/\\'/g, "'").replace(/\\\\/g, "\\").replace(/\\n/g, "\n");
+	payload = payload
+		.replace(/\\'/g, "'")
+		.replace(/\\\\/g, "\\")
+		.replace(/\\n/g, "\n");
 	const enc = (n: number): string => {
 		const lo = n % a;
 		const rest = Math.floor(n / a);
@@ -509,7 +554,8 @@ export function unpackPacker(source: string): string {
 		return (n < a ? "" : enc(rest)) + tok;
 	};
 	while (c--) {
-		if (k[c]) payload = payload.replace(new RegExp("\\b" + enc(c) + "\\b", "g"), k[c]);
+		if (k[c])
+			payload = payload.replace(new RegExp("\\b" + enc(c) + "\\b", "g"), k[c]);
 	}
 	return payload;
 }
@@ -521,23 +567,35 @@ function classifyMedia(u: string): "hls" | "mp4" | "unknown" {
 }
 
 /** Scan a player page body for a JW-Player source / bare media URL. */
-function scanForMedia(body: string): { url: string | null; poster: string | null } {
+function scanForMedia(body: string): {
+	url: string | null;
+	poster: string | null;
+} {
 	const unpacked = unpackPacker(body);
 	const haystack = body + "\n" + unpacked;
 
 	const fromSources =
-		/sources?\s*:\s*\[\s*\{[^}]*?\bfile\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(haystack) ??
+		/sources?\s*:\s*\[\s*\{[^}]*?\bfile\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(
+			haystack,
+		) ??
 		/\bfile\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(haystack) ??
-		/["']?(?:hls|src|url)["']?\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(haystack);
+		/["']?(?:hls|src|url)["']?\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(
+			haystack,
+		);
 	let url = fromSources ? fromSources[1] : null;
 
 	if (!url) {
-		const bare = haystack.match(/https?:\/\/[^\s"'<>\\]+\.(?:m3u8|mp4)[^\s"'<>\\]*/i);
+		const bare = haystack.match(
+			/https?:\/\/[^\s"'<>\\]+\.(?:m3u8|mp4)[^\s"'<>\\]*/i,
+		);
 		url = bare ? bare[0] : null;
 	}
 
 	const posterM = /\bimage\s*:\s*["']([^"']+)["']/i.exec(haystack);
-	return { url: url ? url.replace(/\\\//g, "/") : null, poster: posterM ? posterM[1] : null };
+	return {
+		url: url ? url.replace(/\\\//g, "/") : null,
+		poster: posterM ? posterM[1] : null,
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -552,7 +610,10 @@ export class VoiranimeScraper {
 	private page: AnyPage | null = null;
 
 	constructor(opts: VoiranimeOptions = {}) {
-		this.baseUrl = (opts.baseUrl ?? "https://voir-anime.to").replace(/\/+$/, "");
+		this.baseUrl = (opts.baseUrl ?? "https://voir-anime.to").replace(
+			/\/+$/,
+			"",
+		);
 		this.profile = opts.profile ?? "static";
 		this.timeoutMs = opts.timeoutMs ?? 30_000;
 		this.retries = opts.retries ?? 2;
@@ -565,17 +626,24 @@ export class VoiranimeScraper {
 	}
 
 	private async getPage(): Promise<AnyPage> {
-		if (!this.page) this.page = await Browser.newPage({ profile: this.profile });
+		if (!this.page)
+			this.page = await Browser.newPage({ profile: this.profile });
 		return this.page;
 	}
 
 	/** Fetch raw HTML for a URL with a site Referer and basic retry. */
-	async fetchHtml(url: string, referer = `${this.baseUrl}/`): Promise<{ status: number; html: string }> {
+	async fetchHtml(
+		url: string,
+		referer = `${this.baseUrl}/`,
+	): Promise<{ status: number; html: string }> {
 		let lastErr: unknown;
 		for (let attempt = 0; attempt <= this.retries; attempt++) {
 			try {
 				const page = await this.getPage();
-				const resp = await page.goto(url, { timeoutMs: this.timeoutMs, referer });
+				const resp = await page.goto(url, {
+					timeoutMs: this.timeoutMs,
+					referer,
+				});
 				const html = await page.content();
 				return { status: resp.status, html };
 			} catch (err) {
@@ -603,7 +671,9 @@ export class VoiranimeScraper {
 
 	/** Fetch + parse a single episode page (players + navigation). */
 	async getEpisode(slugOrUrl: string): Promise<EpisodeInfo> {
-		const url = /^https?:\/\//i.test(slugOrUrl) ? slugOrUrl : this.animeUrl(slugOrUrl);
+		const url = /^https?:\/\//i.test(slugOrUrl)
+			? slugOrUrl
+			: this.animeUrl(slugOrUrl);
 		const { status, html } = await this.fetchHtml(url);
 		if (status !== 200) throw new Error(`getEpisode(${url}): HTTP ${status}`);
 		return parseEpisode(html, url);
@@ -613,11 +683,15 @@ export class VoiranimeScraper {
 	 * Search the site catalogue. Uses the server-rendered Madara search
 	 * (`/page/N/?s=…&post_type=wp-manga`) and follows pagination until empty.
 	 */
-	async search(query: string, opts: { maxPages?: number } = {}): Promise<
-		Array<{ slug: string; title: string; url: string }>
-	> {
+	async search(
+		query: string,
+		opts: { maxPages?: number } = {},
+	): Promise<Array<{ slug: string; title: string; url: string }>> {
 		const maxPages = opts.maxPages ?? 10;
-		const seen = new Map<string, { slug: string; title: string; url: string }>();
+		const seen = new Map<
+			string,
+			{ slug: string; title: string; url: string }
+		>();
 		for (let p = 1; p <= maxPages; p++) {
 			const url = `${this.baseUrl}/page/${p}/?s=${encodeURIComponent(query)}&post_type=wp-manga`;
 			const { status, html } = await this.fetchHtml(url);
@@ -647,7 +721,8 @@ export class VoiranimeScraper {
 		opts: { enumerateQualities?: boolean } = {},
 	): Promise<ResolvedSource> {
 		const embedUrl = typeof player === "string" ? player : player.embedUrl;
-		const provider = typeof player === "string" ? providerFromUrl(embedUrl) : player.provider;
+		const provider =
+			typeof player === "string" ? providerFromUrl(embedUrl) : player.provider;
 		const playbackReferer = (() => {
 			try {
 				return `${new URL(embedUrl).origin}/`;
@@ -687,7 +762,10 @@ export class VoiranimeScraper {
 
 		if (opts.enumerateQualities && type === "hls") {
 			try {
-				resolved.qualities = await this.enumerateHlsQualities(url, playbackReferer);
+				resolved.qualities = await this.enumerateHlsQualities(
+					url,
+					playbackReferer,
+				);
 			} catch {
 				/* non-fatal */
 			}
@@ -696,7 +774,10 @@ export class VoiranimeScraper {
 	}
 
 	/** Fetch + parse an HLS master playlist into its variant streams. */
-	async enumerateHlsQualities(masterUrl: string, referer: string): Promise<MediaQuality[]> {
+	async enumerateHlsQualities(
+		masterUrl: string,
+		referer: string,
+	): Promise<MediaQuality[]> {
 		const { status, html } = await this.fetchHtml(masterUrl, referer);
 		if (status !== 200) return [];
 		const text = html.replace(/<[^>]+>/g, "");
@@ -710,7 +791,9 @@ export class VoiranimeScraper {
 			const uri = (lines[i + 1] ?? "").trim();
 			if (!uri || uri.startsWith("#")) continue;
 			out.push({
-				label: res ?? (bw ? `${Math.round(+bw / 1000)}kbps` : `variant ${out.length + 1}`),
+				label:
+					res ??
+					(bw ? `${Math.round(+bw / 1000)}kbps` : `variant ${out.length + 1}`),
 				url: uri,
 				resolution: res,
 				bandwidth: bw ? parseInt(bw, 10) : undefined,
@@ -731,7 +814,11 @@ export class VoiranimeScraper {
 		if (!opts.resolve) return ep;
 		const sources: ResolvedSource[] = [];
 		for (const p of ep.players) {
-			sources.push(await this.resolveSource(p, { enumerateQualities: opts.enumerateQualities }));
+			sources.push(
+				await this.resolveSource(p, {
+					enumerateQualities: opts.enumerateQualities,
+				}),
+			);
 		}
 		return { ...ep, sources };
 	}

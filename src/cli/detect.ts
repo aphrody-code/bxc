@@ -43,7 +43,10 @@ Options:
 	);
 }
 
-function parseArgs(argv: readonly string[], baseOpts: CommonOptions): DetectCliOptions | null {
+function parseArgs(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): DetectCliOptions | null {
 	const opts: DetectCliOptions = { ...baseOpts, url: "", wappOnly: false };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
@@ -76,11 +79,15 @@ function renderMarkdown(r: DeepDetectionResult): string {
 	lines.push(`- HTTP: ${r.httpStatus}`);
 	lines.push(`- Hostname: \`${r.hostname}\``);
 	if (r.finalUrl !== r.url) lines.push(`- Final URL: ${r.finalUrl}`);
-	if (r.resolvedIps.length > 0) lines.push(`- Resolved IPs: ${r.resolvedIps.join(", ")}`);
-	if (r.cnameChain.length > 0) lines.push(`- CNAME chain: ${r.cnameChain.join(" → ")}`);
-	if (r.nsRecords.length > 0) lines.push(`- NS records: ${r.nsRecords.slice(0, 4).join(", ")}`);
+	if (r.resolvedIps.length > 0)
+		lines.push(`- Resolved IPs: ${r.resolvedIps.join(", ")}`);
+	if (r.cnameChain.length > 0)
+		lines.push(`- CNAME chain: ${r.cnameChain.join(" → ")}`);
+	if (r.nsRecords.length > 0)
+		lines.push(`- NS records: ${r.nsRecords.slice(0, 4).join(", ")}`);
 	for (const [ip, ptrs] of Object.entries(r.reversePtr)) {
-		if (ptrs.length > 0) lines.push(`- Reverse PTR \`${ip}\`: ${ptrs.join(", ")}`);
+		if (ptrs.length > 0)
+			lines.push(`- Reverse PTR \`${ip}\`: ${ptrs.join(", ")}`);
 	}
 	lines.push("");
 
@@ -109,7 +116,9 @@ function renderMarkdown(r: DeepDetectionResult): string {
 		for (const e of items) {
 			const ev = e.evidence.replace(/\|/g, "/").slice(0, 80);
 			const conf = e.confidence !== undefined ? e.confidence.toFixed(2) : "—";
-			lines.push(`| ${e.name} | \`${ev}\` | ${e.source} | ${conf} | ${e.version ?? "—"} |`);
+			lines.push(
+				`| ${e.name} | \`${ev}\` | ${e.source} | ${conf} | ${e.version ?? "—"} |`,
+			);
 		}
 		lines.push("");
 	}
@@ -117,7 +126,10 @@ function renderMarkdown(r: DeepDetectionResult): string {
 	return lines.join("\n");
 }
 
-export async function main(argv: readonly string[], baseOpts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	baseOpts: CommonOptions,
+): Promise<void> {
 	const opts = parseArgs(argv, baseOpts);
 	if (!opts) {
 		printUsage();
@@ -126,13 +138,17 @@ export async function main(argv: readonly string[], baseOpts: CommonOptions): Pr
 
 	try {
 		if (opts.wappOnly) {
-			const result = await detectFrameworks(opts.url, { insecure: opts.insecure });
+			const result = await detectFrameworks(opts.url, {
+				insecure: opts.insecure,
+			});
 			Bun.stdout.write(JSON.stringify(result, null, 2) + "\n");
 			return;
 		}
 
 		const result = await deepDetect(opts.url, opts.insecure);
-		const rendered = opts.json ? JSON.stringify(result, null, 2) : renderMarkdown(result);
+		const rendered = opts.json
+			? JSON.stringify(result, null, 2)
+			: renderMarkdown(result);
 		Bun.stdout.write(rendered + "\n");
 	} catch (err) {
 		logger.error(err instanceof Error ? err.message : String(err));

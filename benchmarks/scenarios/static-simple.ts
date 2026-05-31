@@ -86,7 +86,9 @@ export async function run(): Promise<ScenarioResult[]> {
 
 	for (const runner of runners) {
 		if (runner.SKIP_REASON) {
-			console.log(`[${SCENARIO_ID}] SKIP ${runner.RUNNER_ID}: ${runner.SKIP_REASON}`);
+			console.log(
+				`[${SCENARIO_ID}] SKIP ${runner.RUNNER_ID}: ${runner.SKIP_REASON}`,
+			);
 			continue;
 		}
 		console.log(`[${SCENARIO_ID}] running ${runner.RUNNER_ID}...`);

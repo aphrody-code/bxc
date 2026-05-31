@@ -82,7 +82,12 @@ export class Dataset {
 	#writer: ReturnType<ReturnType<typeof Bun.file>["writer"]> | null = null;
 	#itemCount = 0;
 
-	private constructor(name: string, dataPath: string, metaPath: string, initialCount: number) {
+	private constructor(
+		name: string,
+		dataPath: string,
+		metaPath: string,
+		initialCount: number,
+	) {
 		this.#name = name;
 		this.#dataPath = dataPath;
 		this.#metaPath = metaPath;
@@ -149,7 +154,9 @@ export class Dataset {
 		let newlines = "";
 		for (const item of items) {
 			if (typeof item !== "object" || item === null || Array.isArray(item)) {
-				throw new TypeError(`Dataset items must be plain objects, got: ${typeof item}`);
+				throw new TypeError(
+					`Dataset items must be plain objects, got: ${typeof item}`,
+				);
 			}
 			newlines += JSON.stringify(item) + "\n";
 			this.#itemCount++;
@@ -181,7 +188,10 @@ export class Dataset {
 		const limit = opts.limit ?? Infinity;
 
 		const lines = text.split("\n").filter((l) => l.trim().length > 0);
-		const sliced = lines.slice(offset, limit === Infinity ? undefined : offset + limit);
+		const sliced = lines.slice(
+			offset,
+			limit === Infinity ? undefined : offset + limit,
+		);
 
 		const items: DatasetItem[] = [];
 		for (const line of sliced) {
@@ -203,7 +213,10 @@ export class Dataset {
 	 * Export data as a formatted JSON array to `outputPath`.
 	 * Uses `Bun.write` for atomic single-shot write.
 	 */
-	async exportToJson(outputPath: string, opts?: DatasetExportOptions): Promise<void> {
+	async exportToJson(
+		outputPath: string,
+		opts?: DatasetExportOptions,
+	): Promise<void> {
 		const items = await this.getData(opts);
 		await Bun.write(outputPath, JSON.stringify(items, null, 2));
 	}
@@ -213,7 +226,10 @@ export class Dataset {
 	 * Column order is derived from the keys of the first item.
 	 * Fields containing commas, newlines, or quotes are properly escaped (RFC 4180).
 	 */
-	async exportToCsv(outputPath: string, opts?: DatasetExportOptions): Promise<void> {
+	async exportToCsv(
+		outputPath: string,
+		opts?: DatasetExportOptions,
+	): Promise<void> {
 		const items = await this.getData(opts);
 		if (items.length === 0) {
 			await Bun.write(outputPath, "");
@@ -223,7 +239,12 @@ export class Dataset {
 		const headers = Object.keys(items[0]);
 		const escape = (v: unknown): string => {
 			const s = v === null || v === undefined ? "" : String(v);
-			if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+			if (
+				s.includes(",") ||
+				s.includes('"') ||
+				s.includes("\n") ||
+				s.includes("\r")
+			) {
 				return `"${s.replace(/"/g, '""')}"`;
 			}
 			return s;

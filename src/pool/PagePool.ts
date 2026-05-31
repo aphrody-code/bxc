@@ -82,7 +82,9 @@ export interface PagePoolStats {
 export type PageTask<I, O> = (page: Page, input: I) => Promise<O>;
 
 /** Result of a single task — `value` on success, `error` on failure. */
-export type PageResult<O> = { ok: true; value: O } | { ok: false; error: Error };
+export type PageResult<O> =
+	| { ok: true; value: O }
+	| { ok: false; error: Error };
 
 // ---------------------------------------------------------------------------
 // Internal worker queue (no external dep, p-queue-style).
@@ -172,80 +174,91 @@ export class PagePool {
 	 * the input array.  Each result is wrapped in `PageResult<O>` so a failing
 	 * task does not abort the whole batch.
 	 */
-	async run<I, O>(inputs: readonly I[], task: PageTask<I, O>): Promise<PageResult<O>[]> {
+	async run<I, O>(
+		inputs: readonly I[],
+		task: PageTask<I, O>,
+	): Promise<PageResult<O>[]> {
 		if (this.#closed) throw new Error("PagePool is closed");
 		const results: PageResult<O>[] = Array.from({ length: inputs.length });
-		
-        let i = 0;
-        for await (const result of this.runStream(inputs, task)) {
-            results[i++] = result;
-        }
+
+		let i = 0;
+		for await (const result of this.runStream(inputs, task)) {
+			results[i++] = result;
+		}
 
 		return results;
 	}
 
-    /**
-     * Drains `inputs` through `task` as an async generator.
-     * Yields results as soon as they are available, maintaining input order
-     * via an internal re-sequencing buffer.
-     */
-    async *runStream<I, O>(inputs: readonly I[], task: PageTask<I, O>): AsyncGenerator<PageResult<O>> {
-        if (this.#closed) throw new Error("PagePool is closed");
-        this.#queued += inputs.length;
+	/**
+	 * Drains `inputs` through `task` as an async generator.
+	 * Yields results as soon as they are available, maintaining input order
+	 * via an internal re-sequencing buffer.
+	 */
+	async *runStream<I, O>(
+		inputs: readonly I[],
+		task: PageTask<I, O>,
+	): AsyncGenerator<PageResult<O>> {
+		if (this.#closed) throw new Error("PagePool is closed");
+		this.#queued += inputs.length;
 
-        const results = new Map<number, PageResult<O>>();
-        let nextIndex = 0;
-        
-        // We use a helper promise to catch errors from the background tasks
-        let backgroundError: Error | null = null;
+		const results = new Map<number, PageResult<O>>();
+		let nextIndex = 0;
 
-        const launches = inputs.map(async (input, i) => {
-            try {
-                await this.#sem.acquire();
-                if (this.#closed) throw new Error("Pool closed during task");
-                
-                this.#queued--;
-                let page: Page | null = null;
-                try {
-                    page = await this.#acquirePage();
-                    const value = await task(page, input);
-                    results.set(i, { ok: true, value });
-                    this.#completed++;
-                } catch (err) {
-                    const error = err instanceof Error ? err : new Error(String(err));
-                    results.set(i, { ok: false, error });
-                    this.#failed++;
-                } finally {
-                    if (page) this.#releasePage(page);
-                    this.#sem.release();
-                }
-            } catch (e) {
-                backgroundError = e instanceof Error ? e : new Error(String(e));
-            }
-        });
+		// We use a helper promise to catch errors from the background tasks
+		let backgroundError: Error | null = null;
 
-        // Loop until all inputs are processed and yielded
-        while (nextIndex < inputs.length) {
-            if (backgroundError) throw backgroundError;
+		const launches = inputs.map(async (input, i) => {
+			try {
+				await this.#sem.acquire();
+				if (this.#closed) throw new Error("Pool closed during task");
 
-            if (results.has(nextIndex)) {
-                yield results.get(nextIndex)!;
-                results.delete(nextIndex);
-                nextIndex++;
-            } else {
-                // Wait for any task to finish before checking again
-                await Promise.race(launches.slice(nextIndex, nextIndex + this.#concurrency));
-                // Small sleep to prevent tight loop if race resolves but index isn't ready
-                await Bun.sleep(0);
-            }
-        }
-    }
+				this.#queued--;
+				let page: Page | null = null;
+				try {
+					page = await this.#acquirePage();
+					const value = await task(page, input);
+					results.set(i, { ok: true, value });
+					this.#completed++;
+				} catch (err) {
+					const error = err instanceof Error ? err : new Error(String(err));
+					results.set(i, { ok: false, error });
+					this.#failed++;
+				} finally {
+					if (page) this.#releasePage(page);
+					this.#sem.release();
+				}
+			} catch (e) {
+				backgroundError = e instanceof Error ? e : new Error(String(e));
+			}
+		});
+
+		// Loop until all inputs are processed and yielded
+		while (nextIndex < inputs.length) {
+			if (backgroundError) throw backgroundError;
+
+			if (results.has(nextIndex)) {
+				yield results.get(nextIndex)!;
+				results.delete(nextIndex);
+				nextIndex++;
+			} else {
+				// Wait for any task to finish before checking again
+				await Promise.race(
+					launches.slice(nextIndex, nextIndex + this.#concurrency),
+				);
+				// Small sleep to prevent tight loop if race resolves but index isn't ready
+				await Bun.sleep(0);
+			}
+		}
+	}
 
 	/**
 	 * Convenience: like `run` but throws on the first failure and returns a
 	 * plain array of results.
 	 */
-	async runStrict<I, O>(inputs: readonly I[], task: PageTask<I, O>): Promise<O[]> {
+	async runStrict<I, O>(
+		inputs: readonly I[],
+		task: PageTask<I, O>,
+	): Promise<O[]> {
 		const results = await this.run(inputs, task);
 		const out: O[] = [];
 		for (let i = 0; i < results.length; i++) {

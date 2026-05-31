@@ -24,7 +24,7 @@
 		"incremental": true,
 		"tsBuildInfoFile": ".tsbuildinfo",
 
-		"types": ["@types/bun"]
+		"types": ["bun"]
 	},
 	"include": [
 		"src/**/*",

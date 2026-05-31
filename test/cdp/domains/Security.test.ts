@@ -137,9 +137,12 @@ function startSelfSignedServer(): { url: string; stop: () => void } {
 			cert: SELF_SIGNED_CERT,
 		},
 		fetch() {
-			return new Response("<html><head><title>TLS Test</title></head><body>secure</body></html>", {
-				headers: { "Content-Type": "text/html" },
-			});
+			return new Response(
+				"<html><head><title>TLS Test</title></head><body>secure</body></html>",
+				{
+					headers: { "Content-Type": "text/html" },
+				},
+			);
 		},
 	});
 
@@ -200,10 +203,20 @@ describe("Security domain handler", () => {
 
 		try {
 			// Enable certificate error ignoring
-			await cdpCall(transport, "Security.setIgnoreCertificateErrors", { ignore: true }, sessionId);
+			await cdpCall(
+				transport,
+				"Security.setIgnoreCertificateErrors",
+				{ ignore: true },
+				sessionId,
+			);
 
 			// Navigate to the self-signed HTTPS server — should succeed
-			const navResult = await cdpCall(transport, "Page.navigate", { url }, sessionId);
+			const navResult = await cdpCall(
+				transport,
+				"Page.navigate",
+				{ url },
+				sessionId,
+			);
 			expect(navResult).toBeDefined();
 
 			// Verify the page loaded correctly
@@ -225,12 +238,17 @@ describe("Security domain handler", () => {
 
 		try {
 			// Explicitly set to false (default)
-			await cdpCall(transport, "Security.setIgnoreCertificateErrors", { ignore: false }, sessionId);
+			await cdpCall(
+				transport,
+				"Security.setIgnoreCertificateErrors",
+				{ ignore: false },
+				sessionId,
+			);
 
 			// Navigate — should fail with a TLS error surfaced as a CDP error
-			await expect(cdpCall(transport, "Page.navigate", { url }, sessionId)).rejects.toThrow(
-				/cert|tls|ssl|certificate/i,
-			);
+			await expect(
+				cdpCall(transport, "Page.navigate", { url }, sessionId),
+			).rejects.toThrow(/cert|tls|ssl|certificate/i);
 		} finally {
 			stop();
 		}

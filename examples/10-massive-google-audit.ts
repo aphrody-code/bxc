@@ -18,14 +18,14 @@ import { GoogleMassScanner } from "../src/google/mass-scanner.ts";
 
 /**
  * Example 10: Massive Google Audit
- * 
+ *
  * Performs real-time DNS/CDN/Sitemap analysis on 1000+ Google pages.
  */
 
 async function main() {
 	const scanner = new GoogleMassScanner({
 		concurrency: 24,
-		maxPages: 5656
+		maxPages: 5656,
 	});
 
 	// Seed list of Google properties to audit
@@ -52,13 +52,17 @@ async function main() {
 		"https://gemini.google.com",
 	];
 
-	console.log(`🚀 Starting massive audit of ${seeds.length} seeds (Target: 1000 pages)...`);
+	console.log(
+		`🚀 Starting massive audit of ${seeds.length} seeds (Target: 1000 pages)...`,
+	);
 	const startTime = Bun.nanoseconds();
 
 	const results = await scanner.scan(seeds);
 
 	const elapsed = (Bun.nanoseconds() - startTime) / 1e9;
-	console.log(`\n✅ Audit complete! Scanned ${results.length} pages in ${elapsed.toFixed(1)}s.`);
+	console.log(
+		`\n✅ Audit complete! Scanned ${results.length} pages in ${elapsed.toFixed(1)}s.`,
+	);
 
 	// Generate Sitemap
 	const sitemap = scanner.generateSitemap();
@@ -73,10 +77,18 @@ async function main() {
 	}
 
 	console.log("\n📊 Infrastructure Distribution:");
-	console.table(Object.entries(cdnStats).map(([cdn, count]) => ({ CDN: cdn, Count: count })));
+	console.table(
+		Object.entries(cdnStats).map(([cdn, count]) => ({
+			CDN: cdn,
+			Count: count,
+		})),
+	);
 
 	// Export results to JSON for deeper analysis
-	await Bun.write("google-audit-results.json", JSON.stringify(results, null, 2));
+	await Bun.write(
+		"google-audit-results.json",
+		JSON.stringify(results, null, 2),
+	);
 	console.log(`📁 Detailed results saved to google-audit-results.json`);
 }
 

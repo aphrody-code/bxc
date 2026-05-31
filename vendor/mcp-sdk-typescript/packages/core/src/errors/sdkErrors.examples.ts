@@ -7,21 +7,24 @@
  * @module
  */
 
-import { SdkError, SdkErrorCode } from './sdkErrors.js';
+import { SdkError, SdkErrorCode } from "./sdkErrors.js";
 
 /**
  * Example: Throwing and catching SDK errors.
  */
 function SdkError_basicUsage() {
-    //#region SdkError_basicUsage
-    try {
-        // Throwing an SDK error
-        throw new SdkError(SdkErrorCode.NotConnected, 'Transport is not connected');
-    } catch (error) {
-        // Checking error type by code
-        if (error instanceof SdkError && error.code === SdkErrorCode.RequestTimeout) {
-            // Handle timeout
-        }
-    }
-    //#endregion SdkError_basicUsage
+	//#region SdkError_basicUsage
+	try {
+		// Throwing an SDK error
+		throw new SdkError(SdkErrorCode.NotConnected, "Transport is not connected");
+	} catch (error) {
+		// Checking error type by code
+		if (
+			error instanceof SdkError &&
+			error.code === SdkErrorCode.RequestTimeout
+		) {
+			// Handle timeout
+		}
+	}
+	//#endregion SdkError_basicUsage
 }

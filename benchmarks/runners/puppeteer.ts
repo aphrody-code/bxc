@@ -30,7 +30,9 @@ let browserInstance: import("puppeteer-core").Browser | null = null;
 let SKIP_REASON: string | null = null;
 let initialized = false;
 
-async function ensureBrowser(): Promise<import("puppeteer-core").Browser | null> {
+async function ensureBrowser(): Promise<
+	import("puppeteer-core").Browser | null
+> {
 	if (browserInstance) return browserInstance;
 	if (initialized) return null; // already tried and failed
 
@@ -52,7 +54,10 @@ async function ensureBrowser(): Promise<import("puppeteer-core").Browser | null>
 		let executablePath: string | undefined;
 		for (const p of chromiumPaths) {
 			try {
-				const result = Bun.spawnSync(["test", "-x", p], { stdout: "pipe", stderr: "pipe" });
+				const result = Bun.spawnSync(["test", "-x", p], {
+					stdout: "pipe",
+					stderr: "pipe",
+				});
 				if (result.exitCode === 0) {
 					executablePath = p;
 					break;

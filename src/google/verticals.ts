@@ -85,7 +85,12 @@ export interface BookResult {
 	snippet: string;
 }
 
-function buildUrl(domain: string, tbm: string | null, q: string, opts: VerticalOptions): URL {
+function buildUrl(
+	domain: string,
+	tbm: string | null,
+	q: string,
+	opts: VerticalOptions,
+): URL {
 	if (!isGoogleDomain(domain)) {
 		throw new Error(`Invalid Google domain: ${domain}`);
 	}
@@ -99,7 +104,10 @@ function buildUrl(domain: string, tbm: string | null, q: string, opts: VerticalO
 	return u;
 }
 
-async function fetchHtml(url: string, cookies: Cookie[] | undefined): Promise<string> {
+async function fetchHtml(
+	url: string,
+	cookies: Cookie[] | undefined,
+): Promise<string> {
 	let page: HttpPage | null = null;
 	try {
 		page = (await Browser.newPage({
@@ -130,7 +138,10 @@ function unwrapRedirect(href: string): string {
 /**
  * Google Maps "places" search (tbm=lcl).
  */
-export async function googleMapsSearch(query: string, opts: VerticalOptions = {}): Promise<MapsResult[]> {
+export async function googleMapsSearch(
+	query: string,
+	opts: VerticalOptions = {},
+): Promise<MapsResult[]> {
 	const url = buildUrl(opts.domain ?? "google.com", "lcl", query, opts);
 	const html = await fetchHtml(url.toString(), opts.cookies);
 	const doc = await parseHtml(html);
@@ -138,7 +149,10 @@ export async function googleMapsSearch(query: string, opts: VerticalOptions = {}
 		const items = await doc.querySelectorAll("div.VkpGBb, div.rllt__details");
 		const out: MapsResult[] = [];
 		for (const it of items) {
-			const name = (await it.querySelector("div.dbg0pd, div.rllt__details div"))?.textContent().trim() ?? "";
+			const name =
+				(await it.querySelector("div.dbg0pd, div.rllt__details div"))
+					?.textContent()
+					.trim() ?? "";
 			const ratingEl = await it.querySelector("span.yi40Hd, span.BTtC6e");
 			const ratingText = ratingEl?.textContent().trim() ?? "";
 			const rating = ratingText ? Number(ratingText.replace(",", ".")) : null;
@@ -149,7 +163,7 @@ export async function googleMapsSearch(query: string, opts: VerticalOptions = {}
 			const linkUrl = unwrapRedirect(link?.getAttribute("href") ?? "");
 			const details = await it.querySelectorAll("div.rllt__details div");
 			const address = details.at(1)?.textContent().trim() ?? "";
-			
+
 			if (!name) continue;
 			out.push({
 				name,
@@ -168,7 +182,10 @@ export async function googleMapsSearch(query: string, opts: VerticalOptions = {}
 /**
  * Google Books search (tbm=bks).
  */
-export async function googleBooksSearch(query: string, opts: VerticalOptions = {}): Promise<BookResult[]> {
+export async function googleBooksSearch(
+	query: string,
+	opts: VerticalOptions = {},
+): Promise<BookResult[]> {
 	const url = buildUrl(opts.domain ?? "google.com", "bks", query, opts);
 	const html = await fetchHtml(url.toString(), opts.cookies);
 	const doc = await parseHtml(html);
@@ -176,15 +193,19 @@ export async function googleBooksSearch(query: string, opts: VerticalOptions = {
 		const items = await doc.querySelectorAll("div.MjjYud, div.Yr5TG");
 		const out: BookResult[] = [];
 		for (const it of items) {
-			const title = (await it.querySelector("h3, .DKV0Md"))?.textContent().trim() ?? "";
+			const title =
+				(await it.querySelector("h3, .DKV0Md"))?.textContent().trim() ?? "";
 			const link = await it.querySelector("a[href*='books.google']");
 			if (!title || !link) continue;
 			const url = unwrapRedirect(link.getAttribute("href") ?? "");
-			const meta = (await it.querySelector("div.fl, .qLRx3b"))?.textContent().trim() ?? "";
+			const meta =
+				(await it.querySelector("div.fl, .qLRx3b"))?.textContent().trim() ?? "";
 			const yearMatch = meta.match(/\b(1[5-9]\d{2}|20\d{2})\b/);
 			const year = yearMatch ? Number(yearMatch[0]) : null;
 			const author = meta.replace(/\b(1[5-9]\d{2}|20\d{2})\b.*$/, "").trim();
-			const snippet = (await it.querySelector("div.VwiC3b, .cmlJmd"))?.textContent().trim() ?? "";
+			const snippet =
+				(await it.querySelector("div.VwiC3b, .cmlJmd"))?.textContent().trim() ??
+				"";
 			out.push({ title, author, url, year, snippet });
 		}
 		return out;
@@ -196,7 +217,10 @@ export async function googleBooksSearch(query: string, opts: VerticalOptions = {
 /**
  * Google News search (tbm=nws).
  */
-export async function googleNewsSearch(query: string, opts: VerticalOptions = {}): Promise<NewsResult[]> {
+export async function googleNewsSearch(
+	query: string,
+	opts: VerticalOptions = {},
+): Promise<NewsResult[]> {
 	const url = buildUrl(opts.domain ?? "google.com", "nws", query, opts);
 	const html = await fetchHtml(url.toString(), opts.cookies);
 	const doc = await parseHtml(html);
@@ -204,13 +228,25 @@ export async function googleNewsSearch(query: string, opts: VerticalOptions = {}
 		const items = await doc.querySelectorAll("div.SoaBEf, div.WlydOe, g-card");
 		const out: NewsResult[] = [];
 		for (const it of items) {
-			const title = (await it.querySelector("div.MBeuO, div.n0jPhd, h3"))?.textContent().trim() ?? "";
+			const title =
+				(await it.querySelector("div.MBeuO, div.n0jPhd, h3"))
+					?.textContent()
+					.trim() ?? "";
 			const link = await it.querySelector("a[href]");
 			const rawUrl = link?.getAttribute("href") ?? "";
 			const url = unwrapRedirect(rawUrl);
-			const source = (await it.querySelector("div.NUnG9d span, div.MgUUmf span"))?.textContent().trim() ?? "";
-			const snippet = (await it.querySelector("div.GI74Re, div.Y3v8qd"))?.textContent().trim() ?? "";
-			const time = (await it.querySelector("div.OSrXXb span, span.WG9SHc"))?.textContent().trim() ?? "";
+			const source =
+				(await it.querySelector("div.NUnG9d span, div.MgUUmf span"))
+					?.textContent()
+					.trim() ?? "";
+			const snippet =
+				(await it.querySelector("div.GI74Re, div.Y3v8qd"))
+					?.textContent()
+					.trim() ?? "";
+			const time =
+				(await it.querySelector("div.OSrXXb span, span.WG9SHc"))
+					?.textContent()
+					.trim() ?? "";
 			if (title && url) {
 				out.push({ title, url, source, snippet, publishedAt: time || null });
 			}
@@ -224,7 +260,10 @@ export async function googleNewsSearch(query: string, opts: VerticalOptions = {}
 /**
  * Google Images search (tbm=isch). Lite parsing — surfaces thumbnail data.
  */
-export async function googleImageSearch(query: string, opts: VerticalOptions = {}): Promise<ImageResult[]> {
+export async function googleImageSearch(
+	query: string,
+	opts: VerticalOptions = {},
+): Promise<ImageResult[]> {
 	const url = buildUrl(opts.domain ?? "google.com", "isch", query, opts);
 	const html = await fetchHtml(url.toString(), opts.cookies);
 	const out: ImageResult[] = [];
@@ -247,7 +286,9 @@ export async function googleImageSearch(query: string, opts: VerticalOptions = {
 		doc.destroy();
 	}
 
-	const jsonMatches = html.match(/\["(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp|gif))"/gi);
+	const jsonMatches = html.match(
+		/\["(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp|gif))"/gi,
+	);
 	if (jsonMatches) {
 		for (let i = 0; i < Math.min(jsonMatches.length, out.length); i++) {
 			const u = jsonMatches[i].match(/"(https?:\/\/[^"]+)"/)?.[1];
@@ -260,7 +301,10 @@ export async function googleImageSearch(query: string, opts: VerticalOptions = {
 /**
  * Google Videos search (tbm=vid).
  */
-export async function googleVideoSearch(query: string, opts: VerticalOptions = {}): Promise<VideoResult[]> {
+export async function googleVideoSearch(
+	query: string,
+	opts: VerticalOptions = {},
+): Promise<VideoResult[]> {
 	const url = buildUrl(opts.domain ?? "google.com", "vid", query, opts);
 	const html = await fetchHtml(url.toString(), opts.cookies);
 	const doc = await parseHtml(html);
@@ -272,9 +316,14 @@ export async function googleVideoSearch(query: string, opts: VerticalOptions = {
 			const link = await it.querySelector("a[href]");
 			const rawUrl = unwrapRedirect(link?.getAttribute("href") ?? "");
 			if (!title || !rawUrl) continue;
-			const source = (await it.querySelector("cite"))?.textContent().trim() ?? "";
-			const duration = (await it.querySelector("div.J1mWY, span.fGsHV"))?.textContent().trim() ?? null;
-			const thumb = (await it.querySelector("img"))?.getAttribute("src") ?? null;
+			const source =
+				(await it.querySelector("cite"))?.textContent().trim() ?? "";
+			const duration =
+				(await it.querySelector("div.J1mWY, span.fGsHV"))
+					?.textContent()
+					.trim() ?? null;
+			const thumb =
+				(await it.querySelector("img"))?.getAttribute("src") ?? null;
 			out.push({ title, url: rawUrl, source, duration, thumbnail: thumb });
 		}
 		return out;
@@ -286,7 +335,10 @@ export async function googleVideoSearch(query: string, opts: VerticalOptions = {
 /**
  * Google Scholar search (scholar.google.com — no tbm).
  */
-export async function googleScholarSearch(query: string, opts: VerticalOptions = {}): Promise<ScholarResult[]> {
+export async function googleScholarSearch(
+	query: string,
+	opts: VerticalOptions = {},
+): Promise<ScholarResult[]> {
 	const u = new URL("https://scholar.google.com/scholar");
 	u.searchParams.set("q", query);
 	if (opts.hl) u.searchParams.set("hl", opts.hl);
@@ -298,18 +350,26 @@ export async function googleScholarSearch(query: string, opts: VerticalOptions =
 		const items = await doc.querySelectorAll("div.gs_r.gs_or, div.gs_ri");
 		const out: ScholarResult[] = [];
 		for (const it of items) {
-			const link = (await it.querySelector("h3.gs_rt a, h3 a"));
+			const link = await it.querySelector("h3.gs_rt a, h3 a");
 			const title = link?.textContent().trim() ?? "";
 			const url = link?.getAttribute("href") ?? "";
 			if (!title || !url) continue;
-			const meta = (await it.querySelector("div.gs_a"))?.textContent().trim() ?? "";
-			const snippet = (await it.querySelector("div.gs_rs"))?.textContent().trim() ?? "";
+			const meta =
+				(await it.querySelector("div.gs_a"))?.textContent().trim() ?? "";
+			const snippet =
+				(await it.querySelector("div.gs_rs"))?.textContent().trim() ?? "";
 			const links = await it.querySelectorAll("a");
-			const cited = links.find((a) => a.textContent().toLowerCase().includes("cited by"));
-			const citedBy = cited ? Number((cited.textContent().match(/\d+/) ?? [null])[0]) || null : null;
+			const cited = links.find((a) =>
+				a.textContent().toLowerCase().includes("cited by"),
+			);
+			const citedBy = cited
+				? Number((cited.textContent().match(/\d+/) ?? [null])[0]) || null
+				: null;
 			const yearMatch = meta.match(/\b(19|20)\d{2}\b/);
 			const year = yearMatch ? Number(yearMatch[0]) : null;
-			const pdf = links.find((a) => (a.getAttribute("href") || "").toLowerCase().endsWith(".pdf"));
+			const pdf = links.find((a) =>
+				(a.getAttribute("href") || "").toLowerCase().endsWith(".pdf"),
+			);
 			const pdfUrl = pdf?.getAttribute("href") ?? null;
 			const authorsVenue = meta.split("-").map((s) => s.trim());
 			out.push({
@@ -332,7 +392,10 @@ export async function googleScholarSearch(query: string, opts: VerticalOptions =
 /**
  * Google Suggest autocomplete API.
  */
-export async function googleAutocomplete(query: string, opts: { hl?: string; gl?: string; client?: "firefox" | "chrome" } = {}): Promise<string[]> {
+export async function googleAutocomplete(
+	query: string,
+	opts: { hl?: string; gl?: string; client?: "firefox" | "chrome" } = {},
+): Promise<string[]> {
 	const u = new URL("https://suggestqueries.google.com/complete/search");
 	u.searchParams.set("client", opts.client ?? "firefox");
 	u.searchParams.set("q", query);

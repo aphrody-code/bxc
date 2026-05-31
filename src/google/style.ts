@@ -33,7 +33,8 @@ export interface StyleRule {
 export const GOOGLE_TS_STYLE_RULES: StyleRule[] = [
 	{
 		id: "indentation",
-		description: "Use 2-space indentation (no tabs). Note: Bxc uses tabs via Biome.",
+		description:
+			"Use 2-space indentation (no tabs). Note: Bxc uses tabs via Biome.",
 		example: "  if (true) {\n    return;\n  }",
 	},
 	{
@@ -53,7 +54,8 @@ export const GOOGLE_TS_STYLE_RULES: StyleRule[] = [
 	},
 	{
 		id: "const-let",
-		description: "Use const by default, let if reassignment is needed. Never use var.",
+		description:
+			"Use const by default, let if reassignment is needed. Never use var.",
 		example: "const x = 1; let y = 2; y = 3;",
 	},
 	{
@@ -81,11 +83,19 @@ export function checkGoogleStyle(
 	}
 
 	if (code.includes("var ")) {
-		results.push({ ruleId: "const-let", pass: false, message: "Uses 'var' which is forbidden." });
+		results.push({
+			ruleId: "const-let",
+			pass: false,
+			message: "Uses 'var' which is forbidden.",
+		});
 	}
 
 	if (results.length === 0) {
-		results.push({ ruleId: "all", pass: true, message: "Basic style checks passed." });
+		results.push({
+			ruleId: "all",
+			pass: true,
+			message: "Basic style checks passed.",
+		});
 	}
 
 	return results;

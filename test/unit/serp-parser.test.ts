@@ -60,7 +60,9 @@ describe("parseSerp — organic extraction", () => {
 
 	test("strips 'Read more' and decodes entities in snippets", async () => {
 		const r = await parseSerp(MODERN, "bun");
-		expect(r.organic[0]?.snippet).toBe("A drop-in replacement for Node.js using JSC <3.");
+		expect(r.organic[0]?.snippet).toBe(
+			"A drop-in replacement for Node.js using JSC <3.",
+		);
 		expect(r.organic[0]?.snippet).not.toContain("Read more");
 	});
 

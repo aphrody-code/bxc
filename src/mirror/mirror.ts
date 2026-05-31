@@ -55,7 +55,11 @@
  * `Bun.CryptoHasher`, `Bun.Glob`, `fetch` global.
  */
 
-import { dirname, relative as relativePath, resolve as resolvePath } from "node:path";
+import {
+	dirname,
+	relative as relativePath,
+	resolve as resolvePath,
+} from "node:path";
 import { Browser } from "../api/browser.ts";
 import type { AnyPage } from "../api/types.ts";
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
@@ -129,7 +133,11 @@ export interface MirrorManifest {
  * Query strings become a `__qhash` segment so different query variants
  * coexist on disk.
  */
-function mapUrlToLocalPath(url: string, outDir: string, seedHost: string): string {
+function mapUrlToLocalPath(
+	url: string,
+	outDir: string,
+	seedHost: string,
+): string {
 	const u = new URL(url);
 	let pathname = u.pathname.replace(/^\/+/, "");
 	if (pathname === "" || pathname.endsWith("/")) {
@@ -169,21 +177,45 @@ interface AssetTask {
 // `preconnect`, `author`, `license`, `me`, `bookmark`, `pingback`,
 // `prerender`, `search`) do not produce a downloadable resource and
 // trigger Cloudflare 403s on every variant — we ignore them.
-const HTML_ASSET_SELECTORS: Array<{ selector: string; attr: string; tag: string }> = [
+const HTML_ASSET_SELECTORS: Array<{
+	selector: string;
+	attr: string;
+	tag: string;
+}> = [
 	{ selector: "link[rel~='stylesheet'][href]", attr: "href", tag: "link-css" },
 	{ selector: "link[rel~='icon'][href]", attr: "href", tag: "link-icon" },
-	{ selector: "link[rel='shortcut icon'][href]", attr: "href", tag: "link-icon" },
-	{ selector: "link[rel='apple-touch-icon'][href]", attr: "href", tag: "link-icon" },
+	{
+		selector: "link[rel='shortcut icon'][href]",
+		attr: "href",
+		tag: "link-icon",
+	},
+	{
+		selector: "link[rel='apple-touch-icon'][href]",
+		attr: "href",
+		tag: "link-icon",
+	},
 	{
 		selector: "link[rel='apple-touch-icon-precomposed'][href]",
 		attr: "href",
 		tag: "link-icon",
 	},
 	{ selector: "link[rel='mask-icon'][href]", attr: "href", tag: "link-icon" },
-	{ selector: "link[rel='manifest'][href]", attr: "href", tag: "link-manifest" },
+	{
+		selector: "link[rel='manifest'][href]",
+		attr: "href",
+		tag: "link-manifest",
+	},
 	{ selector: "link[rel='preload'][href]", attr: "href", tag: "link-preload" },
-	{ selector: "link[rel='modulepreload'][href]", attr: "href", tag: "link-modulepreload" },
-	{ selector: "link[rel='prefetch'][href]", attr: "href", tag: "link-prefetch" },
+	{
+		selector: "link[rel='modulepreload'][href]",
+		attr: "href",
+		tag: "link-modulepreload",
+	},
+	{
+		selector: "link[rel='prefetch'][href]",
+		attr: "href",
+		tag: "link-prefetch",
+	},
 	{ selector: "script[src]", attr: "src", tag: "script" },
 	{ selector: "img[src]", attr: "src", tag: "img" },
 	{ selector: "img[srcset]", attr: "srcset", tag: "img-srcset" },
@@ -208,11 +240,15 @@ function expandSrcset(value: string): string[] {
 
 function extractCssUrls(css: string): string[] {
 	const out = new Set<string>();
-	for (const m of css.matchAll(/url\(\s*(?:"([^"]+)"|'([^']+)'|([^)\s]+))\s*\)/g)) {
+	for (const m of css.matchAll(
+		/url\(\s*(?:"([^"]+)"|'([^']+)'|([^)\s]+))\s*\)/g,
+	)) {
 		const v = m[1] ?? m[2] ?? m[3];
 		if (v && !v.startsWith("data:")) out.add(v);
 	}
-	for (const m of css.matchAll(/@import\s+(?:url\()?\s*(?:"([^"]+)"|'([^']+)')\s*\)?/g)) {
+	for (const m of css.matchAll(
+		/@import\s+(?:url\()?\s*(?:"([^"]+)"|'([^']+)')\s*\)?/g,
+	)) {
 		const v = m[1] ?? m[2];
 		if (v && !v.startsWith("data:")) out.add(v);
 	}
@@ -245,7 +281,8 @@ function discoverHtmlAssets(html: string, baseUrl: string): AssetTask[] {
 		on(sel: string, h: { element: (el: El) => void }): unknown;
 		transform(html: string): string;
 	};
-	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor }).HTMLRewriter;
+	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor })
+		.HTMLRewriter;
 	if (!Rewriter) {
 		// Fallback regex.
 		for (const m of html.matchAll(
@@ -322,7 +359,8 @@ function rewriteHtmlLinks(
 		on(sel: string, h: { element: (el: El) => void }): unknown;
 		transform(html: string): string;
 	};
-	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor }).HTMLRewriter;
+	const Rewriter = (globalThis as unknown as { HTMLRewriter?: RewriterCtor })
+		.HTMLRewriter;
 	if (!Rewriter) {
 		// Fallback : naive replace
 		let out = html;
@@ -389,15 +427,21 @@ function rewriteCssLinks(
 			return raw;
 		}
 	};
-	let out = css.replace(/url\(\s*(?:"([^"]+)"|'([^']+)'|([^)\s]+))\s*\)/g, (_full, a, b, c) => {
-		const v = a ?? b ?? c;
-		return `url("${remap(v)}")`;
-	});
-	out = out.replace(/@import\s+(?:url\()?\s*(?:"([^"]+)"|'([^']+)')\s*\)?\s*;?/g, (full, a, b) => {
-		const v = a ?? b;
-		const r = remap(v);
-		return `@import "${r}";`;
-	});
+	let out = css.replace(
+		/url\(\s*(?:"([^"]+)"|'([^']+)'|([^)\s]+))\s*\)/g,
+		(_full, a, b, c) => {
+			const v = a ?? b ?? c;
+			return `url("${remap(v)}")`;
+		},
+	);
+	out = out.replace(
+		/@import\s+(?:url\()?\s*(?:"([^"]+)"|'([^']+)')\s*\)?\s*;?/g,
+		(full, a, b) => {
+			const v = a ?? b;
+			const r = remap(v);
+			return `@import "${r}";`;
+		},
+	);
 	return out;
 }
 
@@ -414,12 +458,18 @@ interface DownloadedAsset {
 	error?: string;
 }
 
-function cookieHeaderForHost(jar: Cookie[] | undefined, host: string): string | undefined {
+function cookieHeaderForHost(
+	jar: Cookie[] | undefined,
+	host: string,
+): string | undefined {
 	if (!jar || jar.length === 0) return undefined;
 	const matches: string[] = [];
 	for (const c of jar) {
-		const cookieDomain = c.domain.startsWith(".") ? c.domain.slice(1) : c.domain;
-		const hostMatch = host === cookieDomain || host.endsWith("." + cookieDomain);
+		const cookieDomain = c.domain.startsWith(".")
+			? c.domain.slice(1)
+			: c.domain;
+		const hostMatch =
+			host === cookieDomain || host.endsWith("." + cookieDomain);
 		if (!hostMatch) continue;
 		matches.push(`${c.name}=${c.value}`);
 	}
@@ -438,7 +488,10 @@ async function downloadAsset(
 ): Promise<DownloadedAsset> {
 	try {
 		const headers: Record<string, string> = { "User-Agent": options.ua };
-		const cookieHeader = cookieHeaderForHost(options.cookieJar, new URL(url).hostname);
+		const cookieHeader = cookieHeaderForHost(
+			options.cookieJar,
+			new URL(url).hostname,
+		);
 		if (cookieHeader) headers["Cookie"] = cookieHeader;
 
 		const fetchOpts: any = {
@@ -454,7 +507,8 @@ async function downloadAsset(
 		if (finalUrl.startsWith("/")) {
 			finalUrl = new URL(finalUrl, url).href;
 		}
-		const contentType = r.headers.get("content-type") ?? "application/octet-stream";
+		const contentType =
+			r.headers.get("content-type") ?? "application/octet-stream";
 		if (!r.ok) {
 			return {
 				url,
@@ -518,7 +572,10 @@ async function workerPool<T, U>(
 const DEFAULT_UA =
 	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
-export async function mirrorSite(seed: string, options: MirrorOptions): Promise<MirrorManifest> {
+export async function mirrorSite(
+	seed: string,
+	options: MirrorOptions,
+): Promise<MirrorManifest> {
 	const profile: MirrorProfile = options.profile ?? "http";
 	const concurrency = options.concurrency ?? 6;
 	const timeoutMs = options.timeoutMs ?? 15_000;
@@ -539,9 +596,13 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 	if (options.cookies) {
 		try {
 			cookieJar = await loadCookieJar(options.cookies);
-			log(`[mirror] loaded ${cookieJar.length} cookies from ${options.cookies}`);
+			log(
+				`[mirror] loaded ${cookieJar.length} cookies from ${options.cookies}`,
+			);
 		} catch (err) {
-			log(`[mirror] cookie load failed: ${err instanceof Error ? err.message : String(err)}`);
+			log(
+				`[mirror] cookie load failed: ${err instanceof Error ? err.message : String(err)}`,
+			);
 		}
 	}
 
@@ -596,7 +657,6 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 				maxBytes: maxAssetBytes,
 				insecure: options.insecure,
 			}),
-
 		);
 		for (let i = 0; i < batch.length; i++) {
 			const t = batch[i];
@@ -636,19 +696,29 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 			// Persist raw bytes (links rewritten in step 4).
 			await Bun.write(localPath, r.body);
 		}
-		log(`[mirror] downloaded ${batch.length} assets, queue=${queue.length}, total=${records.size}`);
+		log(
+			`[mirror] downloaded ${batch.length} assets, queue=${queue.length}, total=${records.size}`,
+		);
 	}
 
 	// Step 4 — rewrite links inside HTML + CSS files.
 	const urlToLocal = new Map<string, string>();
-	urlToLocal.set(seedFinalUrl, mapUrlToLocalPath(seedFinalUrl, outDir, seedHost));
+	urlToLocal.set(
+		seedFinalUrl,
+		mapUrlToLocalPath(seedFinalUrl, outDir, seedHost),
+	);
 	for (const [url, rec] of records) {
 		if (!rec.error) urlToLocal.set(url, rec.localPath);
 	}
 
 	// Seed HTML rewrite + write
 	const seedLocal = mapUrlToLocalPath(seedFinalUrl, outDir, seedHost);
-	const rewrittenHtml = rewriteHtmlLinks(seedHtml, seedFinalUrl, urlToLocal, seedLocal);
+	const rewrittenHtml = rewriteHtmlLinks(
+		seedHtml,
+		seedFinalUrl,
+		urlToLocal,
+		seedLocal,
+	);
 	await Bun.write(seedLocal, rewrittenHtml);
 	log(`[mirror] seed written → ${seedLocal}`);
 
@@ -656,7 +726,8 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 	let cssRewritten = 0;
 	for (const rec of records.values()) {
 		if (rec.error) continue;
-		if (!(rec.contentType.includes("css") || rec.url.endsWith(".css"))) continue;
+		if (!(rec.contentType.includes("css") || rec.url.endsWith(".css")))
+			continue;
 		const css = await Bun.file(rec.localPath).text();
 		const next = rewriteCssLinks(css, rec.finalUrl, urlToLocal, rec.localPath);
 		if (next !== css) {
@@ -681,7 +752,10 @@ export async function mirrorSite(seed: string, options: MirrorOptions): Promise<
 		failed,
 		assets: [...records.values()].sort((a, b) => a.url.localeCompare(b.url)),
 	};
-	await Bun.write(resolvePath(outDir, "manifest.json"), JSON.stringify(manifest, null, 2));
+	await Bun.write(
+		resolvePath(outDir, "manifest.json"),
+		JSON.stringify(manifest, null, 2),
+	);
 	log(`[mirror] manifest → ${outDir}/manifest.json`);
 	return manifest;
 }

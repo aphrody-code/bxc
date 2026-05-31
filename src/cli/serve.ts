@@ -103,7 +103,13 @@ function parseArgs(argv: string[]): CLIOptions {
 				break;
 			case "--profile": {
 				const v = next();
-				if (v !== "static" && v !== "fast" && v !== "http" && v !== "stealth" && v !== "max") {
+				if (
+					v !== "static" &&
+					v !== "fast" &&
+					v !== "http" &&
+					v !== "stealth" &&
+					v !== "max"
+				) {
 					throw new Error(
 						`Unknown --profile: ${v} (expected static|fast|http; ` +
 							`Chrome / Chromium / Firefox / Edge / Safari engines are forbidden)`,
@@ -191,7 +197,11 @@ class Logger {
 const BROWSER_ID = `bxc-${Bun.randomUUIDv7().slice(0, 8)}`;
 const PAGE_ID = `page-${Bun.randomUUIDv7().slice(0, 8)}`;
 
-function browserVersion(profile: CLIOptions["profile"], host: string, port: number) {
+function browserVersion(
+	profile: CLIOptions["profile"],
+	host: string,
+	port: number,
+) {
 	return {
 		Browser: `Bxc/0.1.0 (${profile})`,
 		"Protocol-Version": "1.3",
@@ -202,7 +212,11 @@ function browserVersion(profile: CLIOptions["profile"], host: string, port: numb
 	};
 }
 
-function targetList(profile: CLIOptions["profile"], host: string, port: number) {
+function targetList(
+	profile: CLIOptions["profile"],
+	host: string,
+	port: number,
+) {
 	return [
 		{
 			id: PAGE_ID,
@@ -243,10 +257,16 @@ interface WSData {
 // Lazy module cache for StaticDomTransport.  Loaded on first WS connection, not
 // at process start, so the zigquery cdylib is not dlopen'd until a client
 // actually connects.  Cold start for profile=static goes from ~150 ms to <50 ms.
-let _staticTransportModule: typeof import("../transport/StaticDomTransport.ts") | null = null;
-let _httpTransportModule: typeof import("../transport/HttpProfileTransport.ts") | null = null;
+let _staticTransportModule:
+	| typeof import("../transport/StaticDomTransport.ts")
+	| null = null;
+let _httpTransportModule:
+	| typeof import("../transport/HttpProfileTransport.ts")
+	| null = null;
 
-async function loadStaticTransport(): Promise<typeof import("../transport/StaticDomTransport.ts")> {
+async function loadStaticTransport(): Promise<
+	typeof import("../transport/StaticDomTransport.ts")
+> {
 	if (!_staticTransportModule) {
 		_staticTransportModule = await import("../transport/StaticDomTransport.ts");
 	}
@@ -316,7 +336,10 @@ function startStatic(opts: CLIOptions, logger: Logger): Server<WSData> {
 					});
 			},
 			message(ws, message) {
-				const text = typeof message === "string" ? message : new TextDecoder().decode(message);
+				const text =
+					typeof message === "string"
+						? message
+						: new TextDecoder().decode(message);
 				if (ws.data.transport) {
 					ws.data.transport.send(text);
 				} else {
@@ -357,7 +380,11 @@ async function findFreePort(host: string): Promise<number> {
 	throw new Error("Could not find a free TCP port");
 }
 
-async function waitForLightpanda(host: string, port: number, timeoutMs: number): Promise<void> {
+async function waitForLightpanda(
+	host: string,
+	port: number,
+	timeoutMs: number,
+): Promise<void> {
 	const deadline = Date.now() + timeoutMs;
 	let lastErr: unknown;
 	while (Date.now() < deadline) {
@@ -417,7 +444,11 @@ async function findLightpandaBinary(): Promise<string> {
 	return "lightpanda";
 }
 
-async function spawnLightpanda(host: string, logger: Logger, opts: CLIOptions): Promise<FastState> {
+async function spawnLightpanda(
+	host: string,
+	logger: Logger,
+	opts: CLIOptions,
+): Promise<FastState> {
 	const binary = await findLightpandaBinary();
 	const port = await findFreePort(host);
 	const args = [
@@ -442,7 +473,10 @@ async function spawnLightpanda(host: string, logger: Logger, opts: CLIOptions): 
 		stderr: "pipe",
 	});
 
-	const drain = (stream: ReadableStream<Uint8Array> | undefined, prefix: string) => {
+	const drain = (
+		stream: ReadableStream<Uint8Array> | undefined,
+		prefix: string,
+	) => {
 		if (!stream) return;
 		void (async () => {
 			const reader = stream.getReader();
@@ -475,7 +509,10 @@ async function spawnLightpanda(host: string, logger: Logger, opts: CLIOptions): 
 	return { upstreamHost: host, upstreamPort: port, proc };
 }
 
-async function startFast(opts: CLIOptions, logger: Logger): Promise<Server<WSData>> {
+async function startFast(
+	opts: CLIOptions,
+	logger: Logger,
+): Promise<Server<WSData>> {
 	const { cdpPort, host } = opts;
 
 	// OPTIMIZATION: Bind the public CDP port FIRST so that agent-browser (which
@@ -486,7 +523,9 @@ async function startFast(opts: CLIOptions, logger: Logger): Promise<Server<WSDat
 	let fastState: FastState | null = null;
 	const fastReady = spawnLightpanda(host, logger, opts).then((state) => {
 		fastState = state;
-		logger.info(`fast profile upstream ready at lightpanda :${state.upstreamPort}`);
+		logger.info(
+			`fast profile upstream ready at lightpanda :${state.upstreamPort}`,
+		);
 		return state;
 	});
 
@@ -566,7 +605,8 @@ async function startFast(opts: CLIOptions, logger: Logger): Promise<Server<WSDat
 							ws.data.pendingFrames = [];
 						});
 						upstream.addEventListener("message", (ev: MessageEvent) => {
-							const data = typeof ev.data === "string" ? ev.data : String(ev.data);
+							const data =
+								typeof ev.data === "string" ? ev.data : String(ev.data);
 							try {
 								ws.send(data);
 							} catch {
@@ -599,7 +639,10 @@ async function startFast(opts: CLIOptions, logger: Logger): Promise<Server<WSDat
 					});
 			},
 			message(ws, message) {
-				const text = typeof message === "string" ? message : new TextDecoder().decode(message);
+				const text =
+					typeof message === "string"
+						? message
+						: new TextDecoder().decode(message);
 				const upstream = ws.data.upstream;
 				if (upstream && upstream.readyState === WebSocket.OPEN) {
 					upstream.send(text);
@@ -621,7 +664,9 @@ async function startFast(opts: CLIOptions, logger: Logger): Promise<Server<WSDat
 
 	// Emit the "port bound" signal immediately — this is what agent-browser
 	// waits for before issuing its first /json/version probe.
-	logger.info(`fast profile port bound on http://${host}:${cdpPort}/ (lightpanda spawning...)`);
+	logger.info(
+		`fast profile port bound on http://${host}:${cdpPort}/ (lightpanda spawning...)`,
+	);
 
 	// Block until Lightpanda is fully up so the function contract is preserved:
 	// callers that await startFast() know the upstream is operational.
@@ -724,21 +769,29 @@ function rewriteWsUrls(
 // backed `ghost` helper in `src/profiles/ghost/` instead.
 // ---------------------------------------------------------------------------
 
-async function startStealth(_opts: CLIOptions, _logger: Logger): Promise<Server<WSData>> {
+async function startStealth(
+	_opts: CLIOptions,
+	_logger: Logger,
+): Promise<Server<WSData>> {
 	throw new Error(
 		"profile=stealth is removed. bxc is Lightpanda-only. " +
 			"Use `launchGhostBrowser` from `src/profiles/ghost/` for anti-detection.",
 	);
 }
 
-async function startMax(_opts: CLIOptions, _logger: Logger): Promise<Server<WSData>> {
+async function startMax(
+	_opts: CLIOptions,
+	_logger: Logger,
+): Promise<Server<WSData>> {
 	throw new Error(
 		"profile=max is removed. bxc is Lightpanda-only. " +
 			"Use `launchGhostBrowser` from `src/profiles/ghost/` for anti-detection.",
 	);
 }
 
-async function loadHttpTransport(): Promise<typeof import("../transport/HttpProfileTransport.ts")> {
+async function loadHttpTransport(): Promise<
+	typeof import("../transport/HttpProfileTransport.ts")
+> {
 	if (!_httpTransportModule) {
 		_httpTransportModule = await import("../transport/HttpProfileTransport.ts");
 	}
@@ -772,7 +825,9 @@ function startHttp(opts: CLIOptions, logger: Logger): Server<WSData> {
 			open(ws: ServerWebSocket<WSData>) {
 				logger.debug("ws open (http)");
 				loadHttpTransport()
-					.then(({ HttpProfileTransport }) => HttpProfileTransport.create({ profile: "chrome131" }))
+					.then(({ HttpProfileTransport }) =>
+						HttpProfileTransport.create({ profile: "chrome131" }),
+					)
 					.then((transport) => {
 						transport.onmessage = (msg) => {
 							try {
@@ -802,7 +857,10 @@ function startHttp(opts: CLIOptions, logger: Logger): Server<WSData> {
 					});
 			},
 			message(ws: ServerWebSocket<WSData>, message) {
-				const text = typeof message === "string" ? message : new TextDecoder().decode(message);
+				const text =
+					typeof message === "string"
+						? message
+						: new TextDecoder().decode(message);
 				if (ws.data.transport) {
 					ws.data.transport.send(text);
 				} else {
@@ -825,7 +883,11 @@ function startHttp(opts: CLIOptions, logger: Logger): Server<WSData> {
 // HTTP discovery handler shared by static (and as a synthesis layer for fast).
 // ---------------------------------------------------------------------------
 
-function handleHttpDiscovery(pathname: string, opts: CLIOptions, _logger: Logger): Response {
+function handleHttpDiscovery(
+	pathname: string,
+	opts: CLIOptions,
+	_logger: Logger,
+): Response {
 	if (pathname === "/json/version") {
 		return Response.json(browserVersion(opts.profile, opts.host, opts.cdpPort));
 	}
@@ -848,7 +910,10 @@ function handleHttpDiscovery(pathname: string, opts: CLIOptions, _logger: Logger
 // Main
 // ---------------------------------------------------------------------------
 
-export async function main(argv: string[] = process.argv.slice(2), _opts?: CommonOptions): Promise<void> {
+export async function main(
+	argv: string[] = process.argv.slice(2),
+	_opts?: CommonOptions,
+): Promise<void> {
 	let opts: CLIOptions;
 	try {
 		opts = parseArgs(argv);

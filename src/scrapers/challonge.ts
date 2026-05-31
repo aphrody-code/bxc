@@ -91,7 +91,12 @@ export interface ChallongeMatch {
 	identifier: number;
 	raw_identifier: string;
 	round: number;
-	state: "complete" | "pending" | "open" | "collection_yet_to_be_resolved" | string;
+	state:
+		| "complete"
+		| "pending"
+		| "open"
+		| "collection_yet_to_be_resolved"
+		| string;
 	underway_at: string | null;
 	games: number[][];
 	scores: number[] | null;
@@ -243,7 +248,11 @@ function decodeHtmlEntities(s: string): string {
  * `<meta property="og:title" content="X">` and `<meta content="X" property="og:title">`
  * both yield X.
  */
-function findMetaContent(html: string, key: string, attr: "property" | "name"): string | null {
+function findMetaContent(
+	html: string,
+	key: string,
+	attr: "property" | "name",
+): string | null {
 	const re1 = new RegExp(
 		`<meta[^>]+${attr}\\s*=\\s*["']${escapeRegex(key)}["'][^>]*content\\s*=\\s*["']([^"']+)["']`,
 		"i",
@@ -291,7 +300,10 @@ function findReactMount(html: string): ChallongeReactMount | null {
 	if (!m) return null;
 	try {
 		const propsRaw = decodeHtmlEntities(m[2]);
-		return { component: m[1], props: JSON.parse(propsRaw) as Record<string, unknown> };
+		return {
+			component: m[1],
+			props: JSON.parse(propsRaw) as Record<string, unknown>,
+		};
 	} catch {
 		return { component: m[1], props: {} };
 	}
@@ -302,7 +314,11 @@ function bracketKindFromRound(round: number): ChallongeRoundInfo["bracket"] {
 	return round > 0 ? "winners" : "losers";
 }
 
-function roundLabel(round: number, totalWinners: number, totalLosers: number): string {
+function roundLabel(
+	round: number,
+	totalWinners: number,
+	totalLosers: number,
+): string {
 	if (round === 0) return "Group Stage";
 	if (round > 0) {
 		const fromFinal = totalWinners - round;
@@ -332,8 +348,14 @@ function roundLabel(round: number, totalWinners: number, totalLosers: number): s
  * official ranking. For round-robin / group-stage / pending brackets
  * the result is best-effort (sorted by wins / seed).
  */
-function deriveStandings(matches: ChallongeMatch[], adminIds: number[]): ChallongeStandingEntry[] {
-	const players = new Map<number, ChallongePlayer & { wins: number; losses: number }>();
+function deriveStandings(
+	matches: ChallongeMatch[],
+	adminIds: number[],
+): ChallongeStandingEntry[] {
+	const players = new Map<
+		number,
+		ChallongePlayer & { wins: number; losses: number }
+	>();
 	const lastRoundReached = new Map<number, number>();
 	const lastLossRound = new Map<number, number>();
 	let maxWinnersRound = 0;
@@ -367,7 +389,10 @@ function deriveStandings(matches: ChallongeMatch[], adminIds: number[]): Challon
 				const eliminationDepth = (r: number): number =>
 					r > 0 ? r + maxLosersAbsRound : Math.abs(r);
 				const prev = lastLossRound.get(m.loser_id);
-				if (prev === undefined || eliminationDepth(m.round) > eliminationDepth(prev)) {
+				if (
+					prev === undefined ||
+					eliminationDepth(m.round) > eliminationDepth(prev)
+				) {
 					lastLossRound.set(m.loser_id, m.round);
 				}
 			}
@@ -407,7 +432,10 @@ function deriveStandings(matches: ChallongeMatch[], adminIds: number[]): Challon
 	function rankKey(playerId: number, losses: number): readonly number[] {
 		// (losses asc, elimination-depth desc, last-round-reached desc)
 		const lossRound = lastLossRound.get(playerId);
-		const depth = lossRound === undefined ? Number.POSITIVE_INFINITY : eliminationDepth(lossRound);
+		const depth =
+			lossRound === undefined
+				? Number.POSITIVE_INFINITY
+				: eliminationDepth(lossRound);
 		const lastReached = Math.abs(lastRoundReached.get(playerId) ?? 0);
 		return [losses, -depth, -lastReached];
 	}
@@ -438,7 +466,10 @@ export function extractChallongeTournament(
 	html: string,
 	options: ExtractOptions = {},
 ): ChallongeTournamentSnapshot {
-	const tournamentStore = findStore<RawTournamentStore>(html, "TournamentStore");
+	const tournamentStore = findStore<RawTournamentStore>(
+		html,
+		"TournamentStore",
+	);
 	if (!tournamentStore) {
 		throw new Error(
 			"extractChallongeTournament: window._initialStoreState['TournamentStore'] not found",
@@ -451,14 +482,22 @@ export function extractChallongeTournament(
 	for (const round of Object.keys(tournamentStore.matches_by_round)) {
 		for (const m of tournamentStore.matches_by_round[round]) matches.push(m);
 	}
-	if (tournamentStore.third_place_match) matches.push(tournamentStore.third_place_match);
+	if (tournamentStore.third_place_match)
+		matches.push(tournamentStore.third_place_match);
 	for (const m of tournamentStore.consolation_matches ?? []) matches.push(m);
 
 	// Round summary (label + bracket kind + match count).
 	const roundCounts = new Map<number, number>();
-	for (const m of matches) roundCounts.set(m.round, (roundCounts.get(m.round) ?? 0) + 1);
-	const totalWinners = Math.max(0, ...Array.from(roundCounts.keys()).filter((r) => r > 0));
-	const totalLosers = Math.min(0, ...Array.from(roundCounts.keys()).filter((r) => r < 0));
+	for (const m of matches)
+		roundCounts.set(m.round, (roundCounts.get(m.round) ?? 0) + 1);
+	const totalWinners = Math.max(
+		0,
+		...Array.from(roundCounts.keys()).filter((r) => r > 0),
+	);
+	const totalLosers = Math.min(
+		0,
+		...Array.from(roundCounts.keys()).filter((r) => r < 0),
+	);
 	const rounds: ChallongeRoundInfo[] = [];
 	for (const r of [...roundCounts.keys()].sort((a, b) => a - b)) {
 		rounds.push({
@@ -475,7 +514,9 @@ export function extractChallongeTournament(
 		if (m.player1) participantsMap.set(m.player1.id, m.player1);
 		if (m.player2) participantsMap.set(m.player2.id, m.player2);
 	}
-	const participants = [...participantsMap.values()].sort((a, b) => a.seed - b.seed);
+	const participants = [...participantsMap.values()].sort(
+		(a, b) => a.seed - b.seed,
+	);
 
 	// Tournament meta — combine TournamentStore.tournament + meta tags + gon.
 	const tStore = tournamentStore.tournament;
@@ -502,30 +543,48 @@ export function extractChallongeTournament(
 		animated: Boolean(tStore.animated),
 		accept_attachments: Boolean(tStore.accept_attachments),
 		participants_per_match: Number(tStore.participants_per_match ?? 2),
-		participant_count_to_advance: Number(tStore.participant_count_to_advance ?? 1),
+		participant_count_to_advance: Number(
+			tStore.participant_count_to_advance ?? 1,
+		),
 		split_participants: Boolean(tStore.split_participants),
 		predict_the_losers_bracket: Boolean(tStore.predict_the_losers_bracket),
 		quick_advance: Boolean(tStore.quick_advance),
 		participants_swappable: Boolean(tStore.participants_swappable),
 		voting_underway: Boolean(tStore.voting_underway),
 		show_station_and_time: Boolean(tStore.show_station_and_time),
-		only_start_matches_with_stations: Boolean(tStore.only_start_matches_with_stations),
-		grand_finals_modifier: (tStore.grand_finals_modifier as string | null) ?? null,
+		only_start_matches_with_stations: Boolean(
+			tStore.only_start_matches_with_stations,
+		),
+		grand_finals_modifier:
+			(tStore.grand_finals_modifier as string | null) ?? null,
 		group_stage_progress_meter: Number(tStore.group_stage_progress_meter ?? 0),
-		admin_ids: Array.isArray(tStore.admin_ids) ? (tStore.admin_ids as number[]) : [],
-		owner_ids: Array.isArray(tStore.owner_ids) ? (tStore.owner_ids as number[]) : [],
+		admin_ids: Array.isArray(tStore.admin_ids)
+			? (tStore.admin_ids as number[])
+			: [],
+		owner_ids: Array.isArray(tStore.owner_ids)
+			? (tStore.owner_ids as number[])
+			: [],
 		url: options.url ?? null,
 		full_url: ogUrl,
 		canonical_lang: canonicalLang,
 	};
 
 	// gon globals.
-	const adminIdsRaw = (findGonAssign(html, "adminIds") as number[] | null) ?? tournament.admin_ids;
+	const adminIdsRaw =
+		(findGonAssign(html, "adminIds") as number[] | null) ??
+		tournament.admin_ids;
 	const gon: ChallongeGonState = {
 		admin_ids: adminIdsRaw,
 		participant_user_id_map:
-			(findGonAssign(html, "participantUserIdMap") as Record<string, number> | null) ?? {},
-		targeting: (findGonAssign(html, "targetingKeyValues") as Record<string, string> | null) ?? {},
+			(findGonAssign(html, "participantUserIdMap") as Record<
+				string,
+				number
+			> | null) ?? {},
+		targeting:
+			(findGonAssign(html, "targetingKeyValues") as Record<
+				string,
+				string
+			> | null) ?? {},
 		csrf_token: findMetaContent(html, "csrf-token", "name"),
 		asset_host: findMetaContent(html, "asset-host", "name"),
 		locale: userStore?.locale ?? canonicalLang,

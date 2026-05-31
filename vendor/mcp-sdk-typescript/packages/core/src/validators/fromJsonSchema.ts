@@ -1,5 +1,8 @@
-import type { StandardSchemaV1, StandardSchemaWithJSON } from '../util/standardSchema.js';
-import type { JsonSchemaType, jsonSchemaValidator } from './types.js';
+import type {
+	StandardSchemaV1,
+	StandardSchemaWithJSON,
+} from "../util/standardSchema.js";
+import type { JsonSchemaType, jsonSchemaValidator } from "./types.js";
 
 /**
  * Wrap a raw JSON Schema object as a {@linkcode StandardSchemaWithJSON} so it can be
@@ -24,20 +27,25 @@ import type { JsonSchemaType, jsonSchemaValidator } from './types.js';
  * // Use with server.registerTool('greet', { inputSchema }, handler)
  * ```
  */
-export function fromJsonSchema<T = unknown>(schema: JsonSchemaType, validator: jsonSchemaValidator): StandardSchemaWithJSON<T, T> {
-    const check = validator.getValidator<T>(schema);
-    return {
-        '~standard': {
-            version: 1,
-            vendor: 'mcp',
-            jsonSchema: {
-                input: () => schema as Record<string, unknown>,
-                output: () => schema as Record<string, unknown>
-            },
-            validate: (data: unknown): StandardSchemaV1.Result<T> => {
-                const result = check(data);
-                return result.valid ? { value: result.data } : { issues: [{ message: result.errorMessage }] };
-            }
-        }
-    };
+export function fromJsonSchema<T = unknown>(
+	schema: JsonSchemaType,
+	validator: jsonSchemaValidator,
+): StandardSchemaWithJSON<T, T> {
+	const check = validator.getValidator<T>(schema);
+	return {
+		"~standard": {
+			version: 1,
+			vendor: "mcp",
+			jsonSchema: {
+				input: () => schema as Record<string, unknown>,
+				output: () => schema as Record<string, unknown>,
+			},
+			validate: (data: unknown): StandardSchemaV1.Result<T> => {
+				const result = check(data);
+				return result.valid
+					? { value: result.data }
+					: { issues: [{ message: result.errorMessage }] };
+			},
+		},
+	};
 }

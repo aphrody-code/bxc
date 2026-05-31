@@ -44,7 +44,11 @@ export const googleWebSearchTool = {
 		},
 		required: ["query"],
 	},
-	execute: async (args: { query: string; hl?: string; gl?: string }): Promise<string> => {
+	execute: async (args: {
+		query: string;
+		hl?: string;
+		gl?: string;
+	}): Promise<string> => {
 		try {
 			const results = await googleWebSearch(args.query, {
 				hl: args.hl ?? "en",

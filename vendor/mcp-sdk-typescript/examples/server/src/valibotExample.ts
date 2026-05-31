@@ -5,26 +5,26 @@
  * StandardJSONSchemaV1-compliant schemas.
  */
 
-import { McpServer } from '@modelcontextprotocol/server';
-import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
-import { toStandardJsonSchema } from '@valibot/to-json-schema';
-import * as v from 'valibot';
+import { McpServer } from "@modelcontextprotocol/server";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { toStandardJsonSchema } from "@valibot/to-json-schema";
+import * as v from "valibot";
 
 const server = new McpServer({
-    name: 'valibot-example',
-    version: '1.0.0'
+	name: "valibot-example",
+	version: "1.0.0",
 });
 
 // Register a tool with Valibot schema
 server.registerTool(
-    'greet',
-    {
-        description: 'Generate a greeting',
-        inputSchema: toStandardJsonSchema(v.object({ name: v.string() }))
-    },
-    async ({ name }) => ({
-        content: [{ type: 'text', text: `Hello, ${name}!` }]
-    })
+	"greet",
+	{
+		description: "Generate a greeting",
+		inputSchema: toStandardJsonSchema(v.object({ name: v.string() })),
+	},
+	async ({ name }) => ({
+		content: [{ type: "text", text: `Hello, ${name}!` }],
+	}),
 );
 
 const transport = new StdioServerTransport();

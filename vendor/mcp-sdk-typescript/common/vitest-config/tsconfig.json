@@ -1,8 +1,8 @@
 {
-    "include": ["./"],
-    "extends": "@modelcontextprotocol/tsconfig",
-    "compilerOptions": {
-        "noEmit": true,
-        "allowJs": true
-    }
+	"include": ["./"],
+	"extends": "@modelcontextprotocol/tsconfig",
+	"compilerOptions": {
+		"noEmit": true,
+		"allowJs": true
+	}
 }

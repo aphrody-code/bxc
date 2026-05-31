@@ -59,7 +59,11 @@ export interface InstantTarget {
 			path?: string;
 		}>,
 	): Promise<void>;
-	clearCookies(filter?: { name?: string; domain?: string; path?: string }): Promise<void>;
+	clearCookies(filter?: {
+		name?: string;
+		domain?: string;
+		path?: string;
+	}): Promise<void>;
 }
 
 const INSTANT_COOKIE = "next-instant-navigation-testing";
@@ -111,7 +115,9 @@ export async function instant<T>(
 	} finally {
 		// Clear by name to drop the cookie regardless of any value mutation
 		// performed by Next.js during the lock scope.
-		await step("Release Instant Lock", () => page.clearCookies({ name: INSTANT_COOKIE }));
+		await step("Release Instant Lock", () =>
+			page.clearCookies({ name: INSTANT_COOKIE }),
+		);
 		inFlight = null;
 	}
 }
@@ -168,7 +174,11 @@ export function withPlaywrightPage(page: {
 				path?: string;
 			}>,
 		) => Promise<void>;
-		clearCookies: (filter?: { name?: string; domain?: string; path?: string }) => Promise<void>;
+		clearCookies: (filter?: {
+			name?: string;
+			domain?: string;
+			path?: string;
+		}) => Promise<void>;
 	};
 }): InstantTarget {
 	const ctx = page.context();

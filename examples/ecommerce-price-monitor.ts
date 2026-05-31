@@ -63,12 +63,16 @@ const PRODUCT_PAGES: ProductPage[] = [
 	{
 		name: "Turbo Gadget X",
 		url: "data:text/html,<html><head><title>Turbo Gadget X</title></head><body><h1>Turbo Gadget X</h1><span class='price'>$149.00</span></body></html>",
-		simulatedTech: [{ name: "Shopify", categories: ["Ecommerce"], version: "2.0" }],
+		simulatedTech: [
+			{ name: "Shopify", categories: ["Ecommerce"], version: "2.0" },
+		],
 	},
 	{
 		name: "Eco Gizmo Plus",
 		url: "data:text/html,<html><head><title>Eco Gizmo Plus</title></head><body><h1>Eco Gizmo Plus</h1><span class='price'>$74.50</span></body></html>",
-		simulatedTech: [{ name: "Next.js", categories: ["JavaScript frameworks"], version: "14" }],
+		simulatedTech: [
+			{ name: "Next.js", categories: ["JavaScript frameworks"], version: "14" },
+		],
 	},
 	{
 		name: "Smart Doohickey",
@@ -78,7 +82,9 @@ const PRODUCT_PAGES: ProductPage[] = [
 	{
 		name: "Ultra Thingamajig",
 		url: "data:text/html,<html><head><title>Ultra Thingamajig</title></head><body><h1>Ultra Thingamajig</h1><span class='price'>$299.00</span></body></html>",
-		simulatedTech: [{ name: "React", categories: ["JavaScript frameworks"], version: "18" }],
+		simulatedTech: [
+			{ name: "React", categories: ["JavaScript frameworks"], version: "18" },
+		],
 	},
 ];
 
@@ -141,7 +147,9 @@ let changesFound = 0;
 
 console.log(`E-Commerce Price Monitor — ${PRODUCT_PAGES.length} products`);
 console.log(
-	isFirstRun ? "First run: establishing baseline prices." : "Comparing against baseline...",
+	isFirstRun
+		? "First run: establishing baseline prices."
+		: "Comparing against baseline...",
 );
 console.log();
 
@@ -184,7 +192,9 @@ for (const product of PRODUCT_PAGES) {
 	} else if (lastPrice !== currentPrice) {
 		changesFound++;
 		const direction = currentPrice < lastPrice ? "DOWN" : "UP";
-		console.log(`    PRICE CHANGE ${direction}: ${lastPrice} => ${currentPrice}`);
+		console.log(
+			`    PRICE CHANGE ${direction}: ${lastPrice} => ${currentPrice}`,
+		);
 		updatedBaseline[key] = currentPrice;
 	} else {
 		console.log(`    unchanged: ${currentPrice}`);
@@ -197,5 +207,7 @@ console.log();
 if (isFirstRun) {
 	console.log(`Baseline created at ${BASELINE_PATH}`);
 } else {
-	console.log(`${changesFound} price change(s) detected. Baseline updated at ${BASELINE_PATH}`);
+	console.log(
+		`${changesFound} price change(s) detected. Baseline updated at ${BASELINE_PATH}`,
+	);
 }

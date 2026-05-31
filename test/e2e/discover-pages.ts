@@ -36,7 +36,10 @@
  */
 
 import { RobotsFile } from "../../src/utils/robots.ts";
-import { collectSitemapUrls, type SitemapUrl } from "../../src/utils/sitemap.ts";
+import {
+	collectSitemapUrls,
+	type SitemapUrl,
+} from "../../src/utils/sitemap.ts";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -95,7 +98,8 @@ async function readCache(file: string): Promise<CacheFile | null> {
 	if (!(await f.exists())) return null;
 	try {
 		const data = (await f.json()) as CacheFile;
-		if (Array.isArray(data.urls) && typeof data.origin === "string") return data;
+		if (Array.isArray(data.urls) && typeof data.origin === "string")
+			return data;
 		return null;
 	} catch {
 		return null;
@@ -114,7 +118,11 @@ function uniq<T>(items: T[]): T[] {
 // Sitemap discovery
 // ---------------------------------------------------------------------------
 
-const SITEMAP_PATHS = ["/sitemap.xml", "/sitemap_index.xml", "/sitemaps.xml"] as const;
+const SITEMAP_PATHS = [
+	"/sitemap.xml",
+	"/sitemap_index.xml",
+	"/sitemaps.xml",
+] as const;
 
 async function trySitemap(
 	origin: string,
@@ -152,7 +160,8 @@ function extractLinks(html: string, base: string): string[] {
 	while ((match = HREF_RE.exec(html)) !== null) {
 		try {
 			const u = new URL(match[1], base);
-			if (u.protocol === "http:" || u.protocol === "https:") out.push(u.toString());
+			if (u.protocol === "http:" || u.protocol === "https:")
+				out.push(u.toString());
 		} catch {
 			// ignore malformed href
 		}
@@ -169,7 +178,9 @@ interface BfsOptions {
 
 async function bfsCrawl(origin: string, opts: BfsOptions): Promise<string[]> {
 	const baseHost = hostFromOrigin(origin);
-	const queue: Array<{ url: string; depth: number }> = [{ url: origin, depth: 0 }];
+	const queue: Array<{ url: string; depth: number }> = [
+		{ url: origin, depth: 0 },
+	];
 	const seen = new Set<string>([origin]);
 
 	while (queue.length > 0 && seen.size < opts.maxPages) {
@@ -229,7 +240,9 @@ export async function discoverPages(
 	origin: string,
 	opts: DiscoverOptions = {},
 ): Promise<DiscoverResult> {
-	const userAgent = opts.userAgent ?? "Bxc-E2E/1.0 (+https://developers.google.com/bunmium/bxc)";
+	const userAgent =
+		opts.userAgent ??
+		"Bxc-E2E/1.0 (+https://developers.google.com/bunmium/bxc)";
 	const requestTimeoutMs = opts.requestTimeoutMs ?? 10_000;
 	const cacheFile = cachePathFor(origin, opts.cacheFile);
 
@@ -246,7 +259,9 @@ export async function discoverPages(
 		};
 	}
 	if (opts.cacheOnly) {
-		throw new Error(`discoverPages: cacheOnly=true but no cache at ${cacheFile}`);
+		throw new Error(
+			`discoverPages: cacheOnly=true but no cache at ${cacheFile}`,
+		);
 	}
 
 	const signal = AbortSignal.timeout(requestTimeoutMs * 6);
@@ -269,7 +284,10 @@ export async function discoverPages(
 	urls = uniq(urls);
 
 	// 4. robots filter
-	const robots = await RobotsFile.fetch(origin, { userAgent, timeoutMs: requestTimeoutMs });
+	const robots = await RobotsFile.fetch(origin, {
+		userAgent,
+		timeoutMs: requestTimeoutMs,
+	});
 	const allowed: string[] = [];
 	let disallowed = 0;
 	for (const u of urls) {
@@ -319,7 +337,9 @@ if (import.meta.main) {
 	const origin = process.argv[2];
 	const maxArg = process.argv[3];
 	if (!origin) {
-		console.error("usage: bun run test/e2e/discover-pages.ts <origin> [maxPages]");
+		console.error(
+			"usage: bun run test/e2e/discover-pages.ts <origin> [maxPages]",
+		);
 		process.exit(1);
 	}
 	const result = await discoverPages(origin, {

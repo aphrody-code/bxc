@@ -40,14 +40,21 @@ import {
 	type PageLike,
 	resolveBinary,
 } from "../../src/detect.ts";
-import { shouldReDetectAfter, suggestStrategy } from "../../src/router/framework-strategy.ts";
+import {
+	shouldReDetectAfter,
+	suggestStrategy,
+} from "../../src/router/framework-strategy.ts";
 
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 
-const BIN_PATH = join(import.meta.dir, "../../vendor/wappalyzergo/wappalyzergo-cli");
-const BIN_PRESENT = (await Bun.file(BIN_PATH).exists()) || !!Bun.env.BXC_WAPPALYZERGO_BIN;
+const BIN_PATH = join(
+	import.meta.dir,
+	"../../vendor/wappalyzergo/wappalyzergo-cli",
+);
+const BIN_PRESENT =
+	(await Bun.file(BIN_PATH).exists()) || !!Bun.env.BXC_WAPPALYZERGO_BIN;
 const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
 
 function logSkip(reason: string): void {
@@ -71,7 +78,9 @@ describe("suggestStrategy", () => {
 	});
 
 	test("Plain React (SPA) → fast + wait-hydration", () => {
-		const detected: DetectedTech[] = [{ name: "React", categories: ["JavaScript frameworks"] }];
+		const detected: DetectedTech[] = [
+			{ name: "React", categories: ["JavaScript frameworks"] },
+		];
 		const s = suggestStrategy(detected);
 		expect(s.profile).toBe("fast");
 		expect(s.waitFor).toBe("wait-hydration");
@@ -89,7 +98,9 @@ describe("suggestStrategy", () => {
 	});
 
 	test("Cloudflare → stealth", () => {
-		const detected: DetectedTech[] = [{ name: "Cloudflare", categories: ["CDN"] }];
+		const detected: DetectedTech[] = [
+			{ name: "Cloudflare", categories: ["CDN"] },
+		];
 		const s = suggestStrategy(detected);
 		expect(s.profile).toBe("stealth");
 		expect(s.hints.hasAntiBot).toBe(true);
@@ -113,13 +124,17 @@ describe("suggestStrategy", () => {
 	});
 
 	test("Astro → fast + domcontentloaded (SSR)", () => {
-		const detected: DetectedTech[] = [{ name: "Astro", categories: ["Static site generator"] }];
+		const detected: DetectedTech[] = [
+			{ name: "Astro", categories: ["Static site generator"] },
+		];
 		const s = suggestStrategy(detected);
 		expect(s.profile).toBe("fast");
 	});
 
 	test("Shopify → static", () => {
-		const detected: DetectedTech[] = [{ name: "Shopify", categories: ["Ecommerce"] }];
+		const detected: DetectedTech[] = [
+			{ name: "Shopify", categories: ["Ecommerce"] },
+		];
 		const s = suggestStrategy(detected);
 		expect(s.profile).toBe("static");
 		expect(s.hints.shape).toBe("shopify");
@@ -250,7 +265,9 @@ describe.each([
 		expect(hit).toBe(true);
 
 		const strat = suggestStrategy(tech);
-		expect(["static", "fast", "stealth", "max", "http"]).toContain(strat.profile);
+		expect(["static", "fast", "stealth", "max", "http"]).toContain(
+			strat.profile,
+		);
 		if (expectedShape !== undefined) {
 			expect(strat.hints.shape).toBe(expectedShape as never);
 		}
@@ -285,7 +302,9 @@ describe("detectFromPage", () => {
 describe("resolveBinary", () => {
 	test("finds the vendored binary or throws cleanly", async () => {
 		if (!BIN_PRESENT) {
-			await expect(resolveBinary()).rejects.toThrow(/wappalyzergo-cli binary not found/);
+			await expect(resolveBinary()).rejects.toThrow(
+				/wappalyzergo-cli binary not found/,
+			);
 			return;
 		}
 		const resolvedPath = await resolveBinary();

@@ -26,7 +26,7 @@ describe("Google Ecosystem Atlas - Smart Routing Verification", () => {
 		try {
 			expect(page).toBeDefined();
 			// Audit might be undefined if headers are missing in the response type
-			// expect(audit.cdn).toBe("GFE"); 
+			// expect(audit.cdn).toBe("GFE");
 			const title = await page.title();
 			expect(title.length).toBeGreaterThan(0);
 		} finally {
@@ -35,7 +35,8 @@ describe("Google Ecosystem Atlas - Smart Routing Verification", () => {
 	}, 30000);
 
 	// Test Angular (Developers)
-	const angularTarget = HOSTS_BY_FRAMEWORK.angular[0] || "developers.google.com";
+	const angularTarget =
+		HOSTS_BY_FRAMEWORK.angular[0] || "developers.google.com";
 	it(`should successfully navigate to Angular target (${angularTarget}) with smart profile`, async () => {
 		const { page } = await google.open(`https://${angularTarget}/`);
 		try {
@@ -51,7 +52,9 @@ describe("Google Ecosystem Atlas - Smart Routing Verification", () => {
 	it("should perform a stealth search with custom hl/gl", async () => {
 		const results = await google.search("Bxc engine", { hl: "fr", gl: "FR" });
 		if (results.length === 0) {
-			console.warn("[google-atlas-test] IP is blocked or CAPTCHA hit. Skipping assertion.");
+			console.warn(
+				"[google-atlas-test] IP is blocked or CAPTCHA hit. Skipping assertion.",
+			);
 			return;
 		}
 		expect(results.length).toBeGreaterThan(0);

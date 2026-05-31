@@ -20,13 +20,20 @@
  * Scraping strategies specialized for Google domains.
  */
 
-import type { Profile, Strategy, WaitFor } from "../router/framework-strategy.ts";
+import type {
+	Profile,
+	Strategy,
+	WaitFor,
+} from "../router/framework-strategy.ts";
 import type { GoogleDetection } from "./detector.ts";
 
 /**
  * Suggest a scraping strategy for a Google site.
  */
-export function suggestGoogleStrategy(detection: GoogleDetection, url: string): Strategy {
+export function suggestGoogleStrategy(
+	detection: GoogleDetection,
+	url: string,
+): Strategy {
 	const rationale: string[] = [];
 	const hostname = new URL(url).hostname.toLowerCase();
 
@@ -38,11 +45,18 @@ export function suggestGoogleStrategy(detection: GoogleDetection, url: string): 
 	if (hostname.includes("gemini.google")) {
 		profile = "max";
 		waitFor = "networkidle";
-		rationale.push("Gemini detected → profile=max + networkidle for full hydration");
-	} else if (detection.framework === "wiz" || detection.framework === "angular") {
+		rationale.push(
+			"Gemini detected → profile=max + networkidle for full hydration",
+		);
+	} else if (
+		detection.framework === "wiz" ||
+		detection.framework === "angular"
+	) {
 		profile = "fast";
 		waitFor = "wait-hydration";
-		rationale.push(`Google SPA framework (${detection.framework}) → profile=fast + wait-hydration`);
+		rationale.push(
+			`Google SPA framework (${detection.framework}) → profile=fast + wait-hydration`,
+		);
 	} else if (detection.isMaterialDesign) {
 		profile = "fast";
 		waitFor = "domcontentloaded";
@@ -51,7 +65,10 @@ export function suggestGoogleStrategy(detection: GoogleDetection, url: string): 
 		profile = "stealth";
 		waitFor = "networkidle";
 		rationale.push("Google Anti-Bot detected → profile=stealth + networkidle");
-	} else if (detection.hosting === "firebase" || detection.hosting === "cloud-run") {
+	} else if (
+		detection.hosting === "firebase" ||
+		detection.hosting === "cloud-run"
+	) {
 		profile = "fast";
 		waitFor = "domcontentloaded";
 		rationale.push(`Google PaaS (${detection.hosting}) → profile=fast`);

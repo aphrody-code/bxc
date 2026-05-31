@@ -169,10 +169,14 @@ describe("Network domain handler", () => {
 
 	test("Network.setCookies overwrites existing cookie with same key", async () => {
 		await cdpCall(transport, "Network.setCookies", {
-			cookies: [{ name: "token", value: "v1", domain: "google.com", path: "/" }],
+			cookies: [
+				{ name: "token", value: "v1", domain: "google.com", path: "/" },
+			],
 		});
 		await cdpCall(transport, "Network.setCookies", {
-			cookies: [{ name: "token", value: "v2", domain: "google.com", path: "/" }],
+			cookies: [
+				{ name: "token", value: "v2", domain: "google.com", path: "/" },
+			],
 		});
 
 		const result = (await cdpCall(transport, "Network.getAllCookies")) as {
@@ -257,22 +261,30 @@ describe("Network domain handler", () => {
 	// -------------------------------------------------------------------------
 
 	test("Network.emulateNetworkConditions returns empty object", async () => {
-		const result = await cdpCall(transport, "Network.emulateNetworkConditions", {
-			offline: false,
-			latency: 100,
-			downloadThroughput: 1000000,
-			uploadThroughput: 500000,
-		});
+		const result = await cdpCall(
+			transport,
+			"Network.emulateNetworkConditions",
+			{
+				offline: false,
+				latency: 100,
+				downloadThroughput: 1000000,
+				uploadThroughput: 500000,
+			},
+		);
 		expect(result).toEqual({});
 	});
 
 	test("Network.emulateNetworkConditions offline mode stores state", async () => {
-		const result = await cdpCall(transport, "Network.emulateNetworkConditions", {
-			offline: true,
-			latency: 0,
-			downloadThroughput: 0,
-			uploadThroughput: 0,
-		});
+		const result = await cdpCall(
+			transport,
+			"Network.emulateNetworkConditions",
+			{
+				offline: true,
+				latency: 0,
+				downloadThroughput: 0,
+				uploadThroughput: 0,
+			},
+		);
 		expect(result).toEqual({});
 	});
 
@@ -286,7 +298,12 @@ describe("Network domain handler", () => {
 			transport,
 			["Network.requestWillBeSent", "Network.responseReceived"],
 			async () => {
-				await cdpCall(transport, "Page.navigate", { url: "data:text/html,<h1>hi</h1>" }, sessionId);
+				await cdpCall(
+					transport,
+					"Page.navigate",
+					{ url: "data:text/html,<h1>hi</h1>" },
+					sessionId,
+				);
 			},
 		);
 		// data: URIs skip network events
@@ -296,7 +313,9 @@ describe("Network domain handler", () => {
 
 	test("getResponseBody throws for unknown requestId", async () => {
 		await expect(
-			cdpCall(transport, "Network.getResponseBody", { requestId: "nonexistent-id" }),
+			cdpCall(transport, "Network.getResponseBody", {
+				requestId: "nonexistent-id",
+			}),
 		).rejects.toThrow(/nonexistent-id/);
 	});
 

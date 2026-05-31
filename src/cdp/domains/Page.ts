@@ -59,7 +59,12 @@ function nextScriptId(): string {
 // Handler
 // ---------------------------------------------------------------------------
 
-export const PageHandler: DomainHandler = async (method, params, ctx, sessionId) => {
+export const PageHandler: DomainHandler = async (
+	method,
+	params,
+	ctx,
+	sessionId,
+) => {
 	switch (method) {
 		// ------------------------------------------------------------------
 		// No-op stubs
@@ -92,7 +97,10 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 		// In static mode the scripts are stored but never executed (no JS engine).
 		// ------------------------------------------------------------------
 		case "Page.addScriptToEvaluateOnNewDocument": {
-			const { source, worldName } = params as { source: string; worldName?: string };
+			const { source, worldName } = params as {
+				source: string;
+				worldName?: string;
+			};
 			const page = ctx.pageBySession(sessionId);
 			if (worldName) {
 				page.utilityWorldName = worldName;
@@ -164,7 +172,9 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 						url: page.url,
 						domainAndRegistry: "",
 						securityOrigin:
-							url === "about:blank" || url.startsWith("data:") ? "null" : computeOrigin(page.url),
+							url === "about:blank" || url.startsWith("data:")
+								? "null"
+								: computeOrigin(page.url),
 						mimeType: "text/html",
 						adFrameStatus: { adFrameType: "none" },
 						crossOriginIsolatedContextType: "none",
@@ -178,7 +188,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "init", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "init",
+					timestamp: ts,
+				},
 			});
 
 			// Phase 1: emit domContentEventFired + loadEventFired after parse.
@@ -190,7 +205,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "DOMContentLoaded", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "DOMContentLoaded",
+					timestamp: ts,
+				},
 			});
 
 			// In static profile there are no sub-resources, so loadEventFired
@@ -203,7 +223,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "load", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "load",
+					timestamp: ts,
+				},
 			});
 
 			// Emit execution contexts so Puppeteer can bind evaluate calls.
@@ -253,7 +278,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "init", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "init",
+					timestamp: ts,
+				},
 			});
 			ctx.emitEvent({
 				method: "Page.domContentEventFired",
@@ -263,7 +293,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "DOMContentLoaded", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "DOMContentLoaded",
+					timestamp: ts,
+				},
 			});
 			ctx.emitEvent({
 				method: "Page.loadEventFired",
@@ -273,7 +308,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "load", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "load",
+					timestamp: ts,
+				},
 			});
 
 			ctx.emitExecutionContexts(page);
@@ -316,7 +356,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "DOMContentLoaded", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "DOMContentLoaded",
+					timestamp: ts,
+				},
 			});
 			ctx.emitEvent({
 				method: "Page.loadEventFired",
@@ -326,7 +371,12 @@ export const PageHandler: DomainHandler = async (method, params, ctx, sessionId)
 			ctx.emitEvent({
 				method: "Page.lifecycleEvent",
 				sessionId: page.sessionId,
-				params: { frameId: page.frameId, loaderId, name: "load", timestamp: ts },
+				params: {
+					frameId: page.frameId,
+					loaderId,
+					name: "load",
+					timestamp: ts,
+				},
 			});
 
 			ctx.emitExecutionContexts(page);

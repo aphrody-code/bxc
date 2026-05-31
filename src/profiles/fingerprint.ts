@@ -231,11 +231,15 @@ class SeededRandom {
  * All fields (UA, WebGL, screen, languages, platform) are picked from the same
  * consistent profile so anti-bot systems cannot detect cross-field mismatches.
  */
-export function generateFingerprint(opts: FingerprintOptions = {}): BrowserFingerprint {
+export function generateFingerprint(
+	opts: FingerprintOptions = {},
+): BrowserFingerprint {
 	const seed = opts.seed ?? Date.now() ^ (Math.random() * 0x100000000);
 	const rng = new SeededRandom(seed);
 
-	const os = opts.os ?? (rng.next() < 0.6 ? "windows" : rng.next() < 0.7 ? "linux" : "macos");
+	const os =
+		opts.os ??
+		(rng.next() < 0.6 ? "windows" : rng.next() < 0.7 ? "linux" : "macos");
 	const browser = opts.browser ?? (rng.next() < 0.7 ? "chrome" : "firefox");
 
 	const langEntry = rng.pick(LANGUAGES);
@@ -333,7 +337,9 @@ export function generateFingerprint(opts: FingerprintOptions = {}): BrowserFinge
  * Returns the Playwright `extraHTTPHeaders` map derived from a fingerprint.
  * Use this with `context.setExtraHTTPHeaders(...)`.
  */
-export function fingerprintToHeaders(fp: BrowserFingerprint): Record<string, string> {
+export function fingerprintToHeaders(
+	fp: BrowserFingerprint,
+): Record<string, string> {
 	const headers: Record<string, string> = {
 		"accept-language": fp.acceptLanguage,
 		accept: fp.accept,

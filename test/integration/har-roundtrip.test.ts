@@ -72,7 +72,15 @@ function buildHarEntry(
 			bodySize: body.length,
 		},
 		cache: {},
-		timings: { blocked: -1, dns: 5, connect: 10, send: 2, wait: 80, receive: 23, ssl: -1 },
+		timings: {
+			blocked: -1,
+			dns: 5,
+			connect: 10,
+			send: 2,
+			wait: 80,
+			receive: 23,
+			ssl: -1,
+		},
 	};
 }
 
@@ -118,7 +126,9 @@ afterEach(async () => {
 describe("HAR roundtrip: record → save → replay → fetch", () => {
 	test("basic GET response is replayed correctly", async () => {
 		const targetUrl = "https://google.com/";
-		const entries = [buildHarEntry("GET", targetUrl, 200, "<html><body>Example</body></html>")];
+		const entries = [
+			buildHarEntry("GET", targetUrl, 200, "<html><body>Example</body></html>"),
+		];
 		const harPath = await writeHarFile(entries);
 
 		// Load the HAR
@@ -131,7 +141,9 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 		expect(server.port).toBeGreaterThan(0);
 
 		// Fetch from the replay server
-		const res = await fetch(`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`);
+		const res = await fetch(
+			`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`,
+		);
 		expect(res.status).toBe(200);
 		const body = await res.text();
 		expect(body).toBe("<html><body>Example</body></html>");
@@ -140,26 +152,42 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 	test("JSON API response roundtrip", async () => {
 		const apiUrl = "https://api.google.com/v1/users";
 		const jsonBody = JSON.stringify({ users: [{ id: 1, name: "Alice" }] });
-		const entries = [buildHarEntry("GET", apiUrl, 200, jsonBody, "application/json")];
+		const entries = [
+			buildHarEntry("GET", apiUrl, 200, jsonBody, "application/json"),
+		];
 		const harPath = await writeHarFile(entries);
 
 		const replayer = await HarReplayer.load(harPath);
 		const server = await replayer.serve();
 		serversToStop.push(server);
 
-		const res = await fetch(`http://localhost:${server.port}/${encodeURIComponent(apiUrl)}`);
+		const res = await fetch(
+			`http://localhost:${server.port}/${encodeURIComponent(apiUrl)}`,
+		);
 		expect(res.status).toBe(200);
 		expect(res.headers.get("content-type")).toContain("application/json");
 
-		const data = (await res.json()) as { users: Array<{ id: number; name: string }> };
+		const data = (await res.json()) as {
+			users: Array<{ id: number; name: string }>;
+		};
 		expect(data.users[0].name).toBe("Alice");
 	});
 
 	test("multiple URLs are served correctly from one HAR", async () => {
 		const entries = [
 			buildHarEntry("GET", "https://google.com/", 200, "<html>home</html>"),
-			buildHarEntry("GET", "https://google.com/about", 200, "<html>about</html>"),
-			buildHarEntry("GET", "https://google.com/contact", 200, "<html>contact</html>"),
+			buildHarEntry(
+				"GET",
+				"https://google.com/about",
+				200,
+				"<html>about</html>",
+			),
+			buildHarEntry(
+				"GET",
+				"https://google.com/contact",
+				200,
+				"<html>contact</html>",
+			),
 		];
 		const harPath = await writeHarFile(entries);
 
@@ -170,9 +198,15 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 		serversToStop.push(server);
 
 		const [r1, r2, r3] = await Promise.all([
-			fetch(`http://localhost:${server.port}/${encodeURIComponent("https://google.com/")}`),
-			fetch(`http://localhost:${server.port}/${encodeURIComponent("https://google.com/about")}`),
-			fetch(`http://localhost:${server.port}/${encodeURIComponent("https://google.com/contact")}`),
+			fetch(
+				`http://localhost:${server.port}/${encodeURIComponent("https://google.com/")}`,
+			),
+			fetch(
+				`http://localhost:${server.port}/${encodeURIComponent("https://google.com/about")}`,
+			),
+			fetch(
+				`http://localhost:${server.port}/${encodeURIComponent("https://google.com/contact")}`,
+			),
 		]);
 
 		expect(r1.status).toBe(200);
@@ -186,8 +220,20 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 
 	test("non-200 status codes are replayed", async () => {
 		const entries = [
-			buildHarEntry("GET", "https://google.com/notfound", 404, "Not Found", "text/plain"),
-			buildHarEntry("GET", "https://google.com/error", 500, "Internal Server Error", "text/plain"),
+			buildHarEntry(
+				"GET",
+				"https://google.com/notfound",
+				404,
+				"Not Found",
+				"text/plain",
+			),
+			buildHarEntry(
+				"GET",
+				"https://google.com/error",
+				500,
+				"Internal Server Error",
+				"text/plain",
+			),
 			buildHarEntry("GET", "https://google.com/moved", 301, "", "text/html", [
 				{ name: "location", value: "https://google.com/new" },
 			]),
@@ -225,7 +271,9 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 		const server = await replayer.serve();
 		serversToStop.push(server);
 
-		const res = await fetch(`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`);
+		const res = await fetch(
+			`http://localhost:${server.port}/${encodeURIComponent(targetUrl)}`,
+		);
 		expect(res.headers.get("x-rate-limit")).toBe("100");
 		expect(res.headers.get("x-request-id")).toBe("roundtrip-42");
 	});
@@ -259,7 +307,9 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 
 	test("query-parameter routing (?url=...) works end-to-end", async () => {
 		const targetUrl = "https://google.com/query-test";
-		const entries = [buildHarEntry("GET", targetUrl, 200, "query routing works")];
+		const entries = [
+			buildHarEntry("GET", targetUrl, 200, "query routing works"),
+		];
 		const harPath = await writeHarFile(entries);
 
 		const replayer = await HarReplayer.load(harPath);
@@ -275,7 +325,9 @@ describe("HAR roundtrip: record → save → replay → fetch", () => {
 
 	test("HAR with POST entry is replayed for POST requests", async () => {
 		const targetUrl = "https://api.google.com/submit";
-		const entries = [buildHarEntry("POST", targetUrl, 201, '{"id":42}', "application/json")];
+		const entries = [
+			buildHarEntry("POST", targetUrl, 201, '{"id":42}', "application/json"),
+		];
 		const harPath = await writeHarFile(entries);
 
 		const replayer = await HarReplayer.load(harPath);

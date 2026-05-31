@@ -1,3 +1,3 @@
-import baseConfig from '@modelcontextprotocol/vitest-config';
+import baseConfig from "@modelcontextprotocol/vitest-config";
 
 export default baseConfig;

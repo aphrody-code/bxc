@@ -15,7 +15,13 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { parseHtml, destroyTree, querySelector, querySelectorAll, htmlToMarkdown } from "../src/rust/bridge.ts";
+import {
+	parseHtml,
+	destroyTree,
+	querySelector,
+	querySelectorAll,
+	htmlToMarkdown,
+} from "../src/rust/bridge.ts";
 
 describe("rust-bridge integration — DOM & Markdown", () => {
 	it("should parse HTML and query selectors", () => {
@@ -24,8 +30,8 @@ describe("rust-bridge integration — DOM & Markdown", () => {
 		try {
 			expect(tree).toBeGreaterThan(0);
 			const span = querySelector(tree, "span.target");
-			expect(span).toBe("<span class=\"target\">Hello</span>");
-			
+			expect(span).toBe('<span class="target">Hello</span>');
+
 			const all = querySelectorAll(tree, "div");
 			expect(all).toHaveLength(1);
 			expect(all[0]).toContain("div");

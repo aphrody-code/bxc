@@ -35,7 +35,11 @@ Usage:
 	);
 }
 
-async function recordHar(url: string, out: string, opts: CommonOptions): Promise<void> {
+async function recordHar(
+	url: string,
+	out: string,
+	opts: CommonOptions,
+): Promise<void> {
 	const page = (await Browser.newPage({
 		profile: "fast",
 		spawnOpts: { logLevel: "error", readyTimeoutMs: 10_000 },
@@ -47,20 +51,30 @@ async function recordHar(url: string, out: string, opts: CommonOptions): Promise
 		await recorder.save(out);
 		if (!opts.quiet) logger.log(`recorded to ${out}`);
 	} finally {
-		try { await page.close(); } catch {}
+		try {
+			await page.close();
+		} catch {}
 		await Browser.close().catch(() => {});
 	}
 }
 
 async function replayHar(file: string): Promise<void> {
 	const replayer = await HarReplayer.load(file);
-	const inspect = (replayer as unknown as { _inspectStats?: () => unknown })._inspectStats;
+	const inspect = (replayer as unknown as { _inspectStats?: () => unknown })
+		._inspectStats;
 	const stats =
-		typeof inspect === "function" ? inspect.call(replayer) : { source: file, status: "loaded" };
-	Bun.stdout.write(JSON.stringify({ source: file, ...(stats as object) }, null, 2) + "\n");
+		typeof inspect === "function"
+			? inspect.call(replayer)
+			: { source: file, status: "loaded" };
+	Bun.stdout.write(
+		JSON.stringify({ source: file, ...(stats as object) }, null, 2) + "\n",
+	);
 }
 
-export async function main(argv: readonly string[], opts: CommonOptions): Promise<void> {
+export async function main(
+	argv: readonly string[],
+	opts: CommonOptions,
+): Promise<void> {
 	const action = argv[0];
 	if (!action || action === "--help" || action === "-h") {
 		printUsage();

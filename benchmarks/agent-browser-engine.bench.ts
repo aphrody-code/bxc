@@ -40,8 +40,13 @@ function argFlag(flag: string): boolean {
 	return argv.includes(flag);
 }
 
-const ITERATIONS = Number(argValue("--iterations", process.env.BENCH_ITERATIONS ?? "20"));
-const ENGINES_ARG = argValue("--engines", process.env.BENCH_ENGINES ?? "chrome,lightpanda,bxc")
+const ITERATIONS = Number(
+	argValue("--iterations", process.env.BENCH_ITERATIONS ?? "20"),
+);
+const ENGINES_ARG = argValue(
+	"--engines",
+	process.env.BENCH_ENGINES ?? "chrome,lightpanda,bxc",
+)
 	.split(",")
 	.map((e) => e.trim());
 
@@ -55,7 +60,8 @@ const BENCH_DIR = import.meta.dir;
 const BXC_ROOT = `${BENCH_DIR}/..`;
 // Two levels up: /abs/path/to/bunmium; then into agent-browser
 const AGENT_BROWSER_BIN =
-	process.env.AGENT_BROWSER ?? `${BENCH_DIR}/../../agent-browser/cli/target/release/agent-browser`;
+	process.env.AGENT_BROWSER ??
+	`${BENCH_DIR}/../../agent-browser/cli/target/release/agent-browser`;
 
 const BXC_PATH = process.env.BXC_PATH ?? `${BXC_ROOT}/src/cli/serve.ts`;
 
@@ -81,7 +87,15 @@ async function probeChrome(): Promise<EngineStatus> {
 	// Try spawning Chrome once to check if --no-sandbox is needed and works.
 	// We use a short timeout probe.
 	const proc = Bun.spawn(
-		[AGENT_BROWSER_BIN, "--engine", "chrome", "--args", "--no-sandbox", "open", "about:blank"],
+		[
+			AGENT_BROWSER_BIN,
+			"--engine",
+			"chrome",
+			"--args",
+			"--no-sandbox",
+			"open",
+			"about:blank",
+		],
 		{
 			stdout: "pipe",
 			stderr: "pipe",
@@ -99,7 +113,9 @@ async function probeChrome(): Promise<EngineStatus> {
 	if (
 		stderr.includes("No usable sandbox") ||
 		stderr.includes("FATAL") ||
-		(exitCode !== 0 && !stdout.includes("about:blank") && !stdout.includes("Example"))
+		(exitCode !== 0 &&
+			!stdout.includes("about:blank") &&
+			!stdout.includes("Example"))
 	) {
 		// Close any partial session
 		await closeEngine("chrome").catch(() => {});
@@ -125,11 +141,14 @@ async function probeLightpanda(): Promise<EngineStatus> {
 
 	// Check if lightpanda binary supports CDP serve mode (the version installed
 	// in this environment only has an interactive REPL, not a CDP server mode).
-	const proc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", "lightpanda", "open", "about:blank"], {
-		stdout: "pipe",
-		stderr: "pipe",
-		env: { ...process.env },
-	});
+	const proc = Bun.spawn(
+		[AGENT_BROWSER_BIN, "--engine", "lightpanda", "open", "about:blank"],
+		{
+			stdout: "pipe",
+			stderr: "pipe",
+			env: { ...process.env },
+		},
+	);
 
 	const timer = setTimeout(() => proc.kill(), 10_000);
 	const exitCode = await proc.exited.catch(() => -1);
@@ -171,11 +190,14 @@ async function probeBxc(): Promise<EngineStatus> {
 		};
 	}
 
-	const proc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", "bxc", "open", "about:blank"], {
-		stdout: "pipe",
-		stderr: "pipe",
-		env: { ...process.env, BXC_PATH },
-	});
+	const proc = Bun.spawn(
+		[AGENT_BROWSER_BIN, "--engine", "bxc", "open", "about:blank"],
+		{
+			stdout: "pipe",
+			stderr: "pipe",
+			env: { ...process.env, BXC_PATH },
+		},
+	);
 
 	const timer = setTimeout(() => proc.kill(), 15_000);
 	const exitCode = await proc.exited.catch(() => -1);
@@ -200,12 +222,16 @@ async function probeBxc(): Promise<EngineStatus> {
 // ---------------------------------------------------------------------------
 
 async function closeEngine(engine: string): Promise<void> {
-	const env = engine === "bxc" ? { ...process.env, BXC_PATH } : { ...process.env };
-	const proc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", engine, "close", "--all"], {
-		stdout: "pipe",
-		stderr: "pipe",
-		env,
-	});
+	const env =
+		engine === "bxc" ? { ...process.env, BXC_PATH } : { ...process.env };
+	const proc = Bun.spawn(
+		[AGENT_BROWSER_BIN, "--engine", engine, "close", "--all"],
+		{
+			stdout: "pipe",
+			stderr: "pipe",
+			env,
+		},
+	);
 	await proc.exited.catch(() => {});
 }
 
@@ -287,7 +313,8 @@ async function runIteration(
 	scenario: Scenario,
 	iteration: number,
 ): Promise<ScenarioSample> {
-	const env = engine === "bxc" ? { ...process.env, BXC_PATH } : { ...process.env };
+	const env =
+		engine === "bxc" ? { ...process.env, BXC_PATH } : { ...process.env };
 
 	const chromeExtraArgs = engine === "chrome" ? ["--args", "--no-sandbox"] : [];
 
@@ -296,7 +323,14 @@ async function runIteration(
 
 	// Open (cold start: measure time from here to first response)
 	const openProc = Bun.spawn(
-		[AGENT_BROWSER_BIN, "--engine", engine, ...chromeExtraArgs, "open", scenario.url],
+		[
+			AGENT_BROWSER_BIN,
+			"--engine",
+			engine,
+			...chromeExtraArgs,
+			"open",
+			scenario.url,
+		],
 		{ stdout: "pipe", stderr: "pipe", env },
 	);
 
@@ -329,11 +363,14 @@ async function runIteration(
 	const commandSamples: CommandSample[] = [];
 	for (const cmdArgs of scenario.commands) {
 		const tc = Bun.nanoseconds();
-		const cmdProc = Bun.spawn([AGENT_BROWSER_BIN, "--engine", engine, ...cmdArgs], {
-			stdout: "pipe",
-			stderr: "pipe",
-			env,
-		});
+		const cmdProc = Bun.spawn(
+			[AGENT_BROWSER_BIN, "--engine", engine, ...cmdArgs],
+			{
+				stdout: "pipe",
+				stderr: "pipe",
+				env,
+			},
+		);
 		const rss = await readRssKb(cmdProc.pid).catch(() => 0);
 		if (rss > peakRssKb) peakRssKb = rss;
 		await cmdProc.exited.catch(() => {});
@@ -370,10 +407,12 @@ function statsFromSamples(values: number[]): {
 	min: number;
 	max: number;
 } {
-	if (values.length === 0) return { p50: 0, p95: 0, mean: 0, stddev: 0, min: 0, max: 0 };
+	if (values.length === 0)
+		return { p50: 0, p95: 0, mean: 0, stddev: 0, min: 0, max: 0 };
 	const sorted = [...values].sort((a, b) => a - b);
 	const mean = values.reduce((a, b) => a + b, 0) / values.length;
-	const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
+	const variance =
+		values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
 	return {
 		p50: Math.round(percentile(sorted, 50)),
 		p95: Math.round(percentile(sorted, 95)),
@@ -398,7 +437,9 @@ function generateMarkdown(
 	lines.push(`# Engine Comparison Benchmark — ${date}`);
 	lines.push("");
 	lines.push("Compares `chrome`, `lightpanda`, and `bxc` engines via the");
-	lines.push("`agent-browser` CLI for cold-start time, per-command latency, and peak RSS.");
+	lines.push(
+		"`agent-browser` CLI for cold-start time, per-command latency, and peak RSS.",
+	);
 	lines.push("");
 
 	// Environment
@@ -434,8 +475,12 @@ function generateMarkdown(
 
 		lines.push("### Cold Start (open + first response)");
 		lines.push("");
-		lines.push("| Engine | p50 (ms) | p95 (ms) | mean (ms) | stddev | min | max |");
-		lines.push("|--------|----------|----------|-----------|--------|-----|-----|");
+		lines.push(
+			"| Engine | p50 (ms) | p95 (ms) | mean (ms) | stddev | min | max |",
+		);
+		lines.push(
+			"|--------|----------|----------|-----------|--------|-----|-----|",
+		);
 
 		for (const es of engineStatuses) {
 			if (!es.available) {
@@ -443,7 +488,8 @@ function generateMarkdown(
 				continue;
 			}
 			const successes = allSamples.filter(
-				(s) => s.engine === es.engine && s.scenario === scenario.name && s.success,
+				(s) =>
+					s.engine === es.engine && s.scenario === scenario.name && s.success,
 			);
 			if (successes.length === 0) {
 				lines.push(`| ${es.engine} | ERR | ERR | ERR | — | — | — |`);
@@ -476,13 +522,22 @@ function generateMarkdown(
 				if (!es.available) continue;
 				for (const cmdName of cmdNames) {
 					const latencies = allSamples
-						.filter((s) => s.engine === es.engine && s.scenario === scenario.name && s.success)
+						.filter(
+							(s) =>
+								s.engine === es.engine &&
+								s.scenario === scenario.name &&
+								s.success,
+						)
 						.flatMap((s) =>
-							s.commands.filter((c) => c.command === cmdName).map((c) => c.latencyMs),
+							s.commands
+								.filter((c) => c.command === cmdName)
+								.map((c) => c.latencyMs),
 						);
 					if (latencies.length === 0) continue;
 					const st = statsFromSamples(latencies);
-					lines.push(`| ${es.engine} | \`${cmdName}\` | ${st.p50} | ${st.p95} | ${st.mean} |`);
+					lines.push(
+						`| ${es.engine} | \`${cmdName}\` | ${st.p50} | ${st.p95} | ${st.mean} |`,
+					);
 				}
 			}
 			lines.push("");
@@ -499,13 +554,16 @@ function generateMarkdown(
 				continue;
 			}
 			const successes = allSamples.filter(
-				(s) => s.engine === es.engine && s.scenario === scenario.name && s.success,
+				(s) =>
+					s.engine === es.engine && s.scenario === scenario.name && s.success,
 			);
 			if (successes.length === 0) {
 				lines.push(`| ${es.engine} | ERR | ERR | ERR |`);
 				continue;
 			}
-			const rssMb = successes.map((s) => Math.round((s.peakRssKb / 1024) * 10) / 10);
+			const rssMb = successes.map(
+				(s) => Math.round((s.peakRssKb / 1024) * 10) / 10,
+			);
 			const st = statsFromSamples(rssMb);
 			lines.push(`| ${es.engine} | ${st.p50} | ${st.p95} | ${st.mean} |`);
 		}
@@ -525,9 +583,11 @@ function generateMarkdown(
 				(s) => s.engine === es.engine && s.scenario === scenario.name,
 			).length;
 			const successes = allSamples.filter(
-				(s) => s.engine === es.engine && s.scenario === scenario.name && s.success,
+				(s) =>
+					s.engine === es.engine && s.scenario === scenario.name && s.success,
 			).length;
-			const rate = total > 0 ? `${Math.round((successes / total) * 100)}%` : "0%";
+			const rate =
+				total > 0 ? `${Math.round((successes / total) * 100)}%` : "0%";
 			lines.push(`| ${es.engine} | ${successes} | ${total} | ${rate} |`);
 		}
 		lines.push("");
@@ -536,10 +596,14 @@ function generateMarkdown(
 	// Summary comparison table (cold start p50 across all scenarios)
 	lines.push("## Summary — Cold Start p50 Comparison");
 	lines.push("");
-	lines.push("Lower is better. Shows cold-start p50 in ms for each engine x scenario combination.");
+	lines.push(
+		"Lower is better. Shows cold-start p50 in ms for each engine x scenario combination.",
+	);
 	lines.push("");
 
-	const availEngines = engineStatuses.filter((e) => e.available).map((e) => e.engine);
+	const availEngines = engineStatuses
+		.filter((e) => e.available)
+		.map((e) => e.engine);
 	if (availEngines.length > 0) {
 		const header = `| Scenario | ${availEngines.join(" | ")} |`;
 		const sep = `|----------|${availEngines.map(() => "----------").join("|")}|`;
@@ -575,12 +639,14 @@ function generateMarkdown(
 				(s) => s.engine === "bxc" && s.scenario === scenario.name && s.success,
 			);
 			const chromeSamples = allSamples.filter(
-				(s) => s.engine === "chrome" && s.scenario === scenario.name && s.success,
+				(s) =>
+					s.engine === "chrome" && s.scenario === scenario.name && s.success,
 			);
 			if (bxcSamples.length === 0 || chromeSamples.length === 0) continue;
 			const bunSt = statsFromSamples(bxcSamples.map((s) => s.coldStartMs));
 			const chrSt = statsFromSamples(chromeSamples.map((s) => s.coldStartMs));
-			const ratio = chrSt.p50 > 0 ? ((chrSt.p50 / bunSt.p50) * 100).toFixed(0) : "n/a";
+			const ratio =
+				chrSt.p50 > 0 ? ((chrSt.p50 / bunSt.p50) * 100).toFixed(0) : "n/a";
 			const diff = chrSt.p50 - bunSt.p50;
 			lines.push(
 				`**${scenario.name}**: bxc p50=${bunSt.p50}ms, chrome p50=${chrSt.p50}ms — ` +
@@ -591,7 +657,9 @@ function generateMarkdown(
 	}
 
 	lines.push("---");
-	lines.push(`*Generated by \`benchmarks/agent-browser-engine.bench.ts\` on ${date}.*`);
+	lines.push(
+		`*Generated by \`benchmarks/agent-browser-engine.bench.ts\` on ${date}.*`,
+	);
 	lines.push("");
 
 	return lines.join("\n");
@@ -604,7 +672,9 @@ function generateMarkdown(
 async function main(): Promise<void> {
 	const date = new Date().toISOString().slice(0, 10);
 	console.log(`[bench] agent-browser engine comparison — ${date}`);
-	console.log(`[bench] iterations=${ITERATIONS} engines=${ENGINES_ARG.join(",")}`);
+	console.log(
+		`[bench] iterations=${ITERATIONS} engines=${ENGINES_ARG.join(",")}`,
+	);
 	console.log(`[bench] agent-browser: ${AGENT_BROWSER_BIN}`);
 	console.log(`[bench] bxc: ${BXC_PATH}`);
 	console.log("");
@@ -643,7 +713,11 @@ async function main(): Promise<void> {
 		} else if (engine === "bxc") {
 			status = await probeBxc();
 		} else {
-			status = { engine, available: false, skipReason: `unknown engine: ${engine}` };
+			status = {
+				engine,
+				available: false,
+				skipReason: `unknown engine: ${engine}`,
+			};
 		}
 		engineStatuses.push(status);
 		if (status.available) {
@@ -653,7 +727,9 @@ async function main(): Promise<void> {
 		}
 	}
 
-	const availableEngines = engineStatuses.filter((s) => s.available).map((s) => s.engine);
+	const availableEngines = engineStatuses
+		.filter((s) => s.available)
+		.map((s) => s.engine);
 	if (availableEngines.length === 0) {
 		console.log("[bench] No engines available. Writing skip report.");
 	} else {
@@ -730,7 +806,8 @@ async function main(): Promise<void> {
 		}
 		for (const scenario of SCENARIOS) {
 			const successes = allSamples.filter(
-				(s) => s.engine === es.engine && s.scenario === scenario.name && s.success,
+				(s) =>
+					s.engine === es.engine && s.scenario === scenario.name && s.success,
 			);
 			if (successes.length === 0) {
 				console.log(`${es.engine} / ${scenario.name}: 0 successful iterations`);
