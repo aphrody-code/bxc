@@ -100,38 +100,60 @@ export async function scrapeFutGgPlayer(
 	}
 
 	// 2. Extract Club, Nation, and League
+	let cheerioClub: string | undefined = undefined;
+	let cheerioNation: string | undefined = undefined;
+	let cheerioLeague: string | undefined = undefined;
+
+	try {
+		const { load } = await import("cheerio");
+		const $ = load(content);
+		cheerioClub = $('a[href*="/clubs/"]').first().text().trim() || undefined;
+		cheerioNation =
+			$('a[href*="/nations/"]').first().text().trim() || undefined;
+		cheerioLeague =
+			$('a[href*="/leagues/"]').first().text().trim() || undefined;
+	} catch {
+		// Ignore Cheerio loading/parsing errors, fall back to RegExp
+	}
+
 	const clubMatch =
 		/href="\/clubs\/([^/"]+)\/?"[^>]*>(?:<[^>]+>)*\s*([^<]+)\s*(?:<\/[^>]+>)*\s*<\/a>/i.exec(
 			content,
 		);
-	const club = clubMatch
-		? clubMatch[2]
-				.replace(/&#x27;/g, "'")
-				.replace(/&amp;/g, "&")
-				.trim()
-		: undefined;
+	const club =
+		cheerioClub ||
+		(clubMatch
+			? clubMatch[2]
+					.replace(/&#x27;/g, "'")
+					.replace(/&amp;/g, "&")
+					.trim()
+			: undefined);
 
 	const nationMatch =
 		/href="\/nations\/([^/"]+)\/?"[^>]*>(?:<[^>]+>)*\s*([^<]+)\s*(?:<\/[^>]+>)*\s*<\/a>/i.exec(
 			content,
 		);
-	const nation = nationMatch
-		? nationMatch[2]
-				.replace(/&#x27;/g, "'")
-				.replace(/&amp;/g, "&")
-				.trim()
-		: undefined;
+	const nation =
+		cheerioNation ||
+		(nationMatch
+			? nationMatch[2]
+					.replace(/&#x27;/g, "'")
+					.replace(/&amp;/g, "&")
+					.trim()
+			: undefined);
 
 	const leagueMatch =
 		/href="\/leagues\/([^/"]+)\/?"[^>]*>(?:<[^>]+>)*\s*([^<]+)\s*(?:<\/[^>]+>)*\s*<\/a>/i.exec(
 			content,
 		);
-	const league = leagueMatch
-		? leagueMatch[2]
-				.replace(/&#x27;/g, "'")
-				.replace(/&amp;/g, "&")
-				.trim()
-		: undefined;
+	const league =
+		cheerioLeague ||
+		(leagueMatch
+			? leagueMatch[2]
+					.replace(/&#x27;/g, "'")
+					.replace(/&amp;/g, "&")
+					.trim()
+			: undefined);
 
 	// 3. Extract standard Stats (PAC, SHO, PAS, DRI, DEF, PHY) or Goalkeeper Stats (DIV, HAN, KIC, REF, SPD, POS)
 	const stats: Record<string, number> = {};
