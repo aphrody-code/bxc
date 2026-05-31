@@ -16,6 +16,7 @@
 
 import { Browser } from "../../api/browser.ts";
 import { launchGhostBrowser } from "../../profiles/ghost/index.ts";
+import pRetry, { AbortError } from "p-retry";
 import type { FutPrice } from "./types.ts";
 
 export async function scrapeFutBinPrice(
@@ -30,24 +31,61 @@ export async function scrapeFutBinPrice(
 	const finalUrl = isUrl ? urlOrHtml : urlFallback || "unknown";
 
 	if (isUrl) {
-		if (profile === "ghost") {
-			const ghost = await launchGhostBrowser();
-			try {
-				await ghost.page.goto(urlOrHtml);
-				await Bun.sleep(2000);
-				content = await ghost.page.content();
-			} finally {
-				await ghost.close();
-			}
-		} else {
-			const page = await Browser.newPage({ profile });
-			try {
-				await page.goto(urlOrHtml);
-				content = await page.content();
-			} finally {
-				await page.close();
-			}
-		}
+		const fetched = await pRetry(
+			async () => {
+				if (profile === "ghost") {
+					const ghost = await launchGhostBrowser();
+					try {
+						const res = await ghost.page.goto(urlOrHtml);
+						await Bun.sleep(2000);
+						const content = await ghost.page.content();
+						const title = await ghost.page.title();
+						if (
+							title.includes("Just a moment") ||
+							title.includes("Cloudflare")
+						) {
+							throw new AbortError("Cloudflare Turnstile challenge detected");
+						}
+						if (res && res.status === 404) {
+							throw new AbortError(`404 Not Found: ${urlOrHtml}`);
+						}
+						return content;
+					} finally {
+						await ghost.close();
+					}
+				} else {
+					const page = await Browser.newPage({ profile });
+					try {
+						const res = await page.goto(urlOrHtml);
+						const title = await page.title();
+						if (
+							title.includes("Just a moment") ||
+							title.includes("Cloudflare")
+						) {
+							throw new AbortError("Cloudflare Turnstile challenge detected");
+						}
+						if (res && res.status === 404) {
+							throw new AbortError(`404 Not Found: ${urlOrHtml}`);
+						}
+						if (res && res.status >= 500) {
+							throw new Error(`Server error ${res.status}: ${urlOrHtml}`);
+						}
+						return await page.content();
+					} finally {
+						await page.close();
+					}
+				}
+			},
+			{
+				retries: 2,
+				onFailedAttempt: (failedAttempt) => {
+					console.warn(
+						`  [Retry FutBin] Attempt ${failedAttempt.attemptNumber} failed. ${failedAttempt.retriesLeft} retries left. Error: ${failedAttempt.error.message}`,
+					);
+				},
+			},
+		);
+		content = fetched;
 	} else {
 		content = urlOrHtml;
 	}

@@ -16,6 +16,7 @@
 
 import { Browser } from "../../api/browser.ts";
 import { launchGhostBrowser } from "../../profiles/ghost/index.ts";
+import pRetry, { AbortError } from "p-retry";
 import type { FutPlayer } from "./types.ts";
 
 export async function scrapeFutGgPlayer(
@@ -26,26 +27,63 @@ export async function scrapeFutGgPlayer(
 	let title = "";
 
 	if (urlOrHtml.startsWith("http://") || urlOrHtml.startsWith("https://")) {
-		if (profile === "ghost") {
-			const ghost = await launchGhostBrowser();
-			try {
-				await ghost.page.goto(urlOrHtml);
-				await Bun.sleep(2000);
-				content = await ghost.page.content();
-				title = await ghost.page.title();
-			} finally {
-				await ghost.close();
-			}
-		} else {
-			const page = await Browser.newPage({ profile });
-			try {
-				await page.goto(urlOrHtml);
-				content = await page.content();
-				title = await page.title();
-			} finally {
-				await page.close();
-			}
-		}
+		const fetched = await pRetry(
+			async () => {
+				if (profile === "ghost") {
+					const ghost = await launchGhostBrowser();
+					try {
+						const res = await ghost.page.goto(urlOrHtml);
+						await Bun.sleep(2000);
+						const content = await ghost.page.content();
+						const title = await ghost.page.title();
+						if (
+							title.includes("Just a moment") ||
+							title.includes("Cloudflare")
+						) {
+							throw new AbortError("Cloudflare Turnstile challenge detected");
+						}
+						if (res && res.status === 404) {
+							throw new AbortError(`404 Not Found: ${urlOrHtml}`);
+						}
+						return { content, title };
+					} finally {
+						await ghost.close();
+					}
+				} else {
+					const page = await Browser.newPage({ profile });
+					try {
+						const res = await page.goto(urlOrHtml);
+						const title = await page.title();
+						if (
+							title.includes("Just a moment") ||
+							title.includes("Cloudflare")
+						) {
+							throw new AbortError("Cloudflare Turnstile challenge detected");
+						}
+						if (res && res.status === 404) {
+							throw new AbortError(`404 Not Found: ${urlOrHtml}`);
+						}
+						if (res && res.status >= 500) {
+							throw new Error(`Server error ${res.status}: ${urlOrHtml}`);
+						}
+						const content = await page.content();
+						return { content, title };
+					} finally {
+						await page.close();
+					}
+				}
+			},
+			{
+				retries: 2,
+				onFailedAttempt: (failedAttempt) => {
+					console.warn(
+						`  [Retry FutGg] Attempt ${failedAttempt.attemptNumber} failed. ${failedAttempt.retriesLeft} retries left. Error: ${failedAttempt.error.message}`,
+					);
+				},
+			},
+		);
+		content = fetched.content;
+		title = fetched.title;
 	} else {
 		content = urlOrHtml;
 	}
