@@ -117,7 +117,159 @@ async function bootstrap() {
 							profile: t.Optional(t.String()),
 						}),
 					},
-				),
+				)
+				.get(
+					"/fut/players",
+					async ({ query }) => {
+						const { Database } = await import("bun:sqlite");
+						const { join } = await import("node:path");
+						const dbPath = join(
+							import.meta.dir,
+							"../../data/fut_extracted_database.sqlite",
+						);
+						const db = new Database(dbPath);
+
+						let sql = "SELECT * FROM players WHERE 1=1";
+						const params: Record<string, any> = {};
+
+						if (query.rating_min) {
+							sql += " AND rating >= $rating_min";
+							params["$rating_min"] = parseInt(query.rating_min, 10);
+						}
+						if (query.rating_max) {
+							sql += " AND rating <= $rating_max";
+							params["$rating_max"] = parseInt(query.rating_max, 10);
+						}
+						if (query.position) {
+							sql += " AND position = $position";
+							params["$position"] = query.position;
+						}
+						if (query.club) {
+							sql += " AND club LIKE $club";
+							params["$club"] = `%${query.club}%`;
+						}
+						if (query.nation) {
+							sql += " AND nation LIKE $nation";
+							params["$nation"] = `%${query.nation}%`;
+						}
+						if (query.league) {
+							sql += " AND league LIKE $league";
+							params["$league"] = `%${query.league}%`;
+						}
+						if (query.rarity) {
+							sql += " AND rarity LIKE $rarity";
+							params["$rarity"] = `%${query.rarity}%`;
+						}
+						if (query.gender) {
+							sql += " AND gender = $gender";
+							params["$gender"] = query.gender;
+						}
+						if (query.foot) {
+							sql += " AND foot = $foot";
+							params["$foot"] = query.foot;
+						}
+
+						const allowedSorts = [
+							"overall_rating",
+							"rating",
+							"pac",
+							"sho",
+							"pas",
+							"dri",
+							"def",
+							"phy",
+						];
+						const sortBy = allowedSorts.includes(query.sort_by || "")
+							? query.sort_by
+							: "rating";
+						const sortOrder =
+							(query.sort_order || "").toLowerCase() === "asc" ? "ASC" : "DESC";
+						sql += ` ORDER BY ${sortBy} ${sortOrder}`;
+
+						const limit = parseInt(query.limit || "50", 10);
+						const offset = parseInt(query.offset || "0", 10);
+						sql += " LIMIT $limit OFFSET $offset";
+						params["$limit"] = limit;
+						params["$offset"] = offset;
+
+						try {
+							const rows = db.query(sql).all(params);
+							return { success: true, count: rows.length, data: rows };
+						} catch (e: any) {
+							return { success: false, error: e.message };
+						}
+					},
+					{
+						query: t.Object({
+							rating_min: t.Optional(t.String()),
+							rating_max: t.Optional(t.String()),
+							position: t.Optional(t.String()),
+							club: t.Optional(t.String()),
+							nation: t.Optional(t.String()),
+							league: t.Optional(t.String()),
+							rarity: t.Optional(t.String()),
+							gender: t.Optional(t.String()),
+							foot: t.Optional(t.String()),
+							sort_by: t.Optional(t.String()),
+							sort_order: t.Optional(t.String()),
+							limit: t.Optional(t.String()),
+							offset: t.Optional(t.String()),
+						}),
+					},
+				)
+				.get("/fut/stats/summary", async () => {
+					const { Database } = await import("bun:sqlite");
+					const { join } = await import("node:path");
+					const dbPath = join(
+						import.meta.dir,
+						"../../data/fut_extracted_database.sqlite",
+					);
+					try {
+						const db = new Database(dbPath);
+						const totalPlayers = db
+							.query("SELECT COUNT(*) as count FROM players")
+							.get() as any;
+						const totalPrices = db
+							.query("SELECT COUNT(*) as count FROM prices")
+							.get() as any;
+						const avgOverall = db
+							.query(
+								"SELECT AVG(overall_rating) as avg FROM players WHERE overall_rating IS NOT NULL",
+							)
+							.get() as any;
+
+						const positionCounts = db
+							.query(
+								"SELECT position, COUNT(*) as count FROM players GROUP BY position ORDER BY count DESC",
+							)
+							.all() as any[];
+						const rarityCounts = db
+							.query(
+								"SELECT rarity, COUNT(*) as count FROM players WHERE rarity IS NOT NULL GROUP BY rarity ORDER BY count DESC LIMIT 10",
+							)
+							.all() as any[];
+						const genderCounts = db
+							.query(
+								"SELECT gender, COUNT(*) as count FROM players WHERE gender IS NOT NULL GROUP BY gender",
+							)
+							.all() as any[];
+
+						return {
+							success: true,
+							summary: {
+								total_players_crawled: totalPlayers?.count || 0,
+								total_prices_tracked: totalPrices?.count || 0,
+								average_overall_rating:
+									Math.round((avgOverall?.avg || 0) * 10) / 10,
+								positions: positionCounts,
+								rarities: rarityCounts,
+								genders: genderCounts,
+							},
+						};
+					} catch (e: any) {
+						return { success: false, error: e.message };
+					}
+				}),
 		)
 
 		// --- GraphQL API ---
