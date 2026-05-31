@@ -25,16 +25,16 @@ import { detectFrameworks } from "../detect.ts";
 import {
 	EXIT,
 	type CommonOptions,
-	bxcFetch,
 	logger,
 	parseCommonArgs,
 } from "./shared.ts";
+import { bxcFetch } from "../utils/bxc-fetch.ts";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type ReconProfile = "static" | "fast" | "http";
+export type ReconProfile = "static" | "fast" | "http" | "stealth" | "max";
 
 export interface ReconAsset {
 	type: "stylesheet" | "script" | "image" | "font" | "iframe";
@@ -290,8 +290,11 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	let screenshotBytes: number | undefined;
 	let screenshotPath: string | undefined;
 
-	const needsBrowser =
-		opts.screenshot || opts.profile === "fast" || opts.profile === "static";
+	const isBrowserProfile =
+		opts.profile === "fast" ||
+		opts.profile === "stealth" ||
+		opts.profile === "max";
+	const needsBrowser = opts.screenshot || opts.profile !== "http";
 	let browserError: string | null = null;
 	if (needsBrowser) {
 		let page: Page | undefined;
@@ -299,10 +302,9 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 		try {
 			page = (await Browser.newPage({
 				profile: opts.profile,
-				spawnOpts:
-					opts.profile === "fast"
-						? { logLevel: "error", readyTimeoutMs: 10_000 }
-						: undefined,
+				spawnOpts: isBrowserProfile
+					? { logLevel: "error", readyTimeoutMs: 10_000 }
+					: undefined,
 			})) as Page;
 
 			await Promise.race([
@@ -319,7 +321,7 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 			const rendered = await page.content().catch(() => "");
 			if (rendered) body = rendered;
 
-			if (opts.screenshot && opts.profile === "fast" && opts.snapshotDir) {
+			if (opts.screenshot && isBrowserProfile && opts.snapshotDir) {
 				try {
 					const png = await page.screenshot({ format: "png" });
 					screenshotPath = `${opts.snapshotDir}/screenshot.png`;
@@ -540,7 +542,7 @@ Usage:
   bxc recon <url> [options]
 
 Options:
-  --profile <name>      static | fast | http  (default: http)
+  --profile <name>      static | fast | http | stealth | max  (default: http)
   --output <path>       write to file (default: stdout)
   --snapshot-dir <dir>  also persist HTML, headers.json, css-selectors.txt
   --screenshot          capture PNG (forces profile=fast)
@@ -568,7 +570,13 @@ function parseArgs(
 		switch (a) {
 			case "--profile": {
 				const v = argv[++i] as any;
-				if (v !== "static" && v !== "fast" && v !== "http") {
+				if (
+					v !== "static" &&
+					v !== "fast" &&
+					v !== "http" &&
+					v !== "stealth" &&
+					v !== "max"
+				) {
 					logger.error(`Invalid profile: ${v}`);
 					return null;
 				}
@@ -583,7 +591,13 @@ function parseArgs(
 				break;
 			case "--screenshot":
 				opts.screenshot = true;
-				opts.profile = "fast";
+				if (
+					opts.profile !== "fast" &&
+					opts.profile !== "stealth" &&
+					opts.profile !== "max"
+				) {
+					opts.profile = "fast";
+				}
 				break;
 			case "--plain":
 				opts.plain = true;

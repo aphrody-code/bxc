@@ -15,9 +15,6 @@
  */
 
 import { join } from "node:path";
-import { bxcFetch } from "../utils/bxc-fetch.ts";
-
-export { bxcFetch };
 
 /** Root directory of the bxc project. */
 export const ROOT = join(import.meta.dir, "../..");

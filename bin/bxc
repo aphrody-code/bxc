@@ -17,6 +17,36 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 BXC_ROOT="$(cd -P "$SCRIPT_DIR/.." && pwd)"
 
 BUN_BIN="${BUN_BIN:-bun}"
+
+# Optimize: execute compiled standalone binary directly if available
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+BINARY=""
+
+case "$OS" in
+  linux)
+    if [ "$ARCH" = "x86_64" ]; then
+      BINARY="bxc-linux-x64"
+    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+      BINARY="bxc-linux-arm64"
+    fi
+    ;;
+  darwin)
+    if [ "$ARCH" = "x86_64" ]; then
+      BINARY="bxc-darwin-x64"
+    elif [ "$ARCH" = "arm64" ]; then
+      BINARY="bxc-darwin-arm64"
+    fi
+    ;;
+  msys*|mingw*|cygwin*|windows*)
+    BINARY="bxc-windows-x64.exe"
+    ;;
+esac
+
+if [ -n "$BINARY" ] && [ -x "$BXC_ROOT/dist/standalone/$BINARY" ]; then
+  exec "$BXC_ROOT/dist/standalone/$BINARY" "$@"
+fi
+
 if ! command -v "$BUN_BIN" >/dev/null 2>&1; then
   echo "bxc: \`bun\` not found on PATH. Install from https://bun.sh" >&2
   exit 127
