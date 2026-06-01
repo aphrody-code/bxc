@@ -69,14 +69,14 @@ d'emoji, pas de `Co-Authored-By`, pas de `Generated with…`.
 
 ## Intégration vps
 
-Submodule `vps/packages/bxc` → tag `v0.5.4`. Workflow update :
+Submodule `vps/packages/bxc` → tag `v0.5.7`. Workflow update :
 
 ```bash
 cd ~/bxc
 # ... commit + push ...
-git tag -a v0.5.4 -m "v0.5.4 — xplatform cargo checks, FFI port bugfix and manager script"
-git push origin v0.5.4
-gh release create v0.5.4 --repo aphrody-code/bxc --title "bxc v0.5.4" --notes "Release version 0.5.4 with xplatform compilation, FFI port bugfix and bxc-control VPS manager script"
+git tag -a v0.5.7 -m "v0.5.7 — refactor scrapers to workspace packages and fix TS5097 error in consumer projects"
+git push origin v0.5.7
+gh release create v0.5.7 --repo aphrody-code/bxc --title "bxc v0.5.7" --notes "Release version 0.5.7 with scrapers refactored to workspace packages under @aphrody-code scope, compiled standalone mcp, and TS5097 import extension fix"
 
 # Deploying standalone and reloading systemd service is automated via bxc-control:
 ./scripts/bxc-control.sh deploy
