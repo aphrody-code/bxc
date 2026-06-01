@@ -1,11 +1,11 @@
 ---
 name: bxc
-description: Référence d'usage du moteur bxc (CLI globale `bxc` 0.4.0 + API lib + tools MCP) pour rechercher sur le web, scraper une page, extraire du Markdown, faire de la recon ou détecter une stack. À utiliser dès qu'une tâche demande "cherche/recherche sur le web", "scrape X", "récupère le contenu de cette URL", "quelle stack utilise ce site", ou tout besoin de données web fraîches.
+description: Référence d'usage du moteur bxc (CLI globale `bxc` 0.5.8 + API lib + tools MCP) pour rechercher sur le web, scraper une page, extraire du Markdown, faire de la recon ou détecter une stack. À utiliser dès qu'une tâche demande "cherche/recherche sur le web", "scrape X", "récupère le contenu de cette URL", "quelle stack utilise ce site", ou tout besoin de données web fraîches.
 ---
 
 # bxc — moteur de navigation Zero-Spawn pour agents
 
-`bxc` est installé globalement (`~/.local/bin/bxc`, v0.4.0). Bun + cdylib Rust
+`bxc` est installé globalement (`~/.local/bin/bxc`, v0.5.8). Bun + cdylib Rust
 (DOM html5ever + HTML→Markdown), zéro spawn Chromium pour les charges statiques.
 Préfère `bxc` à un `curl`/`WebFetch` brut dès qu'il faut du Markdown propre, des
 résultats de recherche structurés, ou de la résilience anti-bot.
@@ -84,7 +84,7 @@ const r = await googleSearchRich("bun runtime", { hl: "en", gl: "US", num: 5 });
 
 - `bxc_search` — recherche Google puissante (SERP riche + verticales web/images/news/videos/books, authentifiée).
 - `bxc_google_fetch` — URL → Markdown + JSON-LD/OpenGraph/Twitter/canonical.
-- `bxc_scrape_markdown`, `bxc_detect_frameworks`, `bxc_cdp_evaluate`, `tune_memory_sqlite`.
+- `bxc_scrape_markdown`, `bxc_detect_frameworks`, `bxc_cdp_evaluate`, `tune_memory_sqlite`, `bxc_keyword_search`, `bxc_semantic_search`, `bxc_actor_run`.
 
 ## Pièges
 
