@@ -80,3 +80,8 @@ packages/fut/src/data/fut_extracted_database.json
 tmp/
 storage/
 
+# SQLite databases and temp files
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+

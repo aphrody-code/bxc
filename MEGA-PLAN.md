@@ -163,7 +163,21 @@ bxc/
 
 ---
 
-## 🚀 Phases
+## 📦 Shipped Milestones (v0.5.8)
+
+Bxc has evolved into a production-grade, autonomous crawler and zero-spawn browser engine.
+
+### Completed Milestones:
+- [x] **Phase 0 & 1 & 2 (In-process DOM & FFI)**: Fully functional FFI bridge with Rust (`bxc-rust-bridge`) and pure JS fallback.
+- [x] **Unified Command Profiles**: Supporting `static`, `fast`, `http`, `stealth`, and `max` for resilient page fetching and bypasses.
+- [x] **Dedicated Scrapers**: Multi-package workspaces for `challonge`, `fut`, `voiranime`, `worldbeyblade`, `xcom`, and `zukan`.
+- [x] **Autonomous Crawler Daemon**: 24/7 recursive crawler (`bxc crawl-worker`) supporting proxy rotation, `robots.txt` compliance, sitemap parsing, and multi-depth limits.
+- [x] **Search Engine & Indexing**: FTS5 SQLite full-text search + Cosine similarity semantic search over page embeds.
+- [x] **SDK & OpenAPI**: bxc-mcp extension, REST/GraphQL Elysia APIs, and OpenAPI dynamic schema auto-generation.
+
+---
+
+## 🚀 Roadmap Phases
 
 ### Phase 0 — Audit & Bootstrap (✅ 3h fait)
 
