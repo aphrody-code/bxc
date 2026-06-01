@@ -43,6 +43,7 @@
 		"./scrapers/worldbeyblade": "./packages/worldbeyblade/src/index.ts",
 		"./scrapers/fut": "./packages/fut/src/index.ts",
 		"./scrapers/zukan": "./packages/zukan/src/index.ts",
+		"./scrapers/x": "./packages/x/src/index.ts",
 		"./profiles/ghost": "./src/profiles/ghost/index.ts",
 		"./profiles/humanize": "./src/profiles/humanize.ts",
 		"./cookies/cookie-loader": "./src/cookies/cookie-loader.ts",
@@ -62,8 +63,8 @@
 		"test": "bun test test/ packages/ src/",
 		"test:google": "bun test test/integration/google-atlas.test.ts",
 		"test:rust": "bun test test/rust-bridge.test.ts",
-		"lint": "oxlint src test examples scripts",
-		"lint:fix": "oxlint --fix src test examples scripts",
+		"lint": "oxlint src test packages/x/examples scripts",
+		"lint:fix": "oxlint --fix src test packages/x/examples scripts",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
 		"build:mcp": "bun build ./src/mcp/server.ts --compile --minify --bytecode --sourcemap=linked --compile-exec-argv=--smol --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-linux-x64 --outfile ./dist/standalone/bxc-mcp",
@@ -118,6 +119,7 @@
 		"@aphrody-code/voiranime": "workspace:*",
 		"@aphrody-code/worldbeyblade": "workspace:*",
 		"@aphrody-code/xcom": "workspace:*",
-		"@aphrody-code/zukan": "workspace:*"
+		"@aphrody-code/zukan": "workspace:*",
+		"@aphrody-code/x": "workspace:*"
 	}
 }

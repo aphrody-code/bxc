@@ -52,8 +52,10 @@ bxc/
 │   ├── voiranime/                # VoirAnime catalog & embed resolver
 │   ├── worldbeyblade/            # Scraper & metagame sub-package
 │   ├── xcom/                     # X.com profile markdown scraper
+│   ├── x/                        # @aphrody-code/x — headless X/Twitter client (pure TS port) + examples/
 │   └── zukan/                    # Inazuma Eleven Character database scraper
 ├── rust-bridge/                  # FFI Rust ↔ Bun (lol_html, V8 bindings)
+│   └── crates/x-client/          # Native X/Twitter GraphQL+REST client (rusqlite 0.37, FFI via bxc_x_*)
 ├── vendor/                       # mcp-sdk-typescript (NE PAS TOUCHER)
 ├── test/                         # tests root level
 ├── GEMINI.md                     # operating guide partagé

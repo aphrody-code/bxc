@@ -11,6 +11,7 @@ members = [
     "crates/bxc-engine",
     "crates/gemini-web",
     "crates/bxc-chromium",
+    "crates/x-client",
 ]
 
 [workspace.package]
@@ -27,6 +28,7 @@ obscura-js = { path = "crates/obscura-js" }
 obscura-mcp = { path = "crates/obscura-mcp" }
 bxc-chromium = { path = "crates/bxc-chromium" }
 gemini-web = { path = "crates/gemini-web" }
+x-client = { path = "crates/x-client" }
 
 html5ever = "0.39"
 markup5ever = "0.39"
@@ -75,6 +77,7 @@ obscura-dom = { workspace = true }
 obscura-net = { workspace = true }
 bxc-chromium = { workspace = true }
 gemini-web = { workspace = true }
+x-client = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 html2md = "0.2.15"

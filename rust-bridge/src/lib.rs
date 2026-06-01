@@ -2,6 +2,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use obscura_dom::{DomTree};
 use anyhow::anyhow;
+use x_client::{XClient, XSession};
 
 #[no_mangle]
 pub extern "C" fn bxc_parse_html(html_ptr: *const c_char) -> *mut DomTree {
@@ -318,6 +319,141 @@ pub extern "C" fn bxc_gemini_web_ask(
                 "error": format!("Failed to execute Gemini request: {}", e)
             });
             CString::new(err_json.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// x-client (X / Twitter private web API) — cookie-auth read wrappers.
+//
+// Both wrappers authenticate with an `auth_token` + `ct0` cookie pair (the
+// CSRF double-submit values lifted from a logged-in browser session). They
+// build a fresh single-thread tokio runtime per call, mirroring the gemini
+// wrapper above. `XClient::new` installs the ring rustls CryptoProvider
+// idempotently, so no extra setup is required here.
+// ---------------------------------------------------------------------------
+
+/// Build an [`XClient`] from raw `auth_token` / `ct0` cookie pointers.
+///
+/// Returns `Err` with a human-readable message on null/invalid-UTF-8 input or
+/// HTTP client construction failure.
+fn x_build_client(
+    auth_token_ptr: *const c_char,
+    ct0_ptr: *const c_char,
+) -> std::result::Result<XClient, String> {
+    if auth_token_ptr.is_null() || ct0_ptr.is_null() {
+        return Err("Null auth_token/ct0 pointer".to_string());
+    }
+    let auth_token = unsafe { CStr::from_ptr(auth_token_ptr) }
+        .to_str()
+        .map_err(|_| "Invalid UTF-8 in auth_token".to_string())?;
+    let ct0 = unsafe { CStr::from_ptr(ct0_ptr) }
+        .to_str()
+        .map_err(|_| "Invalid UTF-8 in ct0".to_string())?;
+
+    let session = XSession::new(auth_token, ct0);
+    XClient::new(session).map_err(|e| format!("Failed to build X client: {e}"))
+}
+
+/// Fetch a public user profile by `@handle` (screen name).
+///
+/// Returns a JSON-serialised `UserInfo` object, or `{"error":"..."}`.
+/// The returned pointer must be released with [`bxc_free_string`].
+#[no_mangle]
+pub extern "C" fn bxc_x_user_by_screen_name(
+    auth_token_ptr: *const c_char,
+    ct0_ptr: *const c_char,
+    handle_ptr: *const c_char,
+) -> *mut c_char {
+    if handle_ptr.is_null() {
+        return CString::new("{\"error\":\"Null handle pointer\"}").unwrap().into_raw();
+    }
+    let handle = match unsafe { CStr::from_ptr(handle_ptr) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in handle\"}").unwrap().into_raw(),
+    };
+
+    let client = match x_build_client(auth_token_ptr, ct0_ptr) {
+        Ok(c) => c,
+        Err(e) => {
+            let err = serde_json::json!({ "error": e });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("Failed to create tokio runtime: {e}") });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let result = rt.block_on(async { client.user_by_screen_name(handle).await });
+
+    match result {
+        Ok(info) => {
+            let json = serde_json::to_string(&info).unwrap_or_else(|_| "{}".to_string());
+            CString::new(json).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("user_by_screen_name failed: {e}") });
+            CString::new(err.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+/// Fetch up to `count` tweets from a user's timeline by `@handle`.
+///
+/// Resolves the numeric user id from the handle first, then pulls the
+/// `UserTweets` timeline. Returns a JSON-serialised `TweetPage`, or
+/// `{"error":"..."}`. The returned pointer must be released with
+/// [`bxc_free_string`].
+#[no_mangle]
+pub extern "C" fn bxc_x_user_tweets(
+    auth_token_ptr: *const c_char,
+    ct0_ptr: *const c_char,
+    handle_ptr: *const c_char,
+    count: u32,
+) -> *mut c_char {
+    if handle_ptr.is_null() {
+        return CString::new("{\"error\":\"Null handle pointer\"}").unwrap().into_raw();
+    }
+    let handle = match unsafe { CStr::from_ptr(handle_ptr) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in handle\"}").unwrap().into_raw(),
+    };
+
+    let client = match x_build_client(auth_token_ptr, ct0_ptr) {
+        Ok(c) => c,
+        Err(e) => {
+            let err = serde_json::json!({ "error": e });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("Failed to create tokio runtime: {e}") });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let n = if count == 0 { 20 } else { count };
+    let result = rt.block_on(async {
+        let uid = client.user_id_for(handle).await?;
+        client.user_tweets(&uid, n, None, 1).await
+    });
+
+    match result {
+        Ok(page) => {
+            let json = serde_json::to_string(&page).unwrap_or_else(|_| "{}".to_string());
+            CString::new(json).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("user_tweets failed: {e}") });
+            CString::new(err.to_string()).unwrap().into_raw()
         }
     }
 }
