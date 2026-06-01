@@ -108,11 +108,12 @@ async function handleRun(
 		throw new Error("Script file path, directory, or Git URL is required");
 	}
 
-	const resolvedStorageDir =
+	const resolvedStorageDir = resolve(
 		storageDir ||
-		process.env.BXC_STORAGE_DIR ||
-		process.env.APIFY_LOCAL_STORAGE_DIR ||
-		"./storage";
+			process.env.BXC_STORAGE_DIR ||
+			process.env.APIFY_LOCAL_STORAGE_DIR ||
+			"./storage",
+	);
 
 	const isGitUrl =
 		filePath.startsWith("git+") ||
