@@ -23,6 +23,7 @@
 - [🛠️ API Reference](#-api-reference)
   - [Library Usage](#library-usage)
   - [Google Atlas Integration](#google-atlas-integration)
+  - [🌘 Autonomous Crawler & Search Engine](#-autonomous-crawler--search-engine)
 - [🏆 WBO Metagame Tracker & Standings Dashboard](#-wbo-metagame-tracker--standings-dashboard)
 - [📊 Benchmarks](#-benchmarks)
 - [🏗️ Architecture Summary (for LLMs)](#-architecture-summary-for-llms)
@@ -39,6 +40,8 @@ Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/m
 * **`tune_memory_sqlite`**: Structured project memory storage (faster than text).
 * **`bxc_scrape_markdown`**: Convert any URL to clean GFM Markdown.
 * **`bxc_detect_frameworks`**: Deep tech-stack analysis (Wiz, Angular, React, etc.).
+* **`bxc_keyword_search`**: Fast ranked full-text keyword search across crawled pages using FTS5 index.
+* **`bxc_semantic_search`**: Ranked semantic similarity search on all crawled web pages using cosine similarity.
 * **`bxc_cdp_evaluate`**: Execute sandboxed JavaScript in a high-stealth environment.
 * **`bxc_search`**: Powerful Google Web Search with rich snippet options.
 * **`bxc_google_fetch`**: Fetches markdown and structured metadata (JSON-LD, OG, Meta tags).
@@ -73,7 +76,8 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 | `bxc worldbeyblade` | `bxc worldbeyblade <action>` | worldbeyblade.org automation tools (profile, thread, PMs). |
 | `bxc cookies` | `bxc cookies <action>` | Cookie jar management tools. |
 | `bxc har` | `bxc har <action> <url> <out.har>`| HAR (HTTP Archive) recorder/replayer. |
-| `bxc api` | `bxc api` | Run Bxc as an HTTP JSON API. |
+| `bxc api` | `bxc api` | Run Bxc as an HTTP JSON API (REST + GraphQL). |
+| `bxc crawl-worker`| `bxc crawl-worker [opts]`| Runs the persistent recursive crawler worker 24/7. |
 | `bxc install` | `bxc install` | Downloads native dependencies (Lightpanda). |
 | `bxc chrome` | `bxc chrome <action>` | Native Chromium management. |
 
@@ -259,6 +263,25 @@ import { google } from "@aphrody-code/bxc/google";
 
 // Auto-detects local TLD and switches to native Google Smart Routing
 const { page } = await google.open("https://www.google.com/search?q=bxc+engine");
+```
+
+### 🌘 Autonomous Crawler & Search Engine
+
+Bxc includes a 24/7 background worker queue, FTS5 keyword indexing, sitemap XML extraction, and proxy rotation for persistent recursive scraping:
+
+```typescript
+import { BxcClient } from "@aphrody-code/bxc/sdk";
+
+const client = new BxcClient({ endpoint: "http://localhost:3000" });
+
+// Search crawled database natively
+const keywordResults = await client.searchKeyword("Artificial Intelligence");
+const semanticResults = await client.searchSemantic("Machine Learning");
+```
+
+To run a persistent crawling worker daemon on your VPS:
+```bash
+bxc crawl-worker --allowed-domains "news.ycombinator.com" --proxy-pool "http://proxy1.com,http://proxy2.com" https://news.ycombinator.com
 ```
 
 ---

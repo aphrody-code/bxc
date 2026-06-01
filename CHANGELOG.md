@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.5.8] - 2026-06-01
+
+### Added
+
+- Subcommand `bxc crawl-worker` to run the autonomous recursive crawler worker daemon 24/7 on the VPS.
+- SQLite FTS5 Full-Text Search indexing and triggers to automatically keep the FTS virtual table `scrapes_fts` synchronized with `scrapes`.
+- Sitemap XML parsing inside the autonomous crawler to dynamically extract and enqueue `<loc>` URLs.
+- Proxy Pool rotation in `BrowserCrawler` and `AutonomousCrawler` to select random proxy IPs per request.
+- REST `/api/v1/search/keyword` and GraphQL `keywordSearch` queries to perform FTS search natively.
+- Client SDK method `searchKeyword` and MCP tool `bxc_keyword_search` to expose full-text search capabilities system-wide.
+- Walkthrough documentation in [autonomous_crawler_walkthrough.md](file:///home/ubuntu/.gemini/antigravity-cli/brain/f557b83f-ae9b-40bd-9f03-3f2e2c5df2ad/autonomous_crawler_walkthrough.md).
+
+### Fixed
+
+- Handled crawler daemon loop gracefully by adding a `daemon` mode option that prevents premature exits when the queue is temporarily empty.
+- Restored graceful stop / abort signal control over active crawling tasks.
+
 ## [0.5.4] - 2026-05-31
 
 ### Added
