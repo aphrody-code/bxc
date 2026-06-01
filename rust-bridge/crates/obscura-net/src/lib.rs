@@ -12,3 +12,6 @@ pub use robots::RobotsCache;
 pub use blocklist::is_blocked as is_tracker_blocked;
 #[cfg(feature = "stealth")]
 pub use wreq_client::{StealthHttpClient, STEALTH_USER_AGENT};
+
+pub mod dns;
+pub use dns::DnsRecon;
