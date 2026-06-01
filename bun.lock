@@ -9,6 +9,7 @@
         "@aphrody-code/fut": "workspace:*",
         "@aphrody-code/voiranime": "workspace:*",
         "@aphrody-code/worldbeyblade": "workspace:*",
+        "@aphrody-code/x": "workspace:*",
         "@aphrody-code/xcom": "workspace:*",
         "@aphrody-code/zukan": "workspace:*",
         "@bogeychan/elysia-logger": "^0.1.10",
@@ -73,6 +74,17 @@
       "version": "0.1.1",
       "dependencies": {
         "cheerio": "^1.2.0",
+      },
+    },
+    "packages/x": {
+      "name": "@aphrody-code/x",
+      "version": "1.0.3",
+      "dependencies": {
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^6.0.3",
       },
     },
     "packages/xcom": {
@@ -552,6 +564,8 @@
     "@aphrody-code/voiranime": ["@aphrody-code/voiranime@workspace:packages/voiranime"],
 
     "@aphrody-code/worldbeyblade": ["@aphrody-code/worldbeyblade@workspace:packages/worldbeyblade"],
+
+    "@aphrody-code/x": ["@aphrody-code/x@workspace:packages/x"],
 
     "@aphrody-code/xcom": ["@aphrody-code/xcom@workspace:packages/xcom"],
 
