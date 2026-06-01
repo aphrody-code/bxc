@@ -30,6 +30,8 @@ import { BxcDB } from "../../db/BxcDB.ts";
 import { AutonomousCrawler } from "../../../crawler/AutonomousCrawler.ts";
 import { RequestQueue } from "../../../queue/RequestQueue.ts";
 import { redis } from "bun";
+import { generateTypeScriptTypes } from "../../../utils/typegen.ts";
+import { getEmbedding, cosineSimilarity } from "../../../utils/vector.ts";
 
 const db = new BxcDB();
 
@@ -58,6 +60,9 @@ export class Scrape {
 
 	@Field({ nullable: true })
 	openapiSpec?: string;
+
+	@Field({ nullable: true })
+	vector?: string; // JSON float array
 
 	@Field()
 	createdAt!: string;
@@ -93,6 +98,69 @@ export class CrawlResult {
 	stats!: QueueStats;
 }
 
+@ObjectType()
+export class SemanticSearchResult {
+	@Field()
+	url!: string;
+
+	@Field({ nullable: true })
+	metadata?: string; // JSON string
+
+	@Field()
+	markdown!: string;
+
+	@Field()
+	similarity!: number;
+}
+
+@ObjectType()
+export class KeywordSearchResult {
+	@Field()
+	url!: string;
+
+	@Field()
+	profile!: string;
+
+	@Field(() => Int, { nullable: true })
+	status?: number;
+
+	@Field({ nullable: true })
+	metadata?: string; // JSON string
+
+	@Field()
+	markdown!: string;
+
+	@Field()
+	createdAt!: string;
+
+	@Field()
+	rank!: number;
+}
+
+@ObjectType()
+export class FailedCrawl {
+	@Field(() => ID)
+	id!: number;
+
+	@Field()
+	url!: string;
+
+	@Field()
+	method!: string;
+
+	@Field(() => Int)
+	retries!: number;
+
+	@Field({ nullable: true })
+	errorMessage?: string;
+
+	@Field()
+	createdAt!: string;
+
+	@Field({ nullable: true })
+	handledAt?: string;
+}
+
 interface ScrapeRow {
 	id: number;
 	url: string;
@@ -103,6 +171,7 @@ interface ScrapeRow {
 	markdown: string | null;
 	json_data: string | null;
 	openapi_spec: string | null;
+	vector: string | null;
 	timestamp: string | null;
 }
 
@@ -122,6 +191,7 @@ export class ScrapeResolver {
 			markdown: r.markdown ?? undefined,
 			jsonData: r.json_data ?? undefined,
 			openapiSpec: r.openapi_spec ?? undefined,
+			vector: r.vector ?? undefined,
 			createdAt: r.timestamp ?? new Date().toISOString(),
 		}));
 	}
@@ -143,6 +213,7 @@ export class ScrapeResolver {
 					markdown: parsed.markdown,
 					jsonData: JSON.stringify(parsed.structured),
 					openapiSpec: JSON.stringify(parsed.openapi),
+					vector: parsed.vector ? JSON.stringify(parsed.vector) : undefined,
 					createdAt: parsed.timestamp || new Date().toISOString()
 				};
 			}
@@ -158,6 +229,7 @@ export class ScrapeResolver {
 					markdown: row.markdown ?? undefined,
 					jsonData: row.json_data ?? undefined,
 					openapiSpec: row.openapi_spec ?? undefined,
+					vector: row.vector ?? undefined,
 					createdAt: row.timestamp ?? new Date().toISOString(),
 				};
 			}
@@ -178,6 +250,7 @@ export class ScrapeResolver {
 				markdown: row.markdown ?? undefined,
 				jsonData: row.json_data ?? undefined,
 				openapiSpec: row.openapi_spec ?? undefined,
+				vector: row.vector ?? undefined,
 				createdAt: row.timestamp ?? new Date().toISOString(),
 			};
 		}
@@ -196,6 +269,99 @@ export class ScrapeResolver {
 			failed: stats.failed || 0,
 			total: stats.total || 0,
 		};
+	}
+
+	@Query(() => String)
+	async types(@Arg("url") url: string): Promise<string> {
+		const res = await redis.get(`bxc:cache:url:${url}`);
+		let openapi: any = null;
+		let title = "PageData";
+		if (res) {
+			const parsed = JSON.parse(res);
+			openapi = parsed.openapi;
+			title = parsed.title || title;
+		} else {
+			const row = db.getScrapeByUrl(url) as ScrapeRow;
+			if (row && row.openapi_spec) {
+				openapi = JSON.parse(row.openapi_spec);
+				title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+			}
+		}
+
+		if (!openapi) {
+			const crawler = new AutonomousCrawler({ maxRequests: 1 });
+			await crawler.run([url]);
+			const row = db.getScrapeByUrl(url) as ScrapeRow;
+			if (row && row.openapi_spec) {
+				openapi = JSON.parse(row.openapi_spec);
+				title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+			}
+		}
+
+		if (!openapi) {
+			throw new Error(`OpenAPI schema not available for ${url}`);
+		}
+
+		const safeInterfaceName = title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
+		return generateTypeScriptTypes(openapi, safeInterfaceName);
+	}
+
+	@Query(() => [SemanticSearchResult])
+	async semanticSearch(
+		@Arg("q") q: string,
+		@Arg("limit", () => Int, { defaultValue: 5 }) limit: number,
+	): Promise<SemanticSearchResult[]> {
+		const queryVector = await getEmbedding(q);
+		const rows = db.getAllScrapesWithVectors();
+		
+		const results = rows.map((r) => {
+			let vectorParsed: number[] = [];
+			try { vectorParsed = JSON.parse(r.vector); } catch {}
+
+			const similarity = cosineSimilarity(queryVector, vectorParsed);
+			return {
+				url: r.url,
+				metadata: r.metadata ?? undefined,
+				markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
+				similarity
+			};
+		});
+
+		// Sort by similarity descending
+		results.sort((a, b) => b.similarity - a.similarity);
+		return results.slice(0, limit);
+	}
+
+	@Query(() => [KeywordSearchResult])
+	async keywordSearch(
+		@Arg("q") q: string,
+		@Arg("limit", () => Int, { defaultValue: 10 }) limit: number,
+	): Promise<KeywordSearchResult[]> {
+		const rows = db.searchFullText(q, limit);
+		return rows.map((r) => ({
+			url: r.url,
+			profile: r.profile,
+			status: r.status ?? undefined,
+			metadata: r.metadata ?? undefined,
+			markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
+			createdAt: r.timestamp ?? new Date().toISOString(),
+			rank: r.rank
+		}));
+	}
+
+	@Query(() => [FailedCrawl])
+	async failedCrawls(): Promise<FailedCrawl[]> {
+		const crawler = new AutonomousCrawler();
+		const failed = crawler.deadLetterQueue();
+		return failed.map((req) => ({
+			id: req.id,
+			url: req.url,
+			method: req.method,
+			retries: req.retries,
+			errorMessage: req.errorMessage ?? undefined,
+			createdAt: new Date(req.createdAt).toISOString(),
+			handledAt: req.handledAt ? new Date(req.handledAt).toISOString() : undefined,
+		}));
 	}
 
 	@Query(() => String)
@@ -257,6 +423,24 @@ export class ScrapeResolver {
 		return {
 			success: true,
 			message: "Autonomous crawler started in background",
+			stats: {
+				pending: stats.pending || 0,
+				locked: stats.locked || 0,
+				done: stats.done || 0,
+				failed: stats.failed || 0,
+				total: stats.total || 0,
+			}
+		};
+	}
+
+	@Mutation(() => CrawlResult)
+	async replayFailedCrawls(): Promise<CrawlResult> {
+		const crawler = new AutonomousCrawler();
+		const count = crawler.replayFailed();
+		const stats = crawler.stats();
+		return {
+			success: true,
+			message: `Requeued ${count} failed requests from the dead-letter queue.`,
 			stats: {
 				pending: stats.pending || 0,
 				locked: stats.locked || 0,

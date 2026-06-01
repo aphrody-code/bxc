@@ -1552,6 +1552,189 @@ server.registerTool(
 	},
 );
 
+server.registerTool(
+	"bxc_get_url_types",
+	{
+		description: "Retrieves generated TypeScript interface definitions representing the schema of a given crawled URL on the VPS.",
+		inputSchema: z.object({
+			url: z.string().url().describe("The URL to generate TypeScript interfaces for."),
+		}),
+	},
+	async (args) => {
+		const { redis } = await import("bun");
+		const { BxcDB } = await import("../db/BxcDB.ts");
+		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const { generateTypeScriptTypes } = await import("../utils/typegen.ts");
+
+		let openapi: any = null;
+		let title = "PageData";
+
+		const cached = await redis.get(`bxc:cache:url:${args.url}`);
+		if (cached) {
+			const parsed = JSON.parse(cached);
+			openapi = parsed.openapi;
+			title = parsed.title || title;
+		} else {
+			const db = new BxcDB();
+			try {
+				const row = db.getScrapeByUrl(args.url);
+				if (row && row.openapi_spec) {
+					openapi = JSON.parse(row.openapi_spec);
+					title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+				}
+			} finally {
+				db.close();
+			}
+		}
+
+		if (!openapi) {
+			const crawler = new AutonomousCrawler({ maxRequests: 1 });
+			await crawler.run([args.url]);
+			const db = new BxcDB();
+			try {
+				const row = db.getScrapeByUrl(args.url);
+				if (row && row.openapi_spec) {
+					openapi = JSON.parse(row.openapi_spec);
+					title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+				}
+			} finally {
+				db.close();
+			}
+		}
+
+		if (!openapi) {
+			return {
+				content: [{ type: "text", text: `Error: Failed to generate schema or types for ${args.url}` }],
+				isError: true,
+			};
+		}
+
+		const safeInterfaceName = title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
+		const tsTypes = generateTypeScriptTypes(openapi, safeInterfaceName);
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: tsTypes,
+				},
+			],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_semantic_search",
+	{
+		description: "Performs ranked semantic similarity search on all crawled web pages on the VPS using cosine similarity.",
+		inputSchema: z.object({
+			query: z.string().describe("The search query."),
+			limit: z.number().int().min(1).default(5).describe("Maximum number of results to return."),
+		}),
+	},
+	async (args) => {
+		const { BxcDB } = await import("../db/BxcDB.ts");
+		const { getEmbedding, cosineSimilarity } = await import("../utils/vector.ts");
+
+		const queryVector = await getEmbedding(args.query);
+		const db = new BxcDB();
+		try {
+			const rows = db.getAllScrapesWithVectors();
+			const results = rows.map((r) => {
+				let metadataParsed = {};
+				try { metadataParsed = JSON.parse(r.metadata); } catch {}
+				let vectorParsed: number[] = [];
+				try { vectorParsed = JSON.parse(r.vector); } catch {}
+
+				const similarity = cosineSimilarity(queryVector, vectorParsed);
+				return {
+					url: r.url,
+					metadata: metadataParsed,
+					markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
+					similarity
+				};
+			});
+
+			results.sort((a, b) => b.similarity - a.similarity);
+			const sliced = results.slice(0, args.limit);
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify({ query: args.query, results: sliced }, null, 2),
+					},
+				],
+			};
+		} finally {
+			db.close();
+		}
+	},
+);
+
+server.registerTool(
+	"bxc_keyword_search",
+	{
+		description: "Performs full-text keyword search on all crawled web pages on the VPS using SQLite FTS5 rank relevancy matching.",
+		inputSchema: z.object({
+			query: z.string().describe("The search keyword or query phrase."),
+			limit: z.number().int().min(1).default(10).describe("Maximum number of results to return."),
+		}),
+	},
+	async (args) => {
+		const { BxcDB } = await import("../db/BxcDB.ts");
+		const db = new BxcDB();
+		try {
+			const rows = db.searchFullText(args.query, args.limit);
+			const results = rows.map((r) => {
+				let metadataParsed = {};
+				try { metadataParsed = JSON.parse(r.metadata); } catch {}
+				return {
+					url: r.url,
+					profile: r.profile,
+					status: r.status,
+					metadata: metadataParsed,
+					markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
+					timestamp: r.timestamp,
+					rank: r.rank
+				};
+			});
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify({ query: args.query, results }, null, 2),
+					},
+				],
+			};
+		} finally {
+			db.close();
+		}
+	},
+);
+
+server.registerTool(
+	"bxc_crawl_replay_failed",
+	{
+		description: "Replays and retries all failed requests currently stored in the crawler's dead-letter queue.",
+		inputSchema: z.object({}),
+	},
+	async () => {
+		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const crawler = new AutonomousCrawler();
+		const count = crawler.replayFailed();
+		return {
+			content: [
+				{
+					type: "text",
+					text: `Successfully re-queued ${count} failed crawler requests from DLQ.`,
+				},
+			],
+		};
+	},
+);
+
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
