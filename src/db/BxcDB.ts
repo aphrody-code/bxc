@@ -53,6 +53,9 @@ export class BxcDB {
                 status INTEGER,
                 content TEXT,
                 metadata TEXT, -- JSON
+                markdown TEXT,
+                json_data TEXT, -- JSON
+                openapi_spec TEXT, -- JSON
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -65,6 +68,17 @@ export class BxcDB {
             CREATE INDEX IF NOT EXISTS idx_scrapes_url ON scrapes(url);
             CREATE INDEX IF NOT EXISTS idx_scrapes_timestamp ON scrapes(timestamp);
         `);
+
+		// Migration: alter table to add columns if they do not exist
+		try {
+			this.db.exec("ALTER TABLE scrapes ADD COLUMN markdown TEXT;");
+		} catch {}
+		try {
+			this.db.exec("ALTER TABLE scrapes ADD COLUMN json_data TEXT;");
+		} catch {}
+		try {
+			this.db.exec("ALTER TABLE scrapes ADD COLUMN openapi_spec TEXT;");
+		} catch {}
 	}
 
 	public saveScrape(
@@ -73,18 +87,36 @@ export class BxcDB {
 		status: number,
 		content: string,
 		metadata: any,
+		markdown?: string,
+		jsonData?: any,
+		openapiSpec?: any,
 	) {
 		const query = this.db.prepare(`
-            INSERT INTO scrapes (url, profile, status, content, metadata)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO scrapes (url, profile, status, content, metadata, markdown, json_data, openapi_spec)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `);
-		return query.run(url, profile, status, content, JSON.stringify(metadata));
+		return query.run(
+			url,
+			profile,
+			status,
+			content,
+			JSON.stringify(metadata),
+			markdown ?? null,
+			jsonData ? JSON.stringify(jsonData) : null,
+			openapiSpec ? JSON.stringify(openapiSpec) : null,
+		);
 	}
 
 	public getRecentScrapes(limit = 10) {
 		return this.db
 			.query("SELECT * FROM scrapes ORDER BY timestamp DESC LIMIT ?")
 			.all(limit);
+	}
+
+	public getScrapeByUrl(url: string) {
+		return this.db
+			.query("SELECT * FROM scrapes WHERE url = ? ORDER BY timestamp DESC LIMIT 1")
+			.get(url) as any;
 	}
 
 	public close() {
