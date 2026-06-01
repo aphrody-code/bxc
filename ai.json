@@ -1,6 +1,6 @@
 {
 	"project": "Bxc",
-	"version": "0.5.8",
+	"version": "0.6.0",
 	"agents": {
 		"GeminiCLI": {
 			"role": "Lead Orchestrator & Autonomous Developer",
@@ -12,7 +12,7 @@
 				"Memory Consolidation (bun-dream)"
 			],
 			"config": "GEMINI.md",
-			"memory": "/home/ubuntu/.gemini/tmp/bxc/memory/MEMORY.md",
+			"memory": ".gemini/tmp/bxc/memory/MEMORY.md",
 			"extension": "bxc-native"
 		},
 		"ClaudeCode": {
