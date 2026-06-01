@@ -65,6 +65,7 @@ import { Frame } from "./Frame.ts";
 import { BrowserContext } from "./BrowserContext.ts";
 import type { AnyPage } from "./types.ts";
 export { Locator, Frame, BrowserContext };
+export { Actor, KeyValueStore, Dataset, ProxyConfiguration, type ProxyConfigurationOptions } from "../sdk/Actor.ts";
 
 // ---------------------------------------------------------------------------
 // Public option types
@@ -137,6 +138,10 @@ export interface PageOptions {
 	 * ```
 	 */
 	cookies?: string | Cookie[];
+	/** Upstream proxy server URL (e.g. http://proxy.example.com:8080) */
+	proxy?: string;
+	/** Proxy authentication credentials (e.g. username:password) */
+	proxyAuth?: string;
 }
 
 /**
@@ -1477,6 +1482,8 @@ class BrowserSingleton {
 			const fullTransport = await WebSocketTransport.create({
 				headless: opts.headless,
 				insecure: opts.insecure,
+				proxy: opts.proxy,
+				proxyAuth: opts.proxyAuth,
 				...opts.spawnOpts,
 			});
 			const page = await Page.create(fullTransport, opts, context);

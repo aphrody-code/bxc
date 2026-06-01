@@ -39,6 +39,8 @@ interface CliOptions extends CommonOptions {
 	maxPages?: number;
 	maxDepth?: number;
 	compress: boolean;
+	minify: boolean;
+	optimizeImages: boolean;
 	discoverHidden: boolean;
 	resolveSubdomains: boolean;
 	resolveCdns?: string[] | boolean;
@@ -75,6 +77,8 @@ Options:
   --max-pages <N>          maximum HTML pages to crawl (default: 100 if recursive)
   --max-depth <N>          maximum crawl depth (default: 10 if recursive)
   --compress               compress assets with gzip (.gz) sidecar files
+  --minify                 minify HTML, CSS, and JS text assets
+  --optimize-images        optimize PNG and JPEG images using pngquant/jpegoptim
   --discover-hidden        discover hidden pages via robots.txt and sitemaps
   --resolve-subdomains     crawl and resolve subdomains of the seed host
   --resolve-cdns <list>    comma-separated domains (or "true" for any CDN)
@@ -111,6 +115,8 @@ function parseArgs(
 		verbose: false,
 		recursive: false,
 		compress: false,
+		minify: false,
+		optimizeImages: false,
 		discoverHidden: false,
 		resolveSubdomains: false,
 		noParent: false,
@@ -161,6 +167,12 @@ function parseArgs(
 				break;
 			case "--compress":
 				opts.compress = true;
+				break;
+			case "--minify":
+				opts.minify = true;
+				break;
+			case "--optimize-images":
+				opts.optimizeImages = true;
 				break;
 			case "--discover-hidden":
 				opts.discoverHidden = true;
@@ -280,6 +292,8 @@ export async function main(
 			noHostDirectories: opts.noHostDirectories,
 			delayMs: opts.delayMs,
 			har: opts.har,
+			minify: opts.minify,
+			optimizeImages: opts.optimizeImages,
 		});
 
 		Bun.stdout.write(

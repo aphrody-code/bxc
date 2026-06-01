@@ -33,6 +33,8 @@ export interface WebSocketTransportOptions {
 	logLevel?: "debug" | "info" | "warn" | "error" | "fatal" | string;
 	readyTimeoutMs?: number;
 	insecure?: boolean;
+	proxy?: string;
+	proxyAuth?: string;
 }
 
 async function findFreePort(host: string): Promise<number> {
@@ -185,11 +187,17 @@ export class WebSocketTransport implements ConnectionTransport {
 				if (opts.insecure) {
 					args.push("--insecure-disable-tls-host-verification");
 				}
+				if (opts.proxy) {
+					args.push("--proxy", opts.proxy);
+				}
 			} else {
 				const launchArgs = [
 					`--remote-debugging-port=${port}`,
 					"--remote-allow-origins=*", // Required for CDP connections
 				];
+				if (opts.proxy) {
+					launchArgs.push(`--proxy-server=${opts.proxy}`);
+				}
 
 				if (isWin) {
 					// Windows Optimized Flags

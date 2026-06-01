@@ -64,6 +64,7 @@ Subcommands:
   voiranime VoirAnime streaming site catalog search & resolver (e.g. "inazuma")
   google    Google properties auditor & client
   xcom      X.com profile scraper
+  actor     Manage and run Bxc crawler Actors
 
 Global Options:
   --insecure, -k  Bypass TLS certificate validation
@@ -213,6 +214,12 @@ async function main() {
 
 		case "api": {
 			const mod = await import("./api.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "actor": {
+			const mod = await import("./actor.ts");
 			await mod.main(args, opts);
 			break;
 		}

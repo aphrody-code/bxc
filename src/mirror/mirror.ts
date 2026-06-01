@@ -46,9 +46,14 @@ import {
 	relative as relativePath,
 	resolve as resolvePath,
 } from "node:path";
+import zlib from "node:zlib";
+import { promisify } from "node:util";
+import { spawnSync } from "node:child_process";
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
 import { autoDiscoverAndParse } from "../utils/sitemap.ts";
 import type { HarEntry, HarLog } from "../recorder/types.ts";
+
+const brotliCompress = promisify(zlib.brotliCompress);
 import {
 	ImpersonatedClient,
 	type ImpersonateProfile,
@@ -129,6 +134,10 @@ export interface MirrorOptions {
 	delayMs?: number;
 	/** Output path to save the crawl session as a HAR log. */
 	har?: string;
+	/** Minify text assets (HTML/CSS/JS). */
+	minify?: boolean;
+	/** Optimize image assets (PNG/JPEG) if system tools are available. */
+	optimizeImages?: boolean;
 }
 
 export interface MirrorAssetRecord {
@@ -247,7 +256,10 @@ function shouldCrawl(
 				if (
 					host.includes("cdn") ||
 					host.includes("static") ||
-					host.includes("assets")
+					host.includes("assets") ||
+					host.includes("cloudfront") ||
+					host.includes("google") ||
+					host.includes("googleapis")
 				)
 					return true;
 			} else if (Array.isArray(options.resolveCdns)) {
@@ -286,7 +298,10 @@ function shouldDownloadAsset(
 				if (
 					host.includes("cdn") ||
 					host.includes("static") ||
-					host.includes("assets")
+					host.includes("assets") ||
+					host.includes("cloudfront") ||
+					host.includes("google") ||
+					host.includes("googleapis")
 				)
 					return true;
 			} else if (Array.isArray(options.resolveCdns)) {
@@ -472,6 +487,31 @@ const HTML_ASSET_SELECTORS: Array<{
 	{ selector: "embed[src]", attr: "src", tag: "embed" },
 	{ selector: "use[href]", attr: "href", tag: "svg-use" },
 	{ selector: "image[href]", attr: "href", tag: "svg-image" },
+	{
+		selector: "link[rel='alternate'][href]",
+		attr: "href",
+		tag: "link-alternate",
+	},
+	{
+		selector: "meta[property='og:image'][content]",
+		attr: "content",
+		tag: "meta-og-image",
+	},
+	{
+		selector: "meta[property='og:url'][content]",
+		attr: "content",
+		tag: "meta-og-url",
+	},
+	{
+		selector: "meta[name='twitter:image'][content]",
+		attr: "content",
+		tag: "meta-twitter-image",
+	},
+	{
+		selector: "meta[name='twitter:url'][content]",
+		attr: "content",
+		tag: "meta-twitter-url",
+	},
 ];
 
 function expandSrcset(value: string): string[] {
@@ -513,7 +553,8 @@ function discoverHtmlAssets(html: string, baseUrl: string): AssetTask[] {
 			return;
 		}
 		try {
-			const abs = new URL(raw, base).href;
+			const decoded = raw.replace(/&amp;/g, "&");
+			const abs = new URL(decoded, base).href;
 			tasks.push({ url: abs, sourceTag: tag });
 		} catch {
 			// invalid URL — skip
@@ -576,7 +617,8 @@ function discoverHtmlLinks(html: string, baseUrl: string): string[] {
 			return;
 		}
 		try {
-			const abs = new URL(raw, base).href;
+			const decoded = raw.replace(/&amp;/g, "&");
+			const abs = new URL(decoded, base).href;
 			links.push(abs);
 		} catch {
 			// invalid URL
@@ -633,7 +675,8 @@ function rewriteHtmlLinks(
 			return raw;
 		}
 		try {
-			const abs = new URL(raw, base).href;
+			const decoded = raw.replace(/&amp;/g, "&");
+			const abs = new URL(decoded, base).href;
 			const local = urlToLocal.get(abs);
 			if (!local) return raw;
 			return relativePath(htmlOutDir, local);
@@ -767,10 +810,99 @@ async function compressFile(localPath: string): Promise<void> {
 	try {
 		const file = Bun.file(localPath);
 		const bytes = await file.arrayBuffer();
-		const compressed = Bun.gzipSync(new Uint8Array(bytes));
-		await Bun.write(`${localPath}.gz`, compressed);
+		const uint8 = new Uint8Array(bytes);
+
+		// Gzip sidecar
+		const compressedGz = Bun.gzipSync(uint8);
+		await Bun.write(`${localPath}.gz`, compressedGz);
+
+		// Brotli sidecar
+		const compressedBr = await brotliCompress(uint8, {
+			params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 },
+		});
+		await Bun.write(`${localPath}.br`, compressedBr);
 	} catch {
 		// Ignore compression failure for single files
+	}
+}
+
+function minifyHtml(html: string): string {
+	const out = html.replace(/<!--[\s\S]*?-->/g, (match) => {
+		if (match.includes("[if")) return match;
+		return "";
+	});
+	return out
+		.replace(/[ \t]+/g, " ")
+		.replace(/\s*\n\s*/g, "\n")
+		.trim();
+}
+
+function minifyCss(css: string): string {
+	return css
+		.replace(/\/\*[\s\S]*?\*\//g, "")
+		.replace(/\s*([{}|:;,])\s*/g, "$1")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function minifyJs(js: string): string {
+	const pattern =
+		/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|\/(?:[^\/\\]|\\.)*\/[gimy]*)|(\/\/[^\n]*|\/\*[\s\S]*?\*\/)/g;
+	const out = js.replace(pattern, (match, group1, group2) => {
+		if (group2) return "";
+		return group1;
+	});
+	return out
+		.replace(/[ \t]+/g, " ")
+		.replace(/\n\s*\n/g, "\n")
+		.trim();
+}
+
+async function optimizeAssetFile(
+	localPath: string,
+	contentType: string,
+	options: MirrorOptions,
+): Promise<void> {
+	if (options.minify) {
+		const isJs =
+			contentType.includes("javascript") || localPath.endsWith(".js");
+		if (isJs) {
+			try {
+				const js = await Bun.file(localPath).text();
+				const minified = minifyJs(js);
+				await Bun.write(localPath, minified);
+			} catch {
+				// Ignore minification failure
+			}
+		}
+	}
+	if (options.optimizeImages) {
+		const ext = localPath.split(".").pop()?.toLowerCase();
+		const isPng = ext === "png" || contentType.includes("png");
+		const isJpg =
+			ext === "jpg" || ext === "jpeg" || contentType.includes("jpeg");
+		if (isPng || isJpg) {
+			if (isPng) {
+				try {
+					spawnSync("pngquant", [
+						"--force",
+						"--ext",
+						".png",
+						"--speed",
+						"1",
+						localPath,
+					]);
+				} catch {
+					// pngquant not available/failed
+				}
+			} else {
+				try {
+					spawnSync("jpegoptim", ["--strip-all", "--max=85", localPath]);
+				} catch {
+					// jpegoptim not available/failed
+				}
+			}
+		}
 	}
 }
 
@@ -1179,20 +1311,26 @@ export async function mirrorSite(
 		}
 	};
 
+	const activePromises = new Set<Promise<void>>();
 	while (
-		(htmlQueue.size > 0 || activeFetches > 0) &&
+		(htmlQueue.size > 0 || activePromises.size > 0) &&
 		crawledHtml.size < maxPages
 	) {
-		const freeSlots = concurrency - activeFetches;
-		if (freeSlots > 0 && htmlQueue.size > 0) {
-			const promises: Promise<void>[] = [];
-			const toFetch = Math.min(freeSlots, htmlQueue.size);
-			for (let i = 0; i < toFetch; i++) {
-				promises.push(processNextHtml());
-			}
-			await Promise.all(promises);
+		while (
+			activePromises.size < concurrency &&
+			htmlQueue.size > 0 &&
+			crawledHtml.size < maxPages
+		) {
+			const p = processNextHtml();
+			activePromises.add(p);
+			p.finally(() => {
+				activePromises.delete(p);
+			});
+		}
+		if (activePromises.size > 0) {
+			await Promise.race(activePromises);
 		} else {
-			await new Promise((resolve) => setTimeout(resolve, 50));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 		}
 	}
 	log(`[mirror] crawl complete. Crawled ${crawledHtml.size} pages.`);
@@ -1211,6 +1349,13 @@ export async function mirrorSite(
 
 	for (const [, pageData] of crawledHtml) {
 		for (const t of discoverHtmlAssets(pageData.html, pageData.finalUrl)) {
+			if (
+				t.sourceTag === "link-alternate" ||
+				t.sourceTag === "meta-og-url" ||
+				t.sourceTag === "meta-twitter-url"
+			) {
+				continue;
+			}
 			enqueueAsset(t);
 		}
 	}
@@ -1316,12 +1461,15 @@ export async function mirrorSite(
 			seedHost,
 			options,
 		);
-		const rewrittenHtml = rewriteHtmlLinks(
+		let rewrittenHtml = rewriteHtmlLinks(
 			pageData.html,
 			pageData.finalUrl,
 			urlToLocal,
 			localPath,
 		);
+		if (options.minify) {
+			rewrittenHtml = minifyHtml(rewrittenHtml);
+		}
 		htmlPromises.push(
 			(async () => {
 				await Bun.write(localPath, rewrittenHtml);
@@ -1345,13 +1493,16 @@ export async function mirrorSite(
 		cssPromises.push(
 			(async () => {
 				const css = await Bun.file(rec.localPath).text();
-				const next = rewriteCssLinks(
+				let next = rewriteCssLinks(
 					css,
 					rec.finalUrl,
 					urlToLocal,
 					rec.localPath,
 				);
-				if (next !== css) {
+				if (options.minify) {
+					next = minifyCss(next);
+				}
+				if (next !== css || options.minify) {
 					await Bun.write(rec.localPath, next);
 					cssRewritten++;
 				}
@@ -1364,18 +1515,23 @@ export async function mirrorSite(
 	await Promise.all(cssPromises);
 	log(`[mirror] rewrote ${cssRewritten} CSS files`);
 
-	// Pre-compress remaining assets if compress is true
-	if (options.compress) {
-		const compressPromises: Promise<void>[] = [];
+	// Optimize (JS minification + Image optimization) and pre-compress remaining assets
+	if (options.compress || options.minify || options.optimizeImages) {
+		const postProcessPromises: Promise<void>[] = [];
 		for (const rec of records.values()) {
 			if (rec.error) continue;
 			if (rec.contentType.includes("css") || rec.url.endsWith(".css")) continue;
-			if (isCompressible(rec.localPath)) {
-				compressPromises.push(compressFile(rec.localPath));
-			}
+			postProcessPromises.push(
+				(async () => {
+					await optimizeAssetFile(rec.localPath, rec.contentType, options);
+					if (options.compress && isCompressible(rec.localPath)) {
+						await compressFile(rec.localPath);
+					}
+				})(),
+			);
 		}
-		await Promise.all(compressPromises);
-		log(`[mirror] compressed remaining text assets`);
+		await Promise.all(postProcessPromises);
+		log(`[mirror] optimized and compressed remaining assets`);
 	}
 
 	// Step 6 — manifest

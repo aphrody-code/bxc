@@ -78,4 +78,5 @@ src/scrapers/fut/data/fut_extracted_database.json
 
 # Temporary directories
 tmp/
+storage/
 

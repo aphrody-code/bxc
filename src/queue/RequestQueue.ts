@@ -41,6 +41,8 @@
  */
 
 import { Database } from "bun:sqlite";
+import { join } from "node:path";
+import { BxcConfig } from "../config/BxcConfig.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,8 +62,12 @@ export interface QueuedRequest {
 	uniqueKey: string;
 	url: string;
 	method: string;
-	/** Arbitrary JSON payload (headers, body, userData). */
+	/** Raw HTTP POST body/payload string. */
 	payload: string | null;
+	/** Optional headers record. */
+	headers: Record<string, string> | null;
+	/** Optional metadata record. */
+	userData: Record<string, unknown> | null;
 	state: RequestState;
 	retries: number;
 	priority: number;
@@ -80,6 +86,8 @@ export interface AddRequestOptions {
 	headers?: Record<string, string>;
 	/** If true, request is put at the front of the queue. */
 	forefront?: boolean;
+	/** Raw HTTP POST body/payload string. */
+	payload?: string | null;
 }
 
 export interface RequestQueueOptions {
@@ -108,6 +116,8 @@ CREATE TABLE IF NOT EXISTS requests (
   url         TEXT    NOT NULL,
   method      TEXT    NOT NULL DEFAULT 'GET',
   payload     TEXT,
+  headers     TEXT,
+  user_data   TEXT,
   state       TEXT    NOT NULL DEFAULT 'PENDING',
   retries     INTEGER NOT NULL DEFAULT 0,
   priority    INTEGER NOT NULL DEFAULT 0,
@@ -120,6 +130,8 @@ CREATE INDEX IF NOT EXISTS idx_pending ON requests (state, priority DESC, id ASC
   WHERE state = 'PENDING';
 PRAGMA journal_mode=WAL;
 PRAGMA synchronous=NORMAL;
+PRAGMA temp_store=MEMORY;
+PRAGMA mmap_size=30000000000;
 `;
 
 // ---------------------------------------------------------------------------
@@ -143,6 +155,37 @@ export class RequestQueue {
 	readonly #stmtDlq: ReturnType<Database["prepare"]>;
 	readonly #stmtExists: ReturnType<Database["prepare"]>;
 
+	#mapRow(row: any): QueuedRequest {
+		let headers: Record<string, string> | null = null;
+		if (row.headers) {
+			try {
+				headers = JSON.parse(row.headers);
+			} catch {}
+		}
+		let userData: Record<string, unknown> | null = null;
+		if (row.user_data) {
+			try {
+				userData = JSON.parse(row.user_data);
+			} catch {}
+		}
+		return {
+			id: row.id,
+			uniqueKey: row.unique_key,
+			url: row.url,
+			method: row.method,
+			payload: row.payload,
+			headers,
+			userData,
+			state: row.state,
+			retries: row.retries,
+			priority: row.priority,
+			createdAt: row.created_at,
+			lockedAt: row.locked_at,
+			handledAt: row.handled_at,
+			errorMessage: row.error_msg,
+		};
+	}
+
 	private constructor(dbPath: string, opts: RequestQueueOptions = {}) {
 		this.#maxRetries = opts.maxRetries ?? 3;
 		this.#lockTimeoutMs = opts.lockTimeoutMs ?? 120_000;
@@ -150,11 +193,19 @@ export class RequestQueue {
 		this.#db = new Database(dbPath, { create: true });
 		this.#db.exec(DDL);
 
+		// Dynamic migration to add columns if they do not exist
+		try {
+			this.#db.exec("ALTER TABLE requests ADD COLUMN headers TEXT;");
+		} catch {}
+		try {
+			this.#db.exec("ALTER TABLE requests ADD COLUMN user_data TEXT;");
+		} catch {}
+
 		// --------------- prepared statements ---------------
 		this.#stmtInsert = this.#db.prepare(`
       INSERT OR IGNORE INTO requests
-        (unique_key, url, method, payload, state, priority, created_at)
-      VALUES ($uniqueKey, $url, $method, $payload, 'PENDING', $priority, $now)
+        (unique_key, url, method, payload, headers, user_data, state, priority, created_at)
+      VALUES ($uniqueKey, $url, $method, $payload, $headers, $userData, 'PENDING', $priority, $now)
     `);
 
 		this.#stmtFetchBatch = this.#db.prepare(`
@@ -218,10 +269,29 @@ export class RequestQueue {
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Open (or create) a persistent queue at `dbPath`.
+	 * Open (or create) a persistent queue at `dbPathOrName`.
 	 * Pass `":memory:"` for ephemeral in-process queue (useful in tests).
 	 */
-	static open(dbPath: string, opts?: RequestQueueOptions): RequestQueue {
+	static open(
+		dbPathOrName: string,
+		opts?: RequestQueueOptions & { storageDir?: string },
+	): RequestQueue {
+		let dbPath = dbPathOrName;
+		if (
+			!dbPathOrName.includes("/") &&
+			!dbPathOrName.includes("\\") &&
+			dbPathOrName !== ":memory:"
+		) {
+			const storageDir = opts?.storageDir ?? BxcConfig.getGlobal().storageDir;
+			dbPath = join(storageDir, "request_queues", `${dbPathOrName}.db`);
+		}
+		if (dbPath !== ":memory:") {
+			const { mkdirSync } = require("node:fs");
+			const { dirname } = require("node:path");
+			try {
+				mkdirSync(dirname(dbPath), { recursive: true });
+			} catch {}
+		}
 		return new RequestQueue(dbPath, opts);
 	}
 
@@ -236,13 +306,9 @@ export class RequestQueue {
 	addRequest(url: string, opts: AddRequestOptions = {}): boolean {
 		const uniqueKey = opts.uniqueKey ?? url;
 		const method = (opts.method ?? "GET").toUpperCase();
-		const payload =
-			opts.userData !== undefined || opts.headers !== undefined
-				? JSON.stringify({
-						userData: opts.userData ?? {},
-						headers: opts.headers ?? {},
-					})
-				: null;
+		const payload = opts.payload ?? null;
+		const headers = opts.headers ? JSON.stringify(opts.headers) : null;
+		const userData = opts.userData ? JSON.stringify(opts.userData) : null;
 		const priority = opts.forefront === true ? 1 : 0;
 
 		const result = this.#stmtInsert.run({
@@ -250,6 +316,8 @@ export class RequestQueue {
 			$url: url,
 			$method: method,
 			$payload: payload,
+			$headers: headers,
+			$userData: userData,
 			$priority: priority,
 			$now: Date.now(),
 		});
@@ -307,10 +375,10 @@ export class RequestQueue {
 				.prepare(
 					`SELECT * FROM requests WHERE id IN (${ids.map(() => "?").join(",")})`,
 				)
-				.all(...ids) as QueuedRequest[];
+				.all(...ids) as any[];
 		});
 
-		return lockTx(rows.map((r) => r.id));
+		return lockTx(rows.map((r) => r.id)).map((row) => this.#mapRow(row));
 	}
 
 	// ---------------------------------------------------------------------------
@@ -370,7 +438,7 @@ export class RequestQueue {
 
 	/** Return all requests in the dead-letter queue (state = FAILED). */
 	deadLetterQueue(): QueuedRequest[] {
-		return this.#stmtDlq.all() as QueuedRequest[];
+		return (this.#stmtDlq.all() as any[]).map((row) => this.#mapRow(row));
 	}
 
 	/**
