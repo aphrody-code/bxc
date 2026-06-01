@@ -8,8 +8,8 @@ Total samples: 115
 | Profile | Pass | Fail | Skip | Pass rate | Avg goto ms | CF walls |
 |---|---|---|---|---|---|---|
 | static | 0 | 0 | 23 | n/a | — | 0 |
-| fast | 23 | 0 | 0 | 100.0% | 199 ms | 0 |
-| http | 20 | 3 | 0 | 87.0% | 171 ms | 0 |
+| fast | 23 | 0 | 0 | 100.0% | 400 ms | 0 |
+| http | 20 | 3 | 0 | 87.0% | 392 ms | 0 |
 | stealth | 0 | 0 | 23 | n/a | — | 0 |
 | max | 0 | 0 | 23 | n/a | — | 0 |
 
@@ -17,29 +17,29 @@ Total samples: 115
 
 | Pattern | Slug/User | static | fast | http | stealth | max |
 |---|---|---|---|---|---|---|
-| landing-page | about | skip | pass (140ms 481KB) | pass (81ms 481KB) | skip | skip |
-| landing-page | pricing | skip | pass (131ms 428KB) | pass (74ms 428KB) | skip | skip |
-| landing-page | store | skip | pass (310ms 670KB) | pass (637ms 670KB) | skip | skip |
-| about-page | about | skip | pass (131ms 470KB) | pass (74ms 470KB) | skip | skip |
-| about-page | pricing | skip | pass (131ms 470KB) | pass (78ms 470KB) | skip | skip |
-| about-page | store | skip | pass (135ms 470KB) | pass (75ms 470KB) | skip | skip |
-| pricing-page | about | skip | pass (130ms 428KB) | pass (73ms 428KB) | skip | skip |
-| pricing-page | pricing | skip | pass (132ms 428KB) | pass (82ms 428KB) | skip | skip |
-| pricing-page | store | skip | pass (129ms 428KB) | pass (72ms 428KB) | skip | skip |
-| partners-page | about | skip | pass (223ms 324KB) | pass (317ms 324KB) | skip | skip |
-| partners-page | pricing | skip | pass (130ms 324KB) | pass (71ms 324KB) | skip | skip |
-| partners-page | store | skip | pass (131ms 324KB) | pass (74ms 324KB) | skip | skip |
-| store-page | about | skip | pass (399ms 671KB) | pass (309ms 674KB) | skip | skip |
-| store-page | pricing | skip | pass (646ms 673KB) | pass (309ms 671KB) | skip | skip |
-| store-page | store | skip | pass (364ms 669KB) | pass (674ms 671KB) | skip | skip |
-| changelog-page | about | skip | pass (407ms 165KB) | fail: HTTP 404 | skip | skip |
-| changelog-page | pricing | skip | pass (116ms 165KB) | fail: HTTP 404 | skip | skip |
-| changelog-page | store | skip | pass (118ms 165KB) | fail: HTTP 404 | skip | skip |
-| user-profile | pricing | skip | pass (140ms 428KB) | pass (71ms 428KB) | skip | skip |
-| user-profile | about | skip | pass (132ms 470KB) | pass (75ms 470KB) | skip | skip |
-| user-tournaments | pricing | skip | pass (134ms 428KB) | pass (76ms 428KB) | skip | skip |
-| user-tournaments | about | skip | pass (132ms 470KB) | pass (78ms 470KB) | skip | skip |
-| community-satr | sunafterthereign | skip | pass (136ms 481KB) | pass (104ms 481KB) | skip | skip |
+| landing-page | about | skip | pass (232ms 481KB) | pass (177ms 484KB) | skip | skip |
+| landing-page | pricing | skip | pass (225ms 429KB) | pass (159ms 429KB) | skip | skip |
+| landing-page | store | skip | pass (578ms 670KB) | pass (2800ms 671KB) | skip | skip |
+| about-page | about | skip | pass (229ms 470KB) | pass (172ms 470KB) | skip | skip |
+| about-page | pricing | skip | pass (232ms 470KB) | pass (170ms 470KB) | skip | skip |
+| about-page | store | skip | pass (226ms 470KB) | pass (168ms 470KB) | skip | skip |
+| pricing-page | about | skip | pass (214ms 429KB) | pass (165ms 429KB) | skip | skip |
+| pricing-page | pricing | skip | pass (229ms 429KB) | pass (182ms 429KB) | skip | skip |
+| pricing-page | store | skip | pass (218ms 429KB) | pass (158ms 429KB) | skip | skip |
+| partners-page | about | skip | pass (368ms 324KB) | pass (359ms 324KB) | skip | skip |
+| partners-page | pricing | skip | pass (221ms 324KB) | pass (161ms 324KB) | skip | skip |
+| partners-page | store | skip | pass (230ms 324KB) | pass (161ms 324KB) | skip | skip |
+| store-page | about | skip | pass (2218ms 670KB) | pass (635ms 671KB) | skip | skip |
+| store-page | pricing | skip | pass (493ms 671KB) | pass (961ms 670KB) | skip | skip |
+| store-page | store | skip | pass (1348ms 674KB) | pass (1023ms 671KB) | skip | skip |
+| changelog-page | about | skip | pass (421ms 165KB) | fail: HTTP 404 | skip | skip |
+| changelog-page | pricing | skip | pass (188ms 165KB) | fail: HTTP 404 | skip | skip |
+| changelog-page | store | skip | pass (183ms 165KB) | fail: HTTP 404 | skip | skip |
+| user-profile | pricing | skip | pass (220ms 429KB) | pass (165ms 429KB) | skip | skip |
+| user-profile | about | skip | pass (228ms 470KB) | pass (169ms 470KB) | skip | skip |
+| user-tournaments | pricing | skip | pass (229ms 429KB) | pass (167ms 429KB) | skip | skip |
+| user-tournaments | about | skip | pass (232ms 470KB) | pass (160ms 470KB) | skip | skip |
+| community-satr | sunafterthereign | skip | pass (248ms 481KB) | pass (164ms 484KB) | skip | skip |
 
 ## Cloudflare wall analysis
 
