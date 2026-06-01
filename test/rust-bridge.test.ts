@@ -21,6 +21,9 @@ import {
 	querySelector,
 	querySelectorAll,
 	htmlToMarkdown,
+	getChromiumCookies,
+	dnsRecon,
+	geminiWebAsk,
 } from "../src/rust/bridge.ts";
 
 describe("rust-bridge integration — DOM & Markdown", () => {
@@ -45,5 +48,15 @@ describe("rust-bridge integration — DOM & Markdown", () => {
 		const md = htmlToMarkdown(html);
 		expect(md.toLowerCase()).toContain("title");
 		expect(md).toContain("**bold**");
+	});
+
+	it("should run DNS OSINT (via FFI)", () => {
+		const results = dnsRecon("google.com");
+		expect(Array.isArray(results)).toBe(true);
+	});
+
+	it("should support getChromiumCookies FFI signature", () => {
+		const cookies = getChromiumCookies("/tmp", "Default", "google.com");
+		expect(cookies).toBeDefined();
 	});
 });

@@ -1,6 +1,7 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use obscura_dom::{DomTree};
+use anyhow::anyhow;
 
 #[no_mangle]
 pub extern "C" fn bxc_parse_html(html_ptr: *const c_char) -> *mut DomTree {
@@ -159,3 +160,165 @@ pub extern "C" fn bxc_html_to_markdown(html_ptr: *const c_char) -> *mut c_char {
     let c_string = CString::new(markdown).unwrap_or_default();
     c_string.into_raw()
 }
+
+#[no_mangle]
+pub extern "C" fn bxc_get_chromium_cookies(
+    user_data_path_ptr: *const c_char,
+    profile_ptr: *const c_char,
+    host_key_ptr: *const c_char,
+) -> *mut c_char {
+    if user_data_path_ptr.is_null() || profile_ptr.is_null() || host_key_ptr.is_null() {
+        return CString::new("[]").unwrap().into_raw();
+    }
+
+    let user_data_path = unsafe { CStr::from_ptr(user_data_path_ptr) };
+    let profile = unsafe { CStr::from_ptr(profile_ptr) };
+    let host_key = unsafe { CStr::from_ptr(host_key_ptr) };
+
+    let user_data_path_str = match user_data_path.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("[]").unwrap().into_raw(),
+    };
+    let profile_str = match profile.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("[]").unwrap().into_raw(),
+    };
+    let host_key_str = match host_key.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("[]").unwrap().into_raw(),
+    };
+
+    let mut parser = bxc_chromium::ChromiumParser::new(std::path::PathBuf::from(user_data_path_str));
+    if let Err(e) = parser.load_master_key() {
+        let err_json = serde_json::json!({
+            "error": format!("Failed to load master key: {}", e)
+        });
+        return CString::new(err_json.to_string()).unwrap().into_raw();
+    }
+
+    match parser.get_cookies_full(profile_str, host_key_str) {
+        Ok(cookies) => {
+            let json = serde_json::to_string(&cookies).unwrap_or_else(|_| "[]".to_string());
+            CString::new(json).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err_json = serde_json::json!({
+                "error": format!("Failed to extract cookies: {}", e)
+            });
+            CString::new(err_json.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn bxc_dns_recon(domain_ptr: *const c_char) -> *mut c_char {
+    if domain_ptr.is_null() {
+        return CString::new("[]").unwrap().into_raw();
+    }
+
+    let domain = unsafe { CStr::from_ptr(domain_ptr) };
+    let domain_str = match domain.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("[]").unwrap().into_raw(),
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err_json = serde_json::json!({
+                "error": format!("Failed to create tokio runtime: {}", e)
+            });
+            return CString::new(err_json.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let results = rt.block_on(async {
+        let recon = obscura_net::dns::DnsRecon::new();
+        recon.run_osint(domain_str).await
+    });
+
+    match results {
+        Ok(subdomains) => {
+            let json = serde_json::to_string(&subdomains).unwrap_or_else(|_| "[]".to_string());
+            CString::new(json).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err_json = serde_json::json!({
+                "error": format!("Failed to run DNS OSINT: {}", e)
+            });
+            CString::new(err_json.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn bxc_gemini_web_ask(
+    cookie_path_ptr: *const c_char,
+    prompt_ptr: *const c_char,
+    model_ptr: *const c_char,
+) -> *mut c_char {
+    if cookie_path_ptr.is_null() || prompt_ptr.is_null() {
+        let err_json = serde_json::json!({
+            "error": "Null pointer arguments passed to bxc_gemini_web_ask"
+        });
+        return CString::new(err_json.to_string()).unwrap().into_raw();
+    }
+
+    let cookie_path = unsafe { CStr::from_ptr(cookie_path_ptr) };
+    let prompt = unsafe { CStr::from_ptr(prompt_ptr) };
+    
+    let cookie_path_str = match cookie_path.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in cookie_path\"}").unwrap().into_raw(),
+    };
+    let prompt_str = match prompt.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in prompt\"}").unwrap().into_raw(),
+    };
+
+    let model_str = if model_ptr.is_null() {
+        None
+    } else {
+        match unsafe { CStr::from_ptr(model_ptr) }.to_str() {
+            Ok(s) => Some(s),
+            Err(_) => None,
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err_json = serde_json::json!({
+                "error": format!("Failed to create tokio runtime: {}", e)
+            });
+            return CString::new(err_json.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let results = rt.block_on(async {
+        let client = gemini_web::GeminiWebClient::from_cookie_file(cookie_path_str, "en").await;
+        match client {
+            Ok(c) => c.ask(prompt_str, model_str).await.map_err(|e| anyhow!(e)),
+            Err(e) => Err(anyhow!(e)),
+        }
+    });
+
+    match results {
+        Ok(reply) => {
+            let res_json = serde_json::json!({
+                "text": reply.text,
+                "conversation_id": reply.metadata.conversation_id,
+                "response_id": reply.metadata.response_id,
+                "choice_id": reply.metadata.choice_id,
+            });
+            CString::new(res_json.to_string()).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err_json = serde_json::json!({
+                "error": format!("Failed to execute Gemini request: {}", e)
+            });
+            CString::new(err_json.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
