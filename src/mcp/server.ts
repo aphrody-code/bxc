@@ -26,7 +26,7 @@ async function getOrCreatePage(
 
 const server = new McpServer({
 	name: "bxc-native-mcp",
-	version: "0.4.0",
+	version: "0.5.0",
 });
 
 /** Maps a friendly search vertical to Google's `udm` result-mode code. */
@@ -764,8 +764,11 @@ server.registerTool(
 			"Scrapes zukan.inazuma.jp (character list or character details).",
 		inputSchema: z.object({
 			action: z.enum(["list", "chara"]),
-			param: z.string().optional().describe("Character ID or query parameter for details (q parameter)."),
-			locale: z.enum(["ja", "en", "fr"]).default("ja")
+			param: z
+				.string()
+				.optional()
+				.describe("Character ID or query parameter for details (q parameter)."),
+			locale: z.enum(["ja", "en", "fr"]).default("ja"),
 		}),
 	},
 	async (args) => {
@@ -774,16 +777,17 @@ server.registerTool(
 		if (args.action === "list") {
 			const list = await scraper.getCharacterList(args.locale);
 			return {
-				content: [{ type: "text", text: JSON.stringify(list, null, 2) }]
+				content: [{ type: "text", text: JSON.stringify(list, null, 2) }],
 			};
 		} else {
-			if (!args.param) throw new Error("Missing target character parameter ('q')");
+			if (!args.param)
+				throw new Error("Missing target character parameter ('q')");
 			const detail = await scraper.getCharacterDetail(args.param, args.locale);
 			return {
-				content: [{ type: "text", text: JSON.stringify(detail, null, 2) }]
+				content: [{ type: "text", text: JSON.stringify(detail, null, 2) }],
 			};
 		}
-	}
+	},
 );
 
 /**
@@ -1300,10 +1304,21 @@ server.registerTool(
 		description:
 			"Runs a local script, a directory with actor.json/package.json, or a remote Git repository URL as a Bxc Actor. You can optionally provide custom input JSON, storage dir, and control purge behavior.",
 		inputSchema: z.object({
-			actorPath: z.string().describe("The file path, directory path, or Git URL of the Actor."),
-			input: z.record(z.string(), z.any()).optional().describe("Input key-value pairs for the Actor run."),
-			purge: z.boolean().default(true).describe("Purge default storage on start."),
-			storageDir: z.string().optional().describe("Custom storage directory path."),
+			actorPath: z
+				.string()
+				.describe("The file path, directory path, or Git URL of the Actor."),
+			input: z
+				.record(z.string(), z.any())
+				.optional()
+				.describe("Input key-value pairs for the Actor run."),
+			purge: z
+				.boolean()
+				.default(true)
+				.describe("Purge default storage on start."),
+			storageDir: z
+				.string()
+				.optional()
+				.describe("Custom storage directory path."),
 		}),
 	},
 	async (args) => {
@@ -1319,7 +1334,11 @@ server.registerTool(
 			cliArgs.push("--no-purge");
 		}
 		try {
-			await actorCliMain(cliArgs, { insecure: false, quiet: true, json: false, timeoutMs: 30000 }, { exitProcess: false });
+			await actorCliMain(
+				cliArgs,
+				{ insecure: false, quiet: true, json: false, timeoutMs: 30000 },
+				{ exitProcess: false },
+			);
 			return {
 				content: [
 					{
@@ -1351,14 +1370,32 @@ server.registerTool(
 			"Starts a recursive background crawl for a list of URLs on the VPS, matching depth constraints and domain restrictions. Ideal for scraping and indexing sites recursively.",
 		inputSchema: z.object({
 			urls: z.array(z.string().url()).describe("URLs to start crawling from."),
-			allowedDomains: z.array(z.string()).optional().describe("Restrict crawl to these domains."),
-			maxDepth: z.number().int().min(1).default(3).describe("Maximum crawl depth."),
-			maxRequests: z.number().int().min(1).optional().describe("Maximum total requests to crawl."),
-			profile: z.enum(["static", "fast", "stealth", "max"]).default("stealth").describe("Browser profile to use."),
+			allowedDomains: z
+				.array(z.string())
+				.optional()
+				.describe("Restrict crawl to these domains."),
+			maxDepth: z
+				.number()
+				.int()
+				.min(1)
+				.default(3)
+				.describe("Maximum crawl depth."),
+			maxRequests: z
+				.number()
+				.int()
+				.min(1)
+				.optional()
+				.describe("Maximum total requests to crawl."),
+			profile: z
+				.enum(["static", "fast", "stealth", "max"])
+				.default("stealth")
+				.describe("Browser profile to use."),
 		}),
 	},
 	async (args) => {
-		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const { AutonomousCrawler } = await import(
+			"../crawler/AutonomousCrawler.ts"
+		);
 		const crawler = new AutonomousCrawler({
 			allowedDomains: args.allowedDomains,
 			maxDepth: args.maxDepth,
@@ -1388,13 +1425,18 @@ server.registerTool(
 			"Retrieves cached or live crawled data (title, status, markdown content, structured JSON metadata, and OpenAPI schema) for a given URL on the VPS. Checks Redis first, then SQLite, then crawls live.",
 		inputSchema: z.object({
 			url: z.string().url().describe("The URL to fetch data for."),
-			force: z.boolean().default(false).describe("If true, crawls live and bypasses cache."),
+			force: z
+				.boolean()
+				.default(false)
+				.describe("If true, crawls live and bypasses cache."),
 		}),
 	},
 	async (args) => {
 		const { redis } = await import("bun");
 		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const { AutonomousCrawler } = await import(
+			"../crawler/AutonomousCrawler.ts"
+		);
 
 		let data: any = null;
 		let source = "cache";
@@ -1418,7 +1460,12 @@ server.registerTool(
 							openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
 							timestamp: row.timestamp,
 						};
-						await redis.set(`bxc:cache:url:${args.url}`, JSON.stringify(data), "EX", 86400);
+						await redis.set(
+							`bxc:cache:url:${args.url}`,
+							JSON.stringify(data),
+							"EX",
+							86400,
+						);
 						source = "sqlite";
 					}
 				} finally {
@@ -1452,7 +1499,12 @@ server.registerTool(
 
 		if (!data) {
 			return {
-				content: [{ type: "text", text: `Error: Failed to crawl or retrieve page data for ${args.url}` }],
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to crawl or retrieve page data for ${args.url}`,
+					},
+				],
 				isError: true,
 			};
 		}
@@ -1471,15 +1523,21 @@ server.registerTool(
 server.registerTool(
 	"bxc_get_url_openapi",
 	{
-		description: "Retrieves the well-typed OpenAPI schema generated for a given crawled URL on the VPS.",
+		description:
+			"Retrieves the well-typed OpenAPI schema generated for a given crawled URL on the VPS.",
 		inputSchema: z.object({
-			url: z.string().url().describe("The URL to fetch the OpenAPI schema for."),
+			url: z
+				.string()
+				.url()
+				.describe("The URL to fetch the OpenAPI schema for."),
 		}),
 	},
 	async (args) => {
 		const { redis } = await import("bun");
 		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const { AutonomousCrawler } = await import(
+			"../crawler/AutonomousCrawler.ts"
+		);
 
 		let openapi: any = null;
 
@@ -1514,7 +1572,12 @@ server.registerTool(
 
 		if (!openapi) {
 			return {
-				content: [{ type: "text", text: `Error: Failed to generate OpenAPI schema for ${args.url}` }],
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to generate OpenAPI schema for ${args.url}`,
+					},
+				],
 				isError: true,
 			};
 		}
@@ -1533,7 +1596,8 @@ server.registerTool(
 server.registerTool(
 	"bxc_crawl_stats",
 	{
-		description: "Retrieves statistics from the request queue of the autonomous crawler.",
+		description:
+			"Retrieves statistics from the request queue of the autonomous crawler.",
 		inputSchema: z.object({}),
 	},
 	async () => {
@@ -1555,15 +1619,21 @@ server.registerTool(
 server.registerTool(
 	"bxc_get_url_types",
 	{
-		description: "Retrieves generated TypeScript interface definitions representing the schema of a given crawled URL on the VPS.",
+		description:
+			"Retrieves generated TypeScript interface definitions representing the schema of a given crawled URL on the VPS.",
 		inputSchema: z.object({
-			url: z.string().url().describe("The URL to generate TypeScript interfaces for."),
+			url: z
+				.string()
+				.url()
+				.describe("The URL to generate TypeScript interfaces for."),
 		}),
 	},
 	async (args) => {
 		const { redis } = await import("bun");
 		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const { AutonomousCrawler } = await import(
+			"../crawler/AutonomousCrawler.ts"
+		);
 		const { generateTypeScriptTypes } = await import("../utils/typegen.ts");
 
 		let openapi: any = null;
@@ -1580,7 +1650,9 @@ server.registerTool(
 				const row = db.getScrapeByUrl(args.url);
 				if (row && row.openapi_spec) {
 					openapi = JSON.parse(row.openapi_spec);
-					title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+					title = row.metadata
+						? JSON.parse(row.metadata).title || title
+						: title;
 				}
 			} finally {
 				db.close();
@@ -1595,7 +1667,9 @@ server.registerTool(
 				const row = db.getScrapeByUrl(args.url);
 				if (row && row.openapi_spec) {
 					openapi = JSON.parse(row.openapi_spec);
-					title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+					title = row.metadata
+						? JSON.parse(row.metadata).title || title
+						: title;
 				}
 			} finally {
 				db.close();
@@ -1604,12 +1678,18 @@ server.registerTool(
 
 		if (!openapi) {
 			return {
-				content: [{ type: "text", text: `Error: Failed to generate schema or types for ${args.url}` }],
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to generate schema or types for ${args.url}`,
+					},
+				],
 				isError: true,
 			};
 		}
 
-		const safeInterfaceName = title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
+		const safeInterfaceName =
+			title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
 		const tsTypes = generateTypeScriptTypes(openapi, safeInterfaceName);
 
 		return {
@@ -1626,15 +1706,23 @@ server.registerTool(
 server.registerTool(
 	"bxc_semantic_search",
 	{
-		description: "Performs ranked semantic similarity search on all crawled web pages on the VPS using cosine similarity.",
+		description:
+			"Performs ranked semantic similarity search on all crawled web pages on the VPS using cosine similarity.",
 		inputSchema: z.object({
 			query: z.string().describe("The search query."),
-			limit: z.number().int().min(1).default(5).describe("Maximum number of results to return."),
+			limit: z
+				.number()
+				.int()
+				.min(1)
+				.default(5)
+				.describe("Maximum number of results to return."),
 		}),
 	},
 	async (args) => {
 		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { getEmbedding, cosineSimilarity } = await import("../utils/vector.ts");
+		const { getEmbedding, cosineSimilarity } = await import(
+			"../utils/vector.ts"
+		);
 
 		const queryVector = await getEmbedding(args.query);
 		const db = new BxcDB();
@@ -1642,16 +1730,20 @@ server.registerTool(
 			const rows = db.getAllScrapesWithVectors();
 			const results = rows.map((r) => {
 				let metadataParsed = {};
-				try { metadataParsed = JSON.parse(r.metadata); } catch {}
+				try {
+					metadataParsed = JSON.parse(r.metadata);
+				} catch {}
 				let vectorParsed: number[] = [];
-				try { vectorParsed = JSON.parse(r.vector); } catch {}
+				try {
+					vectorParsed = JSON.parse(r.vector);
+				} catch {}
 
 				const similarity = cosineSimilarity(queryVector, vectorParsed);
 				return {
 					url: r.url,
 					metadata: metadataParsed,
 					markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
-					similarity
+					similarity,
 				};
 			});
 
@@ -1662,7 +1754,11 @@ server.registerTool(
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify({ query: args.query, results: sliced }, null, 2),
+						text: JSON.stringify(
+							{ query: args.query, results: sliced },
+							null,
+							2,
+						),
 					},
 				],
 			};
@@ -1675,10 +1771,16 @@ server.registerTool(
 server.registerTool(
 	"bxc_keyword_search",
 	{
-		description: "Performs full-text keyword search on all crawled web pages on the VPS using SQLite FTS5 rank relevancy matching.",
+		description:
+			"Performs full-text keyword search on all crawled web pages on the VPS using SQLite FTS5 rank relevancy matching.",
 		inputSchema: z.object({
 			query: z.string().describe("The search keyword or query phrase."),
-			limit: z.number().int().min(1).default(10).describe("Maximum number of results to return."),
+			limit: z
+				.number()
+				.int()
+				.min(1)
+				.default(10)
+				.describe("Maximum number of results to return."),
 		}),
 	},
 	async (args) => {
@@ -1688,7 +1790,9 @@ server.registerTool(
 			const rows = db.searchFullText(args.query, args.limit);
 			const results = rows.map((r) => {
 				let metadataParsed = {};
-				try { metadataParsed = JSON.parse(r.metadata); } catch {}
+				try {
+					metadataParsed = JSON.parse(r.metadata);
+				} catch {}
 				return {
 					url: r.url,
 					profile: r.profile,
@@ -1696,7 +1800,7 @@ server.registerTool(
 					metadata: metadataParsed,
 					markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
 					timestamp: r.timestamp,
-					rank: r.rank
+					rank: r.rank,
 				};
 			});
 
@@ -1717,11 +1821,14 @@ server.registerTool(
 server.registerTool(
 	"bxc_crawl_replay_failed",
 	{
-		description: "Replays and retries all failed requests currently stored in the crawler's dead-letter queue.",
+		description:
+			"Replays and retries all failed requests currently stored in the crawler's dead-letter queue.",
 		inputSchema: z.object({}),
 	},
 	async () => {
-		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const { AutonomousCrawler } = await import(
+			"../crawler/AutonomousCrawler.ts"
+		);
 		const crawler = new AutonomousCrawler();
 		const count = crawler.replayFailed();
 		return {
@@ -1731,6 +1838,74 @@ server.registerTool(
 					text: `Successfully re-queued ${count} failed crawler requests from DLQ.`,
 				},
 			],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_x_client",
+	{
+		description:
+			"Native X / Twitter client (cookie auth, no API key). Fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account. Auth uses an auth_token + ct0 cookie pair from the session file / X_AUTH_TOKEN+X_CT0 env, or an explicit cookie string.",
+		inputSchema: z.object({
+			action: z
+				.enum(["profile", "tweets", "search", "news", "whoami"])
+				.describe("Operation to run."),
+			handle: z
+				.string()
+				.optional()
+				.describe("@handle (screen name) for profile/tweets."),
+			query: z.string().optional().describe("Search query for action=search."),
+			count: z
+				.number()
+				.int()
+				.min(1)
+				.max(100)
+				.default(20)
+				.describe("Number of items to fetch for tweets/search/news."),
+			cookie: z
+				.string()
+				.optional()
+				.describe(
+					'Explicit "auth_token=...; ct0=..." pair (overrides session/env).',
+				),
+		}),
+	},
+	async (args) => {
+		const { XClient, XSession, getNews } = await import("@aphrody-code/x");
+		const session = args.cookie
+			? XSession.fromCookieString(args.cookie)
+			: XSession.loadOrEnv();
+		const client = new XClient(session);
+
+		let payload: unknown;
+		switch (args.action) {
+			case "profile": {
+				if (!args.handle) throw new Error("action=profile requires handle");
+				payload = await client.userByScreenName(args.handle.replace(/^@/, ""));
+				break;
+			}
+			case "tweets": {
+				if (!args.handle) throw new Error("action=tweets requires handle");
+				const uid = await client.userIdFor(args.handle.replace(/^@/, ""));
+				payload = await client.userTweets(uid, args.count, undefined, 1);
+				break;
+			}
+			case "search": {
+				if (!args.query) throw new Error("action=search requires query");
+				payload = await client.search(args.query, args.count);
+				break;
+			}
+			case "news":
+				payload = await getNews(client, args.count);
+				break;
+			case "whoami":
+				payload = await client.whoami();
+				break;
+		}
+
+		return {
+			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
 		};
 	},
 );
@@ -1749,6 +1924,7 @@ async function main() {
 			import("@aphrody-code/fut"),
 			import("@aphrody-code/voiranime"),
 			import("@aphrody-code/xcom"),
+			import("@aphrody-code/x"),
 			import("../cli/recon.ts"),
 			import("../mirror/index.ts"),
 			import("@aphrody-code/challonge"),

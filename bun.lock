@@ -52,11 +52,11 @@
     },
     "packages/challonge": {
       "name": "@aphrody-code/challonge",
-      "version": "0.1.1",
+      "version": "0.1.2",
     },
     "packages/fut": {
       "name": "@aphrody-code/fut",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "bottleneck": "^2.19.5",
         "lru-cache": "^11.5.1",
@@ -67,18 +67,18 @@
     },
     "packages/voiranime": {
       "name": "@aphrody-code/voiranime",
-      "version": "0.1.1",
+      "version": "0.1.2",
     },
     "packages/worldbeyblade": {
       "name": "@aphrody-code/worldbeyblade",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "cheerio": "^1.2.0",
       },
     },
     "packages/x": {
       "name": "@aphrody-code/x",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "zod": "^4.4.3",
       },
@@ -89,11 +89,11 @@
     },
     "packages/xcom": {
       "name": "@aphrody-code/xcom",
-      "version": "0.1.1",
+      "version": "0.1.2",
     },
     "packages/zukan": {
       "name": "@aphrody-code/zukan",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "cheerio": "^1.2.0",
       },

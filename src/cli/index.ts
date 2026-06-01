@@ -64,6 +64,7 @@ Subcommands:
   voiranime VoirAnime streaming site catalog search & resolver (e.g. "inazuma")
   google    Google properties auditor & client
   xcom      X.com profile scraper
+  x         Native X/Twitter client (profile, tweets, search, news) via cookie auth
   actor     Manage and run Bxc crawler Actors
   crawl-worker Run the autonomous recursive crawler worker daemon 24/7
 
@@ -209,6 +210,12 @@ async function main() {
 
 		case "xcom": {
 			const mod = await import("./xcom.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "x": {
+			const mod = await import("./x.ts");
 			await mod.main(args, opts);
 			break;
 		}
