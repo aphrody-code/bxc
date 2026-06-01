@@ -1,0 +1,111 @@
+{
+	"actorSpecification": 1,
+	"name": "rag-web-browser",
+	"title": "RAG Web Browser",
+	"description": "Clean web browser and search scraper that generates token-optimized markdown for RAG pipelines and LLMs natively in Bxc.",
+	"version": "1.1.0",
+	"run": "bun run main.ts",
+	"input": {
+		"type": "object",
+		"properties": {
+			"query": {
+				"type": "string",
+				"description": "Enter Google Search keywords or a URL of a specific web page.",
+				"prefill": "web browser for RAG pipelines -site:reddit.com"
+			},
+			"urls": {
+				"type": "array",
+				"items": {
+					"type": "string"
+				},
+				"description": "Specific URLs to crawl directly (Bxc extension)."
+			},
+			"maxResults": {
+				"type": "integer",
+				"default": 3,
+				"description": "The maximum number of organic search results to extract.",
+				"minimum": 1,
+				"maximum": 100
+			},
+			"outputFormats": {
+				"type": "array",
+				"description": "Select one or more formats to which the target web pages will be extracted and saved.",
+				"default": ["markdown"],
+				"items": {
+					"type": "string",
+					"enum": ["text", "markdown", "html"]
+				}
+			},
+			"outputFormat": {
+				"type": "string",
+				"enum": ["markdown", "text", "html", "json"],
+				"description": "Output format fallback (Bxc extension)."
+			},
+			"scrapingTool": {
+				"type": "string",
+				"description": "Scraping tool: browser-playwright (Chrome headless) or raw-http (curl-impersonate + cheerio).",
+				"default": "raw-http",
+				"enum": ["browser-playwright", "raw-http"]
+			},
+			"dynamicContent": {
+				"type": "boolean",
+				"description": "Dynamic content fallback (Bxc extension)."
+			},
+			"removeElementsCssSelector": {
+				"type": "string",
+				"description": "A CSS selector matching HTML elements that will be removed from the DOM before formatting.",
+				"default": "nav, footer, script, style, noscript, svg, img[src^='data:'], [role=\"alert\"], [role=\"banner\"], [role=\"dialog\"], [role=\"alertdialog\"], [role=\"region\"][aria-label*=\"skip\" i], [aria-modal=\"true\"]"
+			},
+			"removeElements": {
+				"type": "string",
+				"description": "Remove elements CSS selector fallback (Bxc extension)."
+			},
+			"htmlTransformer": {
+				"type": "string",
+				"description": "Transform HTML using Mozilla's Readability helper: 'none' or 'readableText'.",
+				"default": "none",
+				"enum": ["none", "readableText"]
+			},
+			"desiredConcurrency": {
+				"type": "integer",
+				"default": 5,
+				"description": "The desired number of web browsers running in parallel."
+			},
+			"maxRequestRetries": {
+				"type": "integer",
+				"default": 1,
+				"description": "The maximum number of times the actor will retry loading the target web page on error."
+			},
+			"dynamicContentWaitSecs": {
+				"type": "integer",
+				"default": 10,
+				"description": "The maximum time in seconds to wait for dynamic page content to load."
+			},
+			"removeCookieWarnings": {
+				"type": "boolean",
+				"default": true,
+				"description": "Attempt to close or remove cookie consent dialogs."
+			},
+			"debugMode": {
+				"type": "boolean",
+				"default": false,
+				"description": "Include debugging and latency statistics in the output."
+			},
+			"requestTimeoutSecs": {
+				"type": "integer",
+				"default": 40,
+				"description": "The maximum time in seconds available for the entire request."
+			},
+			"serpProxyGroup": {
+				"type": "string",
+				"default": "GOOGLE_SERP",
+				"enum": ["GOOGLE_SERP", "SHADER"]
+			},
+			"serpMaxRetries": {
+				"type": "integer",
+				"default": 2
+			}
+		},
+		"required": ["query"]
+	}
+}
