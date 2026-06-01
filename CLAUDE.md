@@ -16,8 +16,9 @@ bindings + historique Zig DOM. Publié sur GitHub Packages comme
   rebrand est terminé — ne réintroduire aucun ancien nommage de projet.
 - **`packages/api`** : entry réel = `src/index.ts` (Elysia `.listen()`), PAS
   le `index.ts` racine (stub `bun init`). Cf. `packages/api/CLAUDE.md`.
-- **`packages/bxc-extension`** : MCP server stdio (`bxc-gemini`), 7 tools sur
-  le moteur bxc. Cf. `packages/bxc-extension/CLAUDE.md`.
+- **MCP server** : `src/mcp/server.ts` (`bxc-native-mcp`, version = const en
+  haut du fichier). Build : `bun run build:mcp` → `dist/standalone/bxc-mcp`.
+  Manifest Gemini = `gemini-extension.json` (pointe sur `/usr/local/bin/bxc-mcp`).
 
 ## Commandes essentielles
 
@@ -34,11 +35,23 @@ bun src/cli/index.ts fut price <url>         # FIFA Ultimate Team Price
 bun src/cli/index.ts voiranime search <q>    # VoirAnime search (ex: "inazuma")
 bun src/cli/index.ts google search <q>       # Google Atlas Audits
 bun src/cli/index.ts xcom profile <user>     # Twitter profile markdown / screenshot
+bun src/cli/index.ts x whoami                # Native X client (profile|tweets|search|news|whoami)
 
 # Stack binaire
 cargo build -p bxc-engine --release          # moteur Rust
 ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_bridge.*)
+
+# Build + déploiement VPS
+BXC_TARGETS=linux-x64 bun scripts/build-standalone.ts  # standalone linux seul (rapide)
+bun run build:mcp                            # binaire bxc-mcp
+./scripts/bxc-control.sh deploy              # copie binaires (~/.local + /usr/local) + restart bxc{,-crawler}.service
 ```
+
+> **Nouvelle sous-commande CLI** : créer `src/cli/<name>.ts` (`export async function main(argv, baseOpts)`),
+> ajouter un `case "<name>"` dans `src/cli/index.ts`, et une ligne dans `printUsage()`.
+
+> **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-crawler.service`
+> (24/7 `crawl-worker`). Units source dans `scripts/deploy/`. Repo **PUBLIC** depuis 2026-06-01.
 
 ## Layout
 
@@ -71,22 +84,23 @@ d'emoji, pas de `Co-Authored-By`, pas de `Generated with…`.
 
 ## Intégration vps
 
-Submodule `vps/packages/bxc` → tag `v0.5.8`. Workflow update :
+Submodule `vps/packages/bxc` → dernier tag `v0.6.0`. Workflow release :
 
 ```bash
 cd ~/bxc
 # ... commit + push ...
-git tag -a v0.5.8 -m "v0.5.8 — autonomous crawler worker 24/7, sitemap xml parsing, FTS5 keyword indexing, and proxy pool rotation"
-git push origin v0.5.8
-gh release create v0.5.8 --repo aphrody-code/bxc --title "bxc v0.5.8" --notes "Release version 0.5.8 with autonomous crawler worker 24/7, sitemap XML/txt parsing, FTS5 database search, and proxy rotation"
+git tag -a vX.Y.Z -m "vX.Y.Z — <résumé>"
+git push origin main && git push origin vX.Y.Z
+gh release create vX.Y.Z --repo aphrody-code/bxc --title "bxc vX.Y.Z" --notes "<notes>"
+# assets cross-platform : bun scripts/build-standalone.ts && gh release upload vX.Y.Z dist/standalone/bxc-* --clobber
 
-# Deploying standalone and reloading systemd service is automated via bxc-control:
+# Build + déploiement standalone + restart systemd, automatisé via bxc-control :
 ./scripts/bxc-control.sh deploy
 ```
 
 ## Skills Claude Code à consulter
 
-- **`rust-mcp-server-generator`** — pour étendre `packages/bxc-extension` (MCP stdio `bxc-gemini`, ajout de tools, structure rmcp SDK).
+- **`rust-mcp-server-generator`** — pour étendre le MCP server `src/mcp/server.ts` (tools `registerTool` + Zod, `bxc-native-mcp`).
 - **`rust-async-patterns`** — pour `rust-bridge/` (lol_html, V8 bindings, FFI ↔ Bun).
 - **`rust-best-practices`** + **`rust-testing`** — pour tout nouveau code Rust.
 - **`m15-anti-pattern`** — review avant commit.
@@ -111,3 +125,10 @@ gh release create v0.5.8 --repo aphrody-code/bxc --title "bxc v0.5.8" --notes "R
   pagination, capabilities, CF-workers qui exige `pnpm`). Ce ne sont PAS des
   régressions bxc — filtrer le bruit MCP-SDK avant de conclure.
 - **Mapping de profiles des scrapers** : Le CLI expose `stealth`, `max`, `fast`, `static` et `http`. Certains scrapers internes (comme `fut` ou `voiranime`) n'acceptent qu'un sous-ensemble (ex: `ghost` ou `static`). Veillez à bien mapper les types de profile CLI vers les options attendues par les scrapers sous peine d'erreurs strictes à la compilation TypeScript (`tsc --noEmit`).
+- **Pipe masque le code retour** : `cargo build … | tail` renvoie l'exit de `tail` (0), pas de cargo. Capturer le vrai code : `cmd > /tmp/x.log 2>&1; echo $?`.
+- **`links="sqlite3"` (rusqlite)** : `libsqlite3-sys` déclare `links` → UNE seule version de rusqlite peut être linkée dans le cdylib. Toutes les crates de `rust-bridge/` doivent partager `rusqlite 0.37` (via `{ workspace = true }`). Aligner les deps partagées sur `[workspace.dependencies]` (features additives OK : `uuid = { workspace = true, features = ["fast-rng"] }`).
+- **`verbatimModuleSyntax: true`** (tsconfig root) : tout package workspace importé depuis `src/` est typecheck transitivement → les imports type-only doivent utiliser `import type { … }` sinon `error TS1484`.
+- **`.npmrc` n'est PAS un secret** : `_authToken=${NODE_AUTH_TOKEN}` est un placeholder env (le CI génère son propre `.npmrc`). Ne jamais conclure « token leak » sur `grep -c _authToken` — vérifier placeholder (`=${`) vs littéral. Ne pas Read/cat quand même.
+- **`bxc-mcp` a 3 cibles** à garder fraîches au deploy : `~/.local/bin/bxc-mcp` (MCP Claude `~/.claude.json`), `/usr/local/bin/bxc-mcp` (extension Gemini), `dist/standalone/bxc-mcp` (configs gemini antigravity/plugins/aphrody). `bxc-control deploy` gère les deux premiers.
+- **GitHub Packages visibilité** : `.npmrc` route `@aphrody-code/*` → GitHub Packages (`bun publish` par package, sous-packages avant root). Rendre un package **public** sur un compte **User** = **UI-only**, aucune API (`PATCH …/visibility` = 404), même repo public.
+- **`bun test` ne run que `*.test.ts`** : déplacer des `examples/*.ts` sous `packages/` ne les transforme pas en tests.
