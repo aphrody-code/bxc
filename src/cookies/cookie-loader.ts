@@ -90,6 +90,10 @@ interface RawJsonCookie {
 }
 
 import { resolveCookiePath } from "../utils/paths.ts";
+import { Database } from "bun:sqlite";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { existsSync, copyFileSync, unlinkSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -284,4 +288,104 @@ function parseNetscapeCookies(raw: string): Cookie[] {
 	}
 
 	return out;
+}
+
+function getChromeCookiePath(): string | null {
+	const home = homedir();
+	const paths = [
+		// Linux
+		join(home, ".config/google-chrome/Default/Network/Cookies"),
+		join(home, ".config/google-chrome/Default/Cookies"),
+		join(home, ".config/google-chrome-beta/Default/Network/Cookies"),
+		join(home, ".config/chromium/Default/Network/Cookies"),
+		join(home, ".config/chromium/Default/Cookies"),
+		// macOS
+		join(home, "Library/Application Support/Google/Chrome/Default/Network/Cookies"),
+		join(home, "Library/Application Support/Google/Chrome/Default/Cookies"),
+		// Windows
+		join(home, "AppData", "Local", "Google", "Chrome", "User Data", "Default", "Network", "Cookies"),
+	];
+	for (const p of paths) {
+		if (existsSync(p)) {
+			return p;
+		}
+	}
+	return null;
+}
+
+/**
+ * Best-effort extraction of Google cookies straight from local Chrome.
+ */
+export async function extractFromChrome(domain: string = "google.com"): Promise<Cookie[]> {
+	const dbPath = getChromeCookiePath();
+	if (!dbPath) {
+		throw new Error("Chrome cookie database not found at standard locations. Please export using Cookie-Editor.");
+	}
+
+	const tempPath = dbPath + ".tmp-bxc";
+	try {
+		copyFileSync(dbPath, tempPath);
+	} catch (err) {
+		throw new Error(`Failed to copy Chrome cookie database: ${err}`);
+	}
+
+	let db: Database;
+	try {
+		db = new Database(tempPath);
+	} catch (err) {
+		try {
+			unlinkSync(tempPath);
+		} catch {}
+		throw new Error(`Failed to open Chrome cookie database: ${err}`);
+	}
+
+	try {
+		const query = db.prepare(`
+			SELECT host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly
+			FROM cookies
+			WHERE host_key LIKE ?
+		`);
+		const rows = query.all(`%${domain}%`) as any[];
+
+		const cookies: Cookie[] = [];
+		let decryptionFailed = false;
+
+		for (const row of rows) {
+			const value = row.value;
+			if (!value && row.encrypted_value && row.encrypted_value.length > 0) {
+				decryptionFailed = true;
+				continue;
+			}
+
+			let expires = -1;
+			if (row.expires_utc > 0) {
+				expires = Math.floor(row.expires_utc / 1000000 - 11644473600);
+			}
+
+			cookies.push({
+				name: row.name,
+				value: value || "",
+				domain: row.host_key,
+				path: row.path,
+				expires,
+				httpOnly: row.is_httponly === 1,
+				secure: row.is_secure === 1,
+				sameSite: "Lax",
+			});
+		}
+
+		if (decryptionFailed && cookies.length === 0) {
+			throw new Error(
+				"Chrome cookie decryption failed (likely OS Keyring or App-Bound Encryption protection). " +
+					"Please export your cookies using the Cookie-Editor extension and run `bxc cookies save google <file.json>`."
+			);
+		}
+
+		return cookies;
+	} finally {
+		db.close();
+		try {
+			unlinkSync(tempPath);
+		} catch {}
+	}
 }
