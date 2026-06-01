@@ -1341,6 +1341,217 @@ server.registerTool(
 	},
 );
 
+/**
+ * Bxc Autonomous Crawler MCP Tools
+ */
+server.registerTool(
+	"bxc_crawl_recursive",
+	{
+		description:
+			"Starts a recursive background crawl for a list of URLs on the VPS, matching depth constraints and domain restrictions. Ideal for scraping and indexing sites recursively.",
+		inputSchema: z.object({
+			urls: z.array(z.string().url()).describe("URLs to start crawling from."),
+			allowedDomains: z.array(z.string()).optional().describe("Restrict crawl to these domains."),
+			maxDepth: z.number().int().min(1).default(3).describe("Maximum crawl depth."),
+			maxRequests: z.number().int().min(1).optional().describe("Maximum total requests to crawl."),
+			profile: z.enum(["static", "fast", "stealth", "max"]).default("stealth").describe("Browser profile to use."),
+		}),
+	},
+	async (args) => {
+		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+		const crawler = new AutonomousCrawler({
+			allowedDomains: args.allowedDomains,
+			maxDepth: args.maxDepth,
+			maxRequests: args.maxRequests,
+			profile: args.profile,
+		});
+
+		crawler.run(args.urls).catch((err) => {
+			console.error("[MCP background-crawler] Error:", err);
+		});
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: `Autonomous recursive crawl successfully launched in background. Initial URLs: ${args.urls.join(", ")}`,
+				},
+			],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_get_url_data",
+	{
+		description:
+			"Retrieves cached or live crawled data (title, status, markdown content, structured JSON metadata, and OpenAPI schema) for a given URL on the VPS. Checks Redis first, then SQLite, then crawls live.",
+		inputSchema: z.object({
+			url: z.string().url().describe("The URL to fetch data for."),
+			force: z.boolean().default(false).describe("If true, crawls live and bypasses cache."),
+		}),
+	},
+	async (args) => {
+		const { redis } = await import("bun");
+		const { BxcDB } = await import("../db/BxcDB.ts");
+		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+
+		let data: any = null;
+		let source = "cache";
+
+		if (!args.force) {
+			const cached = await redis.get(`bxc:cache:url:${args.url}`);
+			if (cached) {
+				data = JSON.parse(cached);
+				source = "redis";
+			} else {
+				const db = new BxcDB();
+				try {
+					const row = db.getScrapeByUrl(args.url);
+					if (row) {
+						data = {
+							url: row.url,
+							title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
+							status: row.status,
+							markdown: row.markdown || "",
+							structured: row.json_data ? JSON.parse(row.json_data) : null,
+							openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
+							timestamp: row.timestamp,
+						};
+						await redis.set(`bxc:cache:url:${args.url}`, JSON.stringify(data), "EX", 86400);
+						source = "sqlite";
+					}
+				} finally {
+					db.close();
+				}
+			}
+		}
+
+		if (!data) {
+			const crawler = new AutonomousCrawler({ maxRequests: 1 });
+			await crawler.run([args.url]);
+			const db = new BxcDB();
+			try {
+				const row = db.getScrapeByUrl(args.url);
+				if (row) {
+					data = {
+						url: row.url,
+						title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
+						status: row.status,
+						markdown: row.markdown || "",
+						structured: row.json_data ? JSON.parse(row.json_data) : null,
+						openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
+						timestamp: row.timestamp,
+					};
+					source = "live-crawl";
+				}
+			} finally {
+				db.close();
+			}
+		}
+
+		if (!data) {
+			return {
+				content: [{ type: "text", text: `Error: Failed to crawl or retrieve page data for ${args.url}` }],
+				isError: true,
+			};
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify({ source, data }, null, 2),
+				},
+			],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_get_url_openapi",
+	{
+		description: "Retrieves the well-typed OpenAPI schema generated for a given crawled URL on the VPS.",
+		inputSchema: z.object({
+			url: z.string().url().describe("The URL to fetch the OpenAPI schema for."),
+		}),
+	},
+	async (args) => {
+		const { redis } = await import("bun");
+		const { BxcDB } = await import("../db/BxcDB.ts");
+		const { AutonomousCrawler } = await import("../crawler/AutonomousCrawler.ts");
+
+		let openapi: any = null;
+
+		const cached = await redis.get(`bxc:cache:url:${args.url}`);
+		if (cached) {
+			openapi = JSON.parse(cached).openapi;
+		} else {
+			const db = new BxcDB();
+			try {
+				const row = db.getScrapeByUrl(args.url);
+				if (row && row.openapi_spec) {
+					openapi = JSON.parse(row.openapi_spec);
+				}
+			} finally {
+				db.close();
+			}
+		}
+
+		if (!openapi) {
+			const crawler = new AutonomousCrawler({ maxRequests: 1 });
+			await crawler.run([args.url]);
+			const db = new BxcDB();
+			try {
+				const row = db.getScrapeByUrl(args.url);
+				if (row && row.openapi_spec) {
+					openapi = JSON.parse(row.openapi_spec);
+				}
+			} finally {
+				db.close();
+			}
+		}
+
+		if (!openapi) {
+			return {
+				content: [{ type: "text", text: `Error: Failed to generate OpenAPI schema for ${args.url}` }],
+				isError: true,
+			};
+		}
+
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(openapi, null, 2),
+				},
+			],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_crawl_stats",
+	{
+		description: "Retrieves statistics from the request queue of the autonomous crawler.",
+		inputSchema: z.object({}),
+	},
+	async () => {
+		const { RequestQueue } = await import("../queue/RequestQueue.ts");
+		const queue = RequestQueue.open("bxc-autonomous-crawler");
+		const stats = queue.stats();
+		queue.close();
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(stats, null, 2),
+				},
+			],
+		};
+	},
+);
+
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
