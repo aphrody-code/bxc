@@ -18,7 +18,7 @@
  * `bxc worldbeyblade` — Command-line interface for worldbeyblade.org
  */
 
-import { WorldBeybladeScraper } from "../scrapers/worldbeyblade/index.ts";
+import { WorldBeybladeScraper } from "@aphrody-code/worldbeyblade";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 import { existsSync } from "node:fs";
 

@@ -1,6 +1,6 @@
 {
 	"name": "@aphrody-code/bxc",
-	"version": "0.5.4",
+	"version": "0.5.5",
 	"publishConfig": {
 		"access": "public"
 	},
@@ -37,8 +37,18 @@
 		"./serverless": "./src/serverless/handler.ts",
 		"./ffi/rust-bridge": "./src/rust/bridge.ts",
 		"./ffi/curl-impersonate": "./src/ffi/curl-impersonate.ts",
-		"./scrapers/challonge": "./src/scrapers/challonge.ts",
-		"./scrapers/voiranime": "./src/scrapers/voiranime.ts",
+		"./scrapers/challonge": "./packages/challonge/src/index.ts",
+		"./scrapers/voiranime": "./packages/voiranime/src/index.ts",
+		"./scrapers/xcom": "./packages/xcom/src/index.ts",
+		"./scrapers/worldbeyblade": "./packages/worldbeyblade/src/index.ts",
+		"./scrapers/fut": "./packages/fut/src/index.ts",
+		"./scrapers/zukan": "./packages/zukan/src/index.ts",
+		"./profiles/ghost": "./src/profiles/ghost/index.ts",
+		"./profiles/humanize": "./src/profiles/humanize.ts",
+		"./cookies/cookie-loader": "./src/cookies/cookie-loader.ts",
+		"./cookies/cookie-injector": "./src/cookies/cookie-injector.ts",
+		"./internal/html-utils": "./src/internal/html-utils.ts",
+		"./api/types": "./src/api/types.ts",
 		"./types/ConnectionTransport": "./types/ConnectionTransport.ts",
 		"./crawler": "./src/crawler/index.ts",
 		"./sdk/actor": "./src/sdk/Actor.ts"
@@ -102,6 +112,12 @@
 		"p-retry": "^8.0.0",
 		"reflect-metadata": "^0.2.2",
 		"type-graphql": "^2.0.0-rc.3",
-		"zod": "^4.4.3"
+		"zod": "^4.4.3",
+		"@aphrody-code/challonge": "workspace:*",
+		"@aphrody-code/fut": "workspace:*",
+		"@aphrody-code/voiranime": "workspace:*",
+		"@aphrody-code/worldbeyblade": "workspace:*",
+		"@aphrody-code/xcom": "workspace:*",
+		"@aphrody-code/zukan": "workspace:*"
 	}
 }

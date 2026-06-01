@@ -70,11 +70,11 @@ xcom-deep-report.json
 scratch/
 
 # Bxc FUT unified folder ignores
-src/scrapers/fut/cookies/
-src/scrapers/fut/data/*.sqlite
-src/scrapers/fut/data/*.sqlite-shm
-src/scrapers/fut/data/*.sqlite-wal
-src/scrapers/fut/data/fut_extracted_database.json
+packages/fut/src/cookies/
+packages/fut/src/data/*.sqlite
+packages/fut/src/data/*.sqlite-shm
+packages/fut/src/data/*.sqlite-wal
+packages/fut/src/data/fut_extracted_database.json
 
 # Temporary directories
 tmp/

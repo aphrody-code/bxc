@@ -28,13 +28,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Refactored
 
-- Restructuration, unification et modularisation complète du scraper et de l'analyseur métagame de **WorldBeyblade** sous le module unifié [worldbeyblade](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/).
+- Restructuration, unification et modularisation complète du scraper et de l'analyseur métagame de **WorldBeyblade** sous le module unifié [worldbeyblade](file:///home/ubuntu/bxc/packages/worldbeyblade/src/).
 - Décomposition de la logique monolithique en sous-modules spécialisés :
-  - [types.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/types.ts) : interfaces et typages stricts (sans `any`).
-  - [scraper.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/scraper.ts) : client d'automatisation de forum MyBB (profiles, threads, MPs).
-  - [rankings.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/rankings.ts) : synchronisation et parsing hors-ligne des classements via Wayback CDX.
-  - [analytics.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/analytics.ts) : normalisation des pièces (Blades, Bits) et calculs mathématiques (Podium Score, Combo Synergy).
-  - [index.ts](file:///home/ubuntu/bxc/src/scrapers/worldbeyblade/index.ts) : export "barrel" propre.
+  - [types.ts](file:///home/ubuntu/bxc/packages/worldbeyblade/src/types.ts) : interfaces et typages stricts (sans `any`).
+  - [scraper.ts](file:///home/ubuntu/bxc/packages/worldbeyblade/src/scraper.ts) : client d'automatisation de forum MyBB (profiles, threads, MPs).
+  - [rankings.ts](file:///home/ubuntu/bxc/packages/worldbeyblade/src/rankings.ts) : synchronisation et parsing hors-ligne des classements via Wayback CDX.
+  - [analytics.ts](file:///home/ubuntu/bxc/packages/worldbeyblade/src/analytics.ts) : normalisation des pièces (Blades, Bits) et calculs mathématiques (Podium Score, Combo Synergy).
+  - [index.ts](file:///home/ubuntu/bxc/packages/worldbeyblade/src/index.ts) : export "barrel" propre.
 - Simplification du script d'analyse [bbx_metagame_analyst.ts](file:///home/ubuntu/bxc/scripts/bbx_metagame_analyst.ts) (-500 lignes de code dupliqué) en important les fonctions analytiques partagées du module principal.
 - Mise en conformité stricte `oxlint` et formatage `biome` de tous les fichiers modifiés.
 - Ajout de tests unitaires hors-ligne complets pour l'analyse métagame dans [worldbeyblade.test.ts](file:///home/ubuntu/bxc/test/scrapers/worldbeyblade.test.ts).

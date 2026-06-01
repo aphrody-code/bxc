@@ -10,7 +10,16 @@
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
-		"noEmit": true,
+		"paths": {
+			"@aphrody-code/bxc": ["./src/api/browser.ts"],
+			"@aphrody-code/bxc/scrapers/challonge": ["./packages/challonge/src/index.ts"],
+			"@aphrody-code/bxc/scrapers/voiranime": ["./packages/voiranime/src/index.ts"],
+			"@aphrody-code/bxc/scrapers/xcom": ["./packages/xcom/src/index.ts"],
+			"@aphrody-code/bxc/scrapers/worldbeyblade": ["./packages/worldbeyblade/src/index.ts"],
+			"@aphrody-code/bxc/scrapers/fut": ["./packages/fut/src/index.ts"],
+			"@aphrody-code/bxc/scrapers/zukan": ["./packages/zukan/src/index.ts"],
+			"@aphrody-code/bxc/*": ["./src/*"]
+		},
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 

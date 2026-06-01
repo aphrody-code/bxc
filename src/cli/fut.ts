@@ -18,8 +18,7 @@
  * `bxc fut <action> <url>` — FIFA Ultimate Team scraper
  */
 
-import { scrapeFutBinPrice } from "../scrapers/fut/futbin.ts";
-import { scrapeFutGgPlayer } from "../scrapers/fut/futgg.ts";
+import { scrapeFutBinPrice, scrapeFutGgPlayer } from "@aphrody-code/fut";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Browser } from "../../api/browser.ts";
-import { launchGhostBrowser } from "../../profiles/ghost/index.ts";
+import { Browser } from "@aphrody-code/bxc";
+import { launchGhostBrowser } from "@aphrody-code/bxc/profiles/ghost";
 import pRetry, { AbortError } from "p-retry";
 import type { FutPrice } from "./types.ts";
 
@@ -80,7 +80,7 @@ export async function scrapeFutBinPrice(
 				retries: 2,
 				onFailedAttempt: (failedAttempt) => {
 					console.warn(
-						`  [Retry FutBin] Attempt ${failedAttempt.attemptNumber} failed. ${failedAttempt.retriesLeft} retries left. Error: ${failedAttempt.error.message}`,
+						`  [Retry FutBin] Attempt ${failedAttempt.attemptNumber} failed. ${failedAttempt.retriesLeft} retries left. Error: ${failedAttempt.message}`,
 					);
 				},
 			},
