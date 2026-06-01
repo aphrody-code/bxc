@@ -757,6 +757,35 @@ server.registerTool(
 	},
 );
 
+server.registerTool(
+	"bxc_zukan",
+	{
+		description:
+			"Scrapes zukan.inazuma.jp (character list or character details).",
+		inputSchema: z.object({
+			action: z.enum(["list", "chara"]),
+			param: z.string().optional().describe("Character ID or query parameter for details (q parameter)."),
+			locale: z.enum(["ja", "en", "fr"]).default("ja")
+		}),
+	},
+	async (args) => {
+		const { ZukanScraper } = await import("@aphrody-code/zukan");
+		const scraper = new ZukanScraper();
+		if (args.action === "list") {
+			const list = await scraper.getCharacterList(args.locale);
+			return {
+				content: [{ type: "text", text: JSON.stringify(list, null, 2) }]
+			};
+		} else {
+			if (!args.param) throw new Error("Missing target character parameter ('q')");
+			const detail = await scraper.getCharacterDetail(args.param, args.locale);
+			return {
+				content: [{ type: "text", text: JSON.stringify(detail, null, 2) }]
+			};
+		}
+	}
+);
+
 /**
  * 11. Specialized Scrapers & Verticals
  */
@@ -774,7 +803,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { scrapeFutBinPrice } = await import("../scrapers/fut/futbin.ts");
+		const { scrapeFutBinPrice } = await import("@aphrody-code/fut");
 		const result = await scrapeFutBinPrice(args.url, args.profile);
 		return {
 			content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -796,7 +825,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { scrapeFutGgPlayer } = await import("../scrapers/fut/futgg.ts");
+		const { scrapeFutGgPlayer } = await import("@aphrody-code/fut");
 		const result = await scrapeFutGgPlayer(args.url, args.profile);
 		return {
 			content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -817,7 +846,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { VoiranimeScraper } = await import("../scrapers/voiranime.ts");
+		const { VoiranimeScraper } = await import("@aphrody-code/voiranime");
 		const scraper = new VoiranimeScraper({ profile: args.profile });
 		try {
 			const results = await scraper.search(args.query);
@@ -847,7 +876,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { VoiranimeScraper } = await import("../scrapers/voiranime.ts");
+		const { VoiranimeScraper } = await import("@aphrody-code/voiranime");
 		const scraper = new VoiranimeScraper({ profile: args.profile });
 		try {
 			const info = await scraper.getAnime(args.slugOrUrl);
@@ -873,7 +902,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { VoiranimeScraper } = await import("../scrapers/voiranime.ts");
+		const { VoiranimeScraper } = await import("@aphrody-code/voiranime");
 		const scraper = new VoiranimeScraper({ profile: args.profile });
 		try {
 			const source = await scraper.resolveSource(args.embedUrl, {
@@ -907,7 +936,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { XComScraper } = await import("../scrapers/xcom.ts");
+		const { XComScraper } = await import("@aphrody-code/xcom");
 		const scraper = new XComScraper();
 		try {
 			await scraper.init();
@@ -1138,7 +1167,7 @@ server.registerTool(
 	},
 	async (args) => {
 		const { extractChallongeTournament, extractChallongeTournamentFromFile } =
-			await import("../scrapers/challonge.ts");
+			await import("@aphrody-code/challonge");
 		const { Browser } = await import("../api/browser.ts");
 		if (/^https?:\/\//.test(args.urlOrPath)) {
 			const page = await Browser.newPage({ profile: args.profile });
@@ -1198,7 +1227,7 @@ server.registerTool(
 	},
 	async (args) => {
 		const { WorldBeybladeScraper } = await import(
-			"../scrapers/worldbeyblade/index.ts"
+			"@aphrody-code/worldbeyblade"
 		);
 		const scraper = new WorldBeybladeScraper();
 		try {
@@ -1323,14 +1352,13 @@ async function main() {
 			import("../google/search.ts"),
 			import("../google/fetch.ts"),
 			import("../detect.ts"),
-			import("../scrapers/fut/futbin.ts"),
-			import("../scrapers/fut/futgg.ts"),
-			import("../scrapers/voiranime.ts"),
-			import("../scrapers/xcom.ts"),
+			import("@aphrody-code/fut"),
+			import("@aphrody-code/voiranime"),
+			import("@aphrody-code/xcom"),
 			import("../cli/recon.ts"),
 			import("../mirror/index.ts"),
-			import("../scrapers/challonge.ts"),
-			import("../scrapers/worldbeyblade/index.ts"),
+			import("@aphrody-code/challonge"),
+			import("@aphrody-code/worldbeyblade"),
 			import("../cli/actor.ts"),
 		]).catch(() => {});
 	}, 100);

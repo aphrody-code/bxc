@@ -15,7 +15,7 @@
  */
 
 import * as fs from "fs";
-import { runFullMetagameAnalysis } from "../src/scrapers/worldbeyblade/analytics.ts";
+import { runFullMetagameAnalysis } from "@aphrody-code/bxc/scrapers/worldbeyblade";
 
 async function main() {
 	const archivePath = "/home/ubuntu/bxc/data/thread_archive.html";

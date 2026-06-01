@@ -18,7 +18,7 @@
  * `bxc xcom <action> <username>` — X.com (Twitter) profile scraper
  */
 
-import { XComScraper } from "../scrapers/xcom.ts";
+import { XComScraper } from "@aphrody-code/xcom";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {

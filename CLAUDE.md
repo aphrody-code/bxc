@@ -45,16 +45,14 @@ ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_brid
 ```
 bxc/
 ├── src/                          # API browser TS
-│   ├── google/                   # Google Ecosystem Atlas & compliance
-│   └── scrapers/
-│       ├── worldbeyblade/        # Scraper & metagame sub-package
-│       ├── fut/                  # FIFA Ultimate Team (FUTBin / FUTGG)
-│       ├── voiranime.ts          # VoirAnime catalog & embed resolver
-│       └── xcom.ts               # X.com profile markdown scraper
-├── packages/
-│   ├── api/                      # Elysia server (GraphQL + REST)
-│   ├── bxc-extension/            # MCP stdio (bxc-gemini)
-│   └── ...
+│   └── google/                   # Google Ecosystem Atlas & compliance
+├── packages/                     # Monorepo workspaces & scrapers
+│   ├── challonge/                # Challonge tournament brackets scraper
+│   ├── fut/                      # FIFA Ultimate Team (FUTBin / FUTGG)
+│   ├── voiranime/                # VoirAnime catalog & embed resolver
+│   ├── worldbeyblade/            # Scraper & metagame sub-package
+│   ├── xcom/                     # X.com profile markdown scraper
+│   └── zukan/                    # Inazuma Eleven Character database scraper
 ├── rust-bridge/                  # FFI Rust ↔ Bun (lol_html, V8 bindings)
 ├── vendor/                       # mcp-sdk-typescript (NE PAS TOUCHER)
 ├── test/                         # tests root level

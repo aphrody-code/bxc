@@ -19,7 +19,7 @@ import {
 	WorldBeybladeScraper,
 	parseTournamentsFromHtml,
 	calculateMetagameAnalytics,
-} from "../../src/scrapers/worldbeyblade/index.ts";
+} from "@aphrody-code/bxc/scrapers/worldbeyblade";
 
 // Mock MyBB Profile HTML
 const MOCK_PROFILE_HTML = `

@@ -26,8 +26,8 @@ import * as cheerio from "cheerio";
 import {
 	parsePodiumFromPostHtml,
 	type WBOAnomaly,
-} from "../src/scrapers/worldbeyblade/analytics.ts";
-import type { WBOCombo } from "../src/scrapers/worldbeyblade/types.ts";
+	type WBOCombo,
+} from "@aphrody-code/bxc/scrapers/worldbeyblade";
 
 const THREAD_SLUG =
 	"Thread-Winning-Combinations-at-WBO-Organized-Events-Beyblade-X-BBX";

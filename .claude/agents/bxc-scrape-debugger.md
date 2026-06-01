@@ -54,4 +54,4 @@ Verification: bun test <relevant test> OR a 1-liner repro
 
 - Do not jump straight to `max` — costs 400x a `static` call. Always justify each escalation step.
 - Do not modify files yourself ; the main agent applies the change.
-- Do not invent capabilities — only recommend profiles / modules that exist in `src/profiles/`, `src/scrapers/`, `src/captcha/`, `src/transport/`.
+- Do not invent capabilities — only recommend profiles / modules that exist in `src/profiles/`, `packages/`, `src/captcha/`, `src/transport/`.

@@ -66,7 +66,7 @@
  * ```
  */
 
-import { Browser } from "../api/browser.ts";
+import { Browser } from "@aphrody-code/bxc";
 
 type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
 
