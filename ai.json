@@ -1,6 +1,6 @@
 {
 	"project": "Bxc",
-	"version": "0.5.4",
+	"version": "0.5.8",
 	"agents": {
 		"GeminiCLI": {
 			"role": "Lead Orchestrator & Autonomous Developer",
