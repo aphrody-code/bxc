@@ -58,6 +58,7 @@ export interface BasicCrawlerOptions<ContextType extends CrawlContext> {
 	maxUsedCpuRatio?: number;
 	maxUsedMemoryRatio?: number;
 	maxBlockedMillis?: number;
+	daemon?: boolean;
 }
 
 export abstract class BasicCrawler<ContextType extends CrawlContext> {
@@ -70,6 +71,7 @@ export abstract class BasicCrawler<ContextType extends CrawlContext> {
 	protected dataset: Dataset | null = null;
 	protected count = 0;
 	protected options: BasicCrawlerOptions<ContextType>;
+	protected shouldStop = false;
 
 	// Autoscale thresholds
 	protected autoscaleIntervalMs: number;
@@ -185,16 +187,25 @@ export abstract class BasicCrawler<ContextType extends CrawlContext> {
 		}, this.autoscaleIntervalMs);
 
 		try {
-			while (this.count < this.maxRequestsPerCrawl) {
+			while (this.count < this.maxRequestsPerCrawl && !this.shouldStop) {
 				// Block loop if running task count reaches the current desired concurrency limit
-				while (activePromises.size >= desiredConcurrency) {
+				while (activePromises.size >= desiredConcurrency && !this.shouldStop) {
 					await Promise.race(activePromises);
 				}
+
+				if (this.shouldStop) break;
 
 				const batch = this.requestQueue.fetchBatch(1);
 				if (batch.length === 0) {
 					const { locked, pending } = this.requestQueue.stats();
-					if (locked === 0 && pending === 0) break;
+					if (locked === 0 && pending === 0) {
+						if (this.options.daemon) {
+							// In daemon mode, sleep 1 second and poll again for new requests
+							await Bun.sleep(1000);
+							continue;
+						}
+						break;
+					}
 					// Wait for currently running tasks to release locks or queue new tasks
 					await Bun.sleep(100);
 					continue;
@@ -229,5 +240,9 @@ export abstract class BasicCrawler<ContextType extends CrawlContext> {
 			this.log(`Crawler run finished. Processed ${this.count} requests.`);
 			await this.dataset.close();
 		}
+	}
+
+	stop(): void {
+		this.shouldStop = true;
 	}
 }

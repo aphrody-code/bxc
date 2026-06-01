@@ -20,6 +20,7 @@ import { BxcDB } from "../db/BxcDB.ts";
 import { redis } from "bun";
 import { extractStructuredData } from "../google/fetch.ts";
 import { generateOpenApiSchema } from "../utils/openapi.ts";
+import { getEmbedding } from "../utils/vector.ts";
 
 export interface AutonomousCrawlerOptions {
 	requestQueueName?: string;
@@ -28,6 +29,8 @@ export interface AutonomousCrawlerOptions {
 	maxRequests?: number;
 	redisTtl?: number; // In seconds, default: 86400 (24h)
 	profile?: "static" | "fast" | "stealth" | "max";
+	daemon?: boolean;
+	proxyPool?: string[];
 }
 
 export class AutonomousCrawler {
@@ -38,6 +41,8 @@ export class AutonomousCrawler {
 	private maxRequests: number;
 	private redisTtl: number;
 	private profile: "static" | "fast" | "stealth" | "max";
+	private daemon: boolean;
+	private proxyPool?: string[];
 	private activeCrawler?: BrowserCrawler;
 	private isRunning = false;
 
@@ -49,6 +54,8 @@ export class AutonomousCrawler {
 		this.maxRequests = opts.maxRequests ?? Infinity;
 		this.redisTtl = opts.redisTtl ?? 86400; // 24h
 		this.profile = opts.profile ?? "stealth";
+		this.daemon = opts.daemon ?? false;
+		this.proxyPool = opts.proxyPool;
 	}
 
 	/**
@@ -70,10 +77,24 @@ export class AutonomousCrawler {
 			this.requestQueue.addRequests(prepared);
 		}
 
+		// Periodic background recovery task to handle crashed or killed workers
+		const recoveryInterval = setInterval(() => {
+			try {
+				const recovered = this.requestQueue.recoverStaleLocks();
+				if (recovered > 0) {
+					console.log(`[crawler-recovery] Auto-recovered ${recovered} stale locked requests from queue.`);
+				}
+			} catch (err) {
+				console.error("[crawler-recovery] Stale lock recovery error:", err);
+			}
+		}, 60000);
+
 		this.activeCrawler = new BrowserCrawler({
 			requestQueue: this.requestQueue,
 			profile: this.profile,
 			maxRequestsPerCrawl: this.maxRequests,
+			daemon: this.daemon,
+			proxyPool: this.proxyPool,
 			requestHandler: async (context) => {
 				const { request, page, response, enqueueLinks, pushData, log } = context;
 				const depth = (request.userData?.depth as number) ?? 0;
@@ -100,6 +121,48 @@ export class AutonomousCrawler {
 					return;
 				}
 
+				// Handle Sitemap XML files
+				const isSitemap = url.endsWith(".xml") || url.includes("sitemap");
+				if (isSitemap) {
+					log(`Parsing sitemap: ${url}`);
+					const sitemapHtml = await page.content();
+					const cheerio = require("cheerio");
+					const $ = cheerio.load(sitemapHtml, { xmlMode: true });
+					const locUrls: string[] = [];
+					$("loc").each((_: any, el: any) => {
+						const locText = $(el).text().trim();
+						if (locText) locUrls.push(locText);
+					});
+					
+					log(`Found ${locUrls.length} links in sitemap.`);
+					
+					let filtered = locUrls;
+					if (this.allowedDomains && this.allowedDomains.length > 0) {
+						filtered = locUrls.filter((l) => {
+							try {
+								const hostname = new URL(l).hostname;
+								return this.allowedDomains!.some(
+									(d) => hostname === d || hostname.endsWith("." + d)
+								);
+							} catch {
+								return false;
+							}
+						});
+					}
+
+					if (filtered.length > 0) {
+						this.requestQueue.addRequests(
+							filtered.map((l) => ({
+								url: l,
+								opts: { userData: { depth } }
+							}))
+						);
+					}
+					
+					await redis.set(`bxc:cache:url:${url}`, JSON.stringify({ title: "Sitemap", status: 200 }), "EX", 3600);
+					return;
+				}
+
 				// 1. Get raw HTML and convert to Markdown
 				const html = await page.content();
 				const markdown = await page.markdown();
@@ -118,7 +181,11 @@ export class AutonomousCrawler {
 					timestamp: new Date().toISOString()
 				});
 
-				// 4. Save to SQLite database
+				// 4. Generate Semantic / Vector Embedding
+				log(`Generating embedding for: ${url}`);
+				const vector = await getEmbedding(markdown);
+
+				// 5. Save to SQLite database
 				const metadata = {
 					title,
 					depth,
@@ -126,9 +193,9 @@ export class AutonomousCrawler {
 					openGraph: structured.openGraph,
 					twitter: structured.twitter
 				};
-				this.db.saveScrape(url, this.profile, response.status, html, metadata, markdown, structured, openapi);
+				this.db.saveScrape(url, this.profile, response.status, html, metadata, markdown, structured, openapi, vector);
 
-				// 5. Cache in Redis
+				// 6. Cache in Redis
 				const redisKey = `bxc:cache:url:${url}`;
 				const redisValue = JSON.stringify({
 					url,
@@ -137,12 +204,13 @@ export class AutonomousCrawler {
 					markdown,
 					structured,
 					openapi,
+					vector,
 					timestamp: new Date().toISOString()
 				});
 				await redis.set(redisKey, redisValue, "EX", this.redisTtl);
-				log(`Cached url in Redis: ${url}`);
+				log(`Cached url + vector in Redis: ${url}`);
 
-				// 6. Recursively enqueue links if depth < this.maxDepth
+				// 7. Recursively enqueue links if depth < this.maxDepth
 				if (depth < this.maxDepth) {
 					await enqueueLinks({
 						selector: "a[href]",
@@ -157,7 +225,8 @@ export class AutonomousCrawler {
 					title,
 					depth,
 					status: response.status,
-					openapi
+					openapi,
+					vector
 				});
 			}
 		});
@@ -165,15 +234,25 @@ export class AutonomousCrawler {
 		try {
 			await this.activeCrawler.run();
 		} finally {
+			clearInterval(recoveryInterval);
 			this.isRunning = false;
 		}
 	}
 
 	stop(): void {
 		this.isRunning = false;
+		this.activeCrawler?.stop();
 	}
 
 	stats() {
 		return this.requestQueue.stats();
+	}
+
+	replayFailed(): number {
+		return this.requestQueue.replayFailed();
+	}
+
+	deadLetterQueue() {
+		return this.requestQueue.deadLetterQueue();
 	}
 }

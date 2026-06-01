@@ -36,7 +36,25 @@ export interface PageResponse {
 	markdown: string;
 	structured: any;
 	openapi: any;
+	vector?: number[];
 	timestamp: string;
+}
+
+export interface SemanticSearchResult {
+	url: string;
+	metadata: any;
+	markdown: string;
+	similarity: number;
+}
+
+export interface KeywordSearchResult {
+	url: string;
+	profile: string;
+	status: number;
+	metadata: any;
+	markdown: string;
+	timestamp: string;
+	rank: number;
 }
 
 export interface BxcClientConfig {
@@ -124,6 +142,52 @@ export class BxcClient {
 	async getOpenApi(url: string): Promise<any> {
 		const query = new URLSearchParams({ url }).toString();
 		return this.request<any>(`/api/v1/page/openapi?${query}`);
+	}
+
+	/**
+	 * Retrieve the TypeScript interface definitions representing the schema of a crawled URL.
+	 */
+	async getTypes(url: string): Promise<string> {
+		const query = new URLSearchParams({ url }).toString();
+		return this.request<string>(`/api/v1/page/types?${query}`);
+	}
+
+	/**
+	 * Run a semantic vector similarity search across all crawled pages.
+	 */
+	async searchSemantic(queryText: string, limit = 5): Promise<{ success: boolean; query: string; results: SemanticSearchResult[] }> {
+		const query = new URLSearchParams({
+			q: queryText,
+			limit: String(limit)
+		}).toString();
+		return this.request<{ success: boolean; query: string; results: SemanticSearchResult[] }>(`/api/v1/search/semantic?${query}`);
+	}
+
+	/**
+	 * Run a full-text keyword search across all crawled pages using FTS5.
+	 */
+	async searchKeyword(queryText: string, limit = 10): Promise<{ success: boolean; query: string; results: KeywordSearchResult[] }> {
+		const query = new URLSearchParams({
+			q: queryText,
+			limit: String(limit)
+		}).toString();
+		return this.request<{ success: boolean; query: string; results: KeywordSearchResult[] }>(`/api/v1/search/keyword?${query}`);
+	}
+
+	/**
+	 * Get a list of failed crawler requests from the dead-letter queue.
+	 */
+	async getFailedCrawls(): Promise<{ success: boolean; count: number; failed: any[] }> {
+		return this.request("/api/v1/crawl/failed");
+	}
+
+	/**
+	 * Replay/retry all failed crawler requests in the dead-letter queue.
+	 */
+	async replayFailedCrawls(): Promise<{ success: boolean; message: string; stats: CrawlStats }> {
+		return this.request("/api/v1/crawl/replay", {
+			method: "POST"
+		});
 	}
 
 	/**
