@@ -8,11 +8,10 @@ import {
   checkApiErrors,
   walkTimelineTweets,
   walkTimelineUsers,
-  Tweet,
-  TweetPage,
-  UserPage,
 } from "./parse";
-import { NewsItem, NewsOptions, getNews } from "../services/news";
+import type { Tweet, TweetPage, UserPage } from "./parse";
+import { getNews } from "../services/news";
+import type { NewsItem, NewsOptions } from "../services/news";
 import { uploadMedia } from "../services/media";
 
 export const WEB_BEARER =

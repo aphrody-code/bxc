@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.6.0] - 2026-06-01
+
+### Added
+
+- Native X / Twitter client imported from `x-client`: Rust crate `x-client` under `rust-bridge/crates/` (workspace member, GraphQL + REST cookie-auth client) and pure-TypeScript port published as `@aphrody-code/x`.
+- FFI wrappers `bxc_x_user_by_screen_name` and `bxc_x_user_tweets` exported from the `bxc-rust-bridge` cdylib (cookie auth via `auth_token` + `ct0`).
+- Subcommand `bxc x <profile|tweets|search|news|whoami>` driving the `@aphrody-code/x` client.
+- MCP tool `bxc_x_client` exposing the X client (profile / tweets / search / news / whoami) over the `bxc-native-mcp` server.
+
+### Changed
+
+- `bxc-native-mcp` MCP server bumped to 0.5.0; `bxc-gemini` extension manifest bumped to 0.6.0.
+- Relocated the top-level `examples/` directory under `packages/x/examples/`.
+
+---
+
 ## [0.5.8] - 2026-06-01
 
 ### Added
