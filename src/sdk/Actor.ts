@@ -152,11 +152,11 @@ export class KeyValueStore {
 		const isBuffer = Buffer.isBuffer(value);
 		const isJson =
 			!isBuffer &&
-			(!contentType ||
-				contentType.includes("json") ||
-				typeof value === "object" ||
-				typeof value === "number" ||
-				typeof value === "boolean");
+			(contentType
+				? contentType.includes("json")
+				: (typeof value === "object" ||
+					typeof value === "number" ||
+					typeof value === "boolean"));
 
 		if (isJson) {
 			writeFileSync(jsonPath, JSON.stringify(value, null, 2), "utf8");
