@@ -8,6 +8,10 @@ import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
 import { FutResolver } from "@aphrody-code/bxc/scrapers/fut";
 import { Browser } from "../api/browser.ts";
+import { AutonomousCrawler } from "../crawler/AutonomousCrawler.ts";
+import { BxcDB } from "../db/BxcDB.ts";
+import { RequestQueue } from "../queue/RequestQueue.ts";
+import { redis } from "bun";
 
 function classifyPlayer(player: any) {
 	const tags: string[] = [];
@@ -102,6 +106,197 @@ async function bootstrap() {
 						body: t.Object({
 							url: t.String(),
 							profile: t.Optional(t.String()),
+						}),
+					},
+				)
+				.post(
+					"/crawl",
+					async ({ body }) => {
+						const { urls, allowedDomains, maxDepth, maxRequests, profile } = body as {
+							urls: string[];
+							allowedDomains?: string[];
+							maxDepth?: number;
+							maxRequests?: number;
+							profile?: "static" | "fast" | "stealth" | "max";
+						};
+						
+						const crawler = new AutonomousCrawler({
+							allowedDomains,
+							maxDepth,
+							maxRequests,
+							profile,
+						});
+
+						crawler.run(urls).catch((err) => {
+							console.error("[background-crawler] Error running crawl:", err);
+						});
+
+						return {
+							success: true,
+							message: "Recursive crawl started in the background",
+							stats: crawler.stats(),
+						};
+					},
+					{
+						body: t.Object({
+							urls: t.Array(t.String()),
+							allowedDomains: t.Optional(t.Array(t.String())),
+							maxDepth: t.Optional(t.Number()),
+							maxRequests: t.Optional(t.Number()),
+							profile: t.Optional(t.String()),
+						}),
+					},
+				)
+				.get("/crawl/stats", async () => {
+					const queue = RequestQueue.open("bxc-autonomous-crawler");
+					const stats = queue.stats();
+					queue.close();
+					return { success: true, stats };
+				})
+				.get(
+					"/page",
+					async ({ query }) => {
+						const url = query.url;
+						const force = query.force === "true";
+						
+						if (!force) {
+							const cached = await redis.get(`bxc:cache:url:${url}`);
+							if (cached) {
+								return { success: true, source: "redis", data: JSON.parse(cached) };
+							}
+
+							const db = new BxcDB();
+							try {
+								const row = db.getScrapeByUrl(url);
+								if (row) {
+									const data = {
+										url: row.url,
+										title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
+										status: row.status,
+										markdown: row.markdown || "",
+										structured: row.json_data ? JSON.parse(row.json_data) : null,
+										openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
+										timestamp: row.timestamp,
+									};
+									await redis.set(`bxc:cache:url:${url}`, JSON.stringify(data), "EX", 86400);
+									return { success: true, source: "sqlite", data };
+								}
+							} finally {
+								db.close();
+							}
+						}
+
+						const crawler = new AutonomousCrawler({ maxRequests: 1 });
+						await crawler.run([url]);
+						
+						const db = new BxcDB();
+						try {
+							const row = db.getScrapeByUrl(url);
+							if (row) {
+								return {
+									success: true,
+									source: "live-crawl",
+									data: {
+										url: row.url,
+										title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
+										status: row.status,
+										markdown: row.markdown || "",
+										structured: row.json_data ? JSON.parse(row.json_data) : null,
+										openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
+										timestamp: row.timestamp,
+									}
+								};
+							}
+						} finally {
+							db.close();
+						}
+
+						return { success: false, error: "Failed to scrape page" };
+					},
+					{
+						query: t.Object({
+							url: t.String(),
+							force: t.Optional(t.String()),
+						}),
+					},
+				)
+				.get(
+					"/page/openapi",
+					async ({ query }) => {
+						const url = query.url;
+						const res = await redis.get(`bxc:cache:url:${url}`);
+						if (res) {
+							return JSON.parse(res).openapi;
+						}
+						
+						const db = new BxcDB();
+						try {
+							const row = db.getScrapeByUrl(url);
+							if (row && row.openapi_spec) {
+								return JSON.parse(row.openapi_spec);
+							}
+						} finally {
+							db.close();
+						}
+
+						const crawler = new AutonomousCrawler({ maxRequests: 1 });
+						await crawler.run([url]);
+						
+						const db2 = new BxcDB();
+						try {
+							const row = db2.getScrapeByUrl(url);
+							if (row && row.openapi_spec) {
+								return JSON.parse(row.openapi_spec);
+							}
+						} finally {
+							db2.close();
+						}
+						
+						return { error: "OpenAPI schema not available for this URL" };
+					},
+					{
+						query: t.Object({
+							url: t.String(),
+						}),
+					},
+				)
+				.get(
+					"/page/markdown",
+					async ({ query }) => {
+						const url = query.url;
+						const res = await redis.get(`bxc:cache:url:${url}`);
+						if (res) {
+							return JSON.parse(res).markdown;
+						}
+						
+						const db = new BxcDB();
+						try {
+							const row = db.getScrapeByUrl(url);
+							if (row && row.markdown) {
+								return row.markdown;
+							}
+						} finally {
+							db.close();
+						}
+
+						const crawler = new AutonomousCrawler({ maxRequests: 1 });
+						await crawler.run([url]);
+						
+						const db2 = new BxcDB();
+						try {
+							const row = db2.getScrapeByUrl(url);
+							if (row && row.markdown) {
+								return row.markdown;
+							}
+						} finally {
+							db2.close();
+						}
+						
+						return "Markdown not available for this URL";
+					},
+					{
+						query: t.Object({
+							url: t.String(),
 						}),
 					},
 				)

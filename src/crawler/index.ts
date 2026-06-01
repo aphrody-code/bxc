@@ -24,4 +24,5 @@ export * from "./Crawler.ts";
 export * from "./CheerioCrawler.ts";
 export * from "./BrowserCrawler.ts";
 export * from "./Router.ts";
+export * from "./AutonomousCrawler.ts";
 export * from "../config/BxcConfig.ts";
