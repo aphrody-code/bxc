@@ -85,3 +85,6 @@ storage/
 *.sqlite-shm
 *.sqlite-wal
 
+
+# Registry auth token — never commit
+/.npmrc
