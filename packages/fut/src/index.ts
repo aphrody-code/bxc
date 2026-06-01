@@ -17,3 +17,4 @@
 export * from "./types.ts";
 export * from "./futgg.ts";
 export * from "./futbin.ts";
+export { FutResolver } from "./graphql/FutResolver.ts";

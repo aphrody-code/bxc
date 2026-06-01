@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Cookie } from "../../cookies/cookie-loader.ts";
+import type { Cookie } from "@aphrody-code/bxc/cookies/cookie-loader";
 
 export interface WorldBeybladeProfile {
 	uid: number | null;

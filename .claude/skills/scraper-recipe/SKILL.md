@@ -1,6 +1,6 @@
 ---
 name: scraper-recipe
-description: Génère un scraper Bxc complet (profil choisi + extraction typée Zod + sortie JSONL). À utiliser quand l'utilisateur demande "scrape X", "extract Y from URL Z", ou veut un nouveau scraper one-shot dans `examples/` ou `src/scrapers/`.
+description: Génère un scraper Bxc complet (profil choisi + extraction typée Zod + sortie JSONL). À utiliser quand l'utilisateur demande "scrape X", "extract Y from URL Z", ou veut un nouveau scraper one-shot dans `examples/` ou un sub-package dans `packages/`.
 disable-model-invocation: true
 ---
 
@@ -11,7 +11,7 @@ Quand invoquée via `/scraper-recipe`, cette skill produit un fichier scraper co
 - **URL ou pattern d'URL** (obligatoire)
 - **Schéma cible** (description naturelle, ex : "titre + prix EUR + stock")
 - **Profil souhaité** (optionnel, défaut = `static`)
-- **Mode** (one-shot dans `examples/<name>.ts`, ou production dans `src/scrapers/<name>.ts`)
+- **Mode** (one-shot dans `examples/<name>.ts`, ou sub-package dans `packages/<name>/src/`)
 
 ## API réelle (0.4.0)
 

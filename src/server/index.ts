@@ -6,7 +6,7 @@ import { logger } from "@bogeychan/elysia-logger";
 import { createYoga } from "graphql-yoga";
 import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
-import { FutResolver } from "../scrapers/fut/graphql/FutResolver.ts";
+import { FutResolver } from "@aphrody-code/bxc/scrapers/fut";
 import { Browser } from "../api/browser.ts";
 
 function classifyPlayer(player: any) {
@@ -110,7 +110,7 @@ async function bootstrap() {
 					async ({ query }) => {
 						const { url, profile } = query as { url: string; profile?: string };
 						const { scrapeFutGgPlayer } = await import(
-							"../scrapers/fut/index.ts"
+							"@aphrody-code/bxc/scrapers/fut"
 						);
 						try {
 							const data = await scrapeFutGgPlayer(
@@ -140,7 +140,7 @@ async function bootstrap() {
 					async ({ query }) => {
 						const { url, profile } = query as { url: string; profile?: string };
 						const { scrapeFutBinPrice } = await import(
-							"../scrapers/fut/index.ts"
+							"@aphrody-code/bxc/scrapers/fut"
 						);
 						try {
 							const data = await scrapeFutBinPrice(
@@ -166,7 +166,7 @@ async function bootstrap() {
 						const { join } = await import("node:path");
 						const dbPath = join(
 							import.meta.dir,
-							"../scrapers/fut/data/fut_extracted_database.sqlite",
+							"../../packages/fut/src/data/fut_extracted_database.sqlite",
 						);
 						const db = new Database(dbPath);
 
@@ -267,7 +267,7 @@ async function bootstrap() {
 					const { join } = await import("node:path");
 					const dbPath = join(
 						import.meta.dir,
-						"../scrapers/fut/data/fut_extracted_database.sqlite",
+						"../../packages/fut/src/data/fut_extracted_database.sqlite",
 					);
 					try {
 						const db = new Database(dbPath);

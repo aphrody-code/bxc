@@ -18,15 +18,13 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { WorldBeybladeScraper } from "../src/scrapers/worldbeyblade/index.ts";
 import {
+	WorldBeybladeScraper,
 	parsePodiumFromPostHtml,
 	type WBOAnomaly,
-} from "../src/scrapers/worldbeyblade/analytics.ts";
-import type {
-	WBOCombo,
-	WorldBeybladeThread,
-} from "../src/scrapers/worldbeyblade/types.ts";
+	type WBOCombo,
+	type WorldBeybladeThread,
+} from "@aphrody-code/bxc/scrapers/worldbeyblade";
 
 const ARGS = Bun.argv.slice(2);
 const arg = (k: string) =>
