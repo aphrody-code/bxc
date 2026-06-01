@@ -67,41 +67,53 @@ deploy_all() {
   log "Deploying bxc Standalone and MCP server..."
   
   # 1. Stop service
-  log "Stopping systemd service..."
+  log "Stopping systemd services..."
   sudo systemctl stop bxc || true
-  
+  sudo systemctl stop bxc-crawler || true
+
   # 2. Kill residual bxc processes
   log "Stopping running bxc and bxc-mcp processes..."
   pkill -9 -f "bxc api" || true
   pkill -9 -f "bxc-mcp" || true
-  
-  # 3. Copy binaries
+  pkill -9 -f "crawl-worker" || true
+
+  # 3. Copy binaries (bxc to both bin dirs; bxc-mcp to both for CLI + MCP clients)
   log "Installing standalone bxc binary to /home/ubuntu/.local/bin/bxc..."
   cp "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/home/ubuntu/.local/bin/bxc"
-  
+
   log "Installing standalone bxc binary to /usr/local/bin/bxc..."
   sudo cp "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/usr/local/bin/bxc"
   sudo chmod +x "/usr/local/bin/bxc"
-  
+
   log "Installing standalone bxc-mcp binary to /usr/local/bin/bxc-mcp..."
   sudo cp "${REPO_ROOT}/dist/standalone/bxc-mcp" "/usr/local/bin/bxc-mcp"
   sudo chmod +x "/usr/local/bin/bxc-mcp"
 
-  # 4. Correct log ownerships
+  log "Installing standalone bxc-mcp binary to /home/ubuntu/.local/bin/bxc-mcp (Claude/Gemini MCP target)..."
+  cp "${REPO_ROOT}/dist/standalone/bxc-mcp" "/home/ubuntu/.local/bin/bxc-mcp"
+  chmod +x "/home/ubuntu/.local/bin/bxc-mcp"
+
+  # 4. Install / refresh systemd unit files from the repo
+  log "Installing systemd unit files..."
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-crawler.service" "/etc/systemd/system/bxc-crawler.service"
+
+  # 5. Correct log ownerships
   log "Aligning log permissions..."
   sudo mkdir -p /var/log/bxc
   sudo chown -R ubuntu:ubuntu /var/log/bxc
 
-  # 5. Reload systemd config
+  # 6. Reload systemd config
   log "Reloading systemd daemon..."
   sudo systemctl daemon-reload
-  
-  # 6. Start service
-  log "Starting systemd bxc service..."
+
+  # 7. Start services (API + 24/7 crawler worker)
+  log "Starting systemd services..."
   sudo systemctl start bxc
-  
-  # 7. Print status
-  systemctl status bxc
+  sudo systemctl enable --now bxc-crawler || sudo systemctl restart bxc-crawler
+
+  # 8. Print status
+  systemctl status bxc --no-pager || true
+  systemctl status bxc-crawler --no-pager || true
 }
 
 check_status() {
