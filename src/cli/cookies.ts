@@ -38,6 +38,7 @@ Usage:
   bxc cookies save <shortcut> <path_to_jar.json>    Save cookies to ~/.bxc/cookies/<shortcut>.json
   bxc cookies list                                  List all saved cookie jars in ~/.bxc/cookies
   bxc cookies show <shortcut>                       Show cookie metadata for a saved shortcut
+  bxc cookies extract [domain]                      Extract cookies straight from local Chrome (best effort)
 
 Output (stdout): JSON format
 
@@ -167,6 +168,35 @@ export async function main(
 							total: cookies.length,
 							fresh: fresh.length,
 							domains,
+						},
+						null,
+						2,
+					) + "\n",
+				);
+			} catch (err) {
+				logger.error(err instanceof Error ? err.message : String(err));
+				process.exit(EXIT.DATA_ERR);
+			}
+			break;
+		}
+
+		case "extract": {
+			const domain = argv[1] || "google.com";
+			try {
+				const { extractFromChrome } = await import("../cookies/cookie-loader.ts");
+				const cookies = await extractFromChrome(domain);
+				await saveCookieJar("google", cookies);
+				const fresh = filterExpired(cookies);
+				const domains = [...new Set(cookies.map((c) => c.domain))];
+				Bun.stdout.write(
+					JSON.stringify(
+						{
+							extracted: cookies.length,
+							total: cookies.length,
+							fresh: fresh.length,
+							domains,
+							names: cookies.map((c) => c.name),
+							has_required: cookies.some((c) => c.name === "__Secure-1PSID"),
 						},
 						null,
 						2,
