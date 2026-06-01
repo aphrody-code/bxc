@@ -60,8 +60,9 @@ function skipUnless(condition: boolean, reason: string): void {
 }
 
 let client: ImpersonatedClient;
+let HTTPBIN_OK = true;
 
-beforeAll(() => {
+beforeAll(async () => {
 	if (!LIB_PRESENT) {
 		skipUnless(false, "libcurl-impersonate.so not found — skipping all tests");
 		return;
@@ -72,6 +73,19 @@ beforeAll(() => {
 		sslVerify: true,
 		followRedirects: true,
 	});
+
+	if (NETWORK_OK) {
+		try {
+			const res = await client.fetch("https://httpbin.org/get");
+			if (res.status !== 200) {
+				console.warn(`[WARN] httpbin.org returned status ${res.status}. Tests targeting httpbin.org will be skipped.`);
+				HTTPBIN_OK = false;
+			}
+		} catch (e) {
+			console.warn(`[WARN] Failed to connect to httpbin.org: ${(e as Error).message}. Tests targeting httpbin.org will be skipped.`);
+			HTTPBIN_OK = false;
+		}
+	}
 });
 
 afterAll(() => {
@@ -205,8 +219,8 @@ describe("Cloudflare bypass — basic challenge", () => {
 
 describe("POST request with JSON body", () => {
 	test("POST https://httpbin.org/post returns echoed JSON body", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) {
-			console.warn("SKIP: lib not present or network disabled");
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) {
+			console.warn("SKIP: lib not present, network disabled, or httpbin.org unavailable");
 			return;
 		}
 
@@ -245,8 +259,8 @@ describe("POST request with JSON body", () => {
 	});
 
 	test("POST with URLSearchParams body", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) {
-			console.warn("SKIP: lib not present or network disabled");
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) {
+			console.warn("SKIP: lib not present, network disabled, or httpbin.org unavailable");
 			return;
 		}
 
@@ -277,8 +291,8 @@ describe("POST request with JSON body", () => {
 
 describe("Cookie handling", () => {
 	test("cookies sent in request are echoed by httpbin", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) {
-			console.warn("SKIP: lib not present or network disabled");
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) {
+			console.warn("SKIP: lib not present, network disabled, or httpbin.org unavailable");
 			return;
 		}
 
@@ -301,8 +315,8 @@ describe("Cookie handling", () => {
 	});
 
 	test("Set-Cookie from response is tracked in header", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) {
-			console.warn("SKIP: lib not present or network disabled");
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) {
+			console.warn("SKIP: lib not present, network disabled, or httpbin.org unavailable");
 			return;
 		}
 
@@ -449,7 +463,7 @@ describe("Error handling", () => {
 
 describe("Advanced libcurl features", () => {
 	test("Server Authentication (auth option)", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) return;
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) return;
 
 		// Correct credentials
 		const res = await client.fetch(
@@ -471,7 +485,7 @@ describe("Advanced libcurl features", () => {
 	});
 
 	test("HTTP Version Forcing", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) return;
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) return;
 
 		// Force HTTP/1.1
 		const res = await client.fetch("https://httpbin.org/get", {
@@ -487,7 +501,7 @@ describe("Advanced libcurl features", () => {
 	});
 
 	test("Cookie Jar saving (cookieJarPath option)", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) return;
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) return;
 
 		const jarPath = join(import.meta.dir, "../../tmp/test-cookiejar.txt");
 		const fs = require("node:fs");
@@ -519,7 +533,7 @@ describe("Advanced libcurl features", () => {
 	});
 
 	test("Verbose mode logging", async () => {
-		if (!LIB_PRESENT || !NETWORK_OK) return;
+		if (!LIB_PRESENT || !NETWORK_OK || !HTTPBIN_OK) return;
 
 		// Request with verbose logging enabled (mostly checks it does not crash)
 		const res = await client.fetch("https://httpbin.org/get", {

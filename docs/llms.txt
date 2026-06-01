@@ -98,6 +98,7 @@ Bxc registers these stdio MCP tools under the `bxc-native-mcp` server:
 - **`bxc_mirror`**: Download and mirror a complete site layout locally.
 - **`bxc_challonge`**: Extract a structured typed snapshot of any Challonge tournament page.
 - **`bxc_worldbeyblade`**: Full forum automation (check status, get profile, thread, subforum post list, private message inbox & sending).
+- **`bxc_actor_run`**: Execute an Apify-compatible Actor from a local path, directory, or remote Git repository.
 - **Unified Browser Tools**: Persistent browser automation primitives:
   - **`browser_navigate`**: Navigate the active page to a URL and wait for load.
   - **`browser_snapshot`**: Get current page title, URL, and markdown content.

@@ -43,6 +43,7 @@
  */
 
 import { join } from "node:path";
+import { BxcConfig } from "../config/BxcConfig.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -103,7 +104,7 @@ export class Dataset {
 	 * Datasets with the same name resume from where they left off.
 	 */
 	static async open(name: string, opts: DatasetOptions = {}): Promise<Dataset> {
-		const storageDir = opts.storageDir ?? "./storage";
+		const storageDir = opts.storageDir ?? BxcConfig.getGlobal().storageDir;
 		const dir = join(storageDir, "datasets", name);
 		const dataPath = join(dir, "data.jsonl");
 		const metaPath = join(dir, "meta.json");
@@ -255,6 +256,110 @@ export class Dataset {
 			...items.map((row) => headers.map((h) => escape(row[h])).join(",")),
 		];
 		await Bun.write(outputPath, csvLines.join("\n") + "\n");
+	}
+
+	/**
+	 * Export data as XML to `outputPath`.
+	 * Items are wrapped in <items><item>...</item></items>.
+	 * Keys are turned into elements, properly escaped.
+	 */
+	async exportToXml(
+		outputPath: string,
+		opts?: DatasetExportOptions,
+	): Promise<void> {
+		const items = await this.getData(opts);
+		const escapeXml = (v: unknown): string => {
+			const s = v === null || v === undefined ? "" : String(v);
+			return s
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&apos;");
+		};
+
+		let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<items>\n';
+		for (const item of items) {
+			xml += "  <item>\n";
+			for (const [k, v] of Object.entries(item)) {
+				xml += `    <${k}>${escapeXml(v)}</${k}>\n`;
+			}
+			xml += "  </item>\n";
+		}
+		xml += "</items>\n";
+		await Bun.write(outputPath, xml);
+	}
+
+	/**
+	 * Export data as a simple, pretty HTML table to `outputPath`.
+	 */
+	async exportToHtml(
+		outputPath: string,
+		opts?: DatasetExportOptions,
+	): Promise<void> {
+		const items = await this.getData(opts);
+		if (items.length === 0) {
+			await Bun.write(
+				outputPath,
+				"<!DOCTYPE html>\n<html>\n<body>\n<p>No data</p>\n</body>\n</html>\n",
+			);
+			return;
+		}
+
+		const headers = Object.keys(items[0]);
+		const escapeHtml = (v: unknown): string => {
+			const s = v === null || v === undefined ? "" : String(v);
+			return s
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;");
+		};
+
+		let html = "<!DOCTYPE html>\n<html>\n<head>\n<style>\n";
+		html +=
+			"table { border-collapse: collapse; width: 100%; font-family: sans-serif; }\n";
+		html +=
+			"th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }\n";
+		html += "tr:nth-child(even) { background-color: #f2f2f2; }\n";
+		html += "th { background-color: #4CAF50; color: white; }\n";
+		html += "</style>\n</head>\n<body>\n";
+		html += "<table>\n  <thead>\n    <tr>\n";
+		for (const h of headers) {
+			html += `      <th>${escapeHtml(h)}</th>\n`;
+		}
+		html += "    </tr>\n  </thead>\n  <tbody>\n";
+		for (const item of items) {
+			html += "    <tr>\n";
+			for (const h of headers) {
+				html += `      <td>${escapeHtml(item[h])}</td>\n`;
+			}
+			html += "    </tr>\n";
+		}
+		html += "  </tbody>\n</table>\n</body>\n</html>\n";
+		await Bun.write(outputPath, html);
+	}
+
+	/**
+	 * Export data as multiple JSON files in `outputDir`, matching legacy Apify/Crawlee local storage format.
+	 * Each item will be saved as `{index}.json` (starting at 000000001.json).
+	 */
+	async exportToDirectory(
+		outputDir: string,
+		opts?: DatasetExportOptions,
+	): Promise<void> {
+		const items = await this.getData(opts);
+		const { mkdirSync, writeFileSync } = require("node:fs");
+		mkdirSync(outputDir, { recursive: true });
+		let idx = 1;
+		for (const item of items) {
+			const filename = `${String(idx).padStart(9, "0")}.json`;
+			writeFileSync(
+				join(outputDir, filename),
+				JSON.stringify(item, null, 2),
+				"utf8",
+			);
+			idx++;
+		}
 	}
 
 	// ---------------------------------------------------------------------------

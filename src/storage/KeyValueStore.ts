@@ -59,6 +59,7 @@
 
 import { Database } from "bun:sqlite";
 import { dirname, join } from "node:path";
+import { BxcConfig } from "../config/BxcConfig.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -97,6 +98,8 @@ CREATE TABLE IF NOT EXISTS kv_store (
 );
 PRAGMA journal_mode=WAL;
 PRAGMA synchronous=NORMAL;
+PRAGMA temp_store=MEMORY;
+PRAGMA mmap_size=30000000000;
 `;
 
 // ---------------------------------------------------------------------------
@@ -158,10 +161,29 @@ export class KeyValueStore {
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Open (or create) a key-value store at the given SQLite path.
+	 * Open (or create) a key-value store at the given SQLite path or name.
 	 * Large-value blobs are stored in `<dirname(dbPath)>/blobs/`.
 	 */
-	static open(dbPath: string, opts?: KeyValueStoreOptions): KeyValueStore {
+	static open(
+		dbPathOrName: string,
+		opts?: KeyValueStoreOptions & { storageDir?: string },
+	): KeyValueStore {
+		let dbPath = dbPathOrName;
+		if (
+			!dbPathOrName.includes("/") &&
+			!dbPathOrName.includes("\\") &&
+			dbPathOrName !== ":memory:"
+		) {
+			const storageDir = opts?.storageDir ?? BxcConfig.getGlobal().storageDir;
+			dbPath = join(storageDir, "key_value_stores", `${dbPathOrName}.db`);
+		}
+		if (dbPath !== ":memory:") {
+			const { mkdirSync } = require("node:fs");
+			const { dirname } = require("node:path");
+			try {
+				mkdirSync(dirname(dbPath), { recursive: true });
+			} catch {}
+		}
 		return new KeyValueStore(dbPath, opts);
 	}
 

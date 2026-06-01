@@ -195,4 +195,40 @@ Sitemap: ${serverUrl}/sitemap.xml`,
 			rmSync(outDirFiltered, { recursive: true, force: true });
 		}
 	});
+
+	test("should perform minification and Brotli pre-compression when options are enabled", async () => {
+		const outDirMin = join(import.meta.dir, "../../tmp/mirror-test-min");
+		if (existsSync(outDirMin)) {
+			rmSync(outDirMin, { recursive: true, force: true });
+		}
+
+		const manifest = await mirrorSite(serverUrl, {
+			outDir: outDirMin,
+			recursive: true,
+			maxPages: 10,
+			maxDepth: 3,
+			compress: true,
+			minify: true,
+		});
+
+		expect(manifest.failed).toBe(0);
+
+		const hostDir = join(outDirMin, "127.0.0.1");
+
+		// Verify Brotli sidecar exists
+		expect(existsSync(join(hostDir, "index.html.br"))).toBe(true);
+		expect(existsSync(join(hostDir, "style.css.br"))).toBe(true);
+
+		// Verify minification actually happened (comments removed, spaces collapsed)
+		const indexHtml = readFileSync(join(hostDir, "index.html"), "utf-8");
+		expect(indexHtml).not.toContain("<!--");
+
+		const styleCss = readFileSync(join(hostDir, "style.css"), "utf-8");
+		expect(styleCss).toContain("body{background:url("); // punctuation spacing removed
+
+		// Cleanup
+		if (existsSync(outDirMin)) {
+			rmSync(outDirMin, { recursive: true, force: true });
+		}
+	});
 });

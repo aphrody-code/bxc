@@ -1,0 +1,12 @@
+{
+  "origin": "https://apify.com",
+  "discoveredAt": "2026-06-01T09:47:20.122Z",
+  "source": "sitemap",
+  "urls": [
+    "https://apify.com/",
+    "https://apify.com/about",
+    "https://apify.com/ideas/GPT-crawler-integration",
+    "https://apify.com/ideas/google-slides-ai-generator-784d18f6",
+    "https://apify.com/ideas/tableau-integration"
+  ]
+}
