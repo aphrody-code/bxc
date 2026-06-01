@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+[package]
+name                   = "gemini-web"
+publish                = false
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["aphrody-code <noreply@aphrody-code.dev>"]
+description            = "Gemini web app (gemini.google.com) Boq RPC client — cookie auth, page-bootstrap token scrape, batchexecute envelope codec. Mirrors the notebooklm crate transport."
+
+[lints]
+workspace = true
+
+[dependencies]
+serde       = { workspace = true, features = ["derive"] }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+url         = { workspace = true }
+regex       = { workspace = true }
+sha2        = { workspace = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio       = { workspace = true, features = ["fs", "io-util", "macros", "rt", "time"] }
+reqwest     = { workspace = true }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+tokio       = { version = "1.52", default-features = false, features = ["sync", "macros", "rt", "time"] }
+reqwest     = { version = "0.13", default-features = false, features = ["json", "stream", "query"] }
+
+[target.'cfg(target_os = "wasi")'.dependencies]
+tokio       = { version = "1.52", default-features = false, features = ["sync", "macros", "rt", "time"] }
+
+[dev-dependencies]
+tokio        = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+# rustls CryptoProvider must be installed before the first reqwest::Client
+# (rustls 0.23, cf. CLAUDE.md section 7); examples/tests install ring's.
+rustls       = { workspace = true }
+
+[package.metadata.cargo-machete]
+# tracing: macro-only usage (debug!/warn!); machete under-counts macro invocations.
+# sha2: SAPISIDHASH helper (auth.rs).
+ignored = ["tracing", "sha2"]

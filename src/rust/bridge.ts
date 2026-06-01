@@ -79,6 +79,18 @@ const SYMBOLS = {
 		args: [FFIType.ptr],
 		returns: FFIType.ptr,
 	},
+	bxc_get_chromium_cookies: {
+		args: [FFIType.ptr, FFIType.ptr, FFIType.ptr],
+		returns: FFIType.ptr,
+	},
+	bxc_dns_recon: {
+		args: [FFIType.ptr],
+		returns: FFIType.ptr,
+	},
+	bxc_gemini_web_ask: {
+		args: [FFIType.ptr, FFIType.ptr, FFIType.ptr],
+		returns: FFIType.ptr,
+	},
 } as const;
 
 function loadLib() {
@@ -187,4 +199,64 @@ export function stripTags(html: string): string {
 	const result = new CString(resultPtr).toString();
 	sym.bxc_free_string(resultPtr);
 	return result;
+}
+
+export function getChromiumCookies(
+	userDataPath: string,
+	profile: string,
+	hostKey: string,
+): any {
+	const sym = symbols();
+	const pathPtr = ptr(Buffer.from(userDataPath + "\0"));
+	const profilePtr = ptr(Buffer.from(profile + "\0"));
+	const hostKeyPtr = ptr(Buffer.from(hostKey + "\0"));
+	
+	const resultPtr = sym.bxc_get_chromium_cookies(pathPtr, profilePtr, hostKeyPtr);
+	if (!resultPtr) return [];
+
+	const json = new CString(resultPtr).toString();
+	sym.bxc_free_string(resultPtr);
+	try {
+		return JSON.parse(json);
+	} catch {
+		return [];
+	}
+}
+
+export function dnsRecon(domain: string): string[] {
+	const sym = symbols();
+	const domainPtr = ptr(Buffer.from(domain + "\0"));
+	
+	const resultPtr = sym.bxc_dns_recon(domainPtr);
+	if (!resultPtr) return [];
+
+	const json = new CString(resultPtr).toString();
+	sym.bxc_free_string(resultPtr);
+	try {
+		return JSON.parse(json);
+	} catch {
+		return [];
+	}
+}
+
+export function geminiWebAsk(
+	cookiePath: string,
+	prompt: string,
+	model?: string,
+): any {
+	const sym = symbols();
+	const pathPtr = ptr(Buffer.from(cookiePath + "\0"));
+	const promptPtr = ptr(Buffer.from(prompt + "\0"));
+	const modelPtr = model ? ptr(Buffer.from(model + "\0")) : null;
+	
+	const resultPtr = sym.bxc_gemini_web_ask(pathPtr, promptPtr, modelPtr);
+	if (!resultPtr) return { error: "Null pointer returned from FFI" };
+
+	const json = new CString(resultPtr).toString();
+	sym.bxc_free_string(resultPtr);
+	try {
+		return JSON.parse(json);
+	} catch (err) {
+		return { error: `Failed to parse response: ${err}` };
+	}
 }
