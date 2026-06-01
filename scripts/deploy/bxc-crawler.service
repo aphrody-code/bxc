@@ -1,0 +1,24 @@
+[Unit]
+Description=Bxc Autonomous Crawler Worker (24/7)
+Documentation=https://github.com/aphrody-code/bxc
+After=network-online.target bxc.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bxc
+# 24/7 daemon mode (default). Lightweight `fast` profile for sustained
+# background crawling on a shared VPS; bump to `stealth` for JS-heavy targets.
+ExecStart=/usr/local/bin/bxc crawl-worker --profile fast --queue bxc-autonomous-crawler
+Restart=always
+RestartSec=10
+# Resource guards — runs alongside bxc.service on a 2G box.
+MemoryMax=1500M
+CPUWeight=60
+Nice=10
+StandardOutput=append:/var/log/bxc/crawler.log
+StandardError=append:/var/log/bxc/crawler-error.log
+
+[Install]
+WantedBy=multi-user.target
