@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+# Workspace member of rust-bridge (see ../../Cargo.toml members list).
+# Keeps its own pinned dependency set (reqwest 0.12 / rusqlite 0.32) so the
+# X private-API code compiles unchanged; Cargo links these alongside the
+# bridge's own reqwest 0.13 without conflict.
+[package]
+name        = "x-client"
+version     = "0.2.0"
+edition     = "2024"
+publish     = false
+license     = "Apache-2.0"
+description = "X / Twitter native GraphQL + REST client (cookie auth, no API key required)"
+repository  = "https://github.com/aphrody-code/bxc"
+
+[[bin]]
+name = "x-cli"
+path = "src/main.rs"
+
+[lib]
+name = "x_client"
+path = "src/lib.rs"
+
+[dependencies]
+# HTTP — rustls-tls for zero-system-tls dependency, cookies for jar support.
+reqwest     = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "cookies", "multipart"] }
+# Async runtime.
+tokio       = { version = "1.52", features = ["full"] }
+# Serde / JSON.
+serde       = { version = "1", features = ["derive"] }
+serde_json  = { version = "1" }
+# Error handling.
+thiserror   = { version = "2" }
+anyhow      = { version = "1" }
+# CLI parsing.
+clap        = { version = "4", features = ["derive", "env"] }
+# Home directory resolution for session file.
+dirs        = { version = "6" }
+# rustls CryptoProvider (ring) — must call install_default() once before Client.
+rustls      = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+# Random UUIDs / transaction-ids for human-looking stealth headers.
+uuid        = { version = "1", features = ["v4", "fast-rng"] }
+# Regex for runtime queryId extraction from X's JS bundles.
+regex       = { version = "1" }
+# Local-first config files (bird-compatible JSON5).
+json5       = { version = "0.4" }
+# Timestamps for the local store and JSONL backups.
+time        = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+# Local-first store: bundled SQLite with FTS5 full-text search.
+# Pinned to 0.37 to match bxc-chromium — libsqlite3-sys declares `links =
+# "sqlite3"`, so only one version may be linked into the bridge cdylib.
+rusqlite    = { version = "0.37", features = ["bundled"] }
+
+[dev-dependencies]
+tokio       = { version = "1.52", features = ["full"] }
