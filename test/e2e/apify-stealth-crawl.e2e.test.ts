@@ -15,9 +15,9 @@
  */
 
 /**
- * E2E Challonge crawl suite — validates Bxc against real Challonge patterns.
+ * E2E Apify crawl suite — validates Bxc against real Apify patterns.
  *
- * This suite exercises the 9 URL patterns that rpb-challonge (@rose-griffon/challonge
+ * This suite exercises the 9 URL patterns that rpb-apify (@rose-griffon/apify
  * v2.0.0) consumes via its three transports:
  *   - scraper.ts        puppeteer-extra + stealth (CF managed challenge)
  *   - curl-impersonate  TLS fingerprint bypass
@@ -36,10 +36,10 @@
  *   - http          skip when curl-impersonate .so absent
  *   - stealth       skip when ms-playwright Chromium absent
  *   - max           skip when ms-playwright Firefox absent
- *   - all profiles  skip when challonge.com unreachable
+ *   - all profiles  skip when apify.com unreachable
  *
  * Run:
- *   bun test test/e2e/challonge-crawl.e2e.test.ts
+ *   bun test test/e2e/apify-crawl.e2e.test.ts
  *
  * Expected: >= 1 profile passes each pattern (CF may block static/fast — that is
  * a documented finding, not a test failure).
@@ -49,12 +49,12 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { Browser, type Page } from "../../src/api/browser.ts";
 import {
-	CHALLONGE_PATTERNS,
-	CHALLONGE_SLUGS,
-	CHALLONGE_USERS,
-	type ChallongePattern,
+	APIFY_PATTERNS,
+	APIFY_SLUGS,
+	APIFY_USERS,
+	type ApifyPattern,
 	isCloudflareWall,
-} from "./challonge-fixtures.ts";
+} from "./apify-fixtures.ts";
 import {
 	checkProfile,
 	type ProfileName,
@@ -68,7 +68,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const REPORT_DATE = new Date().toISOString().slice(0, 10);
-const REPORT_PATH = `${import.meta.dir}/results/${REPORT_DATE}-challonge.md`;
+const REPORT_PATH = `${import.meta.dir}/results/${REPORT_DATE}-apify-stealth.md`;
 
 /** Timeout per individual test (generous for stealth/max profiles). */
 const PER_TEST_TIMEOUT_MS = 45_000;
@@ -77,7 +77,7 @@ const PER_TEST_TIMEOUT_MS = 45_000;
 const NAV_TIMEOUT_MS = 30_000;
 
 /**
- * Minimum delay between consecutive Challonge requests (ms) to stay well
+ * Minimum delay between consecutive Apify requests (ms) to stay well
  * below their rate-limit threshold.  4 s == 15 req/min max.
  */
 const REQUEST_DELAY_MS = 4_000;
@@ -102,7 +102,7 @@ let lightpandaBin: string | null = null;
  * Flat result log — one entry per (profile, pattern, slug/user) combination.
  * Written to the Markdown report in afterAll.
  */
-const allResults: ChallongeResult[] = [];
+const allResults: ApifyResult[] = [];
 
 /** Per-profile aggregated metrics for the summary table. */
 const summary: Record<ProfileName, ProfileSummary> = {
@@ -117,7 +117,7 @@ const summary: Record<ProfileName, ProfileSummary> = {
 // Types
 // ---------------------------------------------------------------------------
 
-interface ChallongeResult extends SiteResult {
+interface ApifyResult extends SiteResult {
 	pattern: string;
 	slug: string;
 	cfWall: boolean;
@@ -141,7 +141,7 @@ function emptySummary(): ProfileSummary {
 
 async function isOnline(): Promise<boolean> {
 	try {
-		const r = await fetch("https://challonge.com/T_SS1.json", {
+		const r = await fetch("https://apify.com/robots.txt", {
 			method: "HEAD",
 			signal: AbortSignal.timeout(6_000),
 			headers: { "User-Agent": "Bxc-E2E/1.0" },
@@ -176,10 +176,10 @@ async function throttle(): Promise<void> {
 async function probeWithProfile(
 	profile: ProfileName,
 	url: string,
-	pattern: ChallongePattern,
+	pattern: ApifyPattern,
 	slug: string,
-): Promise<ChallongeResult> {
-	const base: ChallongeResult = {
+): Promise<ApifyResult> {
+	const base: ApifyResult = {
 		profile,
 		url,
 		pattern: pattern.name,
@@ -253,7 +253,7 @@ async function probeWithProfile(
 
 		// Status determination:
 		//   - CF wall is NOT a hard fail — it's a documented finding that steers
-		//     rpb-challonge to use stealth/max profiles.
+		//     rpb-apify to use stealth/max profiles.
 		//   - We only call it "pass" when content is present, above min threshold,
 		//     and the domain signal check passes.
 		if (base.cfWall) {
@@ -299,7 +299,7 @@ async function probeWithProfile(
 // Result recorder
 // ---------------------------------------------------------------------------
 
-function recordResult(r: ChallongeResult): void {
+function recordResult(r: ApifyResult): void {
 	allResults.push(r);
 	const s = summary[r.profile];
 	if (r.status === "pass") s.pass++;
@@ -317,10 +317,10 @@ function recordResult(r: ChallongeResult): void {
 // Markdown report writer
 // ---------------------------------------------------------------------------
 
-async function writeChallongeReport(): Promise<void> {
+async function writeApifyReport(): Promise<void> {
 	const lines: string[] = [];
 
-	lines.push(`# E2E Challonge crawl report`);
+	lines.push(`# E2E Apify crawl report`);
 	lines.push("");
 	lines.push(`Date: ${REPORT_DATE}`);
 	lines.push(`Total samples: ${allResults.length}`);
@@ -415,14 +415,14 @@ async function writeChallongeReport(): Promise<void> {
 	lines.push("");
 
 	// Recommendations
-	lines.push("## Recommendations for rpb-challonge");
+	lines.push("## Recommendations for rpb-apify");
 	lines.push("");
 	lines.push(
-		"The following table maps each rpb-challonge transport to its recommended Bxc profile replacement.",
+		"The following table maps each rpb-apify transport to its recommended Bxc profile replacement.",
 	);
 	lines.push("");
 	lines.push(
-		"| rpb-challonge transport | Current implementation | Bxc replacement | Notes |",
+		"| rpb-apify transport | Current implementation | Bxc replacement | Notes |",
 	);
 	lines.push("|---|---|---|---|");
 	lines.push(
@@ -452,7 +452,7 @@ async function writeChallongeReport(): Promise<void> {
 
 	if (staticPasses === 0 && summary.static.skip === 0) {
 		lines.push(
-			"- `static` profile: 0 passes — Challonge returns CF challenge or insufficient content for this profile. Use `http`/`stealth`/`max` for Challonge pages.",
+			"- `static` profile: 0 passes — Apify returns CF challenge or insufficient content for this profile. Use `http`/`stealth`/`max` for Apify pages.",
 		);
 	} else if (summary.static.skip > 0) {
 		lines.push("- `static` profile: skipped (zigquery cdylib not built).");
@@ -491,7 +491,7 @@ async function writeChallongeReport(): Promise<void> {
 	const allCfWalls = allResults.filter((r) => r.cfWall).length;
 	if (allCfWalls > 0) {
 		lines.push(
-			`Challonge.com is protected by Cloudflare Managed Challenge. ${allCfWalls} request(s) were blocked across all profiles. This confirms that rpb-challonge is correct to use puppeteer-extra-stealth for the scraper transport — only profiles with a real browser engine (stealth/max) can reliably bypass CF Managed Challenge.`,
+			`Apify.com is protected by Cloudflare Managed Challenge. ${allCfWalls} request(s) were blocked across all profiles. This confirms that rpb-apify is correct to use puppeteer-extra-stealth for the scraper transport — only profiles with a real browser engine (stealth/max) can reliably bypass CF Managed Challenge.`,
 		);
 	} else if (allResults.length === 0) {
 		lines.push(
@@ -499,7 +499,7 @@ async function writeChallongeReport(): Promise<void> {
 		);
 	} else {
 		lines.push(
-			"No CF walls detected in this run — either the profiles used are effective or Challonge was not enforcing CF Managed Challenge at test time.",
+			"No CF walls detected in this run — either the profiles used are effective or Apify was not enforcing CF Managed Challenge at test time.",
 		);
 	}
 	lines.push("");
@@ -529,7 +529,7 @@ beforeAll(async () => {
 	online = await isOnline();
 	if (!online) {
 		console.log(
-			"[challonge] SKIP: challonge.com unreachable — all tests will be skipped",
+			"[apify] SKIP: apify.com unreachable — all tests will be skipped",
 		);
 	}
 	lightpandaBin = await resolveLightpandaBin();
@@ -543,8 +543,8 @@ afterAll(async () => {
 	}
 
 	if (allResults.length > 0) {
-		await writeChallongeReport();
-		console.log(`[challonge] report written: ${REPORT_PATH}`);
+		await writeApifyReport();
+		console.log(`[apify] report written: ${REPORT_PATH}`);
 	}
 });
 
@@ -554,22 +554,22 @@ afterAll(async () => {
 
 /**
  * Returns the list of (slug, pattern) pairs to test for a given profile.
- * Tournament patterns use CHALLONGE_SLUGS; user patterns use CHALLONGE_USERS;
+ * Tournament patterns use APIFY_SLUGS; user patterns use APIFY_USERS;
  * the community pattern has its own fixed slug.
  */
-function buildMatrix(): Array<{ slug: string; pattern: ChallongePattern }> {
-	const entries: Array<{ slug: string; pattern: ChallongePattern }> = [];
+function buildMatrix(): Array<{ slug: string; pattern: ApifyPattern }> {
+	const entries: Array<{ slug: string; pattern: ApifyPattern }> = [];
 
-	for (const p of CHALLONGE_PATTERNS) {
+	for (const p of APIFY_PATTERNS) {
 		if (p.requiresUser) {
-			for (const user of CHALLONGE_USERS) {
+			for (const user of APIFY_USERS) {
 				entries.push({ slug: user, pattern: p });
 			}
 		} else if (p.name === "community-satr") {
 			// Community URL is fixed — use a placeholder slug for the report.
 			entries.push({ slug: "sunafterthereign", pattern: p });
 		} else {
-			for (const slug of CHALLONGE_SLUGS) {
+			for (const slug of APIFY_SLUGS) {
 				entries.push({ slug, pattern: p });
 			}
 		}
@@ -585,12 +585,12 @@ const TEST_MATRIX = buildMatrix();
 // ---------------------------------------------------------------------------
 
 for (const profile of PROFILES) {
-	describe(`challonge — profile=${profile}`, () => {
+	describe(`apify — profile=${profile}`, () => {
 		test(
 			`probe challenger patterns with profile=${profile}`,
 			async () => {
 				if (!online) {
-					console.log(`[challonge ${profile}] SKIP: offline`);
+					console.log(`[apify ${profile}] SKIP: offline`);
 					// Record all items as skip for the report.
 					for (const { slug, pattern } of TEST_MATRIX) {
 						recordResult({
@@ -599,7 +599,7 @@ for (const profile of PROFILES) {
 							pattern: pattern.name,
 							slug,
 							status: "skip",
-							error: "challonge.com unreachable",
+							error: "apify.com unreachable",
 							cfWall: false,
 							signalPass: false,
 						});
@@ -609,7 +609,7 @@ for (const profile of PROFILES) {
 
 				const probe = await checkProfile(profile);
 				if (!probe.available) {
-					console.log(`[challonge ${profile}] SKIP: ${probe.reason}`);
+					console.log(`[apify ${profile}] SKIP: ${probe.reason}`);
 					for (const { slug, pattern } of TEST_MATRIX) {
 						recordResult({
 							profile,
@@ -661,7 +661,7 @@ for (const profile of PROFILES) {
 				}
 
 				console.log(
-					`[challonge ${profile}] done: pass=${passCount} fail=${failCount} cfWall=${cfCount} skip=0`,
+					`[apify ${profile}] done: pass=${passCount} fail=${failCount} cfWall=${cfCount} skip=0`,
 				);
 
 				// The test passes if:
@@ -680,7 +680,7 @@ for (const profile of PROFILES) {
 						// There were real requests, all of which failed non-CF.
 						// This is unexpected and should be investigated.
 						console.error(
-							`[challonge ${profile}] WARNING: ${failCount} non-CF failures, 0 passes. ` +
+							`[apify ${profile}] WARNING: ${failCount} non-CF failures, 0 passes. ` +
 								"Inspect the report for details.",
 						);
 					}
@@ -695,19 +695,19 @@ for (const profile of PROFILES) {
 // Post-suite assertion: at least one profile per pattern has a pass
 // ---------------------------------------------------------------------------
 
-describe("challonge — cross-profile coverage", () => {
+describe("apify — cross-profile coverage", () => {
 	test(
 		"every pattern has at least one pass or is fully skipped/CF-blocked",
 		async () => {
 			// This test runs after all profiles have completed (afterAll order).
 			// We check the accumulated results array.
 			if (!online) {
-				console.log("[challonge coverage] SKIP: offline");
+				console.log("[apify coverage] SKIP: offline");
 				return;
 			}
 
 			// Group by pattern+slug.
-			const patternMap = new Map<string, ChallongeResult[]>();
+			const patternMap = new Map<string, ApifyResult[]>();
 			for (const r of allResults) {
 				const key = `${r.pattern}::${r.slug}`;
 				const arr = patternMap.get(key) ?? [];
@@ -733,12 +733,12 @@ describe("challonge — cross-profile coverage", () => {
 			}
 
 			if (issues.length > 0) {
-				console.error("[challonge coverage] unexpected failures:");
+				console.error("[apify coverage] unexpected failures:");
 				for (const issue of issues) console.error("  " + issue);
 				// Soft-assert: log but do not hard-fail — CF may legitimately block all.
 			} else {
 				console.log(
-					`[challonge coverage] OK — all ${patternMap.size} pattern/slug pairs passed, were CF-blocked, or were cleanly skipped`,
+					`[apify coverage] OK — all ${patternMap.size} pattern/slug pairs passed, were CF-blocked, or were cleanly skipped`,
 				);
 			}
 

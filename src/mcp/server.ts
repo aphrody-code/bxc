@@ -1265,6 +1265,53 @@ server.registerTool(
 	},
 );
 
+server.registerTool(
+	"bxc_actor_run",
+	{
+		description:
+			"Runs a local script, a directory with actor.json/package.json, or a remote Git repository URL as a Bxc Actor. You can optionally provide custom input JSON, storage dir, and control purge behavior.",
+		inputSchema: z.object({
+			actorPath: z.string().describe("The file path, directory path, or Git URL of the Actor."),
+			input: z.record(z.string(), z.any()).optional().describe("Input key-value pairs for the Actor run."),
+			purge: z.boolean().default(true).describe("Purge default storage on start."),
+			storageDir: z.string().optional().describe("Custom storage directory path."),
+		}),
+	},
+	async (args) => {
+		const { main: actorCliMain } = await import("../cli/actor.ts");
+		const cliArgs = ["run", args.actorPath];
+		if (args.input) {
+			cliArgs.push("--input", JSON.stringify(args.input));
+		}
+		if (args.storageDir) {
+			cliArgs.push("--storage-dir", args.storageDir);
+		}
+		if (args.purge === false) {
+			cliArgs.push("--no-purge");
+		}
+		try {
+			await actorCliMain(cliArgs, { insecure: false, quiet: true, json: false, timeoutMs: 30000 }, { exitProcess: false });
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Actor run completed successfully. Target: ${args.actorPath}`,
+					},
+				],
+			};
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Actor run failed. Error: ${String(err)}`,
+					},
+				],
+			};
+		}
+	},
+);
+
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
@@ -1284,6 +1331,7 @@ async function main() {
 			import("../mirror/index.ts"),
 			import("../scrapers/challonge.ts"),
 			import("../scrapers/worldbeyblade/index.ts"),
+			import("../cli/actor.ts"),
 		]).catch(() => {});
 	}, 100);
 }
