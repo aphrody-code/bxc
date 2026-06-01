@@ -43,6 +43,7 @@ export interface BrowserCrawlerOptions
 	viewport?: { width: number; height: number };
 	insecure?: boolean;
 	proxy?: string;
+	proxyPool?: string[];
 	proxyAuth?: string;
 	spawnOpts?: any;
 	useWorkers?: boolean;
@@ -69,7 +70,13 @@ export class BrowserCrawler extends BasicCrawler<BrowserCrawlingContext> {
 	}
 
 	private async processRequestDirect(req: any): Promise<void> {
-		this.log(`BrowserCrawler (${this.profile}) crawling: ${req.url}`);
+		let selectedProxy = this.options.proxy;
+		if (this.options.proxyPool && this.options.proxyPool.length > 0) {
+			const idx = Math.floor(Math.random() * this.options.proxyPool.length);
+			selectedProxy = this.options.proxyPool[idx];
+		}
+
+		this.log(`BrowserCrawler (${this.profile}) crawling: ${req.url} (proxy: ${selectedProxy || "none"})`);
 		const { Browser } = require("../api/browser.ts");
 		const page = await Browser.newPage({
 			profile: this.profile,
@@ -78,7 +85,7 @@ export class BrowserCrawler extends BasicCrawler<BrowserCrawlingContext> {
 			userAgent: this.options.userAgent,
 			viewport: this.options.viewport,
 			insecure: this.options.insecure,
-			proxy: this.options.proxy,
+			proxy: selectedProxy,
 			proxyAuth: this.options.proxyAuth,
 			spawnOpts: this.options.spawnOpts,
 		});
@@ -194,6 +201,12 @@ export class BrowserCrawler extends BasicCrawler<BrowserCrawlingContext> {
 				handlerCode = this.requestHandler.toString();
 			}
 
+			let selectedProxy = this.options.proxy;
+			if (this.options.proxyPool && this.options.proxyPool.length > 0) {
+				const idx = Math.floor(Math.random() * this.options.proxyPool.length);
+				selectedProxy = this.options.proxyPool[idx];
+			}
+
 			worker.postMessage({
 				type: "crawl",
 				id: req.id,
@@ -209,7 +222,7 @@ export class BrowserCrawler extends BasicCrawler<BrowserCrawlingContext> {
 					userAgent: this.options.userAgent,
 					viewport: this.options.viewport,
 					insecure: this.options.insecure,
-					proxy: this.options.proxy,
+					proxy: selectedProxy,
 					proxyAuth: this.options.proxyAuth,
 					spawnOpts: this.options.spawnOpts,
 				},

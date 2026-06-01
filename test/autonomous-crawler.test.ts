@@ -122,4 +122,30 @@ describe("Bxc Autonomous Crawler & Cache", () => {
 		expect(crawler).toBeDefined();
 		expect(crawler.stats()).toBeDefined();
 	});
+
+	test("FTS5 Keyword Search and Triggers", () => {
+		const db = new BxcDB(testDbPath);
+		
+		// Insert a record which should automatically trigger FTS insertion
+		db.saveScrape(
+			"https://example.com/fts-test",
+			"static",
+			200,
+			"<html><body><h1>Incredible Technology</h1></body></html>",
+			{ title: "Special Technology Article" },
+			"Technology is moving extremely fast and it is incredible."
+		);
+
+		const searchResult1 = db.searchFullText("Technology");
+		expect(searchResult1.length).toBe(1);
+		expect(searchResult1[0].url).toBe("https://example.com/fts-test");
+
+		const searchResult2 = db.searchFullText("incredible");
+		expect(searchResult2.length).toBe(1);
+		
+		const emptySearch = db.searchFullText("nonexistentword");
+		expect(emptySearch.length).toBe(0);
+
+		db.close();
+	});
 });

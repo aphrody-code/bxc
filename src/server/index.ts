@@ -12,6 +12,8 @@ import { AutonomousCrawler } from "../crawler/AutonomousCrawler.ts";
 import { BxcDB } from "../db/BxcDB.ts";
 import { RequestQueue } from "../queue/RequestQueue.ts";
 import { redis } from "bun";
+import { generateTypeScriptTypes } from "../utils/typegen.ts";
+import { getEmbedding, cosineSimilarity } from "../utils/vector.ts";
 
 function classifyPlayer(player: any) {
 	const tags: string[] = [];
@@ -299,6 +301,173 @@ async function bootstrap() {
 							url: t.String(),
 						}),
 					},
+				)
+				.get(
+					"/page/types",
+					async ({ query }) => {
+						const url = query.url;
+						const res = await redis.get(`bxc:cache:url:${url}`);
+						let openapi: any = null;
+						let title = "PageData";
+						if (res) {
+							const parsed = JSON.parse(res);
+							openapi = parsed.openapi;
+							title = parsed.title || title;
+						} else {
+							const db = new BxcDB();
+							try {
+								const row = db.getScrapeByUrl(url);
+								if (row && row.openapi_spec) {
+									openapi = JSON.parse(row.openapi_spec);
+									title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+								}
+							} finally {
+								db.close();
+							}
+						}
+
+						if (!openapi) {
+							const crawler = new AutonomousCrawler({ maxRequests: 1 });
+							await crawler.run([url]);
+							const db2 = new BxcDB();
+							try {
+								const row = db2.getScrapeByUrl(url);
+								if (row && row.openapi_spec) {
+									openapi = JSON.parse(row.openapi_spec);
+									title = row.metadata ? JSON.parse(row.metadata).title || title : title;
+								}
+							} finally {
+								db2.close();
+							}
+						}
+
+						if (!openapi) {
+							return "Error: OpenAPI schema not found or could not be generated for this URL";
+						}
+
+						const safeInterfaceName = title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
+						return generateTypeScriptTypes(openapi, safeInterfaceName);
+					},
+					{
+						query: t.Object({
+							url: t.String(),
+						}),
+					},
+				)
+				.get(
+					"/search/semantic",
+					async ({ query }) => {
+						const q = query.q;
+						const limit = parseInt(query.limit || "5", 10);
+						
+						const queryVector = await getEmbedding(q);
+
+						const db = new BxcDB();
+						try {
+							const rows = db.getAllScrapesWithVectors();
+							const results = rows.map((r) => {
+								let metadataParsed = {};
+								try { metadataParsed = JSON.parse(r.metadata); } catch {}
+								let vectorParsed: number[] = [];
+								try { vectorParsed = JSON.parse(r.vector); } catch {}
+
+								const similarity = cosineSimilarity(queryVector, vectorParsed);
+								return {
+									url: r.url,
+									metadata: metadataParsed,
+									markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
+									similarity
+								};
+							});
+
+							results.sort((a, b) => b.similarity - a.similarity);
+
+							return {
+								success: true,
+								query: q,
+								results: results.slice(0, limit)
+							};
+						} finally {
+							db.close();
+						}
+					},
+					{
+						query: t.Object({
+							q: t.String(),
+							limit: t.Optional(t.String()),
+						}),
+					}
+				)
+				.get(
+					"/search/keyword",
+					async ({ query }) => {
+						const q = query.q;
+						const limit = parseInt(query.limit || "10", 10);
+
+						const db = new BxcDB();
+						try {
+							const rows = db.searchFullText(q, limit);
+							const results = rows.map((r) => {
+								let metadataParsed = {};
+								try { metadataParsed = JSON.parse(r.metadata); } catch {}
+								return {
+									url: r.url,
+									profile: r.profile,
+									status: r.status,
+									metadata: metadataParsed,
+									markdown: r.markdown ? r.markdown.slice(0, 300) + "..." : "",
+									timestamp: r.timestamp,
+									rank: r.rank
+								};
+							});
+
+							return {
+								success: true,
+								query: q,
+								results
+							};
+						} finally {
+							db.close();
+						}
+					},
+					{
+						query: t.Object({
+							q: t.String(),
+							limit: t.Optional(t.String()),
+						}),
+					},
+				)
+				.post(
+					"/crawl/replay",
+					async () => {
+						const crawler = new AutonomousCrawler();
+						const count = crawler.replayFailed();
+						return {
+							success: true,
+							message: `Requeued ${count} failed requests from the dead-letter queue.`,
+							stats: crawler.stats(),
+						};
+					}
+				)
+				.get(
+					"/crawl/failed",
+					async () => {
+						const crawler = new AutonomousCrawler();
+						const failed = crawler.deadLetterQueue();
+						return {
+							success: true,
+							count: failed.length,
+							failed: failed.map((req) => ({
+								id: req.id,
+								url: req.url,
+								method: req.method,
+								retries: req.retries,
+								errorMessage: req.errorMessage,
+								createdAt: req.createdAt,
+								handledAt: req.handledAt
+							}))
+						};
+					}
 				)
 				.get(
 					"/fut/player",

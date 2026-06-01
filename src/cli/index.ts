@@ -65,6 +65,7 @@ Subcommands:
   google    Google properties auditor & client
   xcom      X.com profile scraper
   actor     Manage and run Bxc crawler Actors
+  crawl-worker Run the autonomous recursive crawler worker daemon 24/7
 
 Global Options:
   --insecure, -k  Bypass TLS certificate validation
@@ -220,6 +221,12 @@ async function main() {
 
 		case "actor": {
 			const mod = await import("./actor.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "crawl-worker": {
+			const mod = await import("./crawl-worker.ts");
 			await mod.main(args, opts);
 			break;
 		}

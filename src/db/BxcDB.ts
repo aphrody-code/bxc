@@ -56,6 +56,7 @@ export class BxcDB {
                 markdown TEXT,
                 json_data TEXT, -- JSON
                 openapi_spec TEXT, -- JSON
+                vector TEXT, -- JSON Float Array
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -79,6 +80,42 @@ export class BxcDB {
 		try {
 			this.db.exec("ALTER TABLE scrapes ADD COLUMN openapi_spec TEXT;");
 		} catch {}
+		try {
+			this.db.exec("ALTER TABLE scrapes ADD COLUMN vector TEXT;");
+		} catch {}
+
+		// FTS5 Virtual Table & Triggers setup
+		try {
+			this.db.exec(`
+				CREATE VIRTUAL TABLE IF NOT EXISTS scrapes_fts USING fts5(url, title, markdown);
+				
+				CREATE TRIGGER IF NOT EXISTS after_scrapes_insert AFTER INSERT ON scrapes BEGIN
+					INSERT INTO scrapes_fts(rowid, url, title, markdown)
+					VALUES (new.id, new.url, coalesce(json_extract(new.metadata, '$.title'), ''), coalesce(new.markdown, ''));
+				END;
+
+				CREATE TRIGGER IF NOT EXISTS after_scrapes_delete AFTER DELETE ON scrapes BEGIN
+					DELETE FROM scrapes_fts WHERE rowid = old.id;
+				END;
+
+				CREATE TRIGGER IF NOT EXISTS after_scrapes_update AFTER UPDATE ON scrapes BEGIN
+					DELETE FROM scrapes_fts WHERE rowid = old.id;
+					INSERT INTO scrapes_fts(rowid, url, title, markdown)
+					VALUES (new.id, new.url, coalesce(json_extract(new.metadata, '$.title'), ''), coalesce(new.markdown, ''));
+				END;
+			`);
+
+			// Backfill existing data if FTS table is empty
+			const count = this.db.query("SELECT COUNT(*) as cnt FROM scrapes_fts").get() as any;
+			if (count && count.cnt === 0) {
+				this.db.exec(`
+					INSERT INTO scrapes_fts(rowid, url, title, markdown)
+					SELECT id, url, coalesce(json_extract(metadata, '$.title'), ''), coalesce(markdown, '') FROM scrapes;
+				`);
+			}
+		} catch (err) {
+			console.error("[db-fts] Failed to initialize FTS5 index and triggers:", err);
+		}
 	}
 
 	public saveScrape(
@@ -90,10 +127,11 @@ export class BxcDB {
 		markdown?: string,
 		jsonData?: any,
 		openapiSpec?: any,
+		vector?: number[],
 	) {
 		const query = this.db.prepare(`
-            INSERT INTO scrapes (url, profile, status, content, metadata, markdown, json_data, openapi_spec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO scrapes (url, profile, status, content, metadata, markdown, json_data, openapi_spec, vector)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 		return query.run(
 			url,
@@ -104,6 +142,7 @@ export class BxcDB {
 			markdown ?? null,
 			jsonData ? JSON.stringify(jsonData) : null,
 			openapiSpec ? JSON.stringify(openapiSpec) : null,
+			vector ? JSON.stringify(vector) : null,
 		);
 	}
 
@@ -117,6 +156,40 @@ export class BxcDB {
 		return this.db
 			.query("SELECT * FROM scrapes WHERE url = ? ORDER BY timestamp DESC LIMIT 1")
 			.get(url) as any;
+	}
+
+	public getAllScrapesWithVectors() {
+		return this.db
+			.query("SELECT url, metadata, markdown, vector FROM scrapes WHERE vector IS NOT NULL")
+			.all() as any[];
+	}
+
+	public searchFullText(queryStr: string, limit = 10) {
+		const sanitized = queryStr.replace(/[^\w\s]/g, " ").trim();
+		if (!sanitized) return [];
+		try {
+			return this.db
+				.query(`
+					SELECT s.id, s.url, s.profile, s.status, s.metadata, s.markdown, s.timestamp, fts.rank
+					FROM scrapes s
+					JOIN scrapes_fts fts ON s.id = fts.rowid
+					WHERE scrapes_fts MATCH ?
+					ORDER BY rank
+					LIMIT ?
+				`)
+				.all(sanitized, limit) as any[];
+		} catch (err) {
+			console.error("[db-fts] FTS query failed, falling back to LIKE:", err);
+			return this.db
+				.query(`
+					SELECT id, url, profile, status, metadata, markdown, timestamp, 0.0 as rank
+					FROM scrapes
+					WHERE url LIKE ? OR markdown LIKE ?
+					ORDER BY timestamp DESC
+					LIMIT ?
+				`)
+				.all(`%${queryStr}%`, `%${queryStr}%`, limit) as any[];
+		}
 	}
 
 	public close() {
