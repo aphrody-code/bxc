@@ -18,6 +18,8 @@
   - [🧩 MCP Server Capabilities](#-mcp-server-capabilities)
 - [🚀 CLI Reference (Agent-Friendly)](#-cli-reference-agent-friendly)
   - [🔍 bxc search — Google Web Search](#-bxc-search--google-web-search)
+  - [𝕏 bxc x — Native X / Twitter Client](#-bxc-x--native-x--twitter-client)
+- [📦 Monorepo Packages](#-monorepo-packages)
 - [📦 Installation](#-installation)
 - [⚙️ Native Engine & Portability](#-native-engine--portability)
 - [🛠️ API Reference](#-api-reference)
@@ -50,6 +52,7 @@ Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/m
 * **`bxc_mirror`**: Download and mirror a complete site layout locally.
 * **`bxc_challonge`**: Extract a structured typed snapshot of any Challonge tournament page.
 * **`bxc_worldbeyblade`**: Full forum automation (check status, get profile, thread, subforum post list, private message inbox & sending).
+* **`bxc_x_client`**: Native X / Twitter client (cookie auth, no API key) — fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account.
 * **Unified Browser Tools**: Persistent browser automation primitives (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill`, `browser_type`, `browser_press_key`, `browser_select_option`, `browser_evaluate`, `browser_wait_for`, `browser_screenshot`, `browser_close`).
 * **Specialized Scrapers**: Exposes Bxc's advanced stealth crawlers directly as tools (`bxc_fut_price`, `bxc_fut_player`, `bxc_voiranime_search`, `bxc_voiranime_info`, `bxc_voiranime_resolve`, `bxc_xcom_profile`).
 
@@ -73,6 +76,7 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 | `bxc voiranime`| `bxc voiranime <action> <arg>` | VoirAnime streaming search (`search`), info (`info`), or embed resolver (`resolve`). |
 | `bxc google` | `bxc google <action> <arg>` | Google Ecosystem client for search (`search`), mandate audit (`open`), or mass audit (`audit`). |
 | `bxc xcom` | `bxc xcom profile <username>` | X.com profile scraper (supports `--screenshot` and `--ai-extract`). |
+| `bxc x` | `bxc x <action> [args]` | Native X/Twitter client via cookie auth — `profile`, `tweets`, `search`, `news`, `whoami`. |
 | `bxc worldbeyblade` | `bxc worldbeyblade <action>` | worldbeyblade.org automation tools (profile, thread, PMs). |
 | `bxc cookies` | `bxc cookies <action>` | Cookie jar management tools. |
 | `bxc har` | `bxc har <action> <url> <out.har>`| HAR (HTTP Archive) recorder/replayer. |
@@ -188,6 +192,48 @@ bxc xcom profile elonmusk
 # Scrape profile with visual screenshot and local AI info extraction
 bxc xcom profile elonmusk --screenshot --ai-extract
 ```
+
+### 𝕏 `bxc x` — Native X / Twitter Client
+A full GraphQL + REST client for X's private web API, authenticated with an
+`auth_token` + `ct0` cookie pair (no developer portal, no API key). Backed by the
+pure-TypeScript [`@aphrody-code/x`](./packages/x) package and a parallel Rust
+crate (`rust-bridge/crates/x-client`) exposed over FFI (`bxc_x_user_*`).
+
+```bash
+# Resolve the authenticated account
+bxc x whoami
+
+# Fetch a public profile (followers, bio, id...)
+bxc x profile elonmusk
+
+# Fetch a user's recent tweets
+bxc x tweets elonmusk --count 40
+
+# Search the Latest timeline / trending news
+bxc x search "browser automation" --count 20
+bxc x news --count 10
+```
+
+Auth resolution order: `--cookie "auth_token=...; ct0=..."` > session file >
+`X_AUTH_TOKEN` / `X_CT0` environment variables.
+
+---
+
+## 📦 Monorepo Packages
+
+Every targeted scraper ships as a standalone, individually-versioned package
+under the `@aphrody-code` scope (published to GitHub Packages):
+
+| Package | Description |
+| :--- | :--- |
+| [`@aphrody-code/bxc`](./package.json) | The full Zero-Spawn engine, CLI, and MCP server. |
+| [`@aphrody-code/x`](./packages/x) | Headless X / Twitter client (GraphQL + REST, cookie auth). |
+| [`@aphrody-code/challonge`](./packages/challonge) | Challonge tournament bracket scraper. |
+| [`@aphrody-code/fut`](./packages/fut) | FIFA Ultimate Team (FUTBin / FUT.GG) price & stats. |
+| [`@aphrody-code/voiranime`](./packages/voiranime) | VoirAnime catalog search & embed resolver. |
+| [`@aphrody-code/worldbeyblade`](./packages/worldbeyblade) | WBO forum automation & metagame. |
+| [`@aphrody-code/xcom`](./packages/xcom) | X.com profile markdown/screenshot scraper. |
+| [`@aphrody-code/zukan`](./packages/zukan) | Inazuma Eleven character database scraper. |
 
 ---
 
