@@ -23,9 +23,9 @@ import {
 	chmodSync,
 } from "node:fs";
 import { join } from "node:path";
-import { hasEmbedded } from "../rust/embedded-assets.ts";
+import { hasEmbedded } from "../rust/embedded-assets";
 
-import { getBinDir } from "../utils/paths.ts";
+import { getBinDir } from "../utils/paths";
 
 /**
  * Extracts an embedded binary asset from Bun's virtual filesystem ($bunfs)
