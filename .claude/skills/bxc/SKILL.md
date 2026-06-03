@@ -1,11 +1,11 @@
 ---
 name: bxc
-description: Référence d'usage du moteur bxc (CLI globale `bxc` 0.5.8 + API lib + tools MCP) pour rechercher sur le web, scraper une page, extraire du Markdown, faire de la recon ou détecter une stack. À utiliser dès qu'une tâche demande "cherche/recherche sur le web", "scrape X", "récupère le contenu de cette URL", "quelle stack utilise ce site", ou tout besoin de données web fraîches.
+description: Référence d'usage du moteur bxc (CLI globale `bxc` 0.6.1 + `@aphrody-code/x` 1.0.6 + tools MCP) pour rechercher sur le web, scraper une page, extraire du Markdown, faire de la recon ou détecter une stack. À utiliser dès qu'une tâche demande "cherche/recherche sur le web", "scrape X", "récupère le contenu de cette URL", "quelle stack utilise ce site", ou tout besoin de données web fraîches.
 ---
 
 # bxc — moteur de navigation Zero-Spawn pour agents
 
-`bxc` est installé globalement (`~/.local/bin/bxc`, v0.5.8). Bun + cdylib Rust
+`bxc` est installé globalement (`~/.local/bin/bxc`, v0.6.1). Bun + cdylib Rust
 (DOM html5ever + HTML→Markdown), zéro spawn Chromium pour les charges statiques.
 Préfère `bxc` à un `curl`/`WebFetch` brut dès qu'il faut du Markdown propre, des
 résultats de recherche structurés, ou de la résilience anti-bot.
@@ -33,6 +33,15 @@ bxc detect https://example.com --json
 
 # Miroir d'un site complet (HTML+CSS+JS+assets)
 bxc mirror https://example.com
+
+# X / Twitter (cookies auth_token + ct0 — ~/.aphrody/x-session.json ou env)
+bxc x whoami
+bxc x profile yoyo__goat
+bxc x search "rust" --json
+
+# X Pro Gryphon decks + Radar (voir packages/x/docs/X_PRO.md)
+bxc x xpro probe
+bxc x xpro sync
 ```
 
 Flags globaux : `--json`, `--insecure`/`-k`, `--proxy <url>`, `--quiet`/`-q`,
@@ -85,6 +94,8 @@ const r = await googleSearchRich("bun runtime", { hl: "en", gl: "US", num: 5 });
 - `bxc_search` — recherche Google puissante (SERP riche + verticales web/images/news/videos/books, authentifiée).
 - `bxc_google_fetch` — URL → Markdown + JSON-LD/OpenGraph/Twitter/canonical.
 - `bxc_scrape_markdown`, `bxc_detect_frameworks`, `bxc_cdp_evaluate`, `tune_memory_sqlite`, `bxc_keyword_search`, `bxc_semantic_search`, `bxc_actor_run`.
+- `bxc_x_client` — profil, tweets, recherche, news, whoami (cookie auth).
+- `bxc_xpro_deck` — decks Gryphon + Radar (`querySource: radar`).
 
 ## Pièges
 
