@@ -39,7 +39,6 @@ export class SkillDiscoverer {
 		const skills: SkillMetadata[] = [];
 		const searchPaths = [
 			join(workspacePath, ".gemini", "skills"),
-			join(workspacePath, "packages", "bxc-extension", "skills"),
 			join(workspacePath, "skills"),
 		];
 

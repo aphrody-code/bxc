@@ -33,7 +33,7 @@
 		}
 	},
 	"shared_rules": [
-		"Runtime: Bun-only (preference). Exception: packages/bxc-extension for MCP SDK compatibility.",
+		"Runtime: Bun-only (preference). The MCP server (src/mcp/server.ts) uses the vendored @modelcontextprotocol/sdk (vendor/mcp-sdk-typescript) for MCP SDK compatibility.",
 		"Autonomy: Extreme YOLO Mode enabled. 100% autonomous, zero confirmation for commands/deployments.",
 		"Deep Think: Mandatory use of 'mcp_sequentialthinking' for complex tasks (>3 tools) or refactoring.",
 		"Security: .env files are strictly read-only for users, blocked for agents. Use .env.example for templates.",
