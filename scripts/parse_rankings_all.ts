@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 function cleanText(text: string): string {
 	return text
