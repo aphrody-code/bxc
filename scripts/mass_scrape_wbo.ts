@@ -52,7 +52,10 @@ const COOKIES_PATH =
 const PROFILE =
 	[...ARGS].find((a) => a.startsWith("--profile="))?.split("=")[1] ?? "ghost";
 
-const OUT_DIR = "/home/ubuntu/bxc/data/wbo_scraped";
+const OUT_DIR =
+	[...ARGS].find((a) => a.startsWith("--out="))?.split("=")[1] ??
+	process.env.BXC_WBO_OUT ??
+	join(import.meta.dir, "..", "data", "wbo_scraped");
 const WIKI_DIR = join(OUT_DIR, "wiki");
 const FORUM_DIR = join(OUT_DIR, "forum");
 
