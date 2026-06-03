@@ -26,7 +26,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
+import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // TransportMux — multiplexes CDP responses and events to multiple listeners

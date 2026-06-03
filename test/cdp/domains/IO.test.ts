@@ -30,8 +30,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { registerIOStream } from "../../../src/cdp/domains/IO.js";
-import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
+import { registerIOStream } from "../../../src/cdp/domains/IO.ts";
+import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -111,7 +111,7 @@ describe("IO domain handler", () => {
 		// of the transport handler state.
 		const testMap = new Map<
 			string,
-			import("../../../src/cdp/types.js").IOStream
+			import("../../../src/cdp/types.ts").IOStream
 		>();
 		const data = new TextEncoder().encode("hello world");
 		const handle = registerIOStream(testMap, data);
@@ -168,11 +168,11 @@ describe("IO domain handler", () => {
 	test("registerIOStream generates unique handles", () => {
 		const map1 = new Map<
 			string,
-			import("../../../src/cdp/types.js").IOStream
+			import("../../../src/cdp/types.ts").IOStream
 		>();
 		const map2 = new Map<
 			string,
-			import("../../../src/cdp/types.js").IOStream
+			import("../../../src/cdp/types.ts").IOStream
 		>();
 		const h1 = registerIOStream(map1, new Uint8Array(4));
 		const h2 = registerIOStream(map2, new Uint8Array(4));
@@ -181,7 +181,7 @@ describe("IO domain handler", () => {
 	});
 
 	test("registerIOStream sets position to 0 initially", () => {
-		const map = new Map<string, import("../../../src/cdp/types.js").IOStream>();
+		const map = new Map<string, import("../../../src/cdp/types.ts").IOStream>();
 		const handle = registerIOStream(map, new TextEncoder().encode("test"));
 		const stream = map.get(handle)!;
 		expect(stream.position).toBe(0);
@@ -194,7 +194,7 @@ describe("IO domain handler", () => {
 	test("Multi-chunk read returns sequential slices", () => {
 		// Build a 200-byte buffer and read in 65536-byte chunks
 		// (since 200 < 65536 it's one chunk, but we verify position advance)
-		const map = new Map<string, import("../../../src/cdp/types.js").IOStream>();
+		const map = new Map<string, import("../../../src/cdp/types.ts").IOStream>();
 		const data = new Uint8Array(200).fill(0xab);
 		registerIOStream(map, data);
 
@@ -213,7 +213,7 @@ describe("IO domain handler", () => {
 	});
 
 	test("IO.read with size param respects smaller chunk size", () => {
-		const map = new Map<string, import("../../../src/cdp/types.js").IOStream>();
+		const map = new Map<string, import("../../../src/cdp/types.ts").IOStream>();
 		const data = new TextEncoder().encode("abcdefgh"); // 8 bytes
 		registerIOStream(map, data);
 

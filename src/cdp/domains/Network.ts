@@ -38,7 +38,7 @@
  * available via Network.getResponseBody.
  */
 
-import type { CdpCookie, CdpCookieParam, DomainHandler } from "../types.js";
+import type { CdpCookie, CdpCookieParam, DomainHandler } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

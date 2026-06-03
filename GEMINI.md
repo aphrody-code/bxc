@@ -20,6 +20,16 @@ Bxc is the definitive "Zero-Spawn" browser engine for the AI-First era. It fuses
 3. **Native Extension**: Use the **`bxc-gemini`** MCP extension for memory tuning, vision analysis, and CDP snapshots.
 4. **No Placeholders**: Always deliver complete, production-ready implementation.
 
+## Deployment (VPS)
+
+Canonical guide: **[`DEPLOY.md`](./DEPLOY.md)**. One-liner:
+
+```bash
+./scripts/bxc-control.sh build && ./scripts/bxc-control.sh deploy
+```
+
+Pair with [`../aphrody/DEPLOY.md`](../aphrody/DEPLOY.md) and [`../aphrody/docs/agent-stack/DEPLOY.md`](../aphrody/docs/agent-stack/DEPLOY.md) for MCP/Grok/Claude sync.
+
 ## Building and Running
 
 | Command | Description |

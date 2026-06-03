@@ -26,7 +26,7 @@
  *   Browser.downloadProgress   — download progress updates
  */
 
-import type { DispatchContext, DomainHandler } from "../types.js";
+import type { DispatchContext, DomainHandler } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Browser-level state (module-scoped, shared for the lifetime of the handler)

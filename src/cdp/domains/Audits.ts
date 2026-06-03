@@ -20,7 +20,7 @@
  * Stubs out Audits.enable which is sent by Puppeteer on startup.
  */
 
-import type { DomainHandler } from "../types.js";
+import type { DomainHandler } from "../types.ts";
 
 export const AuditsHandler: DomainHandler = async (
 	method,

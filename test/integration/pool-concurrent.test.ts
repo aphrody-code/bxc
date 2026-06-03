@@ -30,7 +30,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { PagePool } from "../../src/pool/PagePool.js";
+import { PagePool } from "../../src/pool/PagePool.ts";
 
 describe("PagePool — bounded concurrency", () => {
 	test("100 URLs / concurrency=20 / maxPages=10 — all complete", async () => {

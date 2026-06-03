@@ -49,7 +49,7 @@
  * ```
  */
 
-import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
+import type { ConnectionTransport } from "../../types/ConnectionTransport.ts";
 import {
 	buildCookieHeader,
 	injectCookies,
@@ -59,7 +59,7 @@ import { loadCookieJar } from "../cookies/cookie-loader.ts";
 import type { ImpersonatedClientOptions } from "../ffi/curl-impersonate.ts";
 import { cdpCall as cdpCallShared } from "../internal/cdp-call.ts";
 import type { WebSocketTransportOptions } from "../transport/WebSocketTransport.ts";
-import { StaticDomTransport } from "../transport/StaticDomTransport.js";
+import { StaticDomTransport } from "../transport/StaticDomTransport.ts";
 import { Locator } from "./Locator.ts";
 import { Frame } from "./Frame.ts";
 import { BrowserContext } from "./BrowserContext.ts";
