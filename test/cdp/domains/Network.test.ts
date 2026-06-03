@@ -232,6 +232,42 @@ describe("Network domain handler", () => {
 		expect(result.cookies.length).toBe(0);
 	});
 
+	test("Network.deleteCookies removes only the named cookie", async () => {
+		await cdpCall(transport, "Network.setCookies", {
+			cookies: [
+				{ name: "keep", value: "1", domain: "test.com", path: "/" },
+				{ name: "drop", value: "2", domain: "test.com", path: "/" },
+			],
+		});
+
+		await cdpCall(transport, "Network.deleteCookies", {
+			name: "drop",
+			domain: "test.com",
+		});
+
+		const result = (await cdpCall(transport, "Network.getAllCookies")) as {
+			cookies: Array<{ name: string }>;
+		};
+		expect(result.cookies.map((c) => c.name).sort()).toEqual(["keep"]);
+	});
+
+	test("Network.deleteCookies without scope drops every same-named entry", async () => {
+		await cdpCall(transport, "Network.setCookies", {
+			cookies: [
+				{ name: "x", value: "a", domain: "a.com", path: "/" },
+				{ name: "x", value: "b", domain: "b.com", path: "/" },
+				{ name: "y", value: "c", domain: "a.com", path: "/" },
+			],
+		});
+
+		await cdpCall(transport, "Network.deleteCookies", { name: "x" });
+
+		const result = (await cdpCall(transport, "Network.getAllCookies")) as {
+			cookies: Array<{ name: string }>;
+		};
+		expect(result.cookies.map((c) => c.name)).toEqual(["y"]);
+	});
+
 	// -------------------------------------------------------------------------
 	// Extra headers
 	// -------------------------------------------------------------------------

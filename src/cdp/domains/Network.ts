@@ -20,6 +20,7 @@
  * Implements CDP Network domain methods for the static transport:
  *   - Network.enable
  *   - Network.clearBrowserCookies
+ *   - Network.deleteCookies
  *   - Network.emulateNetworkConditions
  *   - Network.getAllCookies
  *   - Network.getCookies
@@ -154,6 +155,31 @@ export const NetworkHandler: DomainHandler = async (
 		// ------------------------------------------------------------------
 		case "Network.clearBrowserCookies": {
 			net.cookies.clear();
+			return {};
+		}
+
+		// ------------------------------------------------------------------
+		// Network.deleteCookies — remove cookies matching name (+ optional
+		// url / domain / path). Mirrors CDP: `name` is required; the optional
+		// scope fields narrow which jar entries are removed. Without scope
+		// fields, every cookie with that name is removed regardless of domain.
+		// ------------------------------------------------------------------
+		case "Network.deleteCookies": {
+			const p = params as {
+				name: string;
+				url?: string;
+				domain?: string;
+				path?: string;
+			};
+			const scopeDomain = p.domain ?? (p.url ? domainFromUrl(p.url) : undefined);
+			const doomed: string[] = [];
+			for (const [key, cookie] of net.cookies) {
+				if (cookie.name !== p.name) continue;
+				if (scopeDomain !== undefined && cookie.domain !== scopeDomain) continue;
+				if (p.path !== undefined && cookie.path !== p.path) continue;
+				doomed.push(key);
+			}
+			for (const key of doomed) net.cookies.delete(key);
 			return {};
 		}
 
