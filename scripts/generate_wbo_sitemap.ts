@@ -15,9 +15,13 @@
  */
 
 import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { WorldBeybladeScraper } from "@aphrody/bxc/scrapers/worldbeyblade";
 
-const COOKIES_PATH = "/home/ubuntu/.bxc/cookies/worldbeyblade.json";
+const COOKIES_PATH =
+	process.env.BXC_WBO_COOKIES ??
+	join(homedir(), ".bxc", "cookies", "worldbeyblade.json");
 
 async function main() {
 	console.log("Starting WorldBeyblade sitemap generator...");
