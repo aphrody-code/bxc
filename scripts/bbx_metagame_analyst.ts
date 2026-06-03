@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from "fs";
+import * as fs from "node:fs";
 import { runFullMetagameAnalysis } from "@aphrody-code/bxc/scrapers/worldbeyblade";
 
 async function main() {
