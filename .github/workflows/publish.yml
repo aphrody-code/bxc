@@ -17,7 +17,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.0-canary.1
 
       - name: Install dependencies
         # --ignore-scripts: the vendored @modelcontextprotocol/sdk workspace has a
@@ -45,7 +45,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.0-canary.1
 
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
