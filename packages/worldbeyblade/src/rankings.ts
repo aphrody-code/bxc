@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from "node:fs";
 import { join } from "node:path";
 import type { WBOPlayerRanking } from "./types.ts";
 
@@ -163,10 +162,14 @@ export async function syncAndParseAllRankings(
 	const burstPath = join(dataDir, "rankings_burst.html");
 	const metalPath = join(dataDir, "rankings_metal.html");
 
+	const mainFile = Bun.file(mainPath);
+	const burstFile = Bun.file(burstPath);
+	const metalFile = Bun.file(metalPath);
+
 	if (
-		!fs.existsSync(mainPath) ||
-		!fs.existsSync(burstPath) ||
-		!fs.existsSync(metalPath)
+		!(await mainFile.exists()) ||
+		!(await burstFile.exists()) ||
+		!(await metalFile.exists())
 	) {
 		logger("Rankings HTML files missing, downloading from archives...");
 		await downloadRankingsHtml(dataDir, logger);
@@ -174,16 +177,16 @@ export async function syncAndParseAllRankings(
 
 	const allRankings: WBOPlayerRanking[] = [];
 
-	if (fs.existsSync(mainPath)) {
-		const html = fs.readFileSync(mainPath, "utf-8");
+	if (await mainFile.exists()) {
+		const html = await mainFile.text();
 		allRankings.push(...parseRankingsHtml(html, "General/Top"));
 	}
-	if (fs.existsSync(burstPath)) {
-		const html = fs.readFileSync(burstPath, "utf-8");
+	if (await burstFile.exists()) {
+		const html = await burstFile.text();
 		allRankings.push(...parseRankingsHtml(html, "Burst"));
 	}
-	if (fs.existsSync(metalPath)) {
-		const html = fs.readFileSync(metalPath, "utf-8");
+	if (await metalFile.exists()) {
+		const html = await metalFile.text();
 		allRankings.push(...parseRankingsHtml(html, "Metal"));
 	}
 

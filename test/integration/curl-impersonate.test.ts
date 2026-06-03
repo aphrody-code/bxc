@@ -505,7 +505,8 @@ describe("Advanced libcurl features", () => {
 
 		const jarPath = join(import.meta.dir, "../../tmp/test-cookiejar.txt");
 		const fs = require("node:fs");
-		if (fs.existsSync(jarPath)) fs.unlinkSync(jarPath);
+		const jarFile = Bun.file(jarPath);
+		if (await jarFile.exists()) fs.unlinkSync(jarPath);
 
 		// Initialize client with cookieJarPath
 		using jarClient = new ImpersonatedClient({
@@ -523,8 +524,8 @@ describe("Advanced libcurl features", () => {
 		jarClient.close();
 
 		// Verify cookie jar file exists and contains the cookie
-		expect(fs.existsSync(jarPath)).toBe(true);
-		const contents = fs.readFileSync(jarPath, "utf8");
+		expect(await jarFile.exists()).toBe(true);
+		const contents = await jarFile.text();
 		expect(contents).toContain("testcookie");
 		expect(contents).toContain("jarvalue");
 

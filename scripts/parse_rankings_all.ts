@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from "node:fs";
-
 function cleanText(text: string): string {
 	return text
 		.replace(/<[^>]+>/g, "")
@@ -25,12 +23,13 @@ function cleanText(text: string): string {
 		.trim();
 }
 
-function parseRankingsFile(filePath: string, categoryName: string) {
-	if (!fs.existsSync(filePath)) {
+async function parseRankingsFile(filePath: string, categoryName: string) {
+	const file = Bun.file(filePath);
+	if (!(await file.exists())) {
 		console.log(`File not found: ${filePath}`);
 		return [];
 	}
-	const html = fs.readFileSync(filePath, "utf-8");
+	const html = await file.text();
 
 	// Let's find each <div class="list-group-item user">
 	// Let's find each <div class="list-group-item user ...">
@@ -116,18 +115,18 @@ function parseRankingsFile(filePath: string, categoryName: string) {
 	return results;
 }
 
-function main() {
+async function main() {
 	const allRankings = [];
 
-	const mainRanks = parseRankingsFile(
+	const mainRanks = await parseRankingsFile(
 		"/home/ubuntu/bxc/data/rankings_main.html",
 		"General/Top",
 	);
-	const burstRanks = parseRankingsFile(
+	const burstRanks = await parseRankingsFile(
 		"/home/ubuntu/bxc/data/rankings_burst.html",
 		"Burst",
 	);
-	const metalRanks = parseRankingsFile(
+	const metalRanks = await parseRankingsFile(
 		"/home/ubuntu/bxc/data/rankings_metal.html",
 		"Metal",
 	);
@@ -136,8 +135,8 @@ function main() {
 
 	// Save to JSON
 	const outputPath = "/home/ubuntu/bxc/data/wbo_rankings_parsed.json";
-	fs.writeFileSync(outputPath, JSON.stringify(allRankings, null, 2));
+	await Bun.write(outputPath, JSON.stringify(allRankings, null, 2));
 	console.log(`Successfully parsed and saved all rankings to ${outputPath}`);
 }
 
-main();
+await main();
