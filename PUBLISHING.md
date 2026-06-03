@@ -1,12 +1,14 @@
-# Publishing `@bunmium/bxc` to npm
+# Publishing `@aphrody/bxc` to npm
 
-End-to-end checklist for cutting a release. Bxc ships as a Bun-native package; the standalone executable is distributed via Google Developers Releases (not npm) to keep tarball size reasonable.
+End-to-end checklist for cutting a release. Bxc ships as a Bun-native package; the standalone executable is distributed via GitHub Releases (not npm) to keep tarball size reasonable.
+
+Publishing is automated: pushing a `v*` tag triggers `.github/workflows/publish.yml`, which installs, lints, and runs `bun publish --access public --registry https://registry.npmjs.org`. The steps below document the equivalent manual flow and the pre-flight checks.
 
 ## Pre-flight
 
-- [ ] All tests green: `bun test` in `~/bunmium/bxc/`.
+- [ ] All tests green: `bun test` in the repo (`/home/ubuntu/bxc/`).
 - [ ] No staged secrets: `git status` clean of `cookies/private/`, `*.env`, `*.key`.
-- [ ] `package.json` `version` bumped (semver — alpha/beta/rc/stable).
+- [ ] `package.json` `version` bumped (semver — current line is `0.6.x`).
 - [ ] `CHANGELOG.md` updated (or release notes drafted).
 - [ ] Cross-check `package.json#files` against `.npmignore` — defense in depth.
 - [ ] `bun outdated` reviewed for security advisories.
@@ -25,25 +27,25 @@ vendor/curl-impersonate/libcurl-impersonate.so.4           # symlink
 If absent, rebuild:
 
 ```bash
-cd ~/bunmium/bxc
+cd /home/ubuntu/bxc
 bun run build:cdylib                       # rebuilds liblightpanda_dom.so
 # curl-impersonate is a vendored binary; download via scripts/postinstall.ts logic
 ```
 
-## Build the standalone executable (separate channel — Google Developers Release)
+## Build the standalone executable (separate channel — GitHub Release)
 
 ```bash
 bun run build:exe
 ls -lh dist/standalone/
 ```
 
-Expected output: `bxc-linux-x64` ~96 MB. Upload this artifact to the Google Developers Release after `npm publish` lands.
+Expected output: `bxc-linux-x64` ~96 MB. Upload this artifact to the GitHub Release after `npm publish` lands.
 
 ## Pack and audit
 
 ```bash
-cd ~/bunmium/bxc
-rm -f bunmium-bxc-*.tgz
+cd /home/ubuntu/bxc
+rm -f aphrody-bxc-*.tgz
 bun pm pack
 ```
 
@@ -56,7 +58,7 @@ Expected:
 Inspect the contents:
 
 ```bash
-tar tzf bunmium-bxc-0.1.0-alpha.0.tgz | sort
+tar tzf aphrody-bxc-0.6.4.tgz | sort
 ```
 
 ## Smoke-test in a clean project
@@ -65,8 +67,8 @@ tar tzf bunmium-bxc-0.1.0-alpha.0.tgz | sort
 rm -rf /tmp/bxc-install-test
 mkdir -p /tmp/bxc-install-test && cd /tmp/bxc-install-test
 bun init -y
-bun add file:$HOME/bunmium/bxc/bunmium-bxc-0.1.0-alpha.0.tgz
-bun -e 'import { Browser } from "@bunmium/bxc"; console.log(typeof Browser)'
+bun add file:/home/ubuntu/bxc/aphrody-bxc-0.6.4.tgz
+bun -e 'import { Browser } from "@aphrody/bxc"; console.log(typeof Browser)'
 ```
 
 Expected stdout: `object`.
@@ -86,35 +88,29 @@ kill %1
 bun pm whoami                      # confirm if already logged in
 # If not:
 npm login --registry=https://registry.npmjs.org/
-# Two-factor auth strongly recommended for the @bunmium scope.
+# Two-factor auth strongly recommended for the @aphrody scope.
 ```
 
 ## Publish
 
-For the very first publish of the scope, the `--access public` flag is required (scoped packages default to private):
+CI publishes automatically on a `v*` tag push (`.github/workflows/publish.yml`). For a manual publish, scoped packages need `--access public` (already set via `publishConfig.access` in `package.json`):
 
 ```bash
-cd ~/bunmium/bxc
-bun publish --access public --tag alpha
+cd /home/ubuntu/bxc
+bun publish --access public --registry https://registry.npmjs.org
 ```
 
-For subsequent alpha bumps:
+For pre-release channels (alpha/beta/rc), add `--tag`:
 
 ```bash
-bun publish --tag alpha
-```
-
-For stable releases:
-
-```bash
-bun publish --tag latest
+bun publish --access public --tag next --registry https://registry.npmjs.org
 ```
 
 ## Post-publish verification
 
 ```bash
-bun pm view @bunmium/bxc versions
-bun pm view @bunmium/bxc dist-tags
+bun pm view @aphrody/bxc versions
+bun pm view @aphrody/bxc dist-tags
 ```
 
 Then re-run the smoke-test from the public registry:
@@ -122,25 +118,24 @@ Then re-run the smoke-test from the public registry:
 ```bash
 rm -rf /tmp/bxc-prod-test && mkdir -p /tmp/bxc-prod-test
 cd /tmp/bxc-prod-test && bun init -y
-bun add @bunmium/bxc@alpha
-bun -e 'import { Browser } from "@bunmium/bxc"; console.log(typeof Browser)'
+bun add @aphrody/bxc
+bun -e 'import { Browser } from "@aphrody/bxc"; console.log(typeof Browser)'
 ```
 
-## Google Developers Release (separate distribution for the standalone binary)
+## GitHub Release (separate distribution for the standalone binary)
 
 ```bash
-cd ~/bunmium/bxc
-gh release create v0.1.0-alpha.0 \
+cd /home/ubuntu/bxc
+gh release create v0.6.4 \
   dist/standalone/bxc-linux-x64 \
-  --title "v0.1.0-alpha.0" \
-  --notes-file RELEASE-NOTES.md \
-  --prerelease
+  --title "v0.6.4" \
+  --notes-file RELEASE-NOTES.md
 ```
 
 Verify:
 
 ```bash
-gh release view v0.1.0-alpha.0
+gh release view v0.6.4
 ```
 
 ## Yank (only if necessary)
@@ -148,19 +143,19 @@ gh release view v0.1.0-alpha.0
 If a tarball ships secrets or broken artefacts, yank within 72 hours:
 
 ```bash
-bun pm unpublish @bunmium/bxc@0.1.0-alpha.0
+bun pm unpublish @aphrody/bxc@0.6.4
 # Or deprecate (preferred for cosmetic/release-note errors):
-npm deprecate @bunmium/bxc@0.1.0-alpha.0 "Use 0.1.0-alpha.1 — fixes X"
+npm deprecate @aphrody/bxc@0.6.4 "Use 0.6.5 — fixes X"
 ```
 
 ## Rollback checklist
 
-- Bump patch version (alpha to alpha.1) rather than re-publishing the same version (immutable).
-- Update `tasks.json` to reflect the rollback in `/completed` notes.
-- Append row to `state.md` § 4 documenting the cause.
+- Bump patch version (`0.6.4` to `0.6.5`) rather than re-publishing the same version (immutable).
+- Update `CHANGELOG.md` to reflect the rollback.
+- Document the cause in the release notes.
 
 ## Versioning policy
 
-- Pre-release: `0.1.0-alpha.N` (breaking changes allowed every bump).
-- Beta: `0.1.0-beta.N` (API frozen, only bug fixes).
-- Stable: `1.0.0` requires the fork-Bun + `bun:browser` builtin path (`forks/bun/`) green E2E.
+- Patch: `0.6.N` (bug fixes, no breaking changes).
+- Minor: `0.N.0` (additive features).
+- Stable `1.0.0` requires the fork-Bun + `bun:browser` builtin path (`forks/bun/`) green E2E.
