@@ -23,6 +23,9 @@ use serde::Deserialize;
 /// fully self-contained.
 pub static CATALOG_JSON: &str = include_str!("../data/x-graphql-catalog.json");
 
+/// Gryphon / X Pro deck operations (separate bundle from responsive-web).
+pub static GRYPHON_CATALOG_JSON: &str = include_str!("../data/gryphon-graphql-catalog.json");
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
@@ -94,28 +97,34 @@ static CATALOG: OnceLock<HashMap<String, Operation>> = OnceLock::new();
 ///
 /// Parsing is O(n) in the number of operations (158) and happens at most once
 /// per process.
+fn parse_catalog_json(json: &str) -> HashMap<String, Operation> {
+    let raw: CatalogJson = serde_json::from_str(json).expect("catalog JSON is valid");
+    raw.operations
+        .into_iter()
+        .map(|(name, op)| {
+            let op_type = match op.operation_type.to_lowercase().as_str() {
+                "mutation" => OpType::Mutation,
+                "subscription" => OpType::Subscription,
+                _ => OpType::Query,
+            };
+            let operation = Operation {
+                name: name.clone(),
+                query_id: op.query_id,
+                op_type,
+                feature_switches: op.feature_switches,
+            };
+            (name, operation)
+        })
+        .collect()
+}
+
 fn catalog() -> &'static HashMap<String, Operation> {
     CATALOG.get_or_init(|| {
-        let raw: CatalogJson =
-            serde_json::from_str(CATALOG_JSON).expect("x-graphql-catalog.json is valid JSON");
-
-        raw.operations
-            .into_iter()
-            .map(|(name, op)| {
-                let op_type = match op.operation_type.to_lowercase().as_str() {
-                    "mutation" => OpType::Mutation,
-                    "subscription" => OpType::Subscription,
-                    _ => OpType::Query,
-                };
-                let operation = Operation {
-                    name: name.clone(),
-                    query_id: op.query_id,
-                    op_type,
-                    feature_switches: op.feature_switches,
-                };
-                (name, operation)
-            })
-            .collect()
+        let mut map = parse_catalog_json(CATALOG_JSON);
+        for (k, v) in parse_catalog_json(GRYPHON_CATALOG_JSON) {
+            map.entry(k).or_insert(v);
+        }
+        map
     })
 }
 

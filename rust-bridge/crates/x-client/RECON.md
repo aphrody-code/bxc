@@ -14,6 +14,30 @@ authenticated `x.com` client-web build on 2026-05-22.
 | API gateway | GraphQL: `https://x.com/i/api/graphql/{queryId}/{OperationName}`. REST legacy: `https://x.com/i/api/1.1/...`. Some `…/2/…` (OAuth, etc.). |
 | Auth | Public web Bearer (static) + cookie `auth_token` + `ct0`, with `x-csrf-token: <ct0>`, `x-twitter-auth-type: OAuth2Session`, `x-twitter-active-user: yes`. |
 
+## X Premium / Blue Verified (2026-06)
+
+| Surface | Detail |
+|---|---|
+| Hub URL | `https://x.com/i/premium` |
+| Primary GraphQL | **Upsells** (`viewer_v2.upsell_config_for_surfaces`) — no `PremiumHub*` op in catalog |
+| Payments | `pay.x.com`, `money.x.com`, `payments-*.x.com` (Plaid/Stripe/Adyen per CSP) |
+| SKUs | `BlueVerified`, `BlueVerifiedPlus`, `PremiumBasic`, … (client enum) |
+| CLI | `x-cli premium` / `x-cli premium --raw` |
+| TS twin | `@aphrody-code/x` → `packages/x/docs/PREMIUM.md`, `scripts/x-premium-recon.ts` |
+
+Full bxc recon artifacts: `~/bxc/storage/premium-recon/PREMIUM_RECON.json`.
+
+## Coverage tooling (bxc + x-client)
+
+```bash
+bun run scripts/sync-x-catalog.ts          # TS + Rust catalog queryIds
+cargo run -p x-client -- catalog --sync    # Rust-only catalog refresh
+cargo run -p x-client -- coverage --probe-premium
+cd packages/x && bun run coverage -- --probe
+```
+
+See `packages/x/docs/COVERAGE.md`.
+
 ## Operation catalog
 
 - **158 operations** total: **94 queries**, **64 mutations**. Full machine-readable
@@ -64,3 +88,24 @@ SVG + a verification key in the page. Empirically **not required** for this
 account's GraphQL calls (live `CreateTweet` returned 344, never 353). Reference
 algorithm: `isarabjitdhiman/xclienttransaction`. Tracked as a best-effort
 follow-up; the framework works without it today.
+
+## X Pro / Gryphon Decks (2026-06-03)
+
+| Surface | Detail |
+|---|---|
+| Host | `https://pro.x.com` (TweetDeck successor) |
+| Deck URL | `https://pro.x.com/i/decks/{deckId}` |
+| Frontend | Gryphon SPA — `abs.twimg.com/gryphon-client/client-web/main.a4ab919a.js` |
+| GraphQL host | **`https://x.com/i/api/graphql/`** (same cookie auth as x.com; not pro.x.com) |
+| Primary read | **ViewerAccountSync** (`zg67ZFVLUH0OWGwDZjhc0A`) — decks, columns, client config |
+| Deck CRUD | CreateDeck, UpdateDeck, RemoveDeck, ReorderDecks |
+| Column CRUD | CreateColumn, UpdateColumn, RemoveColumn, ReorderColumns |
+| Import / onboarding | GryphonImportClientSyncColumns, GryphonDeleteAccountSync, UpdateGryphonOnboardingState |
+| Column feeds | GenericTimelineById, HomeTimeline, SearchTimeline, … (shared catalog) |
+| Entitlement | **Premium+** (`premium_plus` / `BlueVerifiedPlus` SKU in bundle) |
+| Rust module | `x_pro_deck` (proposed) |
+| TS service | `XProDeckService` (proposed) |
+| Docs | `packages/x/docs/X_PRO.md` |
+| Artifacts | `~/bxc/storage/x-pro-recon/` — `recon.json`, `bundle-scan.json`, `graphql-ops.json`, `graphql-probe.json`, `pro-deck.har` |
+
+Gryphon operations are **not** in `data/x-graphql-catalog.json` (responsive-web only). Sync from Gryphon `main.*.js` or maintain a Gryphon overlay catalog before exposing `x-cli pro` helpers.

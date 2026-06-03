@@ -1,5 +1,5 @@
 {
-  "lockfileVersion": 1,
+  "lockfileVersion": 2,
   "configVersion": 0,
   "workspaces": {
     "": {
@@ -10,6 +10,7 @@
         "@aphrody-code/voiranime": "workspace:*",
         "@aphrody-code/worldbeyblade": "workspace:*",
         "@aphrody-code/x": "workspace:*",
+        "@aphrody-code/xai": "workspace:*",
         "@aphrody-code/xcom": "workspace:*",
         "@aphrody-code/zukan": "workspace:*",
         "@bogeychan/elysia-logger": "^0.1.10",
@@ -82,6 +83,14 @@
       "dependencies": {
         "zod": "^4.4.3",
       },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^6.0.3",
+      },
+    },
+    "packages/xai": {
+      "name": "@aphrody-code/xai",
+      "version": "1.0.0",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
@@ -551,8 +560,8 @@
     },
   },
   "trustedDependencies": [
-    "better-sqlite3",
     "esbuild",
+    "better-sqlite3",
   ],
   "packages": {
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.74.0", "", { "dependencies": { "json-schema-to-ts": "^3.1.1" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-srbJV7JKsc5cQ6eVuFzjZO7UR3xEPJqPamHFIe29bs38Ij2IripoAhC0S5NslNbaFUYqBKypmmpzMTpqfHEUDw=="],
@@ -566,6 +575,8 @@
     "@aphrody-code/worldbeyblade": ["@aphrody-code/worldbeyblade@workspace:packages/worldbeyblade"],
 
     "@aphrody-code/x": ["@aphrody-code/x@workspace:packages/x"],
+
+    "@aphrody-code/xai": ["@aphrody-code/xai@workspace:packages/xai"],
 
     "@aphrody-code/xcom": ["@aphrody-code/xcom@workspace:packages/xcom"],
 

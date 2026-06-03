@@ -1,6 +1,6 @@
 {
 	"name": "@aphrody-code/bxc",
-	"version": "0.6.0",
+	"version": "0.6.1",
 	"publishConfig": {
 		"access": "public"
 	},
@@ -44,6 +44,8 @@
 		"./scrapers/fut": "./packages/fut/src/index.ts",
 		"./scrapers/zukan": "./packages/zukan/src/index.ts",
 		"./scrapers/x": "./packages/x/src/index.ts",
+		"./scrapers/xai": "./packages/xai/src/index.ts",
+		"./xai": "./packages/xai/src/index.ts",
 		"./profiles/ghost": "./src/profiles/ghost/index.ts",
 		"./profiles/humanize": "./src/profiles/humanize.ts",
 		"./cookies/cookie-loader": "./src/cookies/cookie-loader.ts",
@@ -52,7 +54,8 @@
 		"./api/types": "./src/api/types.ts",
 		"./types/ConnectionTransport": "./types/ConnectionTransport.ts",
 		"./crawler": "./src/crawler/index.ts",
-		"./sdk/actor": "./src/sdk/Actor.ts"
+		"./sdk/actor": "./src/sdk/Actor.ts",
+		"./recon": "./src/cli/recon.ts"
 	},
 	"scripts": {
 		"dev": "bun --watch src/serverless/standalone.ts",
@@ -120,6 +123,7 @@
 		"@aphrody-code/worldbeyblade": "workspace:*",
 		"@aphrody-code/xcom": "workspace:*",
 		"@aphrody-code/zukan": "workspace:*",
-		"@aphrody-code/x": "workspace:*"
+		"@aphrody-code/x": "workspace:*",
+		"@aphrody-code/xai": "workspace:*"
 	}
 }

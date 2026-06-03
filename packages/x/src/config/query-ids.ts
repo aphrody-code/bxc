@@ -3,15 +3,10 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-const DISCOVERY_PAGES = [
-  "https://x.com/?lang=en",
-  "https://x.com/explore",
-  "https://x.com/notifications",
-  "https://x.com/settings/profile",
-];
+import { X_DISCOVERY_PAGES, X_DISCOVERY_UA } from "./x-surface";
 
-const DISCOVERY_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+const DISCOVERY_PAGES = [...X_DISCOVERY_PAGES];
+const DISCOVERY_UA = X_DISCOVERY_UA;
 
 export interface QueryIdSnapshot {
   fetched_at: number;
