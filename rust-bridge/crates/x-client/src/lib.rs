@@ -39,7 +39,11 @@
 pub mod api;
 pub mod archive;
 pub mod catalog;
+pub mod catalog_sync;
 pub mod client;
+pub mod premium;
+pub mod x_pro_deck;
+pub mod surface;
 pub mod config;
 pub mod features;
 pub mod media;
@@ -57,6 +61,18 @@ pub use config::Config;
 pub use news::{NewsItem, NewsOptions};
 pub use output::OutputMode;
 pub use parse::{Author, Tweet, TweetPage, User, UserPage};
+pub use catalog_sync::{sync_catalog_file, SyncReport};
+pub use premium::{
+    parse_premium_flags, parse_upsells_response, PremiumAccountFlags, PremiumUpsells,
+    UpsellConfigEntry, PREMIUM_GRAPHQL_OPS, PRODUCT_SKUS,
+};
+pub use x_pro_deck::{
+    parse_viewer_account_sync, ViewerAccountSyncResult, XProAccountSyncConfig, XProDeck,
+    XProDeckColumn, XProDeckConfig,
+};
+pub use surface::{
+    DISCOVERY_PAGES, GRAPHQL_URL_TEMPLATE, GRYPHON_GRAPHQL_OPS, REST_V1_1_BASE, X_PRO_RECON_URLS,
+};
 pub use runtime_query_ids::{QueryIdStore, Snapshot as QueryIdSnapshot};
 pub use session::XSession;
 pub use store::{Stats as StoreStats, Store, StoredTweet};

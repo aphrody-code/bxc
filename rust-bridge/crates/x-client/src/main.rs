@@ -155,6 +155,29 @@ struct Cli {
 }
 
 #[derive(Subcommand)]
+enum XproAction {
+    /// List decks via ViewerAccountSync.
+    Sync {
+        #[arg(long)]
+        raw: bool,
+    },
+    /// Show one deck by id.
+    Deck {
+        deck_id: String,
+    },
+    /// Create a deck (mutation CreateDeck).
+    Create {
+        name: String,
+    },
+    /// Remove a deck by id.
+    Remove {
+        deck_id: String,
+    },
+    /// Probe X Pro API access.
+    Probe,
+}
+
+#[derive(Subcommand)]
 enum Op {
     // -----------------------------------------------------------------------
     // Tweets
@@ -361,6 +384,17 @@ enum Op {
         /// Filter by substring (case-insensitive) in the operation name.
         #[arg(long, value_name = "SUBSTR")]
         filter: Option<String>,
+
+        /// Scrape live bundle queryIds and update embedded catalog JSON.
+        #[arg(long)]
+        sync: bool,
+    },
+
+    /// Coverage report: catalog stats + optional live queryId drift check.
+    Coverage {
+        /// Probe Premium GraphQL ops against the logged-in account.
+        #[arg(long)]
+        probe_premium: bool,
     },
 
     // -----------------------------------------------------------------------
@@ -530,6 +564,17 @@ enum Op {
         /// Max lists to return.
         #[arg(short = 'n', long, default_value_t = 100)]
         count: u32,
+    },
+    /// Dump Premium / Blue Verified upsells and account flags (GraphQL).
+    Premium {
+        /// Emit full raw JSON for Upsells, Viewer, UserByScreenName.
+        #[arg(long)]
+        raw: bool,
+    },
+    /// X Pro (Gryphon) decks — pro.x.com/i/decks.
+    Xpro {
+        #[command(subcommand)]
+        action: XproAction,
     },
     /// Print which X account your cookies belong to.
     Whoami,
@@ -887,7 +932,17 @@ async fn run() -> Result<()> {
             mutations,
             queries,
             filter,
+            sync,
         } => {
+            if sync {
+                let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("data/x-graphql-catalog.json");
+                let report = x_client::sync_catalog_file(&path)
+                    .await
+                    .context("catalog sync failed")?;
+                output::print_json(&report);
+                return Ok(());
+            }
             let mut ops: Vec<_> = if mutations {
                 catalog::mutations()
             } else if queries {
@@ -1217,6 +1272,91 @@ async fn run() -> Result<()> {
                 .await
                 .context("lists failed")?;
             output::print_json(&lists);
+        }
+        Op::Coverage { probe_premium } => {
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("data/x-graphql-catalog.json");
+            let stats = x_client::catalog_sync::catalog_stats(&path).context("catalog stats")?;
+            let mut out = serde_json::json!({ "catalog": stats });
+            if probe_premium {
+                let me = client.whoami().await.context("whoami failed")?;
+                let (upsells, flags, _, _, _) = client
+                    .premium_bundle(&me.screen_name)
+                    .await
+                    .context("premium bundle failed")?;
+                out["premium"] = serde_json::json!({ "account": me.screen_name, "flags": flags, "upsell_count": upsells.configs.len() });
+            }
+            output::print_json(&out);
+        }
+        Op::Xpro { action } => match action {
+            XproAction::Sync { raw } => {
+                let sync = client.viewer_account_sync().await.context("ViewerAccountSync failed")?;
+                if raw {
+                    output::print_json(&sync.raw);
+                } else {
+                    output::print_json(&serde_json::json!({
+                        "deck_count": sync.decks.len(),
+                        "active_deck_id": sync.accountsync_client_config.as_ref().and_then(|c| c.active_deck_id.clone()),
+                        "decks": sync.decks,
+                    }));
+                }
+            }
+            XproAction::Deck { deck_id } => {
+                let deck = client
+                    .xpro_get_deck(&deck_id)
+                    .await
+                    .context("get deck failed")?;
+                output::print_json(&deck);
+            }
+            XproAction::Create { name } => {
+                let id = client
+                    .xpro_create_deck(&name, serde_json::json!([]))
+                    .await
+                    .context("CreateDeck failed")?;
+                output::print_json(&serde_json::json!({ "deck_id": id, "name": name }));
+            }
+            XproAction::Remove { deck_id } => {
+                let json = client
+                    .xpro_remove_deck(&deck_id)
+                    .await
+                    .context("RemoveDeck failed")?;
+                output::print_json(&json);
+            }
+            XproAction::Probe => {
+                let (ok, count, active) = client
+                    .probe_xpro_access()
+                    .await
+                    .context("X Pro probe failed")?;
+                output::print_json(&serde_json::json!({
+                    "ok": ok,
+                    "deck_count": count,
+                    "active_deck_id": active,
+                    "graphql_ops": x_client::GRYPHON_GRAPHQL_OPS,
+                }));
+            }
+        },
+        Op::Premium { raw } => {
+            let me = client.whoami().await.context("whoami failed")?;
+            let (upsells, flags, u, v, user) = client
+                .premium_bundle(&me.screen_name)
+                .await
+                .context("premium bundle failed")?;
+            if raw {
+                output::print_json(&serde_json::json!({
+                    "account": me.screen_name,
+                    "flags": flags,
+                    "upsells": upsells,
+                    "raw": { "Upsells": u, "Viewer": v, "UserByScreenName": user }
+                }));
+            } else {
+                output::print_json(&serde_json::json!({
+                    "account": me.screen_name,
+                    "flags": flags,
+                    "upsells": upsells,
+                    "graphql_ops": x_client::PREMIUM_GRAPHQL_OPS,
+                    "product_skus": x_client::PRODUCT_SKUS,
+                }));
+            }
         }
         Op::Whoami => {
             let me = client.whoami().await.context("whoami failed")?;

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import catalogData from "./x-graphql-catalog.json";
+import gryphonCatalog from "./gryphon-graphql-catalog.json";
 
 export interface Operation {
   name: string;
@@ -11,14 +12,24 @@ export interface Operation {
 const operationsMap = new Map<string, Operation>();
 
 // Initialize map from JSON catalog
-for (const [name, op] of Object.entries(catalogData.operations)) {
-  operationsMap.set(name, {
-    name,
-    queryId: op.queryId,
-    operationType: op.operationType as any,
-    featureSwitches: op.featureSwitches || [],
-  });
+function ingestCatalog(
+  ops: Record<
+    string,
+    { queryId: string; operationType: string; featureSwitches?: string[] }
+  >,
+): void {
+  for (const [name, op] of Object.entries(ops)) {
+    operationsMap.set(name, {
+      name,
+      queryId: op.queryId,
+      operationType: op.operationType as Operation["operationType"],
+      featureSwitches: op.featureSwitches || [],
+    });
+  }
 }
+
+ingestCatalog(catalogData.operations);
+ingestCatalog(gryphonCatalog.operations);
 
 /** Look up a single operation by its exact case-sensitive name. */
 export function getOperation(name: string): Operation | undefined {

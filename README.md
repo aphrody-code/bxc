@@ -53,6 +53,7 @@ Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/m
 * **`bxc_challonge`**: Extract a structured typed snapshot of any Challonge tournament page.
 * **`bxc_worldbeyblade`**: Full forum automation (check status, get profile, thread, subforum post list, private message inbox & sending).
 * **`bxc_x_client`**: Native X / Twitter client (cookie auth, no API key) — fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account.
+* **`bxc_xpro_deck`**: X Pro Gryphon decks (`ViewerAccountSync`, create/remove deck) + Radar keyword search (`querySource: radar`) — see [`packages/x/docs/X_PRO.md`](packages/x/docs/X_PRO.md).
 * **Unified Browser Tools**: Persistent browser automation primitives (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill`, `browser_type`, `browser_press_key`, `browser_select_option`, `browser_evaluate`, `browser_wait_for`, `browser_screenshot`, `browser_close`).
 * **Specialized Scrapers**: Exposes Bxc's advanced stealth crawlers directly as tools (`bxc_fut_price`, `bxc_fut_player`, `bxc_voiranime_search`, `bxc_voiranime_info`, `bxc_voiranime_resolve`, `bxc_xcom_profile`).
 
@@ -77,6 +78,8 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 | `bxc google` | `bxc google <action> <arg>` | Google Ecosystem client for search (`search`), mandate audit (`open`), or mass audit (`audit`). |
 | `bxc xcom` | `bxc xcom profile <username>` | X.com profile scraper (supports `--screenshot` and `--ai-extract`). |
 | `bxc x` | `bxc x <action> [args]` | Native X/Twitter client via cookie auth — `profile`, `tweets`, `search`, `news`, `whoami`. |
+| `bxc har` | `bxc har record <url> <out.har>` | Record HTTP Archive (use `--profile max` for X Pro / SPA). |
+| `bxc grok` | `bxc grok <action> [args]` | xAI API (`chat`, `models`, `tts`, `stt`, `whoami`) — **no `XAI_API_KEY`** when `~/.grok/auth.json` exists (`grok login`). |
 | `bxc worldbeyblade` | `bxc worldbeyblade <action>` | worldbeyblade.org automation tools (profile, thread, PMs). |
 | `bxc cookies` | `bxc cookies <action>` | Cookie jar management tools. |
 | `bxc har` | `bxc har <action> <url> <out.har>`| HAR (HTTP Archive) recorder/replayer. |
@@ -217,6 +220,22 @@ bxc x news --count 10
 Auth resolution order: `--cookie "auth_token=...; ct0=..."` > session file >
 `X_AUTH_TOKEN` / `X_CT0` environment variables.
 
+### 🤖 `bxc grok` — xAI API (keyless with Grok CLI)
+
+Uses the **same OIDC JWT** as Grok Build (`~/.grok/auth.json` after `grok login`).
+No `XAI_API_KEY` required. Falls back to `XAI_API_KEY` when set.
+
+```bash
+bxc grok whoami
+bxc grok models
+bxc grok chat "Summarize zero-spawn browsers in one sentence"
+bxc grok chat "Hi" --model grok-4 --stream
+bxc grok tts "Hello" --output /tmp/hello.mp3
+bxc grok raw GET /models
+```
+
+Library: `@aphrody-code/xai` · MCP: `bxc_grok_chat`, `bxc_grok_models`, `bxc_grok_whoami`.
+
 ---
 
 ## 📦 Monorepo Packages
@@ -228,6 +247,7 @@ under the `@aphrody-code` scope (published to GitHub Packages):
 | :--- | :--- |
 | [`@aphrody-code/bxc`](./package.json) | The full Zero-Spawn engine, CLI, and MCP server. |
 | [`@aphrody-code/x`](./packages/x) | Headless X / Twitter client (GraphQL + REST, cookie auth). |
+| [`@aphrody-code/xai`](./packages/xai) | xAI Grok REST client — Grok Build OIDC session or `XAI_API_KEY`. |
 | [`@aphrody-code/challonge`](./packages/challonge) | Challonge tournament bracket scraper. |
 | [`@aphrody-code/fut`](./packages/fut) | FIFA Ultimate Team (FUTBin / FUT.GG) price & stats. |
 | [`@aphrody-code/voiranime`](./packages/voiranime) | VoirAnime catalog search & embed resolver. |

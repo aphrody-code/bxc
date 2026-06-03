@@ -35,12 +35,7 @@ use tokio::task::JoinSet;
 use crate::{Result, XError};
 
 /// Public discovery pages that reference the client-web bundles.
-const DISCOVERY_PAGES: &[&str] = &[
-    "https://x.com/?lang=en",
-    "https://x.com/explore",
-    "https://x.com/notifications",
-    "https://x.com/settings/profile",
-];
+pub const DISCOVERY_PAGES: &[&str] = crate::surface::DISCOVERY_PAGES;
 
 /// Default freshness window: 24 hours.
 const DEFAULT_TTL_SECS: u64 = 24 * 60 * 60;
@@ -225,7 +220,7 @@ pub fn default_cache_path() -> PathBuf {
 ///
 /// Deliberately carries no auth/cookie/json headers — only a browser UA — so
 /// x.com serves the logged-out HTML shell that references the JS bundles.
-fn discovery_client() -> Result<reqwest::Client> {
+pub fn discovery_client() -> Result<reqwest::Client> {
     reqwest::Client::builder()
         .user_agent(DISCOVERY_UA)
         .build()
@@ -255,6 +250,48 @@ async fn fetch_text(client: &reqwest::Client, url: &str) -> Result<String> {
         });
     }
     Ok(resp.text().await?)
+}
+
+/// Public wrapper for catalog sync and diagnostics.
+pub async fn discover_bundles_public(client: &reqwest::Client) -> Result<Vec<String>> {
+    discover_bundles(client).await
+}
+
+/// Extract every operation/queryId pair from bundles (full catalog sync).
+pub async fn fetch_and_extract_all(
+    client: &reqwest::Client,
+    bundle_urls: &[String],
+) -> HashMap<String, String> {
+    let patterns = operation_patterns();
+    let mut discovered: HashMap<String, String> = HashMap::new();
+
+    for chunk in bundle_urls.chunks(FETCH_CONCURRENCY) {
+        let mut set: JoinSet<Option<String>> = JoinSet::new();
+        for url in chunk {
+            let client = client.clone();
+            let url = url.clone();
+            set.spawn(async move { fetch_text(&client, &url).await.ok() });
+        }
+        while let Some(joined) = set.join_next().await {
+            if let Ok(Some(js)) = joined {
+                for (re, op_group, qid_group) in &patterns {
+                    for caps in re.captures_iter(&js) {
+                        let (Some(op), Some(qid)) = (caps.get(*op_group), caps.get(*qid_group))
+                        else {
+                            continue;
+                        };
+                        let op = op.as_str();
+                        let qid = qid.as_str();
+                        if !valid_query_id(qid) || discovered.contains_key(op) {
+                            continue;
+                        }
+                        discovered.insert(op.to_owned(), qid.to_owned());
+                    }
+                }
+            }
+        }
+    }
+    discovered
 }
 
 /// Scrape every client-web bundle URL referenced by the discovery pages.

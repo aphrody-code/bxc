@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.6.1] - 2026-06-03
+
+### Added
+
+- **X Pro (Gryphon)** — `pro.x.com/i/decks` recon (`bxc detect` / `recon` / `har`), `scripts/x-pro-recon.ts`, docs [`packages/x/docs/X_PRO.md`](packages/x/docs/X_PRO.md).
+- **`@aphrody-code/x` 1.0.6** — Gryphon GraphQL catalog overlay (12 deck ops: `ViewerAccountSync`, `CreateDeck`, …), `x-pro-deck` service, **Radar** (`SearchTimeline` + `querySource: radar`), `radar-surface`, `x-pro-surface`.
+- **Rust `x-cli`** — `xpro` subcommand (`probe`, `sync`, `deck`, `create`, `remove`).
+- **MCP** — `bxc_xpro_deck` tool (decks sync, radar search, probe).
+- **CLI** — `bxc har record` documented; `bxc x` extended via workspace package.
+
+### Changed
+
+- GraphQL catalog merge: responsive-web (158 ops) + Gryphon (12 ops) in TS and Rust `x-client`.
+- `X_DISCOVERY_PAGES` / `X_RECON_URLS` include `pro.x.com` and Radar routes.
+
+---
+
 ## [0.6.0] - 2026-06-01
 
 ### Added

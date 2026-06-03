@@ -1,0 +1,67 @@
+{
+  "extracted_from": "https://abs.twimg.com/gryphon-client/client-web/main.a4ab919a.js",
+  "extracted_at": "2026-06-03",
+  "operation_count": 12,
+  "operations": {
+    "ViewerAccountSync": {
+      "queryId": "zg67ZFVLUH0OWGwDZjhc0A",
+      "operationType": "query",
+      "featureSwitches": []
+    },
+    "CreateDeck": {
+      "queryId": "fVIC9NDfk0-Auids8FlqQQ",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "UpdateDeck": {
+      "queryId": "XW307yOKJINBAvlwOnLteg",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "RemoveDeck": {
+      "queryId": "c20tuAQJznmUHtmOAvHLyA",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "ReorderDecks": {
+      "queryId": "u2A0QRHa7bBRBhZZSmJKXQ",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "CreateColumn": {
+      "queryId": "O4iIdjZUiZpm0KBSiftNGQ",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "UpdateColumn": {
+      "queryId": "suRGd49L2EZ0nuuU4he4aw",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "RemoveColumn": {
+      "queryId": "lfB7GP4w9oCpx5F_BxwRkw",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "ReorderColumns": {
+      "queryId": "JJpn5RKFDbYXC957QragBQ",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "GryphonImportClientSyncColumns": {
+      "queryId": "elhfTZAzxsCyjDZTlVitRw",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "GryphonDeleteAccountSync": {
+      "queryId": "DiJkSLAFULTIt7Z6ZnFhgQ",
+      "operationType": "mutation",
+      "featureSwitches": []
+    },
+    "UpdateGryphonOnboardingState": {
+      "queryId": "zCQ0LjxvX0Ky0br3nE__PA",
+      "operationType": "mutation",
+      "featureSwitches": []
+    }
+  }
+}

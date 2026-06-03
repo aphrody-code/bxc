@@ -65,6 +65,7 @@ Subcommands:
   google    Google properties auditor & client
   xcom      X.com profile scraper
   x         Native X/Twitter client (profile, tweets, search, news) via cookie auth
+  grok      xAI Grok API (chat, models, tts, stt) — OIDC ~/.grok/auth.json or XAI_API_KEY
   actor     Manage and run Bxc crawler Actors
   crawl-worker Run the autonomous recursive crawler worker daemon 24/7
 
@@ -216,6 +217,12 @@ async function main() {
 
 		case "x": {
 			const mod = await import("./x.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "grok": {
+			const mod = await import("./grok.ts");
 			await mod.main(args, opts);
 			break;
 		}
