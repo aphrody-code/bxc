@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import * as fs from "node:fs";
 import { runFullMetagameAnalysis } from "@aphrody-code/bxc/scrapers/worldbeyblade";
 
 async function main() {
 	const archivePath = "/home/ubuntu/bxc/data/thread_archive.html";
-	if (!fs.existsSync(archivePath)) {
+	const archiveFile = Bun.file(archivePath);
+	if (!(await archiveFile.exists())) {
 		console.error(`Error: Archive file not found at ${archivePath}`);
 		process.exit(1);
 	}
 
-	const html = fs.readFileSync(archivePath, "utf-8");
+	const html = await archiveFile.text();
 	const outputPayload = runFullMetagameAnalysis(html);
 
 	console.log(
@@ -33,7 +33,7 @@ async function main() {
 	console.log(`Log contains ${outputPayload.anomalies.length} anomalies.`);
 
 	const outputPath = "/home/ubuntu/bxc/data/bbx_metagame_data.json";
-	fs.writeFileSync(outputPath, JSON.stringify(outputPayload, null, 2));
+	await Bun.write(outputPath, JSON.stringify(outputPayload, null, 2));
 	console.log(`Saved analytical results to ${outputPath}`);
 }
 
