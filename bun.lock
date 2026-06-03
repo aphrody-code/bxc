@@ -66,6 +66,31 @@
         "zod": "^3.24.2",
       },
     },
+    "packages/next-playwright": {
+      "name": "@aphrody-code/next-playwright",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^6.0.3",
+      },
+      "peerDependencies": {
+        "@aphrody-code/bxc-test": "*",
+      },
+      "optionalPeers": [
+        "@aphrody-code/bxc-test",
+      ],
+    },
+    "packages/test": {
+      "name": "@aphrody-code/bxc-test",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "typescript": "^6.0.3",
+      },
+      "peerDependencies": {
+        "@aphrody-code/bxc": "*",
+      },
+    },
     "packages/voiranime": {
       "name": "@aphrody-code/voiranime",
       "version": "0.1.2",
@@ -566,9 +591,15 @@
   "packages": {
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.74.0", "", { "dependencies": { "json-schema-to-ts": "^3.1.1" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-srbJV7JKsc5cQ6eVuFzjZO7UR3xEPJqPamHFIe29bs38Ij2IripoAhC0S5NslNbaFUYqBKypmmpzMTpqfHEUDw=="],
 
+    "@aphrody-code/bxc": ["@aphrody-code/bxc@0.6.0", "https://npm.pkg.github.com/download/@aphrody-code/bxc/0.6.0/0c70ac28921823a984e3b138124501f2c5c38c1d", { "dependencies": { "@aphrody-code/challonge": "0.1.2", "@aphrody-code/fut": "0.1.2", "@aphrody-code/voiranime": "0.1.2", "@aphrody-code/worldbeyblade": "0.1.2", "@aphrody-code/x": "1.0.4", "@aphrody-code/xcom": "0.1.2", "@aphrody-code/zukan": "0.1.2", "@bogeychan/elysia-logger": "^0.1.10", "@elysiajs/cors": "^1.4.2", "@elysiajs/swagger": "^1.3.1", "@libsql/client": "^0.17.3", "@mozilla/readability": "^0.6.0", "bottleneck": "^2.19.5", "class-validator": "^0.15.1", "drizzle-orm": "^0.45.2", "elysia": "^1.4.28", "graphql": "^16.14.0", "graphql-yoga": "^5.21.0", "lru-cache": "^11.5.1", "p-limit": "^7.3.0", "p-queue": "^9.3.0", "p-retry": "^8.0.0", "reflect-metadata": "^0.2.2", "type-graphql": "^2.0.0-rc.3", "zod": "^4.4.3" }, "bin": { "bxc": "bin/bxc" } }, "sha512-HNoUhgZ28QAoIDwxOt/a74LMtiGxSmQu4VYA0Bia75T4Ae4yM0l5uh9gOI+aYkf2v3doOIN5UbhbZWC7zhmgRA=="],
+
+    "@aphrody-code/bxc-test": ["@aphrody-code/bxc-test@workspace:packages/test"],
+
     "@aphrody-code/challonge": ["@aphrody-code/challonge@workspace:packages/challonge"],
 
     "@aphrody-code/fut": ["@aphrody-code/fut@workspace:packages/fut"],
+
+    "@aphrody-code/next-playwright": ["@aphrody-code/next-playwright@workspace:packages/next-playwright"],
 
     "@aphrody-code/voiranime": ["@aphrody-code/voiranime@workspace:packages/voiranime"],
 
@@ -2629,6 +2660,8 @@
     "zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "zod-to-json-schema": ["zod-to-json-schema@3.25.2", "", { "peerDependencies": { "zod": "^3.25.28 || ^4" } }, "sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA=="],
+
+    "@aphrody-code/bxc/@aphrody-code/x": ["@aphrody-code/x@1.0.4", "https://npm.pkg.github.com/download/@aphrody-code/x/1.0.4/26e399b4445c854b19dc2cd8a41d780669f88a44", { "dependencies": { "zod": "^4.4.3" } }, "sha512-79V1j5eRBkGUSQ024oBupAEjxUwbmyPlcAa1Y5XNNai4dHfEvBC6fB1UgU51RvjWCMmogTHLhLQiyylqIsMZDQ=="],
 
     "@aphrody-code/fut/p-queue": ["p-queue@8.1.1", "", { "dependencies": { "eventemitter3": "^5.0.1", "p-timeout": "^6.1.2" } }, "sha512-aNZ+VfjobsWryoiPnEApGGmf5WmNsCo9xu8dfaYamG5qaLP7ClhLN6NgsFe6SwJ2UbLEBK5dv9x8Mn5+RVhMWQ=="],
 
