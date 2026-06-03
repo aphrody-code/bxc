@@ -31,12 +31,12 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { Browser, Page } from "../src/api/browser.js";
+import { Browser, Page } from "../src/api/browser.ts";
 import {
 	CDPError,
 	InProcessTransport,
-} from "../src/transport/InProcessTransport.js";
-import { StaticDomTransport } from "../src/transport/StaticDomTransport.js";
+} from "../src/transport/InProcessTransport.ts";
+import { StaticDomTransport } from "../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

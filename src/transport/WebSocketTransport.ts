@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
+import type { ConnectionTransport } from "../../types/ConnectionTransport.ts";
 import { drainStream } from "../internal/stream-drain.ts";
 import { join } from "node:path";
 

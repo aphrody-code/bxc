@@ -33,7 +33,7 @@
  * Chunk size: 65536 bytes per read (matches Chrome CDP default).
  */
 
-import type { DomainHandler, IOStream } from "../types.js";
+import type { DomainHandler, IOStream } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Constants

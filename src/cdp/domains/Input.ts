@@ -47,8 +47,8 @@
  * profile branch in isolation without requiring a live transport.
  */
 
-import { CDPError } from "../../transport/InProcessTransport.js";
-import type { DomainHandler } from "../types.js";
+import { CDPError } from "../../transport/InProcessTransport.ts";
+import type { DomainHandler } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Supported Input methods

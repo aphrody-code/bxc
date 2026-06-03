@@ -26,8 +26,8 @@
  * `{}`) signals that the method was handled.
  */
 
-import type { CDPEvent } from "../transport/InProcessTransport.js";
-import type { StaticDomTransport } from "../transport/StaticDomTransport.js";
+import type { CDPEvent } from "../transport/InProcessTransport.ts";
+import type { StaticDomTransport } from "../transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // CDPHandlerResult

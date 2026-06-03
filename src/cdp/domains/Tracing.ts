@@ -31,7 +31,7 @@
  * Lightpanda or Chrome which provide a real trace.
  */
 
-import type { DispatchContext, DomainHandler } from "../types.js";
+import type { DispatchContext, DomainHandler } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Tracing state (module-scoped — one trace at a time per process)

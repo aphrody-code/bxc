@@ -29,8 +29,8 @@ import {
 	emitConsoleAPICalled,
 	emitExceptionThrown,
 	getRegisteredBindings,
-} from "../../../src/cdp/domains/Runtime.js";
-import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
+} from "../../../src/cdp/domains/Runtime.ts";
+import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

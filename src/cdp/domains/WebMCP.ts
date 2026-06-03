@@ -23,7 +23,7 @@
  * Stubs out WebMCP.enable so the connection handshake succeeds.
  */
 
-import type { DomainHandler } from "../types.js";
+import type { DomainHandler } from "../types.ts";
 
 export const WebMCPHandler: DomainHandler = async (
 	method,

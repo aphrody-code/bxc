@@ -26,7 +26,7 @@
  * rendering engine so these have no effect.
  */
 
-import type { DomainHandler } from "../types.js";
+import type { DomainHandler } from "../types.ts";
 
 export const EmulationHandler: DomainHandler = async (
 	method,

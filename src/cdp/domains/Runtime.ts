@@ -26,7 +26,7 @@
  *   Runtime.exceptionThrown   — forwarded from fast/stealth/max profiles
  */
 
-import type { DispatchContext, DomainHandler, PageState } from "../types.js";
+import type { DispatchContext, DomainHandler, PageState } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Binding registry (module-scoped)

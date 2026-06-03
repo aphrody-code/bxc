@@ -46,7 +46,7 @@ import type {
 	DomainHandler,
 	FetchAction,
 	FetchInterceptionState,
-} from "../types.js";
+} from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // Handler

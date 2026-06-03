@@ -29,8 +29,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { Browser } from "../../src/api/browser.js";
-import { isZigQueryAvailable, parseHtml } from "../../src/ffi/zigquery.js";
+import { Browser } from "../../src/api/browser.ts";
+import { isZigQueryAvailable, parseHtml } from "../../src/ffi/zigquery.ts";
 
 const describeIfZig = isZigQueryAvailable() ? describe : describe.skip;
 

@@ -46,13 +46,13 @@
  *   regex fallback).
  */
 
-import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
+import type { ConnectionTransport } from "../../types/ConnectionTransport.ts";
 import type { ImpersonatedClientOptions } from "../ffi/curl-impersonate.ts";
 import {
 	isZigQueryAvailable,
 	type ZigDoc,
 	parseHtml as zigParseHtml,
-} from "../ffi/zigquery.js";
+} from "../ffi/zigquery.ts";
 import {
 	extractTitle,
 	openingTagOf,

@@ -52,25 +52,25 @@
  * methods.
  */
 
-import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
-import { AccessibilityHandler } from "../cdp/domains/Accessibility.js";
-import { AuditsHandler } from "../cdp/domains/Audits.js";
+import type { ConnectionTransport } from "../../types/ConnectionTransport.ts";
+import { AccessibilityHandler } from "../cdp/domains/Accessibility.ts";
+import { AuditsHandler } from "../cdp/domains/Audits.ts";
 // Domain handlers
-import { BrowserHandler } from "../cdp/domains/Browser.js";
-import { DOMHandler } from "../cdp/domains/DOM.js";
-import { EmulationHandler } from "../cdp/domains/Emulation.js";
-import { FetchHandler } from "../cdp/domains/Fetch.js";
-import { InputHandler } from "../cdp/domains/Input.js";
-import { IOHandler } from "../cdp/domains/IO.js";
-import { LogHandler } from "../cdp/domains/Log.js";
-import { NetworkHandler } from "../cdp/domains/Network.js";
-import { PageHandler } from "../cdp/domains/Page.js";
-import { PerformanceHandler } from "../cdp/domains/Performance.js";
-import { RuntimeHandler } from "../cdp/domains/Runtime.js";
-import { SecurityHandler } from "../cdp/domains/Security.js";
-import { TargetHandler } from "../cdp/domains/Target.js";
-import { TracingHandler } from "../cdp/domains/Tracing.js";
-import { WebMCPHandler } from "../cdp/domains/WebMCP.js";
+import { BrowserHandler } from "../cdp/domains/Browser.ts";
+import { DOMHandler } from "../cdp/domains/DOM.ts";
+import { EmulationHandler } from "../cdp/domains/Emulation.ts";
+import { FetchHandler } from "../cdp/domains/Fetch.ts";
+import { InputHandler } from "../cdp/domains/Input.ts";
+import { IOHandler } from "../cdp/domains/IO.ts";
+import { LogHandler } from "../cdp/domains/Log.ts";
+import { NetworkHandler } from "../cdp/domains/Network.ts";
+import { PageHandler } from "../cdp/domains/Page.ts";
+import { PerformanceHandler } from "../cdp/domains/Performance.ts";
+import { RuntimeHandler } from "../cdp/domains/Runtime.ts";
+import { SecurityHandler } from "../cdp/domains/Security.ts";
+import { TargetHandler } from "../cdp/domains/Target.ts";
+import { TracingHandler } from "../cdp/domains/Tracing.ts";
+import { WebMCPHandler } from "../cdp/domains/WebMCP.ts";
 import type {
 	DispatchContext,
 	DOMNode,
@@ -79,12 +79,12 @@ import type {
 	PageState,
 	ParsedDocumentLike,
 	ParsedNodeLike,
-} from "../cdp/types.js";
+} from "../cdp/types.ts";
 import {
 	isZigQueryAvailable,
 	type ZigDoc,
 	parseHtml as zigParseHtml,
-} from "../ffi/zigquery.js";
+} from "../ffi/zigquery.ts";
 import {
 	extractTitle,
 	openingTagOf,
@@ -96,7 +96,7 @@ import {
 	type CDPEvent,
 	type CDPHandler,
 	InProcessTransport,
-} from "./InProcessTransport.js";
+} from "./InProcessTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Supported methods list (used in error messages)

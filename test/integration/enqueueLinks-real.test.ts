@@ -24,8 +24,8 @@
  */
 
 import { afterAll, describe, expect, test } from "bun:test";
-import { Browser } from "../../src/api/browser.js";
-import { isZigQueryAvailable } from "../../src/ffi/zigquery.js";
+import { Browser } from "../../src/api/browser.ts";
+import { isZigQueryAvailable } from "../../src/ffi/zigquery.ts";
 import { enqueueLinks } from "../../src/helpers/enqueueLinks.ts";
 import { RequestQueue } from "../../src/queue/RequestQueue.ts";
 

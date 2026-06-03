@@ -30,8 +30,8 @@ import {
 	emitDataCollected,
 	emitTracingComplete,
 	isTracingActive,
-} from "../../../src/cdp/domains/Tracing.js";
-import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
+} from "../../../src/cdp/domains/Tracing.ts";
+import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // TransportMux — fan-out message dispatcher

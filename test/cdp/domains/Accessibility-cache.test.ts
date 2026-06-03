@@ -29,8 +29,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { CDPError } from "../../../src/transport/InProcessTransport.js";
-import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
+import { CDPError } from "../../../src/transport/InProcessTransport.ts";
+import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // CDP call helper (mirrors the one in Accessibility.test.ts)

@@ -21,6 +21,7 @@
   - [𝕏 bxc x — Native X / Twitter Client](#-bxc-x--native-x--twitter-client)
 - [📦 Monorepo Packages](#-monorepo-packages)
 - [📦 Installation](#-installation)
+- [🚢 Deployment (VPS)](#-deployment-vps)
 - [⚙️ Native Engine & Portability](#-native-engine--portability)
 - [🛠️ API Reference](#-api-reference)
   - [Library Usage](#library-usage)
@@ -269,6 +270,19 @@ bun add @aphrody-code/bxc
 
 ---
 
+## 🚢 Deployment (VPS)
+
+Full guide: **[`DEPLOY.md`](DEPLOY.md)** (systemd, MCP, `bxc-control.sh`, clean rebuild, ports).
+
+```bash
+cd ~/bxc && bun install
+./scripts/bxc-control.sh build && ./scripts/bxc-control.sh deploy
+```
+
+Shared agent stack with aphrody: `bash ~/aphrody/scripts/vps-sync-agent-stack.sh` · memory: [`~/aphrody/docs/agent-stack/DEPLOY.md`](../aphrody/docs/agent-stack/DEPLOY.md).
+
+---
+
 ## ⚙️ Native engine & portability
 
 Bxc's fast paths (CSS selectors, native HTML→Markdown) are backed by a Rust
@@ -298,14 +312,14 @@ At runtime:
 
 ### 🛠️ VPS Administration & Automation (`bxc-control`)
 
-Bxc provides a unified management and automation script at [scripts/bxc-control.sh](file:///home/ubuntu/bxc/scripts/bxc-control.sh) for managing builds, backups, systemd services, logs, and tunnel processes on your VPS:
+See **[`DEPLOY.md`](DEPLOY.md)**. Quick reference:
 
 ```bash
-./scripts/bxc-control.sh status     # Check systemd bxc.service status and running processes
-./scripts/bxc-control.sh deploy     # Deploy standalone binaries, update logs, reload and restart systemd
-./scripts/bxc-control.sh logs       # Tail API and Error logs
-./scripts/bxc-control.sh backup     # Run full monorepo backup (Zstd compressed archive + Git bundle)
-./scripts/bxc-control.sh tunnel     # Check SOCKS5 SSH Tunnel connection status to VPS
+./scripts/bxc-control.sh status     # systemd + processes
+./scripts/bxc-control.sh deploy     # binaries + restart bxc + bxc-crawler
+./scripts/bxc-control.sh logs       # /var/log/bxc/*.log
+./scripts/bxc-control.sh backup     # zstd + git bundle
+./scripts/bxc-control.sh tunnel     # SSH tunnel status
 ```
 
 ---

@@ -34,10 +34,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Page } from "../../src/api/browser.js";
+import { Page } from "../../src/api/browser.ts";
 import { HarRecorder } from "../../src/recorder/HarRecorder.ts";
 import type { HarFile } from "../../src/recorder/types.ts";
-import { StaticDomTransport } from "../../src/transport/StaticDomTransport.js";
+import { StaticDomTransport } from "../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -37,7 +37,7 @@
  * ```
  */
 
-import { Browser, type Page, type PageOptions } from "../api/browser.js";
+import { Browser, type Page, type PageOptions } from "../api/browser.ts";
 
 // ---------------------------------------------------------------------------
 // Public types

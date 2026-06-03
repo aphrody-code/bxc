@@ -21,7 +21,7 @@
  * Full console-message forwarding is deferred to Phase 1.
  */
 
-import type { DomainHandler } from "../types.js";
+import type { DomainHandler } from "../types.ts";
 
 export const LogHandler: DomainHandler = async (
 	method,

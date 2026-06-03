@@ -21,7 +21,7 @@
  * Full metrics collection is deferred to Phase 1.
  */
 
-import type { DomainHandler } from "../types.js";
+import type { DomainHandler } from "../types.ts";
 
 export const PerformanceHandler: DomainHandler = async (
 	method,
