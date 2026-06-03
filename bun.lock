@@ -79,7 +79,7 @@
     },
     "packages/x": {
       "name": "@aphrody-code/x",
-      "version": "1.0.4",
+      "version": "1.0.6",
       "dependencies": {
         "zod": "^4.4.3",
       },
