@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test/page
+ * @module @aphrody/bxc-test/page
  *
  * `TestPage` — a Playwright-shaped page surface (`packages/playwright-core/
  * src/client/page.ts`) wrapping a bxc `AnyPage` (`src/api/browser.ts`). It owns

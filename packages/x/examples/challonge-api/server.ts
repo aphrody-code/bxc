@@ -755,7 +755,7 @@ const server = Bun.serve({
 					};
 				}
 				const { extractChallongeTournament } = await import(
-					"@aphrody-code/bxc/scrapers/challonge"
+					"@aphrody/bxc/scrapers/challonge"
 				);
 				return extractChallongeTournament(r.body, {
 					url: pageUrl,

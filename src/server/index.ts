@@ -6,7 +6,7 @@ import { logger } from "@bogeychan/elysia-logger";
 import { createYoga } from "graphql-yoga";
 import { buildSchema } from "type-graphql";
 import { ScrapeResolver } from "./graphql/resolvers/ScrapeResolver.ts";
-import { FutResolver } from "@aphrody-code/bxc/scrapers/fut";
+import { FutResolver } from "@aphrody/bxc/scrapers/fut";
 import { Browser } from "../api/browser.ts";
 import { AutonomousCrawler } from "../crawler/AutonomousCrawler.ts";
 import { BxcDB } from "../db/BxcDB.ts";
@@ -474,7 +474,7 @@ async function bootstrap() {
 					async ({ query }) => {
 						const { url, profile } = query as { url: string; profile?: string };
 						const { scrapeFutGgPlayer } = await import(
-							"@aphrody-code/bxc/scrapers/fut"
+							"@aphrody/bxc/scrapers/fut"
 						);
 						try {
 							const data = await scrapeFutGgPlayer(
@@ -504,7 +504,7 @@ async function bootstrap() {
 					async ({ query }) => {
 						const { url, profile } = query as { url: string; profile?: string };
 						const { scrapeFutBinPrice } = await import(
-							"@aphrody-code/bxc/scrapers/fut"
+							"@aphrody/bxc/scrapers/fut"
 						);
 						try {
 							const data = await scrapeFutBinPrice(

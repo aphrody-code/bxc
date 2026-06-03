@@ -17,7 +17,7 @@ import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { XClient, XSession } from "@aphrody-code/x";
+import { XClient, XSession } from "@aphrody/x";
 
 const CATALOG_PATH = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -185,7 +185,7 @@ async function main(): Promise<void> {
     ...(gap.notes as string[]),
     "2026 responsive-web main bundle embeds 157 operationName entries; none named PremiumHub* / PremiumPaywall*.",
     "/i/premium loads Upsells (viewer_v2.upsell_config_for_surfaces) + nav SKU routing client-side.",
-    "bxc @aphrody-code/x premium.ts ProductCategory is narrower than live SKUs — extend when mapping checkout.",
+    "bxc @aphrody/x premium.ts ProductCategory is narrower than live SKUs — extend when mapping checkout.",
   ];
   writeFileSync(join(opts.outDir, "_gap_report.json"), JSON.stringify(gap, null, 2));
 

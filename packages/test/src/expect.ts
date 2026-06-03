@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test/expect
+ * @module @aphrody/bxc-test/expect
  *
  * Web-first, auto-retrying assertions for {@link BxcLocator}, mirroring
  * Playwright's matcher polling model (`packages/playwright/src/matchers/

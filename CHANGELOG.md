@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ### Added
 
 - **X Pro (Gryphon)** — `pro.x.com/i/decks` recon (`bxc detect` / `recon` / `har`), `scripts/x-pro-recon.ts`, docs [`packages/x/docs/X_PRO.md`](packages/x/docs/X_PRO.md).
-- **`@aphrody-code/x` 1.0.6** — Gryphon GraphQL catalog overlay (12 deck ops: `ViewerAccountSync`, `CreateDeck`, …), `x-pro-deck` service, **Radar** (`SearchTimeline` + `querySource: radar`), `radar-surface`, `x-pro-surface`.
+- **`@aphrody/x` 1.0.6** — Gryphon GraphQL catalog overlay (12 deck ops: `ViewerAccountSync`, `CreateDeck`, …), `x-pro-deck` service, **Radar** (`SearchTimeline` + `querySource: radar`), `radar-surface`, `x-pro-surface`.
 - **Rust `x-cli`** — `xpro` subcommand (`probe`, `sync`, `deck`, `create`, `remove`).
 - **MCP** — `bxc_xpro_deck` tool (decks sync, radar search, probe).
 - **CLI** — `bxc har record` documented; `bxc x` extended via workspace package.
@@ -52,9 +52,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
-- Native X / Twitter client imported from `x-client`: Rust crate `x-client` under `rust-bridge/crates/` (workspace member, GraphQL + REST cookie-auth client) and pure-TypeScript port published as `@aphrody-code/x`.
+- Native X / Twitter client imported from `x-client`: Rust crate `x-client` under `rust-bridge/crates/` (workspace member, GraphQL + REST cookie-auth client) and pure-TypeScript port published as `@aphrody/x`.
 - FFI wrappers `bxc_x_user_by_screen_name` and `bxc_x_user_tweets` exported from the `bxc-rust-bridge` cdylib (cookie auth via `auth_token` + `ct0`).
-- Subcommand `bxc x <profile|tweets|search|news|whoami>` driving the `@aphrody-code/x` client.
+- Subcommand `bxc x <profile|tweets|search|news|whoami>` driving the `@aphrody/x` client.
 - MCP tool `bxc_x_client` exposing the X client (profile / tweets / search / news / whoami) over the `bxc-native-mcp` server.
 
 ### Changed

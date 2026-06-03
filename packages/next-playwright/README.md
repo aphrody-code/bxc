@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# @aphrody-code/next-playwright
+# @aphrody/next-playwright
 
-A bxc port of Next.js's [`@next/playwright`](https://github.com/vercel/next.js/tree/canary/packages/next-playwright) — the `instant()` navigation-testing primitive — built on [`@aphrody-code/bxc-test`](../test) and bxc's native CDP layer. **No `@playwright/test` runtime dependency.**
+A bxc port of Next.js's [`@next/playwright`](https://github.com/vercel/next.js/tree/canary/packages/next-playwright) — the `instant()` navigation-testing primitive — built on [`@aphrody/bxc-test`](../test) and bxc's native CDP layer. **No `@playwright/test` runtime dependency.**
 
 `instant(page, fn)` runs `fn` while the `next-instant-navigation-testing` cookie is set. Inside the scope, a Next.js app with **Cache Components** serves only cached/prefetched content and defers dynamic data until the cookie is cleared — letting a test assert the instant (prefetched) shell deterministically.
 
@@ -23,8 +23,8 @@ A bxc port of Next.js's [`@next/playwright`](https://github.com/vercel/next.js/t
 ## Usage
 
 ```ts
-import { test, expect } from "@aphrody-code/bxc-test";
-import { instant, adaptPage } from "@aphrody-code/next-playwright";
+import { test, expect } from "@aphrody/bxc-test";
+import { instant, adaptPage } from "@aphrody/next-playwright";
 
 test("instant navigation to /dashboard", async ({ page }) => {
   await page.goto("http://localhost:3000/");
@@ -60,7 +60,7 @@ await instant(adaptPage(page), async () => {
 
 ## Relationship to `src/next`
 
-bxc core also ships `@aphrody-code/bxc/next` (`src/next/`) — a bxc-native, page-direct variant of `instant()` (the page itself exposes `addCookies`/`clearCookies`; nesting is guarded by an in-process flight lock) plus `withPlaywrightPage()`. This package is the **faithful, publishable mirror of vercel's `packages/next-playwright`** (structural `context()` shape, cookie-read nesting guard), layered on the `@aphrody-code/bxc-test` runner. Use the core module for quick bxc scripts; use this package when you want the exact `@next/playwright` surface in a `bun test` suite.
+bxc core also ships `@aphrody/bxc/next` (`src/next/`) — a bxc-native, page-direct variant of `instant()` (the page itself exposes `addCookies`/`clearCookies`; nesting is guarded by an in-process flight lock) plus `withPlaywrightPage()`. This package is the **faithful, publishable mirror of vercel's `packages/next-playwright`** (structural `context()` shape, cookie-read nesting guard), layered on the `@aphrody/bxc-test` runner. Use the core module for quick bxc scripts; use this package when you want the exact `@next/playwright` surface in a `bun test` suite.
 
 ## Scope
 

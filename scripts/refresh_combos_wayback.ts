@@ -27,7 +27,7 @@ import {
 	parsePodiumFromPostHtml,
 	type WBOAnomaly,
 	type WBOCombo,
-} from "@aphrody-code/bxc/scrapers/worldbeyblade";
+} from "@aphrody/bxc/scrapers/worldbeyblade";
 
 const THREAD_SLUG =
 	"Thread-Winning-Combinations-at-WBO-Organized-Events-Beyblade-X-BBX";

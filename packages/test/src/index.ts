@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test
+ * @module @aphrody/bxc-test
  *
  * Playwright-compatible browser/site test package for Bun, backed by bxc's
  * native in-process CDP layer (`src/cdp/**`) and the `bun:test` runner. No
@@ -11,7 +11,7 @@
  * Drop-in usage (mirrors `@playwright/test`):
  *
  * ```ts
- * import { test, expect } from "@aphrody-code/bxc-test";
+ * import { test, expect } from "@aphrody/bxc-test";
  *
  * test("homepage", async ({ page }) => {
  *   await page.goto("http://localhost:3000/");

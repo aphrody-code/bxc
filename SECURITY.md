@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest published `@aphrody-code/bxc` release line receives security
+Only the latest published `@aphrody/bxc` release line receives security
 fixes. Pin to a tagged release for production use.
 
 ## Reporting a vulnerability
@@ -20,7 +20,7 @@ We aim to acknowledge within 72 hours.
 - No credentials are committed to this repository. CI generates its registry
   `.npmrc` at runtime from `${NODE_AUTH_TOKEN}` (GitHub Actions secret); the
   tracked-out `.npmrc` is git-ignored.
-- The X / Twitter client (`@aphrody-code/x`, `rust-bridge/crates/x-client`)
+- The X / Twitter client (`@aphrody/x`, `rust-bridge/crates/x-client`)
   authenticates with a user-supplied `auth_token` + `ct0` cookie pair resolved
   from a local session file or `X_AUTH_TOKEN` / `X_CT0` environment variables.
   Never commit these values.

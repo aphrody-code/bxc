@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-//! X.com API surface constants (aligned with `@aphrody-code/x` `x-surface.ts`).
+//! X.com API surface constants (aligned with `@aphrody/x` `x-surface.ts`).
 
 /// Discovery pages that embed responsive-web bundle URLs.
 pub const DISCOVERY_PAGES: &[&str] = &[

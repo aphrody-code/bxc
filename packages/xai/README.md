@@ -1,4 +1,4 @@
-# @aphrody-code/xai
+# @aphrody/xai
 
 Headless **xAI Grok** client for Bun — OpenAI-compatible `https://api.x.ai/v1`.
 
@@ -27,7 +27,7 @@ bxc grok raw GET /models
 ## Library
 
 ```ts
-import { XaiClient } from "@aphrody-code/xai";
+import { XaiClient } from "@aphrody/xai";
 
 const client = new XaiClient();
 const models = await client.listModels();

@@ -1,6 +1,6 @@
 # X client coverage map
 
-`@aphrody-code/x` + `aphrody-x-client` share one GraphQL catalog and bxc-aligned bundle discovery.
+`@aphrody/x` + `aphrody-x-client` share one GraphQL catalog and bxc-aligned bundle discovery.
 
 ## Layers
 
@@ -39,5 +39,5 @@ cargo run -p x-client -- coverage --probe-premium
 
 ## npm packages
 
-- **@aphrody-code/x** / **@aphrody-code/bxc** — this monorepo (cookie GraphQL + recon)
+- **@aphrody/x** / **@aphrody/bxc** — this monorepo (cookie GraphQL + recon)
 - **twitter-api-v2** — official API v2 (OAuth2, not interchangeable)

@@ -1,13 +1,13 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# @aphrody-code/bxc-test
+# @aphrody/bxc-test
 
 Playwright-compatible browser/site test runner for **Bun**, backed by bxc's
 **native in-process CDP layer** (`src/cdp/**`) and the `bun:test` runner. No
 Chromium bundling, no Playwright dependency — zero-spawn in the `static` profile.
 
 ```ts
-import { test, expect } from "@aphrody-code/bxc-test";
+import { test, expect } from "@aphrody/bxc-test";
 
 test("homepage renders", async ({ page }) => {
   await page.goto("http://localhost:3000/");

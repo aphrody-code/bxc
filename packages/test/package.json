@@ -1,8 +1,7 @@
 {
-  "name": "@aphrody-code/bxc-test",
-  "version": "0.1.0",
+  "name": "@aphrody/bxc-test",
+  "version": "0.1.1",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
     "access": "public"
   },
   "description": "Playwright-compatible browser/site test runner for Bun, backed by bxc's native in-process CDP layer. Zero-spawn, no Chromium bundling.",
@@ -35,6 +34,11 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@aphrody-code/bxc": "*"
+    "@aphrody/bxc": "^0.6.4"
+  },
+  "peerDependenciesMeta": {
+    "@aphrody/bxc": {
+      "optional": true
+    }
   }
 }

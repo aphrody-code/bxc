@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# `@aphrody-code/bxc-test` — Playwright-compatible test package plan
+# `@aphrody/bxc-test` — Playwright-compatible test package plan
 
 Status: v1 implemented (2026-06-04). Bun `1.4.0-canary.1+5836485c9`.
 
@@ -82,11 +82,11 @@ box". v1 defines visibility as Playwright does *minus* layout: attached to the
 DOM and **not** `hidden` / `display:none` / `[hidden]` / `aria-hidden="true"`
 (parsed from the `style`/attribute set). Documented honestly as "adapted".
 
-## 4. Architecture of `@aphrody-code/bxc-test`
+## 4. Architecture of `@aphrody/bxc-test`
 
 ```
 packages/test/
-├── package.json            # @aphrody-code/bxc-test, workspace member (packages/*)
+├── package.json            # @aphrody/bxc-test, workspace member (packages/*)
 ├── tsconfig.json           # mirror packages/x: moduleResolution Bundler, types ["bun"]
 ├── README.md               # usage + compat table
 ├── src/
@@ -206,9 +206,9 @@ green test driving `Bun.serve({port:0})` fully offline.
   `packages/playwright-core/src/server/chromium/crConnection.ts:45`.
 - Bun docs: `bun-llms-full.txt:40851-40924` (happy-dom), `bun:test` runner.
 
-## 8. `@aphrody-code/next-playwright` — the Next.js `instant()` port
+## 8. `@aphrody/next-playwright` — the Next.js `instant()` port
 
-Shipped alongside `@aphrody-code/bxc-test` as `packages/next-playwright`. It is a
+Shipped alongside `@aphrody/bxc-test` as `packages/next-playwright`. It is a
 faithful, publishable port of vercel's
 [`packages/next-playwright`](https://github.com/vercel/next.js/tree/canary/packages/next-playwright)
 (`16.3.0-canary.39`, MIT) onto this test package + bxc's CDP layer — **no
@@ -240,7 +240,7 @@ implement `Network.deleteCookies` (so `Page.clearCookies({name})` — and thus t
 `src/cdp/domains/Network.ts` with domain-level tests in
 `test/cdp/domains/Network.test.ts`.
 
-**Relationship to `src/next`:** bxc core also ships `@aphrody-code/bxc/next`
+**Relationship to `src/next`:** bxc core also ships `@aphrody/bxc/next`
 (`src/next/`), a bxc-native, page-direct `instant()` variant (the page itself
 exposes the cookie ops; nesting is guarded by an in-process flight lock) plus
 `withPlaywrightPage()`. The package is the faithful `context()`-shaped mirror of

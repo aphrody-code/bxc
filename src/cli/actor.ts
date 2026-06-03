@@ -275,7 +275,7 @@ async function handleInit(
 			start: "bun run src/main.ts",
 		},
 		dependencies: {
-			"@aphrody-code/bxc": "*",
+			"@aphrody/bxc": "*",
 		},
 	};
 
@@ -290,8 +290,8 @@ async function handleInit(
 		},
 	};
 
-	const mainTs = `import { Actor } from "@aphrody-code/bxc/sdk/actor";
-import { Browser } from "@aphrody-code/bxc";
+	const mainTs = `import { Actor } from "@aphrody/bxc/sdk/actor";
+import { Browser } from "@aphrody/bxc";
 
 await Actor.main(async () => {
 	// Get input

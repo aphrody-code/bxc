@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Browser } from "@aphrody-code/bxc";
-import { launchGhostBrowser } from "@aphrody-code/bxc/profiles/ghost";
+import { Browser } from "@aphrody/bxc";
+import { launchGhostBrowser } from "@aphrody/bxc/profiles/ghost";
 import pRetry, { AbortError } from "p-retry";
 import type { FutPlayer } from "./types.ts";
 

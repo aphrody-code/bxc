@@ -7,7 +7,7 @@
 
 bxc — moteur de navigation "Zero-Spawn" pour agents IA. Bun runtime + Rust V8
 bindings + historique Zig DOM. Publié sur GitHub Packages comme
-`@aphrody-code/bxc` (repo `aphrody-code/bxc`), consommé par `rpb-challonge` (vps).
+`@aphrody/bxc` (repo `aphrody-code/bxc`), consommé par `rpb-challonge` (vps).
 
 ## Rappels critiques
 
@@ -67,7 +67,7 @@ bxc/
 │   ├── voiranime/                # VoirAnime catalog & embed resolver
 │   ├── worldbeyblade/            # Scraper & metagame sub-package
 │   ├── xcom/                     # X.com profile markdown scraper
-│   ├── x/                        # @aphrody-code/x — headless X/Twitter client (pure TS port) + examples/
+│   ├── x/                        # @aphrody/x — headless X/Twitter client (pure TS port) + examples/
 │   └── zukan/                    # Inazuma Eleven Character database scraper
 ├── rust-bridge/                  # FFI Rust ↔ Bun (lol_html, V8 bindings)
 │   └── crates/x-client/          # Native X/Twitter GraphQL+REST client (rusqlite 0.37, FFI via bxc_x_*)
@@ -133,5 +133,5 @@ gh release create vX.Y.Z --repo aphrody-code/bxc --title "bxc vX.Y.Z" --notes "<
 - **`verbatimModuleSyntax: true`** (tsconfig root) : tout package workspace importé depuis `src/` est typecheck transitivement → les imports type-only doivent utiliser `import type { … }` sinon `error TS1484`.
 - **`.npmrc` n'est PAS un secret** : `_authToken=${NODE_AUTH_TOKEN}` est un placeholder env (le CI génère son propre `.npmrc`). Ne jamais conclure « token leak » sur `grep -c _authToken` — vérifier placeholder (`=${`) vs littéral. Ne pas Read/cat quand même.
 - **`bxc-mcp` a 3 cibles** à garder fraîches au deploy : `~/.local/bin/bxc-mcp` (MCP Claude `~/.claude.json`), `/usr/local/bin/bxc-mcp` (extension Gemini), `dist/standalone/bxc-mcp` (configs gemini antigravity/plugins/aphrody). `bxc-control deploy` gère les deux premiers.
-- **GitHub Packages visibilité** : `.npmrc` route `@aphrody-code/*` → GitHub Packages (`bun publish` par package, sous-packages avant root). Rendre un package **public** sur un compte **User** = **UI-only**, aucune API (`PATCH …/visibility` = 404), même repo public.
+- **GitHub Packages visibilité** : `.npmrc` route `@aphrody/*` → GitHub Packages (`bun publish` par package, sous-packages avant root). Rendre un package **public** sur un compte **User** = **UI-only**, aucune API (`PATCH …/visibility` = 404), même repo public.
 - **`bun test` ne run que `*.test.ts`** : déplacer des `examples/*.ts` sous `packages/` ne les transforme pas en tests.

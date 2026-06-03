@@ -13,7 +13,7 @@ A high-performance polyglot (Rust & Bun/TypeScript) headless client to interact 
 ## Directory Structure
 
 - `src/` — Standalone Rust crate (builds a library `x_client` and CLI `x-cli`).
-- `ts/` — Standalone Bun/TypeScript package (`@aphrody-code/x`).
+- `ts/` — Standalone Bun/TypeScript package (`@aphrody/x`).
 - `data/` — GraphQL operation catalogs.
 
 ## Installation & Build

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // SPDX-License-Identifier: Apache-2.0
 /**
- * x-premium-recon — full bxc + @aphrody-code/x recon for X Premium surfaces.
+ * x-premium-recon — full bxc + @aphrody/x recon for X Premium surfaces.
  *
  * - bxc recon/detect (profile `max` for SPA) on known premium URLs
  * - Bundle scrape: routes, SKUs, GraphQL ops, payment/CDN hosts
@@ -254,7 +254,7 @@ async function main(): Promise<void> {
     ),
     npm_notes: {
       official_api: "twitter-api-v2 (OAuth2 portal — not cookie GraphQL)",
-      community_cookie: "@aphrody-code/x / aphrody-x-client (this repo)",
+      community_cookie: "@aphrody/x / aphrody-x-client (this repo)",
       transaction_id: "xclienttransaction / twitter-api-client (optional header)",
     },
   };
@@ -291,7 +291,7 @@ ${((b.product_skus as string[]) ?? []).map((s) => `- \`${s}\``).join("\n")}
 \`${report.bxc_profile}\` on ${(report.premium_urls as string[]).length} URLs — see \`recon-all.json\`.
 
 ## Packages
-- **@aphrody-code/x** — cookie GraphQL (this monorepo)
+- **@aphrody/x** — cookie GraphQL (this monorepo)
 - **aphrody-x-client** — Rust twin
 - **twitter-api-v2** — official API v2 (different auth model)
 `;

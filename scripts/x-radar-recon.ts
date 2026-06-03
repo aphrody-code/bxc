@@ -19,7 +19,7 @@ import {
   radarMetrics,
   radarExplore,
   runXSurfaceRecon,
-} from "@aphrody-code/x";
+} from "@aphrody/x";
 
 function parseArgv(argv: string[]): { outDir: string } {
   let outDir = join(homedir(), "yoyo", "data", "radar-recon");

@@ -39,7 +39,7 @@ Use `fetchPremiumBundle()` or `bun run scripts/x-premium-dump.ts --also-store`.
 
 | Package | Use |
 | --- | --- |
-| **@aphrody-code/x** | Cookie GraphQL (this package) |
+| **@aphrody/x** | Cookie GraphQL (this package) |
 | **aphrody-x-client** (`rust-bridge/crates/x-client`) | Rust CLI: `x-cli premium` |
 | **twitter-api-v2** | Official API v2 (OAuth2 — different model) |
 

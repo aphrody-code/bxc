@@ -27,7 +27,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { extractChallongeTournament } from "@aphrody-code/bxc/scrapers/challonge";
+import { extractChallongeTournament } from "@aphrody/bxc/scrapers/challonge";
 
 const FIXTURE = "/tmp/mirror-bts5/challonge.com/fr/B_TS5";
 

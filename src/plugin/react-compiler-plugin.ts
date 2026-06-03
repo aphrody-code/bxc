@@ -34,7 +34,7 @@
  *
  * @example
  * ```ts
- * import { reactCompilerPlugin } from "@aphrody-code/bxc/plugin";
+ * import { reactCompilerPlugin } from "@aphrody/bxc/plugin";
  * await Bun.build({
  *   entrypoints: ["./app.tsx"],
  *   plugins: [reactCompilerPlugin({ target: "19" })],

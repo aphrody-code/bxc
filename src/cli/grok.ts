@@ -3,7 +3,7 @@
  * `bxc grok` — native xAI API client (no XAI_API_KEY when ~/.grok/auth.json exists).
  */
 
-import { XaiClient } from "@aphrody-code/xai";
+import { XaiClient } from "@aphrody/xai";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 type Action = "whoami" | "models" | "chat" | "tts" | "stt" | "raw";

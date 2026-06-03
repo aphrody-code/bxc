@@ -1,8 +1,7 @@
 {
-  "name": "@aphrody-code/next-playwright",
-  "version": "0.1.0",
+  "name": "@aphrody/next-playwright",
+  "version": "0.1.1",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
     "access": "public"
   },
   "description": "Next.js instant() navigation-testing primitive (port of @next/playwright) for bxc's CDP-backed test runner. Drives the next-instant-navigation-testing cookie protocol over Network.setCookies/getCookies/deleteCookies — no @playwright/test runtime dependency.",
@@ -35,10 +34,10 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@aphrody-code/bxc-test": "*"
+    "@aphrody/bxc-test": "^0.1.1"
   },
   "peerDependenciesMeta": {
-    "@aphrody-code/bxc-test": {
+    "@aphrody/bxc-test": {
       "optional": true
     }
   }

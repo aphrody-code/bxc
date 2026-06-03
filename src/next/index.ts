@@ -23,8 +23,8 @@
  *
  * @example bxc (recommended)
  * ```ts
- * import { Browser } from "@aphrody-code/bxc";
- * import { instant } from "@aphrody-code/bxc/next";
+ * import { Browser } from "@aphrody/bxc";
+ * import { instant } from "@aphrody/bxc/next";
  *
  * const page = await Browser.newPage({ profile: "fast" });
  * await page.goto("http://localhost:3000");
@@ -36,7 +36,7 @@
  * @example Playwright bridge
  * ```ts
  * import { test, expect } from "@playwright/test";
- * import { instant, withPlaywrightPage } from "@aphrody-code/bxc/next";
+ * import { instant, withPlaywrightPage } from "@aphrody/bxc/next";
  *
  * test("instant", async ({ page }) => {
  *   await page.goto("http://localhost:3000");

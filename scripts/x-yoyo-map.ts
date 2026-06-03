@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // SPDX-License-Identifier: Apache-2.0
 /**
- * x-yoyo-map — full account explorer for @aphrody-code/x
+ * x-yoyo-map — full account explorer for @aphrody/x
  *
  * Paginates every high-level XClient surface (authored, likes, bookmarks,
  * home, mentions, graph, news, lists), stores canonical rows in the shared
@@ -123,7 +123,7 @@ function parseArgv(argv: string[]): Options {
 }
 
 function printHelp(): void {
-  console.log(`x-yoyo-map — map your X account into yoyo.sqlite (bun:sqlite + @aphrody-code/x)
+  console.log(`x-yoyo-map — map your X account into yoyo.sqlite (bun:sqlite + @aphrody/x)
 
 Usage:
   bun run scripts/x-yoyo-map.ts [options]

@@ -200,7 +200,7 @@ bxc xcom profile elonmusk --screenshot --ai-extract
 ### 𝕏 `bxc x` — Native X / Twitter Client
 A full GraphQL + REST client for X's private web API, authenticated with an
 `auth_token` + `ct0` cookie pair (no developer portal, no API key). Backed by the
-pure-TypeScript [`@aphrody-code/x`](./packages/x) package and a parallel Rust
+pure-TypeScript [`@aphrody/x`](./packages/x) package and a parallel Rust
 crate (`rust-bridge/crates/x-client`) exposed over FFI (`bxc_x_user_*`).
 
 ```bash
@@ -235,7 +235,7 @@ bxc grok tts "Hello" --output /tmp/hello.mp3
 bxc grok raw GET /models
 ```
 
-Library: `@aphrody-code/xai` · MCP: `bxc_grok_chat`, `bxc_grok_models`, `bxc_grok_whoami`.
+Library: `@aphrody/xai` · MCP: `bxc_grok_chat`, `bxc_grok_models`, `bxc_grok_whoami`.
 
 ---
 
@@ -246,15 +246,15 @@ under the `@aphrody-code` scope (published to GitHub Packages):
 
 | Package | Description |
 | :--- | :--- |
-| [`@aphrody-code/bxc`](./package.json) | The full Zero-Spawn engine, CLI, and MCP server. |
-| [`@aphrody-code/x`](./packages/x) | Headless X / Twitter client (GraphQL + REST, cookie auth). |
-| [`@aphrody-code/xai`](./packages/xai) | xAI Grok REST client — Grok Build OIDC session or `XAI_API_KEY`. |
-| [`@aphrody-code/challonge`](./packages/challonge) | Challonge tournament bracket scraper. |
-| [`@aphrody-code/fut`](./packages/fut) | FIFA Ultimate Team (FUTBin / FUT.GG) price & stats. |
-| [`@aphrody-code/voiranime`](./packages/voiranime) | VoirAnime catalog search & embed resolver. |
-| [`@aphrody-code/worldbeyblade`](./packages/worldbeyblade) | WBO forum automation & metagame. |
-| [`@aphrody-code/xcom`](./packages/xcom) | X.com profile markdown/screenshot scraper. |
-| [`@aphrody-code/zukan`](./packages/zukan) | Inazuma Eleven character database scraper. |
+| [`@aphrody/bxc`](./package.json) | The full Zero-Spawn engine, CLI, and MCP server. |
+| [`@aphrody/x`](./packages/x) | Headless X / Twitter client (GraphQL + REST, cookie auth). |
+| [`@aphrody/xai`](./packages/xai) | xAI Grok REST client — Grok Build OIDC session or `XAI_API_KEY`. |
+| [`@aphrody/challonge`](./packages/challonge) | Challonge tournament bracket scraper. |
+| [`@aphrody/fut`](./packages/fut) | FIFA Ultimate Team (FUTBin / FUT.GG) price & stats. |
+| [`@aphrody/voiranime`](./packages/voiranime) | VoirAnime catalog search & embed resolver. |
+| [`@aphrody/worldbeyblade`](./packages/worldbeyblade) | WBO forum automation & metagame. |
+| [`@aphrody/xcom`](./packages/xcom) | X.com profile markdown/screenshot scraper. |
+| [`@aphrody/zukan`](./packages/zukan) | Inazuma Eleven character database scraper. |
 
 ---
 
@@ -265,7 +265,7 @@ under the `@aphrody-code` scope (published to GitHub Packages):
 curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
 
 # As a library
-bun add @aphrody-code/bxc
+bun add @aphrody/bxc
 ```
 
 ---
@@ -328,7 +328,7 @@ See **[`DEPLOY.md`](DEPLOY.md)**. Quick reference:
 
 ### Library Usage
 ```typescript
-import { Browser } from "@aphrody-code/bxc";
+import { Browser } from "@aphrody/bxc";
 
 const page = await Browser.newPage({ profile: "stealth" });
 await page.goto("https://example.com");
@@ -339,7 +339,7 @@ await page.close();
 
 ### Google Atlas Integration
 ```typescript
-import { google } from "@aphrody-code/bxc/google";
+import { google } from "@aphrody/bxc/google";
 
 // Auto-detects local TLD and switches to native Google Smart Routing
 const { page } = await google.open("https://www.google.com/search?q=bxc+engine");
@@ -350,7 +350,7 @@ const { page } = await google.open("https://www.google.com/search?q=bxc+engine")
 Bxc includes a 24/7 background worker queue, FTS5 keyword indexing, sitemap XML extraction, and proxy rotation for persistent recursive scraping:
 
 ```typescript
-import { BxcClient } from "@aphrody-code/bxc/sdk";
+import { BxcClient } from "@aphrody/bxc/sdk";
 
 const client = new BxcClient({ endpoint: "http://localhost:3000" });
 

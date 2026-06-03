@@ -152,7 +152,7 @@ loaded, the base URL is detected automatically. Otherwise:
  *
  * @example
  * ```ts
- * import { instant, withPlaywrightPage } from "@aphrody-code/bxc/next";
+ * import { instant, withPlaywrightPage } from "@aphrody/bxc/next";
  * test("instant", async ({ page }) => {
  *   await page.goto("http://localhost:3000");
  *   await instant(withPlaywrightPage(page), async () => {

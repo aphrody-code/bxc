@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/next-playwright
+ * @module @aphrody/next-playwright
  *
  * bxc port of Next.js's `@next/playwright` (`/tmp/next.js/packages/
  * next-playwright`, MIT, `16.3.0-canary.39`) — the `instant()` navigation-
@@ -17,11 +17,11 @@
  * ({@link CdpCookieContext}) instead of Playwright's `BrowserContext`, and
  * `step()` targets bxc's runner instead of `@playwright/test`.
  *
- * Usage with `@aphrody-code/bxc-test`:
+ * Usage with `@aphrody/bxc-test`:
  *
  * ```ts
- * import { test, expect } from "@aphrody-code/bxc-test";
- * import { instant, adaptPage } from "@aphrody-code/next-playwright";
+ * import { test, expect } from "@aphrody/bxc-test";
+ * import { instant, adaptPage } from "@aphrody/next-playwright";
  *
  * test("instant navigation", async ({ page }) => {
  *   await page.goto("http://localhost:3000/");

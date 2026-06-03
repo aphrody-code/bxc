@@ -8,7 +8,7 @@ import { resolveAuth, XaiClient } from "./src/index.ts";
 const hasGrokAuth = existsSync(join(homedir(), ".grok", "auth.json"));
 const hasApiKey = Boolean(process.env.XAI_API_KEY?.trim());
 
-describe("@aphrody-code/xai", () => {
+describe("@aphrody/xai", () => {
   test("resolveAuth prefers explicit bearer", () => {
     const a = resolveAuth("xai-test-key");
     expect(a.mode).toBe("api_key");

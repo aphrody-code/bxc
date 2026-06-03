@@ -15,7 +15,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { WorldBeybladeScraper } from "@aphrody-code/bxc/scrapers/worldbeyblade";
+import { WorldBeybladeScraper } from "@aphrody/bxc/scrapers/worldbeyblade";
 
 const COOKIES_PATH = "/home/ubuntu/.bxc/cookies/worldbeyblade.json";
 

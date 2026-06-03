@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Real, fully-offline end-to-end test of `@aphrody-code/bxc-test`.
+ * Real, fully-offline end-to-end test of `@aphrody/bxc-test`.
  *
  * Drives a tiny `Bun.serve({ port: 0 })` HTML page through bxc's native CDP
  * `static` transport and asserts on it with the package's own Playwright-shaped

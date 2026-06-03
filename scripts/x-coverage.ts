@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // SPDX-License-Identifier: Apache-2.0
-import { XClient, XSession, buildCoverageReport } from "@aphrody-code/x";
+import { XClient, XSession, buildCoverageReport } from "@aphrody/x";
 
 const probe = process.argv.includes("--probe");
 let client: XClient | undefined;

@@ -66,7 +66,7 @@
  * ```
  */
 
-import { Browser } from "@aphrody-code/bxc";
+import { Browser } from "@aphrody/bxc";
 
 type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
 
