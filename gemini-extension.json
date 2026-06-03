@@ -1,6 +1,6 @@
 {
 	"name": "bxc-gemini",
-	"version": "0.6.2",
+	"version": "0.6.3",
 	"description": "Bxc Native Extension: Zero-Spawn Browser Engine and WBO Beyblade X Metagame / Standings Tracker for AI Agents.",
 	"author": "aphrody-code",
 	"contextFileName": "GEMINI.md",
