@@ -1,10 +1,10 @@
 {
   "name": "@aphrody-code/x",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "description": "Headless X (Twitter) client in pure TypeScript for Bun. Built on top of Bun Web APIs (fetch) and Bun APIs (Bun.file). Replicates the entire x-client Rust functionality.",
+  "description": "Headless X (Twitter) client in pure TypeScript for Bun. Cookie GraphQL + REST, bxc-aligned catalog sync and surface recon.",
   "keywords": [
     "aphrody",
     "bun",
@@ -12,7 +12,8 @@
     "twitter",
     "client",
     "graphql",
-    "headless"
+    "headless",
+    "bxc"
   ],
   "license": "Apache-2.0",
   "type": "module",
@@ -25,7 +26,10 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
-    "test": "bun test"
+    "test": "bun test",
+    "catalog:sync": "bun ../../scripts/sync-x-catalog.ts",
+    "coverage": "bun ../../scripts/x-coverage.ts",
+    "recon": "bun ../../scripts/x-premium-recon.ts --profile max"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

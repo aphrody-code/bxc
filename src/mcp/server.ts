@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 import { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
 
@@ -1910,6 +1910,147 @@ server.registerTool(
 	},
 );
 
+server.registerTool(
+	"bxc_xpro_deck",
+	{
+		description:
+			"X Pro (Gryphon) decks on pro.x.com + X Radar. Cookie auth via session/env. Actions: probe, sync (ViewerAccountSync), deck, create, remove, radar_search.",
+		inputSchema: z.object({
+			action: z
+				.enum([
+					"probe",
+					"sync",
+					"deck",
+					"create",
+					"remove",
+					"radar_search",
+				])
+				.describe("X Pro / Radar operation."),
+			deck_id: z.string().optional().describe("Deck rest_id for deck/remove."),
+			name: z.string().optional().describe("Deck name for create."),
+			query: z
+				.string()
+				.optional()
+				.describe("Radar search query for radar_search."),
+			count: z.number().int().min(1).max(100).default(20),
+			cookie: z.string().optional(),
+		}),
+	},
+	async (args) => {
+		const {
+			XClient,
+			XSession,
+			viewerAccountSync,
+			getDeck,
+			createDeck,
+			removeDeck,
+			probeXProAccess,
+			radarMetrics,
+		} = await import("@aphrody-code/x");
+		const session = args.cookie
+			? XSession.fromCookieString(args.cookie)
+			: XSession.loadOrEnv();
+		const client = new XClient(session);
+
+		let payload: unknown;
+		switch (args.action) {
+			case "probe":
+				payload = await probeXProAccess(client);
+				break;
+			case "sync":
+				payload = await viewerAccountSync(client);
+				break;
+			case "deck": {
+				if (!args.deck_id) throw new Error("deck requires deck_id");
+				payload = await getDeck(client, args.deck_id);
+				break;
+			}
+			case "create": {
+				if (!args.name) throw new Error("create requires name");
+				payload = { deck_id: await createDeck(client, args.name, []) };
+				break;
+			}
+			case "remove": {
+				if (!args.deck_id) throw new Error("remove requires deck_id");
+				payload = await removeDeck(client, args.deck_id);
+				break;
+			}
+			case "radar_search": {
+				if (!args.query) throw new Error("radar_search requires query");
+				payload = await radarMetrics(client, args.query, 3);
+				break;
+			}
+		}
+		return {
+			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_grok_models",
+	{
+		description:
+			"List xAI Grok models (GET /v1/models). Uses Grok Build OIDC session (~/.grok/auth.json) when present — no XAI_API_KEY required. Falls back to XAI_API_KEY env.",
+		inputSchema: z.object({}),
+	},
+	async () => {
+		const { XaiClient } = await import("@aphrody-code/xai");
+		const client = new XaiClient();
+		const payload = await client.listModels();
+		return {
+			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_grok_chat",
+	{
+		description:
+			"xAI chat completion (POST /v1/chat/completions). OpenAI-compatible. Auth: ~/.grok/auth.json OIDC JWT (grok login) preferred over metered XAI_API_KEY.",
+		inputSchema: z.object({
+			prompt: z.string().describe("User message."),
+			model: z
+				.string()
+				.default("grok-3-mini")
+				.describe("Model id (e.g. grok-4, grok-3-mini)."),
+			max_tokens: z.number().int().min(1).max(131072).default(2048),
+			temperature: z.number().min(0).max(2).optional(),
+		}),
+	},
+	async (args) => {
+		const { XaiClient } = await import("@aphrody-code/xai");
+		const client = new XaiClient();
+		const text = await client.complete(
+			args.prompt,
+			args.model,
+			args.max_tokens,
+		);
+		return {
+			content: [{ type: "text", text }],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_grok_whoami",
+	{
+		description:
+			"Show which xAI credential source bxc will use (grok_oidc from ~/.grok/auth.json vs XAI_API_KEY).",
+		inputSchema: z.object({}),
+	},
+	async () => {
+		const { XaiClient } = await import("@aphrody-code/xai");
+		const client = new XaiClient();
+		return {
+			content: [
+				{ type: "text", text: JSON.stringify(client.whoami(), null, 2) },
+			],
+		};
+	},
+);
+
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
@@ -1925,6 +2066,7 @@ async function main() {
 			import("@aphrody-code/voiranime"),
 			import("@aphrody-code/xcom"),
 			import("@aphrody-code/x"),
+			import("@aphrody-code/xai"),
 			import("../cli/recon.ts"),
 			import("../mirror/index.ts"),
 			import("@aphrody-code/challonge"),
