@@ -4,8 +4,8 @@
     "rootDir": "src",
     "outDir": "dist",
     "paths": {
-      "@aphrody-code/bxc": ["../../src/api/browser.ts"],
-      "@aphrody-code/bxc/*": ["../../src/*"]
+      "@aphrody/bxc": ["../../src/api/browser.ts"],
+      "@aphrody/bxc/*": ["../../src/*"]
     }
   },
   "include": ["src/**/*"]

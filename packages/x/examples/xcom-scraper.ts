@@ -1,4 +1,4 @@
-import { XComScraper } from "@aphrody-code/bxc/scrapers/xcom";
+import { XComScraper } from "@aphrody/bxc/scrapers/xcom";
 import { write } from "bun";
 
 async function main() {

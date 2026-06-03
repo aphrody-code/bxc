@@ -24,7 +24,7 @@ import {
 	type WBOAnomaly,
 	type WBOCombo,
 	type WorldBeybladeThread,
-} from "@aphrody-code/bxc/scrapers/worldbeyblade";
+} from "@aphrody/bxc/scrapers/worldbeyblade";
 
 const ARGS = Bun.argv.slice(2);
 const arg = (k: string) =>

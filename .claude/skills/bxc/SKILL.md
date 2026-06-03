@@ -1,6 +1,6 @@
 ---
 name: bxc
-description: Référence d'usage du moteur bxc (CLI globale `bxc` 0.6.1 + `@aphrody-code/x` 1.0.6 + tools MCP) pour rechercher sur le web, scraper une page, extraire du Markdown, faire de la recon ou détecter une stack. À utiliser dès qu'une tâche demande "cherche/recherche sur le web", "scrape X", "récupère le contenu de cette URL", "quelle stack utilise ce site", ou tout besoin de données web fraîches.
+description: Référence d'usage du moteur bxc (CLI globale `bxc` 0.6.1 + `@aphrody/x` 1.0.6 + tools MCP) pour rechercher sur le web, scraper une page, extraire du Markdown, faire de la recon ou détecter une stack. À utiliser dès qu'une tâche demande "cherche/recherche sur le web", "scrape X", "récupère le contenu de cette URL", "quelle stack utilise ce site", ou tout besoin de données web fraîches.
 ---
 
 # bxc — moteur de navigation Zero-Spawn pour agents
@@ -70,10 +70,10 @@ Reste au profil le plus bas qui fonctionne. `bxc search` choisit seul
 Override : `--cookies <path>`. Forcer anonyme : `--no-auth`. Autres jars connus :
 `~/.bxc/cookies/gemini.json`. **Ne jamais `cat`/afficher ces fichiers** (secrets).
 
-## API librairie (`@aphrody-code/bxc`)
+## API librairie (`@aphrody/bxc`)
 
 ```ts
-import { Browser } from "@aphrody-code/bxc";
+import { Browser } from "@aphrody/bxc";
 
 const page = await Browser.newPage({ profile: "static" }); // static|fast|http|stealth|max
 await page.goto("https://example.com", { timeoutMs: 30_000 });
@@ -84,7 +84,7 @@ await page.close();
 ```
 
 ```ts
-import { googleSearchRich } from "@aphrody-code/bxc/google";
+import { googleSearchRich } from "@aphrody/bxc/google";
 const r = await googleSearchRich("bun runtime", { hl: "en", gl: "US", num: 5 });
 // r.organic[] {position,title,url,snippet}, r.totalResults, r.authenticated, r.profileUsed
 ```

@@ -21,8 +21,8 @@ supprimée — l'extraction se fait par sélecteurs CSS (`page.$$`) ou Markdown
 (`page.markdown()`), puis `Zod.parse()`.
 
 ```ts
-import { Browser } from "@aphrody-code/bxc";          // singleton
-import { googleSearchRich } from "@aphrody-code/bxc/google"; // si recherche
+import { Browser } from "@aphrody/bxc";          // singleton
+import { googleSearchRich } from "@aphrody/bxc/google"; // si recherche
 ```
 
 Surface `page` utile : `goto(url,{timeoutMs})`, `content()` (HTML), `markdown()`
@@ -45,7 +45,7 @@ Surface `page` utile : `goto(url,{timeoutMs})`, `content()` (HTML), `markdown()`
 
 ```typescript
 import { z } from "zod";
-import { Browser } from "@aphrody-code/bxc";
+import { Browser } from "@aphrody/bxc";
 
 const Schema = z.object({
   // ... champs selon la demande utilisateur
@@ -99,4 +99,4 @@ try {
 
 - **Parallélisme naïf** sur `fast` / `stealth` / `max` : 1 process Lightpanda par worker = OOM. Utiliser `PagePool` / `AutoscaledPool` de `src/pool/`.
 - **Pas de Zod** : output non typé → bug downstream. Toujours `Schema.parse()`.
-- **`Browser.fetch()` / `extractStructured` / `@aphrody-code/llm-extract`** : n'existent plus. Ne pas les générer.
+- **`Browser.fetch()` / `extractStructured` / `@aphrody/llm-extract`** : n'existent plus. Ne pas les générer.

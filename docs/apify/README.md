@@ -84,8 +84,8 @@ A lightweight route manager to clean up complex conditional handlers by register
 ## 💻 Code Example: Labeled Routing Crawler with Actor SDK
 
 ```typescript
-import { Actor } from "@aphrody-code/bxc/sdk/actor";
-import { CheerioCrawler, createRouter } from "@aphrody-code/bxc/crawler";
+import { Actor } from "@aphrody/bxc/sdk/actor";
+import { CheerioCrawler, createRouter } from "@aphrody/bxc/crawler";
 
 await Actor.main(async () => {
     // 1. Get actor input (reads default KeyValueStore INPUT.json)

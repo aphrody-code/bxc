@@ -47,7 +47,7 @@
  * Usage :
  *
  * ```ts
- * import { launchGhostBrowser } from "@aphrody-code/bxc/profiles/ghost";
+ * import { launchGhostBrowser } from "@aphrody/bxc/profiles/ghost";
  *
  * const ghost = await launchGhostBrowser({
  *   fingerprint: { os: "linux", browser: "chrome" },

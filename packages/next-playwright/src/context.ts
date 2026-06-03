@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/next-playwright/context
+ * @module @aphrody/next-playwright/context
  *
  * The CDP cookie adapter. `@next/playwright`'s `instant()` talks to a
  * structural `PlaywrightBrowserContext` exposing `addCookies` / `cookies` /
@@ -131,7 +131,7 @@ export interface PlaywrightPage {
 }
 
 /**
- * Wraps a bxc page (e.g. `@aphrody-code/bxc-test`'s `TestPage`) as the
+ * Wraps a bxc page (e.g. `@aphrody/bxc-test`'s `TestPage`) as the
  * structural `PlaywrightPage` that {@link instant} expects, bridging its
  * cookie context onto CDP. The returned context is memoised so nesting
  * detection (a single shared jar) behaves like Playwright's context scope.

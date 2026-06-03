@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test/locator
+ * @module @aphrody/bxc-test/locator
  *
  * `BxcLocator` — a Playwright-shaped Locator resolved over bxc's native CDP DOM
  * domain (`src/cdp/domains/DOM.ts`). Like Playwright's Locator

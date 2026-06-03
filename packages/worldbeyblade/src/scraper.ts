@@ -17,11 +17,11 @@
 import {
 	launchGhostBrowser,
 	type GhostBrowser,
-} from "@aphrody-code/bxc/profiles/ghost";
-import { Browser } from "@aphrody-code/bxc";
-import { randomWait, typeNatural } from "@aphrody-code/bxc/profiles/humanize";
-import type { Cookie } from "@aphrody-code/bxc/cookies/cookie-loader";
-import type { AnyPage } from "@aphrody-code/bxc/api/types";
+} from "@aphrody/bxc/profiles/ghost";
+import { Browser } from "@aphrody/bxc";
+import { randomWait, typeNatural } from "@aphrody/bxc/profiles/humanize";
+import type { Cookie } from "@aphrody/bxc/cookies/cookie-loader";
+import type { AnyPage } from "@aphrody/bxc/api/types";
 import type {
 	WorldBeybladeProfile,
 	WorldBeybladePost,
@@ -377,7 +377,7 @@ export class WorldBeybladeScraper {
 					: null;
 
 				const contentHtml = this.extractMatchingDiv(block, pid);
-				const { htmlToMarkdown } = await import("@aphrody-code/bxc/internal/html-utils");
+				const { htmlToMarkdown } = await import("@aphrody/bxc/internal/html-utils");
 				const contentMarkdown = htmlToMarkdown(contentHtml);
 
 				posts.push({
@@ -618,10 +618,10 @@ export class WorldBeybladeScraper {
 	async searchHeadless(query: string): Promise<WorldBeybladeSearchResult[]> {
 		this.log(`Performing headless search for query: "${query}"...`);
 		const { ImpersonatedClient } = await import(
-			"@aphrody-code/bxc/ffi/curl-impersonate"
+			"@aphrody/bxc/ffi/curl-impersonate"
 		);
 		const { buildCookieHeader } = await import(
-			"@aphrody-code/bxc/cookies/cookie-injector"
+			"@aphrody/bxc/cookies/cookie-injector"
 		);
 
 		const client = new ImpersonatedClient({ profile: "chrome131" });
@@ -636,7 +636,7 @@ export class WorldBeybladeScraper {
 
 		let cookiesArray: Cookie[] = [];
 		if (typeof this.options.cookies === "string") {
-			const { loadCookieJar } = await import("@aphrody-code/bxc/cookies/cookie-loader");
+			const { loadCookieJar } = await import("@aphrody/bxc/cookies/cookie-loader");
 			cookiesArray = await loadCookieJar(this.options.cookies);
 		} else if (Array.isArray(this.options.cookies)) {
 			cookiesArray = this.options.cookies;

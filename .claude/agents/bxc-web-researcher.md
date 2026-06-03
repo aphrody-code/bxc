@@ -47,8 +47,8 @@ escalate one step (`--profile http`, then `--profile fast`) — don't jump to `m
 ## Library API (when the CLI isn't enough — batch/typed extraction)
 
 ```ts
-import { Browser } from "@aphrody-code/bxc";
-import { googleSearchRich } from "@aphrody-code/bxc/google";
+import { Browser } from "@aphrody/bxc";
+import { googleSearchRich } from "@aphrody/bxc/google";
 
 const r = await googleSearchRich("bun runtime", { num: 5, hl: "en" });
 const page = await Browser.newPage({ profile: "static" });

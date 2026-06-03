@@ -25,7 +25,7 @@
  *
  * @example Runtime usage (Bun.plugin)
  * ```ts
- * import { lightpandaPlugin } from "@aphrody-code/bxc/plugin";
+ * import { lightpandaPlugin } from "@aphrody/bxc/plugin";
  * Bun.plugin(lightpandaPlugin());
  *
  * const html = (await import("lightpanda:https://google.com")).default;
@@ -34,7 +34,7 @@
  *
  * @example Build-time usage (Bun.build)
  * ```ts
- * import { lightpandaPlugin } from "@aphrody-code/bxc/plugin";
+ * import { lightpandaPlugin } from "@aphrody/bxc/plugin";
  *
  * await Bun.build({
  *   entrypoints: ["./app.ts"],
@@ -279,7 +279,7 @@ export function registerLightpandaPlugin(
  *
  * @example
  * ```ts
- * import { renderPage } from "@aphrody-code/bxc/plugin";
+ * import { renderPage } from "@aphrody/bxc/plugin";
  * const html = await renderPage("https://google.com");
  * ```
  */

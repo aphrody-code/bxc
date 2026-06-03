@@ -1594,7 +1594,7 @@ class BrowserSingleton {
  *
  * @example Anti-detection (Lightpanda + ghost stealth injects):
  * ```ts
- * import { launchGhostBrowser } from "@aphrody-code/bxc/profiles/ghost";
+ * import { launchGhostBrowser } from "@aphrody/bxc/profiles/ghost";
  * const ghost = await launchGhostBrowser({
  *   fingerprint: { os: "linux", browser: "chrome", version: 131 },
  *   locale: "fr-FR",

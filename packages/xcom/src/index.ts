@@ -10,8 +10,8 @@
 import {
 	launchGhostBrowser,
 	type GhostBrowser,
-} from "@aphrody-code/bxc/profiles/ghost";
-import { randomWait, scrollHuman } from "@aphrody-code/bxc/profiles/humanize";
+} from "@aphrody/bxc/profiles/ghost";
+import { randomWait, scrollHuman } from "@aphrody/bxc/profiles/humanize";
 
 export interface XComProfileData {
 	username: string;

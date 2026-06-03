@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test/runner
+ * @module @aphrody/bxc-test/runner
  *
  * The runner seam. Re-exports `bun:test`'s runner verbs so any file using this
  * package runs under `bun test`, and provides a Playwright-style per-test `page`

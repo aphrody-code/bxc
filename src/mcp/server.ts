@@ -772,7 +772,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { ZukanScraper } = await import("@aphrody-code/zukan");
+		const { ZukanScraper } = await import("@aphrody/zukan");
 		const scraper = new ZukanScraper();
 		if (args.action === "list") {
 			const list = await scraper.getCharacterList(args.locale);
@@ -807,7 +807,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { scrapeFutBinPrice } = await import("@aphrody-code/fut");
+		const { scrapeFutBinPrice } = await import("@aphrody/fut");
 		const result = await scrapeFutBinPrice(args.url, args.profile);
 		return {
 			content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -829,7 +829,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { scrapeFutGgPlayer } = await import("@aphrody-code/fut");
+		const { scrapeFutGgPlayer } = await import("@aphrody/fut");
 		const result = await scrapeFutGgPlayer(args.url, args.profile);
 		return {
 			content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -850,7 +850,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { VoiranimeScraper } = await import("@aphrody-code/voiranime");
+		const { VoiranimeScraper } = await import("@aphrody/voiranime");
 		const scraper = new VoiranimeScraper({ profile: args.profile });
 		try {
 			const results = await scraper.search(args.query);
@@ -880,7 +880,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { VoiranimeScraper } = await import("@aphrody-code/voiranime");
+		const { VoiranimeScraper } = await import("@aphrody/voiranime");
 		const scraper = new VoiranimeScraper({ profile: args.profile });
 		try {
 			const info = await scraper.getAnime(args.slugOrUrl);
@@ -906,7 +906,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { VoiranimeScraper } = await import("@aphrody-code/voiranime");
+		const { VoiranimeScraper } = await import("@aphrody/voiranime");
 		const scraper = new VoiranimeScraper({ profile: args.profile });
 		try {
 			const source = await scraper.resolveSource(args.embedUrl, {
@@ -940,7 +940,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { XComScraper } = await import("@aphrody-code/xcom");
+		const { XComScraper } = await import("@aphrody/xcom");
 		const scraper = new XComScraper();
 		try {
 			await scraper.init();
@@ -1171,7 +1171,7 @@ server.registerTool(
 	},
 	async (args) => {
 		const { extractChallongeTournament, extractChallongeTournamentFromFile } =
-			await import("@aphrody-code/challonge");
+			await import("@aphrody/challonge");
 		const { Browser } = await import("../api/browser.ts");
 		if (/^https?:\/\//.test(args.urlOrPath)) {
 			const page = await Browser.newPage({ profile: args.profile });
@@ -1231,7 +1231,7 @@ server.registerTool(
 	},
 	async (args) => {
 		const { WorldBeybladeScraper } = await import(
-			"@aphrody-code/worldbeyblade"
+			"@aphrody/worldbeyblade"
 		);
 		const scraper = new WorldBeybladeScraper();
 		try {
@@ -1872,7 +1872,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { XClient, XSession, getNews } = await import("@aphrody-code/x");
+		const { XClient, XSession, getNews } = await import("@aphrody/x");
 		const session = args.cookie
 			? XSession.fromCookieString(args.cookie)
 			: XSession.loadOrEnv();
@@ -1946,7 +1946,7 @@ server.registerTool(
 			removeDeck,
 			probeXProAccess,
 			radarMetrics,
-		} = await import("@aphrody-code/x");
+		} = await import("@aphrody/x");
 		const session = args.cookie
 			? XSession.fromCookieString(args.cookie)
 			: XSession.loadOrEnv();
@@ -1995,7 +1995,7 @@ server.registerTool(
 		inputSchema: z.object({}),
 	},
 	async () => {
-		const { XaiClient } = await import("@aphrody-code/xai");
+		const { XaiClient } = await import("@aphrody/xai");
 		const client = new XaiClient();
 		const payload = await client.listModels();
 		return {
@@ -2020,7 +2020,7 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { XaiClient } = await import("@aphrody-code/xai");
+		const { XaiClient } = await import("@aphrody/xai");
 		const client = new XaiClient();
 		const text = await client.complete(
 			args.prompt,
@@ -2041,7 +2041,7 @@ server.registerTool(
 		inputSchema: z.object({}),
 	},
 	async () => {
-		const { XaiClient } = await import("@aphrody-code/xai");
+		const { XaiClient } = await import("@aphrody/xai");
 		const client = new XaiClient();
 		return {
 			content: [
@@ -2062,15 +2062,15 @@ async function main() {
 			import("../google/search.ts"),
 			import("../google/fetch.ts"),
 			import("../detect.ts"),
-			import("@aphrody-code/fut"),
-			import("@aphrody-code/voiranime"),
-			import("@aphrody-code/xcom"),
-			import("@aphrody-code/x"),
-			import("@aphrody-code/xai"),
+			import("@aphrody/fut"),
+			import("@aphrody/voiranime"),
+			import("@aphrody/xcom"),
+			import("@aphrody/x"),
+			import("@aphrody/xai"),
 			import("../cli/recon.ts"),
 			import("../mirror/index.ts"),
-			import("@aphrody-code/challonge"),
-			import("@aphrody-code/worldbeyblade"),
+			import("@aphrody/challonge"),
+			import("@aphrody/worldbeyblade"),
 			import("../cli/actor.ts"),
 		]).catch(() => {});
 	}, 100);

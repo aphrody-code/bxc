@@ -38,7 +38,7 @@ import { join } from "node:path";
 import {
 	WorldBeybladeScraper,
 	type WorldBeybladePost,
-} from "@aphrody-code/bxc/scrapers/worldbeyblade";
+} from "@aphrody/bxc/scrapers/worldbeyblade";
 
 const ARGS = new Set(Bun.argv.slice(2));
 const TARGET =

@@ -18,7 +18,7 @@
  * `bxc voiranime <action> <arg>` — VoirAnime streaming scraper
  */
 
-import { VoiranimeScraper } from "@aphrody-code/voiranime";
+import { VoiranimeScraper } from "@aphrody/voiranime";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {

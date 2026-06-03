@@ -10,7 +10,7 @@
  * Usage : bun scripts/resolve-episode.ts <SERIES> <NUMBER>
  *   SERIES ∈ DB | DBZ | DBGT | DBS | DB_DAIMA
  */
-import { VoiranimeScraper } from "@aphrody-code/bxc/scrapers/voiranime";
+import { VoiranimeScraper } from "@aphrody/bxc/scrapers/voiranime";
 
 const SERIES_SLUG: Record<string, string> = {
 	DB: "dragon-ball",

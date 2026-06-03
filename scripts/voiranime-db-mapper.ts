@@ -23,7 +23,7 @@ import {
 	VoiranimeScraper,
 	type AnimeInfo,
 	type PlayerEmbed,
-} from "@aphrody-code/bxc/scrapers/voiranime";
+} from "@aphrody/bxc/scrapers/voiranime";
 
 const ARGS = new Set(Bun.argv.slice(2));
 const CONCURRENCY = Number(

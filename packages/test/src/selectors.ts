@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test/selectors
+ * @module @aphrody/bxc-test/selectors
  *
  * Maps Playwright's semantic locators (`getByRole`, `getByTestId`, `getByText`,
  * `getByLabel`, …) onto CSS selectors that bxc's CDP `DOM.querySelectorAll`
