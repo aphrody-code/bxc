@@ -242,7 +242,7 @@ Library: `@aphrody/xai` · MCP: `bxc_grok_chat`, `bxc_grok_models`, `bxc_grok_wh
 ## 📦 Monorepo Packages
 
 Every targeted scraper ships as a standalone, individually-versioned package
-under the `@aphrody-code` scope (published to GitHub Packages):
+under the `@aphrody` scope (published to npm):
 
 | Package | Description |
 | :--- | :--- |
