@@ -94,10 +94,15 @@ export class XaiClient {
     options: { model?: string; language?: string } = {},
   ): Promise<unknown> {
     const form = new FormData();
-    const blob =
-      file instanceof Blob
-        ? file
-        : new Blob([file instanceof Buffer ? new Uint8Array(file) : await (file as Bun.BunFile).arrayBuffer()]);
+    let blob: Blob;
+    if (file instanceof Blob) {
+      blob = file;
+    } else if (Buffer.isBuffer(file)) {
+      blob = new Blob([new Uint8Array(file)]);
+    } else {
+      // Bun.BunFile (Blob-compatible au runtime : .arrayBuffer()).
+      blob = new Blob([await (file as unknown as Blob).arrayBuffer()]);
+    }
     form.append("file", blob, "audio.wav");
     if (options.model) form.append("model", options.model);
     if (options.language) form.append("language", options.language);
