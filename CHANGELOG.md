@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.6.2] - 2026-06-04
+
+### Changed
+
+- **Full-Bun TS surface** — converted the remaining `fs` sync calls and
+  `child_process.spawnSync` to native Bun APIs (`Bun.file`, `Bun.write`,
+  `Bun.spawn`) across `worldbeyblade`, mirror, and analysis scripts; n2b
+  Node-API findings dropped 75 -> 59 (the remainder are false positives on
+  already-`Bun.spawn` call sites). Typecheck clean.
+
+### Fixed
+
+- Repaired corrupted path-scrub artifacts (`atlas-from-cache.ts`,
+  `test/e2e/helpers.ts`), removed the self-corrupted `scripts/path-sentinel.ts`,
+  and dropped dead `packages/bxc-extension` references from CI (`ci.yml` was red
+  on a clean checkout). Added `SKIP_NETWORK_TESTS=1` to the Linux/Windows test
+  jobs.
+
+### Meta
+
+- Version manifests aligned: `ai.json` and `gemini-extension.json` corrected
+  from a stale `0.6.0` to match `package.json` (now `0.6.2`).
+
+---
+
 ## [0.6.1] - 2026-06-03
 
 ### Added
