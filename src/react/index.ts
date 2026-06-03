@@ -23,8 +23,8 @@
  *
  * @example
  * ```ts
- * import { Browser } from "@aphrody-code/bxc";
- * import { snapshotHydration, fetchNextData } from "@aphrody-code/bxc/react";
+ * import { Browser } from "@aphrody/bxc";
+ * import { snapshotHydration, fetchNextData } from "@aphrody/bxc/react";
  *
  * const page = await Browser.newPage({ profile: "http" });
  * await page.goto("https://google.com/users/42");

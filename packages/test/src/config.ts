@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/bxc-test/config
+ * @module @aphrody/bxc-test/config
  *
  * `defineConfig` — a `playwright.config.ts`-shaped options object. The fields
  * that bxc can honour (`use.baseURL`, `use.testIdAttribute`, `use.profile`,

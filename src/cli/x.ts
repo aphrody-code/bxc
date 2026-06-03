@@ -17,14 +17,14 @@
 /**
  * `bxc x <action> [args]` — native X / Twitter client (cookie auth).
  *
- * Wraps the `@aphrody-code/x` headless client. Authentication uses an
+ * Wraps the `@aphrody/x` headless client. Authentication uses an
  * `auth_token` + `ct0` cookie pair, resolved from (in order):
  *   1. `--cookie "auth_token=...; ct0=..."`
  *   2. the session file (`~/.config/x-cli/session.json`)
  *   3. the `X_AUTH_TOKEN` / `X_CT0` environment variables
  */
 
-import { XClient, XSession, getNews } from "@aphrody-code/x";
+import { XClient, XSession, getNews } from "@aphrody/x";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 type Action = "profile" | "tweets" | "news" | "search" | "whoami";

@@ -110,7 +110,7 @@ See also [PREMIUM.md](./PREMIUM.md) for subscription purchase GraphQL (`Upsells`
 | Layer | Recommended name |
 | --- | --- |
 | Rust (`aphrody-x-client`) | `x_pro_deck` module — `viewer_account_sync()`, `create_deck()`, … |
-| TypeScript (`@aphrody-code/x`) | `XProDeckService` — wraps Gryphon catalog + `ViewerAccountSync` |
+| TypeScript (`@aphrody/x`) | `XProDeckService` — wraps Gryphon catalog + `ViewerAccountSync` |
 
 ## CLI / artifacts
 
@@ -127,6 +127,6 @@ Artifacts: `~/bxc/storage/x-pro-recon/` (also copied to `~/yoyo/data/x-pro-recon
 
 | Package | Use |
 | --- | --- |
-| **@aphrody-code/x** | Extend catalog with Gryphon ops; add `XProDeckService` |
+| **@aphrody/x** | Extend catalog with Gryphon ops; add `XProDeckService` |
 | **aphrody-x-client** | `x-cli pro deck` subcommands |
 | **twitter-api-v2** | Official API — no deck/column surface |

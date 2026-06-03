@@ -24,7 +24,7 @@ Bxc (Browser-X) is a native, zero-spawn, high-performance web browser automation
 ## Quick Start (Bun FFI)
 
 ```typescript
-import { Browser } from "@aphrody-code/bxc";
+import { Browser } from "@aphrody/bxc";
 
 // Initialize stealth browser
 const page = await Browser.newPage({ profile: "stealth" });

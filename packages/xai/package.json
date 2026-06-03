@@ -1,7 +1,10 @@
 {
-  "name": "@aphrody-code/xai",
-  "version": "1.0.0",
-  "description": "Headless xAI Grok API client for Bun — OIDC session (~/.grok/auth.json) or XAI_API_KEY, OpenAI-compatible REST.",
+  "name": "@aphrody/xai",
+  "version": "1.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Headless xAI Grok API client for Bun \u2014 OIDC session (~/.grok/auth.json) or XAI_API_KEY, OpenAI-compatible REST.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",

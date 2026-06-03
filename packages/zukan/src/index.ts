@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Browser } from "@aphrody-code/bxc";
+import { Browser } from "@aphrody/bxc";
 import * as cheerio from "cheerio";
 
 export interface ZukanCharacterRef {

@@ -25,7 +25,7 @@ import {
 	type ChallongeTournamentSnapshot,
 	extractChallongeTournament,
 	extractChallongeTournamentFromFile,
-} from "@aphrody-code/challonge";
+} from "@aphrody/challonge";
 import { EXIT, type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {

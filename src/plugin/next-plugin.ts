@@ -668,7 +668,7 @@ export function nextEnvPlugin(options: NextPluginOptions = {}): BunPlugin {
  *
  * @example
  * ```ts
- * import { nextPlugin } from "@aphrody-code/bxc/plugin";
+ * import { nextPlugin } from "@aphrody/bxc/plugin";
  * await Bun.build({
  *   entrypoints: ["./app.ts"],
  *   plugins: nextPlugin({ cwd: process.cwd(), emitManifest: true }),

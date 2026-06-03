@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * @module @aphrody-code/next-playwright/step
+ * @module @aphrody/next-playwright/step
  *
  * `step()` — the bxc reimplementation of `@next/playwright`'s internal step
  * helper (`/tmp/next.js/packages/next-playwright/src/step.ts`). The upstream
  * version probes for `@playwright/test` and wraps the body in `test.step()` so
  * the acquire/release actions show as labeled steps in Playwright's UI.
  *
- * bxc's test runner (`@aphrody-code/bxc-test`, built on `bun:test`) has no
+ * bxc's test runner (`@aphrody/bxc-test`, built on `bun:test`) has no
  * `test.step` UI primitive, so — exactly like the upstream Jest fallback — the
  * default behaviour is to run the body directly. A host (a richer bxc reporter,
  * a trace recorder) may install its own reporter via {@link setStepReporter} to

@@ -277,7 +277,7 @@ export function tailwindPlugin(options: TailwindPluginOptions = {}): BunPlugin {
  *
  * @example
  * ```ts
- * import { compileTailwindCss } from "@aphrody-code/bxc/plugin";
+ * import { compileTailwindCss } from "@aphrody/bxc/plugin";
  * const out = await compileTailwindCss(`@tailwind utilities;`, {
  *   content: ["src/**\/*.tsx"],
  *   minify: true,

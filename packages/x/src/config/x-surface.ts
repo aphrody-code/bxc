@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * X.com private web API surface map (bxc recon + bundle extraction, 2026-06).
- * Shared by @aphrody-code/x and aphrody-x-client.
+ * Shared by @aphrody/x and aphrody-x-client.
  */
 
 export const X_DISCOVERY_UA =

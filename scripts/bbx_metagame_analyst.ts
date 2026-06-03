@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { runFullMetagameAnalysis } from "@aphrody-code/bxc/scrapers/worldbeyblade";
+import { runFullMetagameAnalysis } from "@aphrody/bxc/scrapers/worldbeyblade";
 
 async function main() {
 	const archivePath = "/home/ubuntu/bxc/data/thread_archive.html";
