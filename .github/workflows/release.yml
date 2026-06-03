@@ -58,14 +58,14 @@ jobs:
         run: |
           mkdir -p dist/release
           bun build --compile --target=${{ matrix.bun_target }} --minify --bytecode --outfile dist/release/bxc src/serverless/standalone.ts
-          cd packages/bxc-extension && bun build ./server.ts --compile --target=${{ matrix.bun_target }} --outfile ../../dist/release/bxc-mcp
+          bun build ./src/mcp/server.ts --compile --target=${{ matrix.bun_target }} --minify --bytecode --no-compile-autoload-tsconfig --no-compile-autoload-package-json --outfile dist/release/bxc-mcp
         if: matrix.os != 'windows-latest'
 
       - name: Compile Standalone (Windows Bytecode)
         run: |
           mkdir dist\release
           bun build --compile --target=${{ matrix.bun_target }} --minify --bytecode --outfile dist\release\bxc.exe src\serverless\standalone.ts
-          cd packages\bxc-extension && bun build .\server.ts --compile --target=${{ matrix.bun_target }} --outfile ..\..\dist\release\bxc-mcp.exe
+          bun build .\src\mcp\server.ts --compile --target=${{ matrix.bun_target }} --minify --bytecode --no-compile-autoload-tsconfig --no-compile-autoload-package-json --outfile dist\release\bxc-mcp.exe
         if: matrix.os == 'windows-latest'
 
       - name: Package Artifacts
