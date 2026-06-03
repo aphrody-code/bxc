@@ -95,7 +95,7 @@ export async function resolveLightpandaBin(): Promise<string | null> {
 	const candidates = [
 		Bun.env.BXC_LIGHTPANDA_BIN,
 		Bun.env.BXC_LIGHTPANDA_PATH,
-		"${process.env.HOME || '/home/ubuntu'}/vps/packages/bxc/vendor/lightpanda-bin/linux-x64/lightpanda",
+		`${HOME}/vendor/lightpanda-bin/linux-x64/lightpanda`,
 		`${HOME}/.cache/lightpanda-node/lightpanda`,
 		`${HOME}/.local/bin/lightpanda`,
 		`${HOME}/lightpanda`,

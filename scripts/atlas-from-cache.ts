@@ -19,7 +19,7 @@
 import { Database } from "bun:sqlite";
 import { join } from "node:path";
 
-const HOME = process.env.HOME ?? "${process.env.HOME || '/home/ubuntu'}";
+const HOME = process.env.HOME ?? "";
 const CACHE = join(HOME, ".bxc/cache.sqlite");
 const OUT_JSON = join(HOME, "bxc/google-ecosystem-map.json");
 const OUT_TS = join(HOME, "bxc/src/google/atlas.ts");
