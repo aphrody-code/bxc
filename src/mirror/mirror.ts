@@ -48,7 +48,6 @@ import {
 } from "node:path";
 import zlib from "node:zlib";
 import { promisify } from "node:util";
-import { spawnSync } from "node:child_process";
 import { type Cookie, loadCookieJar } from "../cookies/cookie-loader.ts";
 import { autoDiscoverAndParse } from "../utils/sitemap.ts";
 import type { HarEntry, HarLog } from "../recorder/types.ts";
@@ -884,20 +883,19 @@ async function optimizeAssetFile(
 		if (isPng || isJpg) {
 			if (isPng) {
 				try {
-					spawnSync("pngquant", [
-						"--force",
-						"--ext",
-						".png",
-						"--speed",
-						"1",
-						localPath,
-					]);
+					await Bun.spawn(
+						["pngquant", "--force", "--ext", ".png", "--speed", "1", localPath],
+						{ stdout: "ignore", stderr: "ignore" },
+					).exited;
 				} catch {
 					// pngquant not available/failed
 				}
 			} else {
 				try {
-					spawnSync("jpegoptim", ["--strip-all", "--max=85", localPath]);
+					await Bun.spawn(
+						["jpegoptim", "--strip-all", "--max=85", localPath],
+						{ stdout: "ignore", stderr: "ignore" },
+					).exited;
 				} catch {
 					// jpegoptim not available/failed
 				}
