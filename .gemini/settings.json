@@ -37,13 +37,6 @@
 		"autoMemory": true,
 		"jitContext": true
 	},
-	"extensions": {
-		"bxc-native": {
-			"path": "packages/bxc-extension",
-			"enabled": true,
-			"trusted": true
-		}
-	},
 	"agents": {
 		"browser": {
 			"allowedDomains": ["*"]
