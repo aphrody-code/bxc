@@ -69,6 +69,10 @@ x-profile.*
 xcom-deep-report.json
 scratch/
 
+# e2e crawl outputs (regenerable)
+test/e2e/results/
+test/e2e/fixtures/sitemaps/*-2026-*.json
+
 # Bxc FUT unified folder ignores
 packages/fut/src/cookies/
 packages/fut/src/data/*.sqlite
