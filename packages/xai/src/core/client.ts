@@ -97,7 +97,7 @@ export class XaiClient {
     const blob =
       file instanceof Blob
         ? file
-        : new Blob([file instanceof Buffer ? file : await (file as Blob).arrayBuffer()]);
+        : new Blob([file instanceof Buffer ? new Uint8Array(file) : await file.arrayBuffer()]);
     form.append("file", blob, "audio.wav");
     if (options.model) form.append("model", options.model);
     if (options.language) form.append("language", options.language);
