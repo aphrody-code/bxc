@@ -22,7 +22,7 @@
  * resolves to the CDP result object (or throw a CDPError).
  */
 
-import type { ConnectionTransport } from "../../types/ConnectionTransport.js";
+import type { ConnectionTransport } from "../../types/ConnectionTransport.ts";
 
 // ---------------------------------------------------------------------------
 // Internal types

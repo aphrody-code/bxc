@@ -22,8 +22,8 @@
  *          DOM.enable, DOM.getBoxModel, DOM.resolveNode, DOM.setFileInputFiles
  */
 
-import { CDPError } from "../../transport/InProcessTransport.js";
-import type { DomainHandler } from "../types.js";
+import { CDPError } from "../../transport/InProcessTransport.ts";
+import type { DomainHandler } from "../types.ts";
 
 /**
  * Tries to parse a CSS dimension (e.g. "300px", "10.5em") and return the

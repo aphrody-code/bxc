@@ -34,8 +34,8 @@ import {
 	getContentSize,
 	getDownloadConfig,
 	getGrantedPermissions,
-} from "../../../src/cdp/domains/Browser.js";
-import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.js";
+} from "../../../src/cdp/domains/Browser.ts";
+import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
 // TransportMux — fan-out message dispatcher (avoids onmessage slot conflicts)

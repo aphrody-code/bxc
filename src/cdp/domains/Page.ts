@@ -41,8 +41,8 @@
  *   Page.screencastFrame         (never in static mode)
  */
 
-import type { DomainHandler } from "../types.js";
-import { invalidateAXCache } from "./Accessibility.js";
+import type { DomainHandler } from "../types.ts";
+import { invalidateAXCache } from "./Accessibility.ts";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -526,8 +526,8 @@ export const PageHandler: DomainHandler = async (
  * Call this from the navigate helper when a download is detected.
  */
 export function emitDownloadWillBegin(
-	ctx: import("../types.js").DispatchContext,
-	page: import("../types.js").PageState,
+	ctx: import("../types.ts").DispatchContext,
+	page: import("../types.ts").PageState,
 	opts: { guid: string; url: string; suggestedFilename: string },
 ): void {
 	ctx.emitEvent({
@@ -547,8 +547,8 @@ export function emitDownloadWillBegin(
  * state: "inProgress" | "completed" | "canceled"
  */
 export function emitDownloadProgress(
-	ctx: import("../types.js").DispatchContext,
-	page: import("../types.js").PageState,
+	ctx: import("../types.ts").DispatchContext,
+	page: import("../types.ts").PageState,
 	opts: {
 		guid: string;
 		totalBytes: number;

@@ -95,6 +95,7 @@ deploy_all() {
 
   # 4. Install / refresh systemd unit files from the repo
   log "Installing systemd unit files..."
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc.service" "/etc/systemd/system/bxc.service"
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc-crawler.service" "/etc/systemd/system/bxc-crawler.service"
 
   # 5. Correct log ownerships

@@ -28,8 +28,8 @@
  *   Target.targetInfoChanged   — when URL changes (Page.frameNavigated)
  */
 
-import { CDPError } from "../../transport/InProcessTransport.js";
-import type { DomainHandler } from "../types.js";
+import { CDPError } from "../../transport/InProcessTransport.ts";
+import type { DomainHandler } from "../types.ts";
 
 const BROWSER_CONTEXT_ID = "defaultBrowserContextId";
 const BROWSER_TARGET_ID = "browserTargetId";

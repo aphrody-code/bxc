@@ -23,7 +23,7 @@
  * `tls: { rejectUnauthorized: false }` on Bun's fetch when the flag is true.
  */
 
-import type { DomainHandler } from "../types.js";
+import type { DomainHandler } from "../types.ts";
 
 export const SecurityHandler: DomainHandler = async (
 	method,

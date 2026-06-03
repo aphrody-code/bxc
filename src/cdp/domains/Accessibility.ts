@@ -32,8 +32,8 @@
  * `Accessibility.getFullAXTree` to build a page snapshot.
  */
 
-import { CDPError } from "../../transport/InProcessTransport.js";
-import type { DomainHandler, ParsedNodeLike } from "../types.js";
+import { CDPError } from "../../transport/InProcessTransport.ts";
+import type { DomainHandler, ParsedNodeLike } from "../types.ts";
 
 // ---------------------------------------------------------------------------
 // AX tree types (subset of Chrome DevTools Protocol Accessibility domain)

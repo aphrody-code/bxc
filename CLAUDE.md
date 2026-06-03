@@ -1,6 +1,7 @@
 # CLAUDE.md — bxc
 
-> Contexte général partagé avec Gemini : voir [`GEMINI.md`](./GEMINI.md).
+> Contexte général partagé avec Gemini : voir [`GEMINI.md`](./GEMINI.md).  
+> Mémoire agy VPS : `~/.gemini/antigravity-cli/MEMORY.md` · deploy : [`DEPLOY.md`](./DEPLOY.md).
 > Ce fichier liste ce qui est **spécifique à Claude Code** ou ce qu'il faut
 > rappeler systématiquement.
 
@@ -41,10 +42,11 @@ bun src/cli/index.ts x whoami                # Native X client (profile|tweets|s
 cargo build -p bxc-engine --release          # moteur Rust
 ls rust-bridge/target/release/               # binaires cdylib (libbxc_rust_bridge.*)
 
-# Build + déploiement VPS
-BXC_TARGETS=linux-x64 bun scripts/build-standalone.ts  # standalone linux seul (rapide)
-bun run build:mcp                            # binaire bxc-mcp
-./scripts/bxc-control.sh deploy              # copie binaires (~/.local + /usr/local) + restart bxc{,-crawler}.service
+# Build + déploiement VPS — canonical: DEPLOY.md
+bun run build:linux                          # dist/standalone/bxc-linux-x64
+bun run build:mcp                            # dist/standalone/bxc-mcp
+./scripts/bxc-control.sh deploy              # ~/.local + /usr/local + systemd
+bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.toml
 ```
 
 > **Nouvelle sous-commande CLI** : créer `src/cli/<name>.ts` (`export async function main(argv, baseOpts)`),
@@ -71,6 +73,7 @@ bxc/
 │   └── crates/x-client/          # Native X/Twitter GraphQL+REST client (rusqlite 0.37, FFI via bxc_x_*)
 ├── vendor/                       # mcp-sdk-typescript (NE PAS TOUCHER)
 ├── test/                         # tests root level
+├── DEPLOY.md                     # VPS + systemd + MCP deploy (canonical)
 ├── GEMINI.md                     # operating guide partagé
 ├── CLAUDE.md                     # ce fichier
 ├── MEGA-PLAN.md                  # roadmap macro
