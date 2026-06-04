@@ -54,11 +54,11 @@
     },
     "packages/challonge": {
       "name": "@aphrody/challonge",
-      "version": "0.1.3",
+      "version": "0.1.4",
     },
     "packages/fut": {
       "name": "@aphrody/fut",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "bottleneck": "^2.19.5",
         "lru-cache": "^11.5.1",
@@ -69,7 +69,7 @@
     },
     "packages/next-playwright": {
       "name": "@aphrody/next-playwright",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
@@ -97,18 +97,18 @@
     },
     "packages/voiranime": {
       "name": "@aphrody/voiranime",
-      "version": "0.1.3",
+      "version": "0.1.4",
     },
     "packages/worldbeyblade": {
       "name": "@aphrody/worldbeyblade",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "cheerio": "^1.2.0",
       },
     },
     "packages/x": {
       "name": "@aphrody/x",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "dependencies": {
         "zod": "^4.4.3",
       },
@@ -119,7 +119,10 @@
     },
     "packages/xai": {
       "name": "@aphrody/xai",
-      "version": "1.0.1",
+      "version": "1.0.3",
+      "dependencies": {
+        "@aphrody/x": "workspace:*",
+      },
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
@@ -127,11 +130,11 @@
     },
     "packages/xcom": {
       "name": "@aphrody/xcom",
-      "version": "0.1.3",
+      "version": "0.1.4",
     },
     "packages/zukan": {
       "name": "@aphrody/zukan",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "cheerio": "^1.2.0",
       },

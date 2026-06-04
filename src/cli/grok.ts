@@ -17,6 +17,8 @@ interface GrokCliOptions extends CommonOptions {
   bearer?: string;
   output?: string;
   temperature?: number;
+  reasoningEffort?: string;
+  responseFormat?: string; // e.g. json_object or json
 }
 
 function printUsage(): void {
@@ -35,6 +37,8 @@ Options:
   --model <id>        Model id (default grok-3-mini for chat)
   --max-tokens <N>    Max completion tokens (default 1024)
   --temperature <T>   Sampling temperature
+  --reasoning-effort <low|medium|high>  xAI reasoning depth (createChat)
+  --response-format <json_object|...>   Structured output (createChat + sampleStructured)
   --stream            SSE stream for chat
   --bearer <token>    Override bearer (else XAI_API_KEY or ~/.grok/auth.json)
   --output <path>     Write binary TTS output to file
@@ -50,6 +54,7 @@ Examples:
   bxc grok models
   bxc grok chat "Explain zero-spawn browsers in one sentence"
   bxc grok chat "Hi" --model grok-4 --stream
+  bxc grok chat "Return only JSON {ok:true}" --response-format json_object --reasoning-effort low
   bxc grok tts "Hello world" --output /tmp/hello.mp3
 
 `,
@@ -84,6 +89,14 @@ function parseArgs(
         break;
       case "--temperature":
         opts.temperature = parseFloat(argv[++i]);
+        break;
+      case "--reasoning-effort":
+      case "--reasoning_effort":
+        opts.reasoningEffort = argv[++i];
+        break;
+      case "--response-format":
+      case "--response_format":
+        opts.responseFormat = argv[++i];
         break;
       case "--stream":
         opts.stream = true;
@@ -159,23 +172,37 @@ export async function main(
           logger.error("chat requires a prompt");
           process.exit(EXIT.MISUSE);
         }
-        const result = await client.chat({
-          model: opts.model,
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: opts.maxTokens,
-          temperature: opts.temperature,
-          stream: opts.stream,
-        });
-        if (opts.stream && result instanceof ReadableStream) {
-          await drainSse(result);
+        if (opts.stream) {
+          // low-level stream for now
+          const result = await client.chat({
+            model: opts.model,
+            messages: [{ role: "user", content: prompt }],
+            max_tokens: opts.maxTokens,
+            temperature: opts.temperature,
+            stream: true,
+          });
+          await drainSse(result as ReadableStream);
         } else {
-          const res = result as { choices: { message: { content: string } }[] };
-          emit(
-            opts.json
-              ? res
-              : (res.choices[0]?.message?.content ?? ""),
-            opts.json,
-          );
+          // Use new high-level native Chat API (multi-turn ready, SuperGrok native)
+          // Supports reasoning_effort, response_format etc from xai package enhancements.
+          const chatOpts: any = {
+            max_tokens: opts.maxTokens,
+            temperature: opts.temperature,
+          };
+          if (opts.reasoningEffort) chatOpts.reasoning_effort = opts.reasoningEffort;
+          if (opts.responseFormat) chatOpts.response_format = opts.responseFormat === "json" ? { type: "json_object" } : opts.responseFormat;
+          const chat = client.createChat(opts.model, chatOpts);
+          chat.append(prompt);
+          let res: any;
+          if (opts.responseFormat) {
+            res = await chat.sampleStructured();
+            const out = opts.json ? res : (res.parsed ?? res.choices?.[0]?.message?.content ?? "");
+            emit(out, opts.json);
+          } else {
+            res = await chat.sample();
+            const content = res.choices[0]?.message?.content ?? "";
+            emit(opts.json ? res : content, opts.json);
+          }
         }
         break;
       }

@@ -38,8 +38,8 @@
 ## 🤖 AI Agent Intelligence
 Bxc is designed for high-concurrency agentic workflows. It solves the "Heavy Browser" problem by moving the DOM and network layers directly into the Bun runtime memory space.
 
-### 🧩 MCP Server Capabilities
-Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/mcp/server.ts`). AI agents can use it to:
+### 🧩 MCP Server & AI Plugins Capabilities
+Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/mcp/server.ts`, version synced with release). AI agents can use it to:
 * **`tune_memory_sqlite`**: Structured project memory storage (faster than text).
 * **`bxc_scrape_markdown`**: Convert any URL to clean GFM Markdown.
 * **`bxc_detect_frameworks`**: Deep tech-stack analysis (Wiz, Angular, React, etc.).
@@ -53,10 +53,33 @@ Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/m
 * **`bxc_mirror`**: Download and mirror a complete site layout locally.
 * **`bxc_challonge`**: Extract a structured typed snapshot of any Challonge tournament page.
 * **`bxc_worldbeyblade`**: Full forum automation (check status, get profile, thread, subforum post list, private message inbox & sending).
-* **`bxc_x_client`**: Native X / Twitter client (cookie auth, no API key) — fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account.
+* **`bxc_x_client`**: Native X / Twitter client (cookie auth, no API key) — fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account. Also supports `rank`/`foryou` for local X For You style ranking (from xai-org/x-algorithm).
+* **`bxc_x_algorithm_rank`**: Direct access to the local ranking pipeline (filters + weighted scorer + diversity).
 * **`bxc_xpro_deck`**: X Pro Gryphon decks (`ViewerAccountSync`, create/remove deck) + Radar keyword search (`querySource: radar`) — see [`packages/x/docs/X_PRO.md`](packages/x/docs/X_PRO.md).
 * **Unified Browser Tools**: Persistent browser automation primitives (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill`, `browser_type`, `browser_press_key`, `browser_select_option`, `browser_evaluate`, `browser_wait_for`, `browser_screenshot`, `browser_close`).
 * **Specialized Scrapers**: Exposes Bxc's advanced stealth crawlers directly as tools (`bxc_fut_price`, `bxc_fut_player`, `bxc_voiranime_search`, `bxc_voiranime_info`, `bxc_voiranime_resolve`, `bxc_xcom_profile`).
+
+### 🧠 AI-Ready Plugin for Claude / Grok / Agy (Recommended)
+All old direct "bxc" MCP entries and the legacy "bxc" skill have been removed from Claude Code, Grok Build, and Agy/antigravity-cli configs (in favor of the unified plugin below).
+
+The **unified bxc plugin** (built using the official `plugin-dev` toolkit from anthropics/claude-code) is the AI-ready integration:
+
+- Location (in this repo): `plugins/bxc/`
+- 8 skills with progressive disclosure + strong triggers (bxc-core, rust-ffi, x-client, grok-xai, mcp-server, scraper, autopilot, docs)
+- 6 dedicated sub-agents (bxc-rust-ffi-engineer, bxc-mcp-author, bxc-x-grok-architect, bxc-scraper-creator, bxc-verify-enforcer, bxc-crossplat-builder)
+- Slash commands, event hooks (enforce scoped tests `bun test test/ packages/ src/`, bxc* naming, vendor protection)
+- MCP server wiring example (`.mcp.json`)
+- Fully documented cross-platform (Bun + Rust cdylib for linux-x64, mac universal, win msvc)
+- **Generic / reusable**: The entire `plugins/bxc/` (or its components) can be dropped into *any* Bun + Rust-FFI + native X/Grok + MCP + scraper + agent project. See `plugins/bxc/README.md` "How to Adapt to Another Project".
+
+**Install**:
+- Claude Code: `--plugin-dir /path/to/bxc/plugins/bxc` or `cp -r plugins/bxc ~/.claude/plugins/bxc`
+- Grok Build: add to `~/.grok/config.toml` [plugins].paths or copy to installed-plugins dir
+- Agy/antigravity-cli: `cp -r plugins/bxc ~/.gemini/antigravity-cli/plugins/bxc` ; update mcp/plugins config
+
+The plugin ships its own `validate-bxc-plugin.sh` and follows plugin-dev best practices. After install, the skills/agents load automatically for bxc-related tasks.
+
+See `plugins/bxc/README.md` (and the reference `plugins/plugin-dev-reference/`) for details. This is the "AI ready" layer on top of the core CLI/MCP.
 
 ---
 
@@ -201,7 +224,9 @@ bxc xcom profile elonmusk --screenshot --ai-extract
 A full GraphQL + REST client for X's private web API, authenticated with an
 `auth_token` + `ct0` cookie pair (no developer portal, no API key). Backed by the
 pure-TypeScript [`@aphrody/x`](./packages/x) package and a parallel Rust
-crate (`rust-bridge/crates/x-client`) exposed over FFI (`bxc_x_user_*`).
+crate (`rust-bridge/crates/x-client`) exposed over FFI (`bxc_x_user_*`). Includes local port of the X For You ranking algorithm (see `rust-bridge/crates/x-algorithm` + `bxc_x_algorithm_rank`).
+
+See [packages/x/README.md](packages/x/README.md) for complete, readable documentation (core features, algo, X + Grok synergy, CLI, MCP, production notes, examples).
 
 ```bash
 # Resolve the authenticated account
@@ -216,6 +241,10 @@ bxc x tweets elonmusk --count 40
 # Search the Latest timeline / trending news
 bxc x search "browser automation" --count 20
 bxc x news --count 10
+
+# Local X For You style re-ranking (integrated from xai-org/x-algorithm)
+bxc x rank --from search "rust" --count 15
+bxc x foryou --count 10
 ```
 
 Auth resolution order: `--cookie "auth_token=...; ct0=..."` > session file >
@@ -235,7 +264,7 @@ bxc grok tts "Hello" --output /tmp/hello.mp3
 bxc grok raw GET /models
 ```
 
-Library: `@aphrody/xai` · MCP: `bxc_grok_chat`, `bxc_grok_models`, `bxc_grok_whoami`.
+Library: `@aphrody/xai` (see [packages/xai/README.md](packages/xai/README.md) for complete docs: high-level Chat, XTools, integration, SuperGrok, etc.) · MCP: `bxc_grok_chat`, `bxc_grok_models`, `bxc_grok_whoami`.
 
 ---
 
@@ -247,8 +276,8 @@ under the `@aphrody` scope (published to npm):
 | Package | Description |
 | :--- | :--- |
 | [`@aphrody/bxc`](./package.json) | The full Zero-Spawn engine, CLI, and MCP server. |
-| [`@aphrody/x`](./packages/x) | Headless X / Twitter client (GraphQL + REST, cookie auth). |
-| [`@aphrody/xai`](./packages/xai) | xAI Grok REST client — Grok Build OIDC session or `XAI_API_KEY`. |
+| [`@aphrody/x`](./packages/x) | Headless X / Twitter client (GraphQL + REST, cookie auth). See [packages/x/README.md](packages/x/README.md) for complete docs: core features, local For You algo (x-algorithm port), X + Grok synergy via XTools, CLI, MCP, examples, production notes. |
+| [`@aphrody/xai`](./packages/xai) | xAI Grok REST client (high-level fluent Chat like xai-sdk-python: `createChat`/`append`/`sample`/`stream`/`executeToolCalls`/`sampleStructured`, reasoning_effort, structured outputs, XTools for native X tool fulfillment + auto-dispatch) + SUPER_GROK_TOKEN (gratuite/keyless). Deep native X combo via @aphrody/x for agentic use. See [packages/xai/README.md](packages/xai/README.md) for complete, readable docs (auth, high-level, integration, low-level, MCP, API ref, production). |
 | [`@aphrody/challonge`](./packages/challonge) | Challonge tournament bracket scraper. |
 | [`@aphrody/fut`](./packages/fut) | FIFA Ultimate Team (FUTBin / FUT.GG) price & stats. |
 | [`@aphrody/voiranime`](./packages/voiranime) | VoirAnime catalog search & embed resolver. |

@@ -1,10 +1,10 @@
 {
   "name": "@aphrody/x",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Headless X (Twitter) client in pure TypeScript for Bun. Cookie GraphQL + REST, bxc-aligned catalog sync and surface recon.",
+  "description": "Headless X (Twitter) client in pure TypeScript for Bun. Cookie-auth GraphQL + REST, no API key. Includes local For You algo (x-algorithm port), full stealth, store, and deep synergy with @aphrody/xai for Grok + native X agents (via XTools).",
   "keywords": [
     "aphrody",
     "bun",

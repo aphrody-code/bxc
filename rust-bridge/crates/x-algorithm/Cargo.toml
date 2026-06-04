@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+# Native port / adaptation of key concepts from the X For You feed algorithm
+# (https://github.com/xai-org/x-algorithm — candidate-pipeline, filters, scorers,
+# diversity, multi-action weighted ranking). Simplified, dependency-light,
+# no internal X macros/telemetry/gRPC. Designed for FFI exposure in bxc.
+#
+# The original uses a full Grok-based transformer (Phoenix) for P(engage) prediction.
+# Here we provide the pipeline skeleton + classical filters + a proxy scorer
+# (using observed engagement counts + in-network signals + diversity).
+# This gives agents a "native" local re-ranker for X results without hand-rolled heuristics.
+[package]
+name        = "x-algorithm"
+version     = "0.1.0"
+edition     = "2021"
+publish     = false
+license     = "Apache-2.0"
+description = "Native Rust adaptation of X (Twitter) For You feed ranking algorithm (pipeline + filters + weighted scorer + diversity) for bxc"
+
+[lints]
+workspace = true
+
+[lib]
+name = "x_algorithm"
+path = "src/lib.rs"
+
+[dependencies]
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+anyhow      = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

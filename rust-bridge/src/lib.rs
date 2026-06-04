@@ -3,6 +3,7 @@ use std::os::raw::c_char;
 use obscura_dom::{DomTree};
 use anyhow::anyhow;
 use x_client::{XClient, XSession};
+use x_algorithm; // for the X For You ranking (pure API + json helper)
 
 #[no_mangle]
 pub extern "C" fn bxc_parse_html(html_ptr: *const c_char) -> *mut DomTree {
@@ -453,6 +454,51 @@ pub extern "C" fn bxc_x_user_tweets(
         }
         Err(e) => {
             let err = serde_json::json!({ "error": format!("user_tweets failed: {e}") });
+            CString::new(err.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+/// Rank an array of post candidates (JSON) using the native X For You algorithm
+/// (filters, weighted scorer, author diversity etc. — adapted from
+/// xai-org/x-algorithm).
+///
+/// The input is a JSON array of objects matching `x_algorithm::PostCandidate`.
+/// `context` is optional JSON for `RankingContext` (viewer history, followed, mutes...).
+/// Returns a JSON array of `ScoredPost` (or `{"error": "..."}`).
+/// Free the returned string with [`bxc_free_string`].
+#[no_mangle]
+pub extern "C" fn bxc_x_algorithm_rank(
+    candidates_json_ptr: *const c_char,
+    context_json_ptr: *const c_char,
+    top_k: u32,
+) -> *mut c_char {
+    if candidates_json_ptr.is_null() {
+        let err = serde_json::json!({"error": "null candidates pointer"});
+        return CString::new(err.to_string()).unwrap().into_raw();
+    }
+
+    let cands_str = match unsafe { CStr::from_ptr(candidates_json_ptr) }.to_str() {
+        Ok(s) => s,
+        Err(_) => {
+            let err = serde_json::json!({"error": "invalid utf8 in candidates json"});
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let ctx_str = if context_json_ptr.is_null() {
+        ""
+    } else {
+        match unsafe { CStr::from_ptr(context_json_ptr) }.to_str() {
+            Ok(s) => s,
+            Err(_) => "",
+        }
+    };
+
+    match x_algorithm::rank_posts_json(cands_str, ctx_str, top_k) {
+        Ok(json) => CString::new(json).unwrap().into_raw(),
+        Err(e) => {
+            let err = serde_json::json!({"error": e.to_string()});
             CString::new(err.to_string()).unwrap().into_raw()
         }
     }

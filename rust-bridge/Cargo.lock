@@ -373,6 +373,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "x-algorithm",
  "x-client",
 ]
 
@@ -4552,6 +4553,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "x-algorithm"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "x-client"
 version = "0.2.0"
 dependencies = [
@@ -4569,6 +4580,7 @@ dependencies = [
  "time",
  "tokio",
  "uuid",
+ "x-algorithm",
 ]
 
 [[package]]

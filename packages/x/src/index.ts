@@ -124,3 +124,17 @@ export { ingestBeybladeData, type IngestStats } from "./db/ingest";
 export { Crawler, type CrawlerOptions } from "./services/crawler";
 export { BeybladeXRag, type RagResult, type RagOptions } from "./services/rag";
 
+// X For You style local ranking (native port of xai-org/x-algorithm concepts).
+// Mirrors the Rust integration in rust-bridge/crates/x-client.
+// Use `rankTweets(tweetsFromClient, context)` for typed results from XClient.
+// See also the Rust FFI `bxc_x_algorithm_rank` and `x_client::rank_tweets`.
+export {
+  rankPosts,
+  rankTweets,
+  toPostCandidate,
+  tweetToPostCandidate,
+  type PostCandidate,
+  type RankingContext,
+  type ScoredPost,
+} from "./algo";
+

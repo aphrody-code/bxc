@@ -163,6 +163,11 @@ bxc/
 
 ---
 
+## 📦 Shipped Milestones (v0.6+)
+
+- [x] Native TS reimplementation of xAI client high-level API (createChat/append/sample/stream/executeToolCalls/sampleStructured) + SuperGrok keyless token support (SUPER_GROK_TOKEN, explicit non-xai- bearer as "supergrok" mode). Mirrors xai-sdk-python design while staying 100% REST/fetch native for Bun. Deep integration with packages/x for X tool fulfillment in Grok agentic flows (XTools + xNativeTools).
+- [x] Documentation made complete and lisible for the native clients: full TOC'd READMEs for @aphrody/x (client + local For You algo from x-algorithm + synergy) and @aphrody/xai (high-level Chat, XTools, full agent loops, quick ref, prod notes); runnable example packages/xai/examples/grok-x-agent.ts; updated docs/PLAN.md, root README, CLAUDE.md; xai bumped to 1.0.2. All verified with 30 pass unit tests (no live).
+
 ## 📦 Shipped Milestones (v0.5.8)
 
 Bxc has evolved into a production-grade, autonomous crawler and zero-spawn browser engine.

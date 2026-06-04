@@ -77,6 +77,18 @@ pub use runtime_query_ids::{QueryIdStore, Snapshot as QueryIdSnapshot};
 pub use session::XSession;
 pub use store::{Stats as StoreStats, Store, StoredTweet};
 
+// X For You feed algorithm (native Rust port of core concepts from
+// xai-org/x-algorithm: candidate pipeline, filters, weighted multi-action
+// scorer, author diversity). Integrated here for convenient ranking of
+// XClient results (timelines, search, etc.).
+pub use x_algorithm::{
+    rank_posts as rank_posts_algo,
+    rank_posts_json as rank_posts_json_algo,
+    PostCandidate as AlgoPostCandidate,
+    RankingContext as AlgoRankingContext,
+    ScoredPost as AlgoScoredPost,
+};
+
 use thiserror::Error;
 
 /// All errors produced by this crate.
@@ -121,3 +133,67 @@ pub enum XError {
 
 /// Convenience alias used throughout the crate.
 pub type Result<T> = std::result::Result<T, XError>;
+
+/// Convert a parsed `Tweet` (from this crate's GraphQL extraction) into a
+/// `PostCandidate` suitable for the X For You ranking algorithm.
+///
+/// `in_network` should be set to true for posts known to come from followed
+/// accounts (e.g. from a HomeTimeline vs SearchTimeline).
+///
+/// Note: `created_at` in the source Tweet is a human string (e.g. X's legacy
+/// format). This converter attempts a best-effort parse using the `time` crate
+/// (already a dependency); if it fails the unix timestamp will be 0 (the ranker
+/// will still work but age-based filters will be less accurate).
+pub fn tweet_to_algo_candidate(tweet: &Tweet, in_network: bool) -> x_algorithm::PostCandidate {
+    let created_at = tweet
+        .created_at
+        .as_ref()
+        .and_then(|s| {
+            // X often uses: "Wed Oct 10 20:19:24 +0000 2018" (RFC 2822-ish)
+            // time crate can parse it with a format.
+            use time::format_description::well_known::Rfc2822;
+            time::OffsetDateTime::parse(s, &Rfc2822)
+                .ok()
+                .map(|dt| dt.unix_timestamp())
+        })
+        .unwrap_or(0);
+
+    x_algorithm::PostCandidate {
+        id: tweet.id.clone(),
+        author_id: tweet.author_id.clone().unwrap_or_default(),
+        author_handle: Some(tweet.author.username.clone()),
+        text: tweet.text.clone(),
+        created_at,
+        like_count: tweet.like_count,
+        reply_count: tweet.reply_count,
+        repost_count: tweet.retweet_count,
+        quote_count: tweet.quote_count,
+        is_reply: tweet.in_reply_to_status_id.is_some(),
+        is_repost: tweet.quoted_tweet.is_some(), // rough proxy
+        has_media: false, // the summarized Tweet does not carry media flags; set upstream if known
+        in_network,
+    }
+}
+
+/// Rank a slice of this crate's `Tweet`s with the native X For You algorithm.
+///
+/// Convenience wrapper that converts + calls `x_algorithm::rank_posts`.
+/// Returns scored candidates (with explainable `reasons`).
+///
+/// Example:
+/// ```ignore
+/// let page: TweetPage = ...;
+/// let ctx = x_algorithm::RankingContext { viewer_id: Some(uid), ..Default::default() };
+/// let ranked = x_client::rank_tweets(&page.tweets, ctx, 20);
+/// ```
+pub fn rank_tweets(
+    tweets: &[Tweet],
+    context: x_algorithm::RankingContext,
+    top_k: usize,
+) -> Vec<x_algorithm::ScoredPost> {
+    let cands: Vec<_> = tweets
+        .iter()
+        .map(|t| tweet_to_algo_candidate(t, false))
+        .collect();
+    x_algorithm::rank_posts(cands, &context, top_k)
+}
