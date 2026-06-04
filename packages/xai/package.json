@@ -1,10 +1,10 @@
 {
   "name": "@aphrody/xai",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Headless xAI Grok API client for Bun \u2014 OIDC session (~/.grok/auth.json) or XAI_API_KEY, OpenAI-compatible REST.",
+  "description": "Headless xAI Grok API client for Bun — high-level fluent Chat API (createChat/append/sample/stream/executeToolCalls/sampleStructured, reasoning, structured, XTools for native X tool fulfillment) + SUPER_GROK_TOKEN keyless + OIDC. OpenAI-compatible REST, deep native integration with @aphrody/x.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -15,6 +15,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test"
+  },
+  "dependencies": {
+    "@aphrody/x": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

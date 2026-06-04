@@ -24,16 +24,17 @@
  *   3. the `X_AUTH_TOKEN` / `X_CT0` environment variables
  */
 
-import { XClient, XSession, getNews } from "@aphrody/x";
+import { XClient, XSession, getNews, rankPosts, rankTweets, toPostCandidate, type PostCandidate, type TweetPage } from "@aphrody/x";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
-type Action = "profile" | "tweets" | "news" | "search" | "whoami";
+type Action = "profile" | "tweets" | "news" | "search" | "whoami" | "rank" | "foryou";
 
 interface CliOptions extends CommonOptions {
 	action: Action;
 	positional: string[];
 	count: number;
 	cookie?: string;
+	fromSource?: "search" | "news";
 }
 
 function printUsage(): void {
@@ -46,6 +47,9 @@ Usage:
   bxc x search <query> [--count N]  Search the Latest timeline
   bxc x news [--count N]            Fetch trending news from the Explore tabs
   bxc x whoami                      Resolve the authenticated account
+  bxc x rank [--from <search|news>] [--count N]
+                                    Re-rank recent results using local X For You style algo
+  bxc x foryou [--count N]          Demo "For You" mix (whoami + search/news) ranked locally (x-algorithm)
 
 Options:
   --count, -n <N>   Number of items to fetch (default 20)
@@ -64,7 +68,7 @@ function parseArgs(
 	baseOpts: CommonOptions,
 ): CliOptions | null {
 	const actionStr = argv[0];
-	const valid: Action[] = ["profile", "tweets", "news", "search", "whoami"];
+	const valid: Action[] = ["profile", "tweets", "news", "search", "whoami", "rank", "foryou"];
 	if (!valid.includes(actionStr as Action)) {
 		if (actionStr && actionStr !== "--help" && actionStr !== "-h") {
 			logger.error(`Unknown action: ${actionStr}`);
@@ -88,6 +92,10 @@ function parseArgs(
 				break;
 			case "--cookie":
 				opts.cookie = argv[++i];
+				break;
+			case "--from":
+				const src = (argv[++i] || "").toLowerCase();
+				if (src === "search" || src === "news") opts.fromSource = src;
 				break;
 			case "--help":
 			case "-h":
@@ -165,6 +173,38 @@ export async function main(
 			}
 			case "whoami": {
 				emit(await client.whoami());
+				break;
+			}
+			case "rank":
+			case "foryou": {
+				const isForyou = opts.action === "foryou";
+				// Try to use typed path for search results (preferred, uses Tweet types + rankTweets)
+				let ranked: ReturnType<typeof rankPosts> = [];
+				let source = isForyou ? "foryou-mix" : (opts.fromSource || "search");
+
+				if (isForyou || opts.fromSource === "search" || (!opts.fromSource && opts.positional.length)) {
+					const q = isForyou ? (opts.positional.join(" ") || "ai") : (opts.positional.join(" ").trim() || "tech");
+					const page: TweetPage = await client.search(q, Math.max(30, opts.count));
+					// Try to enrich context (best effort)
+					let viewer: any = null;
+					try { viewer = await client.whoami(); } catch {}
+					const ctx = {
+						viewer_id: viewer?.id ? String(viewer.id) : undefined,
+					};
+					ranked = rankTweets(page.tweets || [], ctx, opts.count);
+				} else {
+					// Fallback for news or raw
+					const newsRes: any = await getNews(client, Math.max(30, opts.count));
+					const raws: any[] = Array.isArray(newsRes) ? newsRes : (newsRes?.items || newsRes || []);
+					const cands: PostCandidate[] = raws.map(toPostCandidate).filter(Boolean) as PostCandidate[];
+					let viewer: any = null;
+					try { viewer = await client.whoami(); } catch {}
+					const ctx = { viewer_id: viewer?.id ? String(viewer.id) : undefined };
+					ranked = rankPosts(cands, ctx, opts.count);
+					source = "news";
+				}
+
+				emit({ ranked_count: ranked.length, source, results: ranked });
 				break;
 			}
 		}

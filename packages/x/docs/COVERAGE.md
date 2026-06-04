@@ -1,5 +1,11 @@
 # X client coverage map
 
+See [packages/x/README.md](../README.md) for the complete, readable package documentation (features, usage, algo, X + Grok synergy, examples, etc.).
+
+**Test suite improvements (autonomous):** Added dedicated unit tests for `src/algo.ts` (rankPosts filters/scoring/diversity, toPostCandidate/tweetToPostCandidate conversions from raw/Tweet, rankTweets). Covers the native X For You ranking port from x-algorithm. Total x tests now include strong coverage for ranking + existing catalog/store/ingest/RAG + cross integration with mock X search results.
+
+See `index.test.ts` for "X Algo (For You ranking - from x-algorithm)" describe and synergy tests.
+
 `@aphrody/x` + `aphrody-x-client` share one GraphQL catalog and bxc-aligned bundle discovery.
 
 ## Layers
