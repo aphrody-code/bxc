@@ -46,5 +46,10 @@ dirs        = { version = "6" }
 json5       = { version = "0.4" }
 time        = { version = "0.3", features = ["formatting", "parsing", "macros"] }
 
+# X For You algorithm (native ranking). Additive, used for optional local re-ranking
+# of this crate's Tweet/User results (timelines, search, etc). See `rank_tweets`,
+# `tweet_to_algo_candidate` and the re-exported `x_algorithm::*` types.
+x-algorithm = { workspace = true }
+
 [dev-dependencies]
 tokio       = { workspace = true }

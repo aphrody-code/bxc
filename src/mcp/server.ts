@@ -26,7 +26,7 @@ async function getOrCreatePage(
 
 const server = new McpServer({
 	name: "bxc-native-mcp",
-	version: "0.5.0",
+	version: "0.6.5",
 });
 
 /** Maps a friendly search vertical to Google's `udm` result-mode code. */
@@ -1849,8 +1849,8 @@ server.registerTool(
 			"Native X / Twitter client (cookie auth, no API key). Fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account. Auth uses an auth_token + ct0 cookie pair from the session file / X_AUTH_TOKEN+X_CT0 env, or an explicit cookie string.",
 		inputSchema: z.object({
 			action: z
-				.enum(["profile", "tweets", "search", "news", "whoami"])
-				.describe("Operation to run."),
+				.enum(["profile", "tweets", "search", "news", "whoami", "rank", "foryou"])
+				.describe("Operation to run. 'rank'/'foryou' run local X For You style ranking (x-algorithm port) over search/news results."),
 			handle: z
 				.string()
 				.optional()
@@ -1902,10 +1902,63 @@ server.registerTool(
 			case "whoami":
 				payload = await client.whoami();
 				break;
+			case "rank":
+			case "foryou": {
+				const { rankTweets, rankPosts, toPostCandidate, getNews } = await import("@aphrody/x");
+				const isForyou = args.action === "foryou";
+				let ranked: any[];
+				if (isForyou || args.query) {
+					const q = isForyou ? (args.query || "ai") : (args.query || "tech");
+					const page: any = await client.search(q, Math.max(30, args.count || 20));
+					const ctx = { viewer_id: (await client.whoami().catch(() => ({} as any)))?.id };
+					ranked = rankTweets(page.tweets || [], ctx, args.count || 20);
+				} else {
+					const n: any = await getNews(client, Math.max(30, args.count || 20));
+					const raws: any[] = Array.isArray(n) ? n : (n?.items || n || []);
+					const cands = raws.map(toPostCandidate).filter(Boolean);
+					const ctx = { viewer_id: (await client.whoami().catch(() => ({} as any)))?.id };
+					ranked = rankPosts(cands as any, ctx, args.count || 20);
+				}
+				payload = { ranked_count: ranked.length, action: args.action, results: ranked };
+				break;
+			}
 		}
 
 		return {
 			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+		};
+	},
+);
+
+// Explicit entry for the local X For You ranking (x-algorithm concepts).
+// Feed it candidates (from bxc_x_client search/news or your own fetch) + optional context.
+// The Rust equivalent (bxc_x_algorithm_rank) is also linked into the bxc cdylib / bxc-mcp binary.
+server.registerTool(
+	"bxc_x_algorithm_rank",
+	{
+		description:
+			"Rank a list of X posts using the local port of X For You algorithm (filters + weighted engagement scorer + author diversity from xai-org/x-algorithm). Returns ScoredPost[].",
+		inputSchema: z.object({
+			candidates: z
+				.array(z.any())
+				.describe("Array of post objects (id, author_id, text, like_count, reply_count, ...). toPostCandidate() shape accepted."),
+			context: z
+				.object({
+					viewer_id: z.string().optional(),
+					followed_author_ids: z.array(z.string()).optional(),
+					recent_engagement_author_ids: z.array(z.string()).optional(),
+					muted_keywords: z.array(z.string()).optional(),
+					blocked_author_ids: z.array(z.string()).optional(),
+				})
+				.optional(),
+			top_k: z.number().int().min(1).max(100).default(20),
+		}),
+	},
+	async (args) => {
+		const { rankPosts } = await import("@aphrody/x");
+		const ranked = rankPosts(args.candidates || [], args.context || {}, args.top_k || 20);
+		return {
+			content: [{ type: "text", text: JSON.stringify(ranked, null, 2) }],
 		};
 	},
 );
@@ -2008,7 +2061,7 @@ server.registerTool(
 	"bxc_grok_chat",
 	{
 		description:
-			"xAI chat completion (POST /v1/chat/completions). OpenAI-compatible. Auth: ~/.grok/auth.json OIDC JWT (grok login) preferred over metered XAI_API_KEY.",
+			"xAI chat completion using the native high-level TS Chat API (createChat + append + sample, mirroring xai-sdk-python). Fully API key-less via SuperGrok / ~/.grok/auth.json OIDC (gratuite). Falls back to XAI_API_KEY. For multi-turn/agentic, use the @aphrody/xai package directly with XTools for native X integration.",
 		inputSchema: z.object({
 			prompt: z.string().describe("User message."),
 			model: z
@@ -2017,16 +2070,30 @@ server.registerTool(
 				.describe("Model id (e.g. grok-4, grok-3-mini)."),
 			max_tokens: z.number().int().min(1).max(131072).default(2048),
 			temperature: z.number().min(0).max(2).optional(),
+			reasoning_effort: z.enum(["low", "medium", "high"]).optional().describe("xAI reasoning depth (packages/xai createChat parity)."),
+			response_format: z.any().optional().describe("Structured e.g. {type:'json_object'} or zod-like (basic support via xai)."),
+			search_parameters: z.any().optional().describe("Legacy search params for compat."),
 		}),
 	},
 	async (args) => {
 		const { XaiClient } = await import("@aphrody/xai");
 		const client = new XaiClient();
-		const text = await client.complete(
-			args.prompt,
-			args.model,
-			args.max_tokens,
-		);
+		// Uses the native high-level Chat API (createChat/append/sample + structured) from packages/xai.
+		// Supports reasoning_effort, response_format, search_parameters etc. Full SUPER_GROK_TOKEN gratuite.
+		// For X tool calling from Grok, use xSearchToolDef etc + XTools (or bxc_x_client).
+		const chatOpts: any = { max_tokens: args.max_tokens, temperature: args.temperature };
+		if (args.reasoning_effort) chatOpts.reasoning_effort = args.reasoning_effort;
+		if (args.response_format) chatOpts.response_format = args.response_format;
+		if (args.search_parameters) chatOpts.search_parameters = args.search_parameters;
+		const chat = client.createChat(args.model, chatOpts);
+		chat.append(args.prompt);
+		if (args.response_format) {
+			const out = await chat.sampleStructured();
+			const payload = out.parsed ?? out.choices?.[0]?.message?.content ?? "";
+			return { content: [{ type: "text", text: typeof payload === "string" ? payload : JSON.stringify(payload) }] };
+		}
+		const res = await chat.sample();
+		const text = res.choices[0]?.message?.content ?? "";
 		return {
 			content: [{ type: "text", text }],
 		};

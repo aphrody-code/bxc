@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "bxc-native-mcp": {
+      "command": "node",
+      "args": ["${CLAUDE_PROJECT_ROOT}/dist/standalone/bxc-mcp"],
+      "env": {
+        "BXC_MCP_MODE": "stdio"
+      }
+    }
+  }
+}

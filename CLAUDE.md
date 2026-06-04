@@ -17,9 +17,22 @@ bindings + historique Zig DOM. Publié sur GitHub Packages comme
   rebrand est terminé — ne réintroduire aucun ancien nommage de projet.
 - **`packages/api`** : entry réel = `src/index.ts` (Elysia `.listen()`), PAS
   le `index.ts` racine (stub `bun init`). Cf. `packages/api/CLAUDE.md`.
+- **Docs x/xai** : 
+  - `packages/x/README.md` (complete: features, algo ranking from x-algorithm, X+Grok synergy, usage, CLI, MCP, prod notes).
+  - `packages/xai/README.md` (complete & lisible: TOC, auth/SuperGrok, high-level Chat API with full examples for createChat/append/sample/stream/executeToolCalls/sampleStructured, XTools + tool defs + injectable for tests, native integration loops, quick ref, prod notes, contributing).
+  - Root README.md table and sections link to them.
+  - Keep in sync with code changes (new Chat methods, XTools, etc.). Tests: see `packages/x/index.test.ts` and `packages/xai/index.test.ts` (30 pass + 2 live-skipped = 32 total across packages, 120 expects; covers Chat full surface + stream/toolDeltas/execute/sampleStructured, XTools injectable+auto-dispatch+defs, algo rank full (filters/scoring/diversity), cross synergy with mock XClient, no live by default).
+  - Sub-docs: packages/x/docs/ (COVERAGE.md updated with algo/tests notes, X_PRO.md, etc.).
+- **`packages/xai`** (avec `packages/x`): client xAI/Grok natif. Toujours étendre createChat pour features Python SDK (reasoning_effort, search_parameters, structured zod/simple), XTools pour actions x (tweets/news/whoami+), améliorer erreurs Chat, tests unit tool-calling, compat SUPER_GROK_TOKEN. Mettre à jour README + CLAUDE. Focus combo Grok+X production agents. Vérif: bun test packages/xai/ + typecheck + lint (scoped, no live).
 - **MCP server** : `src/mcp/server.ts` (`bxc-native-mcp`, version = const en
   haut du fichier). Build : `bun run build:mcp` → `dist/standalone/bxc-mcp`.
   Manifest Gemini = `gemini-extension.json` (pointe sur `/usr/local/bin/bxc-mcp`).
+
+- **Claude Code Plugin (recommended)**: The complete reusable plugin lives at `plugins/bxc/`.
+  It bundles generalized skills (bxc-core, rust-ffi, x-client, grok-xai, mcp-server, scraper, autopilot, docs), 7+ dedicated sub-agents, commands (`/bxc-verify` etc.), enforcement hooks, and MCP wiring.
+  Install with the plugin-dev workflow or directly via `--plugin-dir plugins/bxc`.
+  Use it (or load its skills/agents) for any bxc-like project. It follows the anthropics/claude-code plugin-dev patterns (see `plugins/plugin-dev-reference/`).
+  Update the plugin when you add major capabilities to bxc (new agents, skills, cross-platform notes). The plugin README contains the install + adaptation guide for other projects.
 
 ## Commandes essentielles
 
@@ -36,7 +49,8 @@ bun src/cli/index.ts fut price <url>         # FIFA Ultimate Team Price
 bun src/cli/index.ts voiranime search <q>    # VoirAnime search (ex: "inazuma")
 bun src/cli/index.ts google search <q>       # Google Atlas Audits
 bun src/cli/index.ts xcom profile <user>     # Twitter profile markdown / screenshot
-bun src/cli/index.ts x whoami                # Native X client (profile|tweets|search|news|whoami)
+bun src/cli/index.ts x whoami                # Native X client (profile|tweets|search|news|whoami|rank|foryou + x-algorithm)
+bun src/cli/index.ts x foryou                # demo local For You ranking (integrated from xai-org/x-algorithm)
 
 # Stack binaire
 cargo build -p bxc-engine --release          # moteur Rust
