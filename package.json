@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/bxc",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "publishConfig": {
     "access": "public"
   },
@@ -34,6 +34,8 @@
     "./browser": "./src/api/browser.ts",
     "./detect": "./src/detect.ts",
     "./google": "./src/google/index.ts",
+    "./google/gemini-web": "./src/google/gemini-web.ts",
+    "./google/gemini-session": "./src/google/gemini-session.ts",
     "./serverless": "./src/serverless/handler.ts",
     "./ffi/rust-bridge": "./src/rust/bridge.ts",
     "./ffi/curl-impersonate": "./src/ffi/curl-impersonate.ts",

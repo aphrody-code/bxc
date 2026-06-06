@@ -20,12 +20,10 @@
  * Static scraper and parser for the Gemini Web App.
  */
 
-export const GEMINI_BASE_URL = "https://gemini.google.com";
-const GEMINI_APP_URL = `${GEMINI_BASE_URL}/app`;
+import { GEMINI_HOST, GEMINI_APP_URL, DEFAULT_USER_AGENT } from "./gemini-web.ts";
 
-const DEFAULT_USER_AGENT =
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-	"(KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
+/** @deprecated Alias of {@link GEMINI_HOST}; kept so existing importers keep working. */
+export const GEMINI_BASE_URL = GEMINI_HOST;
 
 // Feature patterns
 const RPC_SERVICE_RE = /"(assistant\.lamda\.[a-zA-Z0-9_./]+)"/g;
