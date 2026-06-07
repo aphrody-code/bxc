@@ -1,0 +1,2 @@
+# Artefacts de build (regenerables via build-zip.ps1)
+*.zip

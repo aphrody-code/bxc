@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bxc Gemini TTS</title>
+    <link rel="stylesheet" href="../styles/aphrody-m3.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="hdr">
+      <h1>bxc Gemini&nbsp;TTS</h1>
+      <p class="sub">Lecture vocale française · session Google · assistant IA</p>
+    </header>
+
+    <!-- Lecture vocale -->
+    <section class="card">
+      <h2 class="card-title">Lecture vocale</h2>
+      <label class="row switch-row" for="autoRead">
+        <span>Lecture automatique</span>
+        <span class="switch">
+          <input type="checkbox" id="autoRead" />
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </span>
+      </label>
+      <label class="row field" for="voice">
+        <span>Voix française</span>
+        <select id="voice"></select>
+      </label>
+      <div class="row slider-row">
+        <span>Vitesse <em id="rateVal">1.0</em></span>
+        <input type="range" id="rate" min="0.5" max="2" step="0.1" />
+      </div>
+      <div class="row slider-row">
+        <span>Tonalité <em id="pitchVal">1.0</em></span>
+        <input type="range" id="pitch" min="0" max="2" step="0.1" />
+      </div>
+      <div class="actions">
+        <button type="button" id="test" class="btn text">Tester</button>
+        <button type="button" id="stop" class="btn tonal">Stop</button>
+        <button type="button" id="readLast" class="btn filled">Lire la réponse</button>
+      </div>
+    </section>
+
+    <!-- Session Google -->
+    <section class="card">
+      <h2 class="card-title">Session Google</h2>
+      <p class="card-desc">
+        Synchronise tes cookies Google (en clair, httpOnly inclus) vers
+        <code>bxc</code> et le VPS — sans App-Bound Encryption ni CDP.
+      </p>
+      <div class="status" id="cookieStatus">Statut inconnu</div>
+      <div class="actions">
+        <button type="button" id="syncCookies" class="btn filled">Synchroniser maintenant</button>
+      </div>
+    </section>
+
+    <!-- Assistant IA -->
+    <section class="card">
+      <h2 class="card-title">Assistant IA (Gemini)</h2>
+      <textarea id="aiPrompt" class="ta" rows="2" placeholder="Demande quelque chose à Gemini, ou résume la page active…"></textarea>
+      <div class="actions">
+        <button type="button" id="aiPage" class="btn tonal">Résumer la page</button>
+        <button type="button" id="aiAsk" class="btn filled">Demander</button>
+      </div>
+      <div class="ai-out" id="aiOut" hidden>
+        <p class="ai-text" id="aiText"></p>
+        <div class="actions">
+          <button type="button" id="aiSpeak" class="btn text">Lire à voix haute</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="hint" id="hint"></p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
