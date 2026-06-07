@@ -159,7 +159,7 @@ function normalizeTweet(record: JsonObject, index: number): Tweet | null {
   const author = asObject(record.author) ?? asObject(record.user) ?? {};
   const id = firstString(record.id, record.tweet_id, record.tweetId, record.rest_id) ?? `hermes-${index + 1}`;
   const text = firstString(record.text, record.full_text, record.fullText) ?? "";
-  if (!id || !text) {
+  if (!id) {
     return null;
   }
 
@@ -225,6 +225,9 @@ function findFirstObject(payload: unknown, keys: string[]): JsonObject | undefin
     return undefined;
   }
   for (const key of keys) {
+    if (key === "data" || key === "result") {
+      continue;
+    }
     const value = payload[key];
     if (isJsonObject(value)) {
       return value;
@@ -234,6 +237,12 @@ function findFirstObject(payload: unknown, keys: string[]): JsonObject | undefin
     const found = findFirstObject(payload[key], keys);
     if (found) {
       return found;
+    }
+  }
+  for (const key of keys) {
+    const value = payload[key];
+    if (isJsonObject(value)) {
+      return value;
     }
   }
   return payload;

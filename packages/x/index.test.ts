@@ -94,6 +94,19 @@ describe("X Client Unit Tests", () => {
         }));
       }
 
+      if (url.pathname === "/api/v1/x/tweets/200") {
+        return new Response(JSON.stringify({
+          data: {
+            tweet: {
+              id: "200",
+              text: "",
+              author: { username: "media_only", name: "Media Only" },
+              media: [{ type: "photo", url: "https://example.com/image.jpg" }],
+            },
+          },
+        }));
+      }
+
       return new Response(JSON.stringify({
         tweets: [
           {
@@ -113,6 +126,7 @@ describe("X Client Unit Tests", () => {
     const profile = await client.userByScreenName("aphrody_code");
     const search = await client.search("bxc", 5);
     const tweets = await client.userTweets("42", 5);
+    const mediaOnlyTweet = await client.getTweet("200");
 
     expect(profile).toEqual({
       id: "42",
@@ -124,10 +138,14 @@ describe("X Client Unit Tests", () => {
     expect(search.tweets[0].text).toBe("Hello from Hermes Tweet");
     expect(search.next_cursor).toBe("next-page");
     expect(tweets.tweets[0].author.username).toBe("aphrody_code");
+    expect(mediaOnlyTweet?.id).toBe("200");
+    expect(mediaOnlyTweet?.text).toBe("");
+    expect(mediaOnlyTweet?.media?.[0].type).toBe("photo");
     expect(calls.map((call) => call.path)).toEqual([
       "/api/v1/x/users/aphrody_code",
       "/api/v1/x/tweets/search",
       "/api/v1/x/users/42/tweets",
+      "/api/v1/x/tweets/200",
     ]);
     expect(calls[1].search).toContain("q=bxc");
     expect(calls.every((call) => call.apiKey === "xq_test")).toBe(true);

@@ -1804,7 +1804,7 @@ server.registerTool(
 				const { rankTweets, rankPosts, toPostCandidate, getNews } = await import("@aphrody/x");
 				const isForyou = args.action === "foryou";
 				let ranked: any[];
-				if (isForyou || args.query) {
+				if (isForyou || args.query || args.action === "rank") {
 					const q = isForyou ? (args.query || "ai") : (args.query || "tech");
 					const page: any = await client.search(q, Math.max(30, args.count || 20));
 					const ctx = { viewer_id: (await client.whoami().catch(() => ({} as any)))?.id };

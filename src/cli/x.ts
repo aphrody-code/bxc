@@ -193,7 +193,7 @@ export async function main(
 				let ranked: ReturnType<typeof rankPosts> = [];
 				let source = isForyou ? "foryou-mix" : (opts.fromSource || "search");
 
-				if (isForyou || opts.fromSource === "search" || (!opts.fromSource && opts.positional.length)) {
+				if (isForyou || opts.fromSource !== "news") {
 					const q = isForyou ? (opts.positional.join(" ") || "ai") : (opts.positional.join(" ").trim() || "tech");
 					const page: TweetPage = await client.search(q, Math.max(30, opts.count));
 					// Try to enrich context (best effort)
