@@ -1,0 +1,70 @@
+/* bxc Gemini TTS — barre de contrôle flottante, Material 3 (thème aphrody).
+   Les tokens sont déclarés localement (scopés) pour ne pas dépendre de la page
+   Gemini ni polluer son CSS. */
+.bxc-tts-bar {
+  --p: #ffa5c9; /* primary */
+  --on-p: #5e1133; /* on-primary */
+  --sc-high: #3a3334; /* surface-container-high */
+  --sc-highest: #484042; /* surface-container-highest */
+  --on-surf: #ebe0e1; /* on-surface */
+  --outline: #9e8c90; /* outline */
+
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483646;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 9999px; /* shape-corner-full */
+  background: var(--sc-high);
+  box-shadow: 0 4px 8px 3px rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.3); /* elevation level3 */
+  font-family: "Google Sans", "Roboto", system-ui, sans-serif;
+}
+
+.bxc-tts-bar.bxc-tts-speaking {
+  box-shadow: 0 0 0 2px var(--p), 0 4px 8px 3px rgb(0 0 0 / 0.15);
+}
+
+.bxc-tts-btn {
+  position: relative;
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.00625rem;
+  line-height: 1;
+  overflow: hidden;
+  color: var(--on-surf);
+  background: var(--sc-highest);
+  transition: background 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* state layer M3 */
+.bxc-tts-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.bxc-tts-btn:hover::before {
+  opacity: 0.08;
+}
+.bxc-tts-btn:active::before {
+  opacity: 0.12;
+}
+
+.bxc-tts-btn.bxc-tts-on {
+  color: var(--on-p);
+  background: var(--p);
+}
+
+.bxc-tts-btn:focus-visible {
+  outline: 2px solid var(--p);
+  outline-offset: 2px;
+}
