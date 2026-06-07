@@ -54,7 +54,7 @@
     },
     "packages/challonge": {
       "name": "@aphrody/challonge",
-      "version": "0.1.4",
+      "version": "0.1.5",
     },
     "packages/fut": {
       "name": "@aphrody/fut",
@@ -69,13 +69,13 @@
     },
     "packages/next-playwright": {
       "name": "@aphrody/next-playwright",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
       },
       "peerDependencies": {
-        "@aphrody/bxc-test": "^0.1.1",
+        "@aphrody/bxc-test": "^0.1.2",
       },
       "optionalPeers": [
         "@aphrody/bxc-test",
@@ -83,13 +83,13 @@
     },
     "packages/test": {
       "name": "@aphrody/bxc-test",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
       },
       "peerDependencies": {
-        "@aphrody/bxc": "^0.6.4",
+        "@aphrody/bxc": "^0.6.6",
       },
       "optionalPeers": [
         "@aphrody/bxc",
@@ -108,7 +108,7 @@
     },
     "packages/x": {
       "name": "@aphrody/x",
-      "version": "1.0.8",
+      "version": "1.0.9",
       "dependencies": {
         "zod": "^4.4.3",
       },
@@ -119,7 +119,7 @@
     },
     "packages/xai": {
       "name": "@aphrody/xai",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "@aphrody/x": "workspace:*",
       },
@@ -130,7 +130,7 @@
     },
     "packages/xcom": {
       "name": "@aphrody/xcom",
-      "version": "0.1.4",
+      "version": "0.1.5",
     },
     "packages/zukan": {
       "name": "@aphrody/zukan",

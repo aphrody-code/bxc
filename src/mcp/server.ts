@@ -26,7 +26,7 @@ async function getOrCreatePage(
 
 const server = new McpServer({
 	name: "bxc-native-mcp",
-	version: "0.6.5",
+	version: "0.6.6",
 });
 
 /** Maps a friendly search vertical to Google's `udm` result-mode code. */
@@ -118,18 +118,28 @@ server.registerTool(
 		description: "Scrapes a URL and returns its content in clean GFM Markdown.",
 		inputSchema: z.object({
 			url: z.string().url(),
-			profile: z.enum(["static", "fast", "http", "stealth"]).default("static"),
+			profile: z.enum(["static", "fast", "http", "stealth", "max"]).default("static"),
+			force: z.boolean().default(false).describe("Bypass cache and crawl live."),
 		}),
 	},
 	async (args) => {
-		const { Browser } = await import("../api/browser.ts");
-		const page = await Browser.newPage({ profile: args.profile });
+		const { smartFetch } = await import("../crawler/crawl-utils.ts");
 		try {
-			await page.goto(args.url);
-			const markdown = await page.markdown();
-			return { content: [{ type: "text", text: markdown }] };
-		} finally {
-			await page.close();
+			const result = await smartFetch(args.url, {
+				force: args.force,
+				initialProfile: args.profile,
+			});
+			return { content: [{ type: "text", text: result.markdown }] };
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to scrape ${args.url}. Details: ${err instanceof Error ? err.message : String(err)}`,
+					},
+				],
+				isError: true,
+			};
 		}
 	},
 );
@@ -275,32 +285,39 @@ server.registerTool(
 			"Fetches a URL and returns its clean GFM Markdown plus structured metadata extracted in one pass: JSON-LD, OpenGraph, Twitter cards, canonical URL and meta description. Ideal for handing an AI both a page's content and its machine-readable metadata in a single call.",
 		inputSchema: z.object({
 			url: z.string().url(),
-			profile: z.enum(["static", "http", "fast", "stealth"]).default("http"),
+			profile: z.enum(["static", "http", "fast", "stealth", "max"]).default("http"),
+			force: z.boolean().default(false).describe("Bypass cache and crawl live."),
 		}),
 	},
 	async (args) => {
-		const { Browser } = await import("../api/browser.ts");
-		const { extractStructuredData } = await import("../google/fetch.ts");
-		const page = await Browser.newPage({ profile: args.profile });
+		const { smartFetch } = await import("../crawler/crawl-utils.ts");
 		try {
-			await page.goto(args.url);
-			const html = await page.content();
-			const structured = await extractStructuredData(html);
-			const markdown = await page.markdown();
+			const result = await smartFetch(args.url, {
+				force: args.force,
+				initialProfile: args.profile as any,
+			});
 			return {
 				content: [
 					{
 						type: "text",
 						text: JSON.stringify(
-							{ url: args.url, structured, markdown },
+							{ url: args.url, structured: result.structured, markdown: result.markdown },
 							null,
 							2,
 						),
 					},
 				],
 			};
-		} finally {
-			await page.close();
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to fetch ${args.url}. Details: ${err instanceof Error ? err.message : String(err)}`,
+					},
+				],
+				isError: true,
+			};
 		}
 	},
 );
@@ -1432,91 +1449,37 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { redis } = await import("bun");
-		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { AutonomousCrawler } = await import(
-			"../crawler/AutonomousCrawler.ts"
-		);
-
-		let data: any = null;
-		let source = "cache";
-
-		if (!args.force) {
-			const cached = await redis.get(`bxc:cache:url:${args.url}`);
-			if (cached) {
-				data = JSON.parse(cached);
-				source = "redis";
-			} else {
-				const db = new BxcDB();
-				try {
-					const row = db.getScrapeByUrl(args.url);
-					if (row) {
-						data = {
-							url: row.url,
-							title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
-							status: row.status,
-							markdown: row.markdown || "",
-							structured: row.json_data ? JSON.parse(row.json_data) : null,
-							openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
-							timestamp: row.timestamp,
-						};
-						await redis.set(
-							`bxc:cache:url:${args.url}`,
-							JSON.stringify(data),
-							"EX",
-							86400,
-						);
-						source = "sqlite";
-					}
-				} finally {
-					db.close();
-				}
-			}
-		}
-
-		if (!data) {
-			const crawler = new AutonomousCrawler({ maxRequests: 1 });
-			await crawler.run([args.url]);
-			const db = new BxcDB();
-			try {
-				const row = db.getScrapeByUrl(args.url);
-				if (row) {
-					data = {
-						url: row.url,
-						title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
-						status: row.status,
-						markdown: row.markdown || "",
-						structured: row.json_data ? JSON.parse(row.json_data) : null,
-						openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
-						timestamp: row.timestamp,
-					};
-					source = "live-crawl";
-				}
-			} finally {
-				db.close();
-			}
-		}
-
-		if (!data) {
+		const { smartFetch } = await import("../crawler/crawl-utils.ts");
+		try {
+			const result = await smartFetch(args.url, { force: args.force });
+			const data = {
+				url: result.url,
+				title: result.title,
+				status: result.status,
+				markdown: result.markdown,
+				structured: result.structured,
+				openapi: result.openapi,
+				timestamp: result.timestamp,
+			};
 			return {
 				content: [
 					{
 						type: "text",
-						text: `Error: Failed to crawl or retrieve page data for ${args.url}`,
+						text: JSON.stringify({ source: result.source, data }, null, 2),
+					},
+				],
+			};
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to crawl or retrieve page data for ${args.url}. Details: ${err instanceof Error ? err.message : String(err)}`,
 					},
 				],
 				isError: true,
 			};
 		}
-
-		return {
-			content: [
-				{
-					type: "text",
-					text: JSON.stringify({ source, data }, null, 2),
-				},
-			],
-		};
 	},
 );
 
@@ -1533,63 +1496,28 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { redis } = await import("bun");
-		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { AutonomousCrawler } = await import(
-			"../crawler/AutonomousCrawler.ts"
-		);
-
-		let openapi: any = null;
-
-		const cached = await redis.get(`bxc:cache:url:${args.url}`);
-		if (cached) {
-			openapi = JSON.parse(cached).openapi;
-		} else {
-			const db = new BxcDB();
-			try {
-				const row = db.getScrapeByUrl(args.url);
-				if (row && row.openapi_spec) {
-					openapi = JSON.parse(row.openapi_spec);
-				}
-			} finally {
-				db.close();
-			}
-		}
-
-		if (!openapi) {
-			const crawler = new AutonomousCrawler({ maxRequests: 1 });
-			await crawler.run([args.url]);
-			const db = new BxcDB();
-			try {
-				const row = db.getScrapeByUrl(args.url);
-				if (row && row.openapi_spec) {
-					openapi = JSON.parse(row.openapi_spec);
-				}
-			} finally {
-				db.close();
-			}
-		}
-
-		if (!openapi) {
+		const { smartFetch } = await import("../crawler/crawl-utils.ts");
+		try {
+			const result = await smartFetch(args.url);
 			return {
 				content: [
 					{
 						type: "text",
-						text: `Error: Failed to generate OpenAPI schema for ${args.url}`,
+						text: JSON.stringify(result.openapi, null, 2),
+					},
+				],
+			};
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to generate OpenAPI schema for ${args.url}. Details: ${err instanceof Error ? err.message : String(err)}`,
 					},
 				],
 				isError: true,
 			};
 		}
-
-		return {
-			content: [
-				{
-					type: "text",
-					text: JSON.stringify(openapi, null, 2),
-				},
-			],
-		};
 	},
 );
 
@@ -1629,77 +1557,32 @@ server.registerTool(
 		}),
 	},
 	async (args) => {
-		const { redis } = await import("bun");
-		const { BxcDB } = await import("../db/BxcDB.ts");
-		const { AutonomousCrawler } = await import(
-			"../crawler/AutonomousCrawler.ts"
-		);
+		const { smartFetch } = await import("../crawler/crawl-utils.ts");
 		const { generateTypeScriptTypes } = await import("../utils/typegen.ts");
-
-		let openapi: any = null;
-		let title = "PageData";
-
-		const cached = await redis.get(`bxc:cache:url:${args.url}`);
-		if (cached) {
-			const parsed = JSON.parse(cached);
-			openapi = parsed.openapi;
-			title = parsed.title || title;
-		} else {
-			const db = new BxcDB();
-			try {
-				const row = db.getScrapeByUrl(args.url);
-				if (row && row.openapi_spec) {
-					openapi = JSON.parse(row.openapi_spec);
-					title = row.metadata
-						? JSON.parse(row.metadata).title || title
-						: title;
-				}
-			} finally {
-				db.close();
-			}
-		}
-
-		if (!openapi) {
-			const crawler = new AutonomousCrawler({ maxRequests: 1 });
-			await crawler.run([args.url]);
-			const db = new BxcDB();
-			try {
-				const row = db.getScrapeByUrl(args.url);
-				if (row && row.openapi_spec) {
-					openapi = JSON.parse(row.openapi_spec);
-					title = row.metadata
-						? JSON.parse(row.metadata).title || title
-						: title;
-				}
-			} finally {
-				db.close();
-			}
-		}
-
-		if (!openapi) {
+		try {
+			const result = await smartFetch(args.url);
+			const safeInterfaceName =
+				result.title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
+			const tsTypes = generateTypeScriptTypes(result.openapi, safeInterfaceName);
 			return {
 				content: [
 					{
 						type: "text",
-						text: `Error: Failed to generate schema or types for ${args.url}`,
+						text: tsTypes,
+					},
+				],
+			};
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error: Failed to generate schema or types for ${args.url}. Details: ${err instanceof Error ? err.message : String(err)}`,
 					},
 				],
 				isError: true,
 			};
 		}
-
-		const safeInterfaceName =
-			title.replace(/[^a-zA-Z0-9]/g, "") || "ScrapedData";
-		const tsTypes = generateTypeScriptTypes(openapi, safeInterfaceName);
-
-		return {
-			content: [
-				{
-					type: "text",
-					text: tsTypes,
-				},
-			],
-		};
 	},
 );
 

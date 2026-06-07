@@ -60,6 +60,7 @@ Bxc ships with a native, unified **Model Context Protocol (MCP)** server (`src/m
 * **Specialized Scrapers**: Exposes Bxc's advanced stealth crawlers directly as tools (`bxc_fut_price`, `bxc_fut_player`, `bxc_voiranime_search`, `bxc_voiranime_info`, `bxc_voiranime_resolve`, `bxc_xcom_profile`).
 
 ### 🧠 AI-Ready Plugin for Claude / Grok / Agy (Recommended)
+See `packages/xai/examples/grok-x-agent.ts` for a complete runnable example of native X + Grok agent loop (part of docs/examples item 7).
 All old direct "bxc" MCP entries and the legacy "bxc" skill have been removed from Claude Code, Grok Build, and Agy/antigravity-cli configs (in favor of the unified plugin below).
 
 The **unified bxc plugin** (built using the official `plugin-dev` toolkit from anthropics/claude-code) is the AI-ready integration:
@@ -289,6 +290,7 @@ under the `@aphrody` scope (published to npm):
 
 ## 📦 Installation
 
+### Linux / macOS
 ```bash
 # Global install (recommended)
 curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
@@ -296,6 +298,27 @@ curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | 
 # As a library
 bun add @aphrody/bxc
 ```
+
+### Windows 11 (PowerShell One-Liner)
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/aphrody-code/bxc/main/scripts/install-bxc.ps1 | iex"
+```
+
+### Windows 11 Development / Packaging
+If you are developing or building Bxc on Windows 11, you can automate setup, build, and packaging using the scripts below:
+
+* **Install Prerequisites via WinGet**:
+  ```powershell
+  .\scripts\install-deps-windows.ps1
+  ```
+* **Build Bxc**:
+  ```powershell
+  .\scripts\build-windows.ps1
+  ```
+* **Package and Deploy (WinGet & MSIX)**:
+  ```powershell
+  .\scripts\deploy-windows.ps1
+  ```
 
 ---
 

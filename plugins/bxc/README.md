@@ -56,6 +56,8 @@ Invoke with "use the bxc-rust-ffi-engineer agent to ..." or let Claude Code pick
 ### MCP Integration
 Example `.mcp.json` for the bxc-native-mcp (stdio). The actual binary lives in the target project (`dist/standalone/bxc-mcp` or `bun src/mcp/server.ts` for dev). The plugin documents how to wire it for any bxc-like project.
 
+**Services + Caching for instant fetches**: Use `scripts/bxc-control.sh deploy` (or systemctl) to reactivate `bxc` (API/CDP :9222) + `bxc-crawler` (24/7 AutonomousCrawler daemon). All crawlers now use Redis+SQLite (`bxc:cache:url:*`) caching layer by default — MCP tools (get_url_data, openapi, types, crawl data) hit cache first for instant responses; bg worker keeps it fresh. Complements native x/xai tools in agent loops. See bxc-autopilot skill.
+
 ## Cross-Platform
 - **Bun**: first-class on Linux, macOS, Windows.
 - **Rust cdylib**: produce the right artifact per OS and load it with platform detection or `BXC_RUST_BRIDGE_LIB`.
