@@ -20,6 +20,7 @@ bindings + historique Zig DOM. Publié sur GitHub Packages comme
 - **Docs x/xai** : 
   - `packages/x/README.md` (complete: features, algo ranking from x-algorithm, X+Grok synergy, usage, CLI, MCP, prod notes).
   - `packages/xai/README.md` (complete & lisible: TOC, auth/SuperGrok, high-level Chat API with full examples for createChat/append/sample/stream/executeToolCalls/sampleStructured, XTools + tool defs + injectable for tests, native integration loops, quick ref, prod notes, contributing).
+  See packages/xai/examples/grok-x-agent.ts for runnable native X + Grok example (docs item 7).
   - Root README.md table and sections link to them.
   - Keep in sync with code changes (new Chat methods, XTools, etc.). Tests: see `packages/x/index.test.ts` and `packages/xai/index.test.ts` (30 pass + 2 live-skipped = 32 total across packages, 120 expects; covers Chat full surface + stream/toolDeltas/execute/sampleStructured, XTools injectable+auto-dispatch+defs, algo rank full (filters/scoring/diversity), cross synergy with mock XClient, no live by default).
   - Sub-docs: packages/x/docs/ (COVERAGE.md updated with algo/tests notes, X_PRO.md, etc.).
@@ -99,9 +100,9 @@ bxc/
 Idem global : `feat|fix|chore(scope): description` français, 1 ligne, pas
 d'emoji, pas de `Co-Authored-By`, pas de `Generated with…`.
 
-## Intégration vps
+## Intégration VPS / release
 
-Submodule `vps/packages/bxc` → dernier tag `v0.6.0`. Workflow release :
+Workflow release (tagging + GitHub + deploy via bxc-control) :
 
 ```bash
 cd ~/bxc
@@ -149,3 +150,7 @@ gh release create vX.Y.Z --repo aphrody-code/bxc --title "bxc vX.Y.Z" --notes "<
 - **`bxc-mcp` a 3 cibles** à garder fraîches au deploy : `~/.local/bin/bxc-mcp` (MCP Claude `~/.claude.json`), `/usr/local/bin/bxc-mcp` (extension Gemini), `dist/standalone/bxc-mcp` (configs gemini antigravity/plugins/aphrody). `bxc-control deploy` gère les deux premiers.
 - **GitHub Packages visibilité** : `.npmrc` route `@aphrody/*` → GitHub Packages (`bun publish` par package, sous-packages avant root). Rendre un package **public** sur un compte **User** = **UI-only**, aucune API (`PATCH …/visibility` = 404), même repo public.
 - **`bun test` ne run que `*.test.ts`** : déplacer des `examples/*.ts` sous `packages/` ne les transforme pas en tests.
+- **Code Gemini Web unifié** (commit `c2a7ea3` sur main) : `src/google/gemini-session.ts` = `GeminiSessionPool` (1 client/conversation, continuité `keepContext`, drop-on-error) + `isGeminiStaleError()` + `GEMINI_STALE_MESSAGE` — cœur partagé unique pour les serveurs HTTP qui exposent Gemini.
+  - Exports subpath : `@aphrody/bxc/google/gemini-web` et `@aphrody/bxc/google/gemini-session` (en plus du barrel `./google`).
+  - `gemini-scraper.ts` réutilise `GEMINI_HOST`/`GEMINI_APP_URL`/`DEFAULT_USER_AGENT` de `gemini-web.ts` (plus de constantes dupliquées) ; `GEMINI_BASE_URL` = alias déprécié de `GEMINI_HOST`.
+  - Consommé par aphrody web (chat MD3 natif, modèle `"gemini-web"`). La CLI `bxc google chat` utilise `GeminiWebClient` en direct (one-shot, pas de pool).
