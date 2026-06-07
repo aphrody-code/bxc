@@ -58,6 +58,8 @@ Options:
   --help, -h        this help
 
 Auth resolution order: --cookie > session file > X_AUTH_TOKEN / X_CT0 env.
+If APHRODY_X_READ_BACKEND=hermes or xquik is set, profile, tweets, search, rank,
+and foryou can use HERMES_TWEET_API_KEY or XQUIK_API_KEY for public reads.
 
 `,
 	);
@@ -107,9 +109,27 @@ function parseArgs(
 	return opts;
 }
 
-function resolveSession(opts: CliOptions): XSession {
-	if (opts.cookie) return XSession.fromCookieString(opts.cookie);
-	return XSession.loadOrEnv();
+function supportsSessionlessRead(opts: CliOptions): boolean {
+	if (opts.action === "profile" || opts.action === "tweets" || opts.action === "search") {
+		return true;
+	}
+	return (opts.action === "rank" || opts.action === "foryou") && opts.fromSource !== "news" && opts.positional.length > 0;
+}
+
+function resolveSession(opts: CliOptions): XSession | undefined {
+	try {
+		if (opts.cookie) return XSession.fromCookieString(opts.cookie);
+		return XSession.loadOrEnv();
+	} catch (err) {
+		if (!opts.cookie && supportsSessionlessRead(opts)) {
+			return undefined;
+		}
+		logger.error(
+			`no X session: ${err instanceof Error ? err.message : String(err)}. ` +
+				`Pass --cookie "auth_token=...; ct0=..." or set X_AUTH_TOKEN / X_CT0.`,
+		);
+		process.exit(EXIT.MISUSE);
+	}
 }
 
 export async function main(
@@ -122,16 +142,7 @@ export async function main(
 		process.exit(EXIT.MISUSE);
 	}
 
-	let session: XSession;
-	try {
-		session = resolveSession(opts);
-	} catch (err) {
-		logger.error(
-			`no X session: ${err instanceof Error ? err.message : String(err)}. ` +
-				`Pass --cookie "auth_token=...; ct0=..." or set X_AUTH_TOKEN / X_CT0.`,
-		);
-		process.exit(EXIT.MISUSE);
-	}
+	const session = resolveSession(opts);
 
 	const client = new XClient(session);
 	const emit = (data: unknown) =>
@@ -182,7 +193,7 @@ export async function main(
 				let ranked: ReturnType<typeof rankPosts> = [];
 				let source = isForyou ? "foryou-mix" : (opts.fromSource || "search");
 
-				if (isForyou || opts.fromSource === "search" || (!opts.fromSource && opts.positional.length)) {
+				if (isForyou || opts.fromSource !== "news") {
 					const q = isForyou ? (opts.positional.join(" ") || "ai") : (opts.positional.join(" ").trim() || "tech");
 					const page: TweetPage = await client.search(q, Math.max(30, opts.count));
 					// Try to enrich context (best effort)

@@ -1729,7 +1729,7 @@ server.registerTool(
 	"bxc_x_client",
 	{
 		description:
-			"Native X / Twitter client (cookie auth, no API key). Fetch a profile, a user's tweets, search the Latest timeline, trending news, or resolve the authenticated account. Auth uses an auth_token + ct0 cookie pair from the session file / X_AUTH_TOKEN+X_CT0 env, or an explicit cookie string.",
+			"Native X / Twitter client. Cookie auth is the default. Optional Hermes Tweet/Xquik read backend can fetch public profiles, user tweets, search, rank, or foryou when configured.",
 		inputSchema: z.object({
 			action: z
 				.enum(["profile", "tweets", "search", "news", "whoami", "rank", "foryou"])
@@ -1756,9 +1756,23 @@ server.registerTool(
 	},
 	async (args) => {
 		const { XClient, XSession, getNews } = await import("@aphrody/x");
-		const session = args.cookie
-			? XSession.fromCookieString(args.cookie)
-			: XSession.loadOrEnv();
+		let session;
+		try {
+			session = args.cookie
+				? XSession.fromCookieString(args.cookie)
+				: XSession.loadOrEnv();
+		} catch (err) {
+			const hasQuery = typeof args.query === "string" && args.query.trim().length > 0;
+			const canUseHermes =
+				!args.cookie &&
+				(args.action === "profile" ||
+					args.action === "tweets" ||
+					args.action === "search" ||
+					((args.action === "rank" || args.action === "foryou") && hasQuery));
+			if (!canUseHermes) {
+				throw err;
+			}
+		}
 		const client = new XClient(session);
 
 		let payload: unknown;
@@ -1790,7 +1804,7 @@ server.registerTool(
 				const { rankTweets, rankPosts, toPostCandidate, getNews } = await import("@aphrody/x");
 				const isForyou = args.action === "foryou";
 				let ranked: any[];
-				if (isForyou || args.query) {
+				if (isForyou || args.query || args.action === "rank") {
 					const q = isForyou ? (args.query || "ai") : (args.query || "tech");
 					const page: any = await client.search(q, Math.max(30, args.count || 20));
 					const ctx = { viewer_id: (await client.whoami().catch(() => ({} as any)))?.id };

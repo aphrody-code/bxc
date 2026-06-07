@@ -49,6 +49,32 @@ const client = new XClient(session);
 
 **Cookie management**: Use bxc CLI `bxc cookies ...` or the tools in `src/cookies` (in root bxc).
 
+### Optional Hermes Tweet / Xquik Read Backend
+
+Cookie auth remains the default. Public read operations can optionally use
+[Hermes Tweet](https://github.com/Xquik-dev/hermes-tweet) through Xquik when an
+X session is not available, or when you explicitly select that backend:
+
+```bash
+export APHRODY_X_READ_BACKEND=hermes
+export HERMES_TWEET_API_KEY="xq_..."
+```
+
+Supported aliases:
+
+| Variable | Purpose |
+| --- | --- |
+| `APHRODY_X_READ_BACKEND=auto` | Default. Use cookies when present, Hermes Tweet only for supported public reads without a cookie session. |
+| `APHRODY_X_READ_BACKEND=x` | Force the original cookie-auth X client. |
+| `APHRODY_X_READ_BACKEND=hermes` or `xquik` | Force Hermes Tweet/Xquik for supported public reads. |
+| `HERMES_TWEET_API_KEY` or `XQUIK_API_KEY` | API key for the Hermes Tweet/Xquik read backend. |
+| `HERMES_TWEET_BASE_URL` or `XQUIK_BASE_URL` | Optional base URL. Defaults to `https://xquik.com`. |
+| `HERMES_TWEET_TIMEOUT_MS` | Optional fetch timeout. Defaults to `30000`. |
+
+The backend supports `profile`, `tweets`, `search`, tweet lookup, and thread
+reads. Private reads, writes, media upload, X Pro, Radar, and `whoami` still
+require the original cookie session.
+
 ## Usage
 
 ### Basic
