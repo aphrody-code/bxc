@@ -61,7 +61,7 @@ import {
 	ptr,
 	toArrayBuffer,
 } from "bun:ffi";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { hasEmbedded, curlImpersonateAsset } from "../rust/embedded-assets.ts";
 import { extractEmbeddedAssetIfNeeded } from "../internal/embedded-loader.ts";
 
@@ -367,6 +367,21 @@ function resolveLibPath(): string {
 function getLib(): Library<typeof SYMBOLS> {
 	if (_lib) return _lib;
 	_libPath = resolveLibPath();
+	if (process.platform === "win32") {
+		try {
+			const dllDir = dirname(_libPath);
+			const kernel32 = dlopen("kernel32.dll", {
+				SetDllDirectoryW: {
+					args: [FFIType.ptr],
+					returns: FFIType.bool,
+				},
+			});
+			const buf = Buffer.from(dllDir + "\0", "utf16le");
+			kernel32.symbols.SetDllDirectoryW(buf);
+		} catch (err) {
+			console.warn("[bxc] Failed to SetDllDirectoryW for curl-impersonate:", err);
+		}
+	}
 	_lib = dlopen(_libPath, SYMBOLS);
 	// CURL_GLOBAL_ALL = 3
 	_lib.symbols.curl_global_init(3n as unknown as number);

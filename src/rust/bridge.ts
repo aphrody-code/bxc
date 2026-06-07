@@ -15,7 +15,7 @@
  */
 
 import { CString, dlopen, FFIType, ptr, suffix } from "bun:ffi";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { hasEmbedded, rustBridgeAsset } from "./embedded-assets.ts";
 import { extractEmbeddedAssetIfNeeded } from "../internal/embedded-loader.ts";
 
@@ -94,7 +94,23 @@ const SYMBOLS = {
 } as const;
 
 function loadLib() {
-	return dlopen(resolveRustBridgePath(), SYMBOLS);
+	const libPath = resolveRustBridgePath();
+	if (process.platform === "win32") {
+		try {
+			const dllDir = dirname(libPath);
+			const kernel32 = dlopen("kernel32.dll", {
+				SetDllDirectoryW: {
+					args: [FFIType.ptr],
+					returns: FFIType.bool,
+				},
+			});
+			const buf = Buffer.from(dllDir + "\0", "utf16le");
+			kernel32.symbols.SetDllDirectoryW(buf);
+		} catch (err) {
+			console.warn("[bxc] Failed to SetDllDirectoryW for rust-bridge:", err);
+		}
+	}
+	return dlopen(libPath, SYMBOLS);
 }
 
 type BridgeLib = ReturnType<typeof loadLib>;

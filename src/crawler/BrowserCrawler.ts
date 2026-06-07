@@ -70,99 +70,132 @@ export class BrowserCrawler extends BasicCrawler<BrowserCrawlingContext> {
 	}
 
 	private async processRequestDirect(req: any): Promise<void> {
-		let selectedProxy = this.options.proxy;
-		if (this.options.proxyPool && this.options.proxyPool.length > 0) {
-			const idx = Math.floor(Math.random() * this.options.proxyPool.length);
-			selectedProxy = this.options.proxyPool[idx];
-		}
+		const { isCrawlFailure, profilesOrder } = require("./crawl-utils.ts");
+		const startProfile = this.profile;
+		const idx = profilesOrder.indexOf(startProfile);
+		const escalationPath = idx === -1 ? [startProfile] : profilesOrder.slice(idx);
 
-		this.log(`BrowserCrawler (${this.profile}) crawling: ${req.url} (proxy: ${selectedProxy || "none"})`);
-		const { Browser } = require("../api/browser.ts");
-		const page = await Browser.newPage({
-			profile: this.profile,
-			headless: this.headless,
-			cookies: this.options.cookies,
-			userAgent: this.options.userAgent,
-			viewport: this.options.viewport,
-			insecure: this.options.insecure,
-			proxy: selectedProxy,
-			proxyAuth: this.options.proxyAuth,
-			spawnOpts: this.options.spawnOpts,
-		});
+		let lastError: Error | null = null;
+		let success = false;
 
-		try {
-			const response = await page.goto(req.url);
-			const body = await page.content();
+		for (const profile of escalationPath) {
+			let selectedProxy = this.options.proxy;
+			if (this.options.proxyPool && this.options.proxyPool.length > 0) {
+				const proxyIdx = Math.floor(Math.random() * this.options.proxyPool.length);
+				selectedProxy = this.options.proxyPool[proxyIdx];
+			}
 
-			let cachedCheerio: cheerio.CheerioAPI | null = null;
-			const getCheerio = () => {
-				if (!cachedCheerio) {
-					cachedCheerio = cheerio.load(body);
+			this.log(`BrowserCrawler (${profile}) crawling: ${req.url} (proxy: ${selectedProxy || "none"})`);
+			const { Browser } = require("../api/browser.ts");
+			let page: any = null;
+			try {
+				page = await Browser.newPage({
+					profile: profile,
+					headless: this.headless,
+					cookies: this.options.cookies,
+					userAgent: this.options.userAgent,
+					viewport: this.options.viewport,
+					insecure: this.options.insecure,
+					proxy: selectedProxy,
+					proxyAuth: this.options.proxyAuth,
+					spawnOpts: this.options.spawnOpts,
+				});
+
+				const response = await page.goto(req.url);
+				const body = await page.content();
+				const title = await page.title();
+				const status = response?.status;
+
+				if (isCrawlFailure(status, body, title)) {
+					throw new Error(
+						`Crawl failure detected (status: ${status}, title: "${title}", content length: ${body.length})`
+					);
 				}
-				return cachedCheerio;
-			};
 
-			const context: BrowserCrawlingContext = {
-				request: req,
-				page,
-				response,
-				get $() {
-					return getCheerio();
-				},
-				enqueueLinks: async (opts) => {
-					const selector = opts?.selector ?? "a[href]";
-					const allowedDomains = opts?.allowedDomains;
-					const $ = getCheerio();
-					const links: Array<{ url: string; opts?: any }> = [];
-					const base = new URL(req.url);
-					$(selector).each((_, el) => {
-						const href = $(el).attr("href");
-						if (
-							href &&
-							!href.startsWith("javascript:") &&
-							!href.startsWith("#") &&
-							!href.startsWith("mailto:")
-						) {
-							try {
-								const absUrl = new URL(href, base).href;
-								if (allowedDomains) {
-									const hostname = new URL(absUrl).hostname;
-									if (
-										allowedDomains.some(
-											(d) => hostname === d || hostname.endsWith("." + d),
-										)
-									) {
+				let cachedCheerio: cheerio.CheerioAPI | null = null;
+				const getCheerio = () => {
+					if (!cachedCheerio) {
+						cachedCheerio = cheerio.load(body);
+					}
+					return cachedCheerio;
+				};
+
+				const context: BrowserCrawlingContext = {
+					request: req,
+					page,
+					response,
+					get $() {
+						return getCheerio();
+					},
+					enqueueLinks: async (opts) => {
+						const selector = opts?.selector ?? "a[href]";
+						const allowedDomains = opts?.allowedDomains;
+						const $ = getCheerio();
+						const links: Array<{ url: string; opts?: any }> = [];
+						const base = new URL(req.url);
+						$(selector).each((_, el) => {
+							const href = $(el).attr("href");
+							if (
+								href &&
+								!href.startsWith("javascript:") &&
+								!href.startsWith("#") &&
+								!href.startsWith("mailto:")
+							) {
+								try {
+									const absUrl = new URL(href, base).href;
+									if (allowedDomains) {
+										const hostname = new URL(absUrl).hostname;
+										if (
+											allowedDomains.some(
+												(d) => hostname === d || hostname.endsWith("." + d),
+											)
+										) {
+											links.push({
+												url: absUrl,
+												opts: opts?.userData ? { userData: opts.userData } : {},
+											});
+										}
+									} else {
 										links.push({
 											url: absUrl,
 											opts: opts?.userData ? { userData: opts.userData } : {},
 										});
 									}
-								} else {
-									links.push({
-										url: absUrl,
-										opts: opts?.userData ? { userData: opts.userData } : {},
-									});
+								} catch {
+									// Ignore
 								}
-							} catch {
-								// Ignore
 							}
+						});
+						if (links.length > 0) {
+							this.requestQueue.addRequests(links);
 						}
-					});
-					if (links.length > 0) {
-						this.requestQueue.addRequests(links);
-					}
-				},
-				pushData: async (data) => {
-					if (this.dataset) {
-						await this.dataset.pushData(data);
-					}
-				},
-				log: (msg) => this.log(msg),
-			};
+					},
+					pushData: async (data) => {
+						if (this.dataset) {
+							await this.dataset.pushData(data);
+						}
+					},
+					log: (msg) => this.log(msg),
+				};
 
-			await this.requestHandler(context);
-		} finally {
-			await page.close();
+				await this.requestHandler(context);
+				success = true;
+				break;
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				this.log(`BrowserCrawler profile ${profile} failed for ${req.url}: ${msg}. Escalating...`);
+				lastError = err instanceof Error ? err : new Error(msg);
+			} finally {
+				if (page) {
+					try {
+						await page.close();
+					} catch {}
+				}
+			}
+		}
+
+		if (!success) {
+			throw lastError ?? new Error(`Failed to crawl ${req.url} with all profiles in escalation path.`);
 		}
 	}
 

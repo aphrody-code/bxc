@@ -24,6 +24,9 @@ import { Browser, type Page } from "../api/browser.ts";
 import { detectFrameworks } from "../detect.ts";
 import { EXIT, type CommonOptions, logger, parseCommonArgs } from "./shared.ts";
 import { bxcFetch } from "../utils/bxc-fetch.ts";
+import { extractStructuredData } from "../google/fetch.ts";
+import { generateOpenApiSchema } from "../utils/openapi.ts";
+import { getEmbedding } from "../utils/vector.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,6 +76,12 @@ interface ReconCliOptions extends CommonOptions {
 	snapshotDir?: string;
 	screenshot: boolean;
 	plain: boolean;
+	headless?: boolean;
+	cookies?: string | any[];
+	userAgent?: string;
+	viewport?: { width: number; height: number };
+	proxyAuth?: string;
+	spawnOpts?: any;
 }
 
 // ---------------------------------------------------------------------------
@@ -277,69 +286,277 @@ async function extractCssSelectors(
 
 export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 	const t0 = Bun.nanoseconds();
-	const fetched = await fetchFull(opts.url, opts);
-	const headers = reconHeaders(fetched.headers);
-	let body = fetched.body;
-	let finalUrl = fetched.finalUrl;
-	let gotoMs = (Bun.nanoseconds() - t0) / 1e6;
+	const cacheKey = `bxc:cache:url:${opts.url}`;
+	const { redis } = await import("bun");
+	const { BxcDB } = await import("../db/BxcDB.ts");
+	const { isCrawlFailure, profilesOrder } = await import("../crawler/crawl-utils.ts");
+
+	// 1. Cache Check (unless screenshot is requested)
+	if (!opts.screenshot) {
+		try {
+			const cached = await redis.get(cacheKey);
+			if (cached) {
+				const parsed = JSON.parse(cached);
+				const body = parsed.html || "";
+				const [assets, cssSelectors, frameworks] = await Promise.all([
+					Promise.resolve(extractAssets(body, opts.url)),
+					extractCssSelectors(body, opts.url, opts),
+					detectFrameworks(
+						{ html: body, headers: {} },
+						{ insecure: opts.insecure, timeoutMs: 10_000 },
+					).catch(() => []),
+				]);
+				return {
+					$schema: RECON_SCHEMA,
+					url: opts.url,
+					finalUrl: parsed.url || opts.url,
+					httpStatus: parsed.status || 200,
+					bytes: body.length,
+					gotoMs: 0,
+					profile: parsed.profileUsed || opts.profile,
+					headers: { cdnVendor: "Cached (Redis)", cspHosts: [] },
+					frameworks: frameworks.map((f) => ({
+						name: f.name,
+						categories: f.categories,
+						version: f.version,
+					})),
+					assets,
+					cssSelectors,
+				};
+			}
+		} catch (err) {
+			logger.error(`[recon-cache] Redis lookup error: ${err}`);
+		}
+
+		const db = new BxcDB();
+		try {
+			const row = db.getScrapeByUrl(opts.url);
+			if (row) {
+				const body = row.content || "";
+				const [assets, cssSelectors, frameworks] = await Promise.all([
+					Promise.resolve(extractAssets(body, opts.url)),
+					extractCssSelectors(body, opts.url, opts),
+					detectFrameworks(
+						{ html: body, headers: {} },
+						{ insecure: opts.insecure, timeoutMs: 10_000 },
+					).catch(() => []),
+				]);
+				const result: ReconResult = {
+					$schema: RECON_SCHEMA,
+					url: opts.url,
+					finalUrl: row.url || opts.url,
+					httpStatus: row.status,
+					bytes: body.length,
+					gotoMs: 0,
+					profile: row.profile || opts.profile,
+					headers: { cdnVendor: "Cached (SQLite)", cspHosts: [] },
+					frameworks: frameworks.map((f) => ({
+						name: f.name,
+						categories: f.categories,
+						version: f.version,
+					})),
+					assets,
+					cssSelectors,
+				};
+				// populate redis cache
+				try {
+					await redis.set(
+						cacheKey,
+						JSON.stringify({
+							html: body,
+							url: row.url,
+							status: row.status,
+							profileUsed: row.profile,
+							markdown: row.markdown || "",
+							structured: row.json_data ? JSON.parse(row.json_data) : null,
+							openapi: row.openapi_spec ? JSON.parse(row.openapi_spec) : null,
+						}),
+						"EX",
+						86400,
+					);
+				} catch {}
+				return result;
+			}
+		} catch (err) {
+			logger.error(`[recon-cache] SQLite lookup error: ${err}`);
+		} finally {
+			db.close();
+		}
+	}
+
+	// 2. Live Crawl with Profile Escalation
+	const idx = profilesOrder.indexOf(opts.profile);
+	const escalationPath = idx === -1 ? profilesOrder : profilesOrder.slice(idx);
+
+	let lastError: Error | null = null;
+	let headers: ReconHeaders = { cdnVendor: "unknown", cspHosts: [] };
+	let rawHeaders: Record<string, string> = {};
+	let body = "";
+	let finalUrl = opts.url;
+	let httpStatus = 200;
+	let profileUsed = opts.profile;
+	let gotoMs = 0;
 	let screenshotBytes: number | undefined;
 	let screenshotPath: string | undefined;
 
-	const isBrowserProfile =
-		opts.profile === "fast" ||
-		opts.profile === "stealth" ||
-		opts.profile === "max";
-	const needsBrowser = opts.screenshot || opts.profile !== "http";
-	let browserError: string | null = null;
-	if (needsBrowser) {
-		let page: Page | undefined;
-		const t1 = Bun.nanoseconds();
+	for (const profile of escalationPath) {
+		if (!opts.quiet) logger.log(`[recon] Probing target using profile: ${profile}`);
+		const tStart = Bun.nanoseconds();
+		let page: any = null;
 		try {
-			page = (await Browser.newPage({
-				profile: opts.profile,
-				spawnOpts: isBrowserProfile
-					? { logLevel: "error", readyTimeoutMs: 10_000 }
-					: undefined,
-			})) as Page;
+			// First, do a lightweight fetch to get headers (fingerprint CDN)
+			try {
+				const fetched = await fetchFull(opts.url, opts);
+				rawHeaders = fetched.headers;
+				headers = reconHeaders(rawHeaders);
+				httpStatus = fetched.status;
+				finalUrl = fetched.finalUrl;
+				body = fetched.body;
+			} catch (fetchErr) {
+				// if http fetch fails, we still try browser profiles
+				if (profile === "http") throw fetchErr;
+			}
 
-			await Promise.race([
-				page.goto(opts.url, { timeoutMs: opts.timeoutMs }),
-				new Promise<never>((_, rej) =>
+			if (profile === "http") {
+				if (isCrawlFailure(httpStatus, body, "")) {
+					throw new Error(`Crawl failure detected (status: ${httpStatus})`);
+				}
+				gotoMs = (Bun.nanoseconds() - tStart) / 1e6;
+				profileUsed = "http";
+			} else {
+				// Browser profiles: fast, stealth, max
+				const isBrowserProfile =
+					profile === "fast" || profile === "stealth" || profile === "max";
+				page = (await Browser.newPage({
+					profile,
+					headless: opts.headless ?? true,
+					cookies: opts.cookies,
+					userAgent: opts.userAgent,
+					viewport: opts.viewport,
+					insecure: opts.insecure,
+					proxy: opts.proxy,
+					proxyAuth: opts.proxyAuth,
+					spawnOpts:
+						opts.spawnOpts ??
+						(isBrowserProfile
+							? { logLevel: "error", readyTimeoutMs: 10000 }
+							: undefined),
+				})) as Page;
+
+				const navigationPromise = page.goto(opts.url, {
+					timeoutMs: opts.timeoutMs ?? 30000,
+				});
+				const timeoutPromise = new Promise<never>((_, rej) =>
 					setTimeout(
 						() => rej(new Error("navigation timeout")),
-						opts.timeoutMs,
+						opts.timeoutMs ?? 30000,
 					),
-				),
-			]);
-			gotoMs = (Bun.nanoseconds() - t1) / 1e6;
-			finalUrl = page.url();
-			const rendered = await page.content().catch(() => "");
-			if (rendered) body = rendered;
+				);
+				const nav = await Promise.race([navigationPromise, timeoutPromise]);
 
-			if (opts.screenshot && isBrowserProfile && opts.snapshotDir) {
-				try {
-					const png = await page.screenshot({ format: "png" });
-					screenshotPath = `${opts.snapshotDir}/screenshot.png`;
-					await Bun.write(screenshotPath, png);
-					screenshotBytes = png.byteLength;
-				} catch {
-					// screenshot failed
+				gotoMs = (Bun.nanoseconds() - tStart) / 1e6;
+				finalUrl = page.url();
+				body = await page.content();
+				const title = await page.title();
+				httpStatus = nav?.status ?? 200;
+
+				if (isCrawlFailure(httpStatus, body, title)) {
+					throw new Error(
+						`Crawl failure detected (status: ${httpStatus}, title: "${title}")`,
+					);
 				}
+
+				if (opts.screenshot && isBrowserProfile && opts.snapshotDir) {
+					try {
+						const png = await page.screenshot({ format: "png" });
+						screenshotPath = `${opts.snapshotDir}/screenshot.png`;
+						await Bun.write(screenshotPath, png);
+						screenshotBytes = png.byteLength;
+					} catch (screenshotErr) {
+						logger.warn(`Screenshot failed: ${screenshotErr}`);
+					}
+				}
+				profileUsed = profile;
 			}
-		} catch (err) {
-			browserError = err instanceof Error ? err.message : String(err);
-		} finally {
+
+			// Save to cache (Redis and SQLite)
+			const markdown = page
+				? await page.markdown()
+				: body.replace(/<[^>]*>/g, " ").slice(0, 10000);
+			const structured = await extractStructuredData(body);
+			const openapi = generateOpenApiSchema({
+				url: opts.url,
+				title: page ? await page.title() : "Recon Target",
+				description: structured.description || undefined,
+				markdown,
+				structuredData: structured,
+				timestamp: new Date().toISOString(),
+			});
+			const vector = await getEmbedding(markdown);
+
+			const db = new BxcDB();
 			try {
-				await page?.close();
-			} catch {
-				// ignore
+				db.saveScrape(
+					opts.url,
+					profile,
+					httpStatus,
+					body,
+					{
+						title: page ? await page.title() : "Recon Target",
+						canonical: structured.canonical,
+						openGraph: structured.openGraph,
+					},
+					markdown,
+					structured,
+					openapi,
+					vector,
+				);
+			} catch (dbErr) {
+				logger.error(`[recon-cache] SQLite save error: ${dbErr}`);
+			} finally {
+				db.close();
+			}
+
+			try {
+				await redis.set(
+					cacheKey,
+					JSON.stringify({
+						html: body,
+						url: finalUrl,
+						status: httpStatus,
+						profileUsed: profile,
+						markdown,
+						structured,
+						openapi,
+						vector,
+						timestamp: new Date().toISOString(),
+					}),
+					"EX",
+					86400,
+				);
+			} catch (redisErr) {
+				logger.error(`[recon-cache] Redis save error: ${redisErr}`);
+			}
+
+			break; // Succeeded! Break out of loop
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			if (!opts.quiet)
+				logger.warn(`[recon] Profile ${profile} failed: ${message}`);
+			lastError = err instanceof Error ? err : new Error(message);
+		} finally {
+			if (page) {
+				try {
+					await page.close();
+				} catch {}
 			}
 		}
 	}
 
-	if (browserError && !opts.quiet) {
-		logger.warn(
-			`browser path failed (${browserError.slice(0, 120)}); falling back to fetch-only.`,
+	if (body === "") {
+		throw (
+			lastError ??
+			new Error(`Failed to recon target ${opts.url} using escalation path.`)
 		);
 	}
 
@@ -358,7 +575,7 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 		);
 		await Bun.write(
 			`${opts.snapshotDir}/headers.json`,
-			JSON.stringify(fetched.headers, null, 2),
+			JSON.stringify(rawHeaders, null, 2),
 		).catch(() => {});
 		await Bun.write(
 			`${opts.snapshotDir}/css-selectors.txt`,
@@ -370,7 +587,7 @@ export async function recon(opts: ReconCliOptions): Promise<ReconResult> {
 		$schema: RECON_SCHEMA,
 		url: opts.url,
 		finalUrl,
-		httpStatus: fetched.status,
+		httpStatus,
 		bytes: body.length,
 		gotoMs,
 		profile: opts.profile,

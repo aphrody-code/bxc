@@ -459,6 +459,156 @@ pub extern "C" fn bxc_x_user_tweets(
     }
 }
 
+/// Fetch community metadata by its numeric rest id (from /i/communities/<id>).
+///
+/// Returns JSON of the Community result or {"error": "..." }.
+/// Free with bxc_free_string.
+#[no_mangle]
+pub extern "C" fn bxc_x_community_by_rest_id(
+    auth_token_ptr: *const c_char,
+    ct0_ptr: *const c_char,
+    community_id_ptr: *const c_char,
+) -> *mut c_char {
+    if community_id_ptr.is_null() {
+        return CString::new("{\"error\":\"Null community_id pointer\"}").unwrap().into_raw();
+    }
+    let comm_id = match unsafe { CStr::from_ptr(community_id_ptr) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in community_id\"}").unwrap().into_raw(),
+    };
+
+    let client = match x_build_client(auth_token_ptr, ct0_ptr) {
+        Ok(c) => c,
+        Err(e) => {
+            let err = serde_json::json!({ "error": e });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("Failed to create tokio runtime: {e}") });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let result = rt.block_on(async { client.community_by_rest_id(comm_id).await });
+
+    match result {
+        Ok(val) => {
+            let json = serde_json::to_string(&val).unwrap_or_else(|_| "{}".to_string());
+            CString::new(json).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("community_by_rest_id failed: {e}") });
+            CString::new(err.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+/// Fetch up to `count` tweets from a community timeline by its numeric rest id.
+///
+/// Returns JSON-serialised TweetPage (or error). Free with bxc_free_string.
+#[no_mangle]
+pub extern "C" fn bxc_x_community_tweets(
+    auth_token_ptr: *const c_char,
+    ct0_ptr: *const c_char,
+    community_id_ptr: *const c_char,
+    count: u32,
+) -> *mut c_char {
+    if community_id_ptr.is_null() {
+        return CString::new("{\"error\":\"Null community_id pointer\"}").unwrap().into_raw();
+    }
+    let comm_id = match unsafe { CStr::from_ptr(community_id_ptr) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in community_id\"}").unwrap().into_raw(),
+    };
+
+    let client = match x_build_client(auth_token_ptr, ct0_ptr) {
+        Ok(c) => c,
+        Err(e) => {
+            let err = serde_json::json!({ "error": e });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("Failed to create tokio runtime: {e}") });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let n = if count == 0 { 20 } else { count };
+    let result = rt.block_on(async {
+        client.community_timeline(comm_id, n, None, 1).await
+    });
+
+    match result {
+        Ok(page) => {
+            let json = serde_json::to_string(&page).unwrap_or_else(|_| "{}".to_string());
+            CString::new(json).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("community_tweets failed: {e}") });
+            CString::new(err.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
+/// Fetch community info + initial tweets (count) in parallel using tokio::join.
+/// Returns JSON { "info": <community>, "tweets": <TweetPage> } or error.
+/// Useful for concurrent indexing of metadata + content.
+#[no_mangle]
+pub extern "C" fn bxc_x_community_info_and_tweets(
+    auth_token_ptr: *const c_char,
+    ct0_ptr: *const c_char,
+    community_id_ptr: *const c_char,
+    count: u32,
+) -> *mut c_char {
+    if community_id_ptr.is_null() {
+        return CString::new("{\"error\":\"Null community_id pointer\"}").unwrap().into_raw();
+    }
+    let comm_id = match unsafe { CStr::from_ptr(community_id_ptr) }.to_str() {
+        Ok(s) => s,
+        Err(_) => return CString::new("{\"error\":\"Invalid UTF-8 in community_id\"}").unwrap().into_raw(),
+    };
+
+    let client = match x_build_client(auth_token_ptr, ct0_ptr) {
+        Ok(c) => c,
+        Err(e) => {
+            let err = serde_json::json!({ "error": e });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(r) => r,
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("Failed to create tokio runtime: {e}") });
+            return CString::new(err.to_string()).unwrap().into_raw();
+        }
+    };
+
+    let n = if count == 0 { 20 } else { count };
+    let result = rt.block_on(async {
+        client.community_info_and_timeline(comm_id, n, 1).await
+    });
+
+    match result {
+        Ok((info, page)) => {
+            let json = serde_json::json!({ "info": info, "tweets": page });
+            CString::new(serde_json::to_string(&json).unwrap_or("{}".to_string())).unwrap().into_raw()
+        }
+        Err(e) => {
+            let err = serde_json::json!({ "error": format!("community_info_and_tweets failed: {e}") });
+            CString::new(err.to_string()).unwrap().into_raw()
+        }
+    }
+}
+
 /// Rank an array of post candidates (JSON) using the native X For You algorithm
 /// (filters, weighted scorer, author diversity etc. — adapted from
 /// xai-org/x-algorithm).

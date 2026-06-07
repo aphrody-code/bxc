@@ -1020,6 +1020,51 @@ impl XClient {
             .await
     }
 
+    /// Fetch community metadata by rest id (the numeric part of /i/communities/<id>).
+    ///
+    /// Returns the raw GraphQL result (under data.communityResults.result).
+    pub async fn community_by_rest_id(&self, community_id: &str) -> Result<Value> {
+        let variables = json!({ "communityId": community_id });
+        self.graphql("CommunityByRestId", variables, None).await
+    }
+
+    /// Fetch tweets from a community's timeline.
+    ///
+    /// Uses `CommunityTweetsTimeline`. The response typically nests the timeline
+    /// under `data.communityResults.result.ranked_community_timeline.timeline`
+    /// (or similar), but `walk_timeline_tweets` recurses to locate instructions.
+    pub async fn community_timeline(
+        &self,
+        community_id: &str,
+        count: u32,
+        cursor: Option<&str>,
+        quote_depth: u32,
+    ) -> Result<TweetPage> {
+        let mut variables = json!({
+            "communityId": community_id,
+            "count": count,
+            "withCommunity": true,
+        });
+        if let Some(c) = cursor {
+            variables["cursor"] = json!(c);
+        }
+        self.timeline_tweets("CommunityTweetsTimeline", variables, quote_depth)
+            .await
+    }
+
+    /// Fetch community info + initial tweets page in parallel (concurrent).
+    pub async fn community_info_and_timeline(
+        &self,
+        community_id: &str,
+        count: u32,
+        quote_depth: u32,
+    ) -> Result<(Value, TweetPage)> {
+        let info = self.community_by_rest_id(community_id);
+        let timeline = self.community_timeline(community_id, count, None, quote_depth);
+        let (info_res, timeline_res) = tokio::join!(info, timeline);
+        Ok((info_res?, timeline_res?))
+    }
+
     /// List the lists owned by (or that include) a user.
     ///
     /// `member_of = false` → `ListOwnerships` (lists the user owns);
