@@ -1762,13 +1762,13 @@ server.registerTool(
 				? XSession.fromCookieString(args.cookie)
 				: XSession.loadOrEnv();
 		} catch (err) {
+			const hasQuery = typeof args.query === "string" && args.query.trim().length > 0;
 			const canUseHermes =
 				!args.cookie &&
 				(args.action === "profile" ||
 					args.action === "tweets" ||
 					args.action === "search" ||
-					args.action === "rank" ||
-					args.action === "foryou");
+					((args.action === "rank" || args.action === "foryou") && hasQuery));
 			if (!canUseHermes) {
 				throw err;
 			}

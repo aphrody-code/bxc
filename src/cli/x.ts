@@ -113,7 +113,7 @@ function supportsSessionlessRead(opts: CliOptions): boolean {
 	if (opts.action === "profile" || opts.action === "tweets" || opts.action === "search") {
 		return true;
 	}
-	return (opts.action === "rank" || opts.action === "foryou") && opts.fromSource !== "news";
+	return (opts.action === "rank" || opts.action === "foryou") && opts.fromSource !== "news" && opts.positional.length > 0;
 }
 
 function resolveSession(opts: CliOptions): XSession | undefined {

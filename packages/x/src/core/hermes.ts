@@ -61,7 +61,7 @@ export class HermesTweetClient {
 
   public async getTweet(tweetId: string): Promise<Tweet | null> {
     const payload = await this.request(`${TWEETS_PATH}/${encodeURIComponent(tweetId)}`);
-    return normalizeTweet(findFirstObject(payload, ["tweet", "post", "data"]) ?? {}, 0);
+    return normalizeTweet(findFirstObject(payload, ["tweet", "post"]) ?? {}, 0);
   }
 
   public async thread(tweetId: string, cursor?: string): Promise<TweetPage> {
@@ -187,7 +187,7 @@ function normalizeTweet(record: JsonObject, index: number): Tweet | null {
 }
 
 function normalizeUserInfo(payload: unknown, handle: string): UserInfo {
-  const record = findFirstObject(payload, ["user", "profile", "data"]) ?? {};
+  const record = findFirstObject(payload, ["user", "profile"]) ?? {};
   const username = firstString(record.username, record.handle, record.screen_name) ?? stripHandle(handle);
   return {
     id: firstString(record.id, record.user_id, record.userId, record.rest_id) ?? username,
