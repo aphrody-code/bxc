@@ -7,8 +7,8 @@ After=network.target
 # adjust WorkingDirectory/ExecStart to your deploy path
 Type=simple
 User=ubuntu
-WorkingDirectory=/opt/bxc
-ExecStart=/usr/bin/bun run src/cli/serve.ts
+WorkingDirectory=/home/ubuntu/bxc
+ExecStart=/usr/local/bin/bxc serve --cdp-port 9222
 Restart=always
 RestartSec=5
 

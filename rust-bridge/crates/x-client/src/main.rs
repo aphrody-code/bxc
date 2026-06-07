@@ -130,6 +130,21 @@ fn extract_list_id(input: &str) -> Result<String> {
     Err(anyhow::anyhow!("could not extract a list id from: {input}"))
 }
 
+/// Extract a numeric community id from a URL like https://x.com/i/communities/123 or return as-is if numeric.
+fn extract_community_id(input: &str) -> Result<String> {
+    let trimmed = input.trim();
+    if trimmed.chars().all(|c| c.is_ascii_digit()) && !trimmed.is_empty() {
+        return Ok(trimmed.to_owned());
+    }
+    if let Some(rest) = trimmed.split("/communities/").nth(1) {
+        let id: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        if !id.is_empty() {
+            return Ok(id);
+        }
+    }
+    Err(anyhow::anyhow!("could not extract a community id from: {input}"))
+}
+
 /// Normalize a handle by stripping a leading `@`.
 fn normalize_handle(h: &str) -> &str {
     h.trim().trim_start_matches('@')
@@ -515,6 +530,22 @@ enum Op {
     #[command(name = "list-timeline")]
     ListTimeline {
         /// List URL or numeric id.
+        target: String,
+        #[command(flatten)]
+        page: PageArgs,
+    },
+    /// Fetch tweets from a community timeline (by URL https://x.com/i/communities/ID or numeric id).
+    #[command(name = "community-timeline")]
+    CommunityTimeline {
+        /// Community URL or numeric id.
+        target: String,
+        #[command(flatten)]
+        page: PageArgs,
+    },
+    /// Fetch community info + first tweets page in parallel (demo of parallel indexing).
+    #[command(name = "community-info")]
+    CommunityInfo {
+        /// Community URL or numeric id.
         target: String,
         #[command(flatten)]
         page: PageArgs,
@@ -1214,6 +1245,32 @@ async fn run() -> Result<()> {
             .await
             .context("list_timeline failed")?;
             output::print_tweets(&result.tweets, result.next_cursor.as_deref(), mode);
+        }
+        Op::CommunityTimeline { target, page } => {
+            let comm_id = extract_community_id(&target)?;
+            let result = paginate_tweets(page.all, page.max_pages, page.cursor.clone(), |cur| {
+                let comm_id = comm_id.clone();
+                Box::pin(async move {
+                    client
+                        .community_timeline(&comm_id, page.count, cur.as_deref(), page.quote_depth)
+                        .await
+                        .map_err(anyhow::Error::from)
+                })
+            })
+            .await
+            .context("community_timeline failed")?;
+            output::print_tweets(&result.tweets, result.next_cursor.as_deref(), mode);
+        }
+        Op::CommunityInfo { target, page } => {
+            let comm_id = extract_community_id(&target)?;
+            let (info, tweets) = client
+                .community_info_and_timeline(&comm_id, page.count, page.quote_depth)
+                .await
+                .context("community_info_and_timeline (parallel) failed")?;
+            println!("=== Community Info (parallel fetch) ===");
+            println!("{}", serde_json::to_string_pretty(&info)?);
+            println!("=== Tweets (first page, parallel) ===");
+            output::print_tweets(&tweets.tweets, tweets.next_cursor.as_deref(), mode);
         }
         Op::News {
             count,

@@ -841,6 +841,36 @@ export class XClient {
     return await this.timelineTweets("ListLatestTweetsTimeline", variables, quoteDepth);
   }
 
+  /** Fetch community metadata by its rest id (the number from /i/communities/ID). */
+  public async communityByRestId(communityId: string): Promise<any> {
+    return await this.graphqlWaiting("CommunityByRestId", { communityId });
+  }
+
+  /** Fetch a page of tweets from a community timeline. Cursor for pagination. */
+  public async communityTimeline(
+    communityId: string,
+    count: number,
+    cursor?: string,
+    quoteDepth?: number
+  ): Promise<TweetPage> {
+    const variables: any = { communityId, count };
+    if (cursor) variables.cursor = cursor;
+    return await this.timelineTweets("CommunityTweetsTimeline", variables, quoteDepth);
+  }
+
+  /** Fetch community info + first tweets page in parallel (Promise.all). */
+  public async communityInfoAndTimeline(
+    communityId: string,
+    count = 20,
+    quoteDepth = 0
+  ): Promise<{ info: any; tweets: TweetPage }> {
+    const [info, tweets] = await Promise.all([
+      this.communityByRestId(communityId),
+      this.communityTimeline(communityId, count, undefined, quoteDepth),
+    ]);
+    return { info, tweets };
+  }
+
   public async lists(userId: string, memberOf: boolean, count: number): Promise<ListInfo[]> {
     const op = memberOf ? "ListMemberships" : "ListOwnerships";
     const variables = {

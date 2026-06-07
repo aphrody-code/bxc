@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/bxc",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "publishConfig": {
     "access": "public"
   },
@@ -120,13 +120,13 @@
     "reflect-metadata": "^0.2.2",
     "type-graphql": "^2.0.0-rc.3",
     "zod": "^4.4.3",
-    "@aphrody/challonge": "workspace:*",
-    "@aphrody/fut": "workspace:*",
-    "@aphrody/voiranime": "workspace:*",
-    "@aphrody/worldbeyblade": "workspace:*",
-    "@aphrody/xcom": "workspace:*",
-    "@aphrody/zukan": "workspace:*",
-    "@aphrody/x": "workspace:*",
-    "@aphrody/xai": "workspace:*"
+    "@aphrody/challonge": "0.1.6",
+    "@aphrody/fut": "0.1.5",
+    "@aphrody/voiranime": "0.1.5",
+    "@aphrody/worldbeyblade": "0.1.5",
+    "@aphrody/xcom": "0.1.6",
+    "@aphrody/zukan": "0.1.5",
+    "@aphrody/x": "1.0.10",
+    "@aphrody/xai": "1.0.5"
   }
 }

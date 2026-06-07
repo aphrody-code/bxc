@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="Aphrody.Bxc"
+    Publisher="CN=Aphrody, O=Aphrody, C=US"
+    Version="0.6.6.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Bxc Browser Automation</DisplayName>
+    <PublisherDisplayName>Aphrody</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22000.0" />
+  </Dependencies>
+
+  <Applications>
+    <Application Id="BxcCLI" Executable="bxc.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Bxc CLI"
+        Description="Bxc Browser Automation CLI"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Logo.png"
+        Square44x44Logo="Assets\SmallLogo.png">
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Required to execute native binaries and FFI dlls -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

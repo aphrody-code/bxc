@@ -29,6 +29,7 @@ interface ScrapeOptions extends CommonOptions {
 	profile: ScrapeProfile;
 	max: number;
 	markdown: boolean;
+	force: boolean;
 }
 
 function printUsage(): void {
@@ -43,6 +44,7 @@ Options:
   --profile <name>   static (default) | fast | http | stealth | max
   --markdown         convert the entire page to GFM Markdown
   --max <N>          max elements returned (default: 50)
+  --force, --no-cache bypass caching and crawl live
   --help, -h         this help
 
 `,
@@ -60,6 +62,7 @@ function parseArgs(
 		profile: "static",
 		max: 50,
 		markdown: false,
+		force: false,
 	};
 	const positional: string[] = [];
 	for (let i = 0; i < argv.length; i++) {
@@ -85,6 +88,10 @@ function parseArgs(
 				break;
 			case "--max":
 				opts.max = parseInt(argv[++i], 10);
+				break;
+			case "--force":
+			case "--no-cache":
+				opts.force = true;
 				break;
 			case "--help":
 			case "-h":
@@ -116,41 +123,35 @@ export async function main(
 		process.exit(EXIT.MISUSE);
 	}
 
-	let page: Awaited<ReturnType<typeof Browser.newPage>> | undefined;
 	try {
-		const isBrowserProfile =
-			opts.profile === "fast" ||
-			opts.profile === "stealth" ||
-			opts.profile === "max";
-		page = await Browser.newPage({
-			profile: opts.profile,
-			spawnOpts: isBrowserProfile
-				? { logLevel: "error", readyTimeoutMs: 10_000 }
-				: undefined,
+		const { smartFetch } = await import("../crawler/crawl-utils.ts");
+		const cheerio = await import("cheerio");
+
+		// Fetch page (via cache or live crawl with escalation)
+		const result = await smartFetch(opts.url, {
+			force: opts.force,
+			initialProfile: opts.profile,
+			timeoutMs: opts.timeoutMs,
 		});
-		await page.goto(opts.url, { timeoutMs: opts.timeoutMs });
 
 		if (opts.markdown) {
-			const md = await page.markdown();
-			Bun.stdout.write(md + "\n");
+			Bun.stdout.write(result.markdown + "\n");
 			return;
 		}
 
-		const els = await page.$$(opts.selector);
+		const $ = cheerio.load(result.html);
+		const els = $(opts.selector);
 		const out: Array<{ index: number; text: string }> = [];
-		for (let i = 0; i < els.length && i < opts.max; i++) {
-			const el = els[i] as unknown as { textContent?: () => Promise<string> };
-			const text = (await el.textContent?.()) ?? "";
+		els.each((i, el) => {
+			if (i >= opts.max) return;
+			const text = $(el).text() ?? "";
 			out.push({ index: i, text: text.trim().slice(0, 500) });
-		}
+		});
 		Bun.stdout.write(JSON.stringify(out, null, 2) + "\n");
 	} catch (err) {
 		logger.error(err instanceof Error ? err.message : String(err));
 		process.exit(EXIT.DATA_ERR);
 	} finally {
-		try {
-			await page?.close();
-		} catch {}
 		await Browser.close().catch(() => {});
 	}
 }

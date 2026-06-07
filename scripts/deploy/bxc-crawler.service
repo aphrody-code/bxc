@@ -10,6 +10,8 @@ User=ubuntu
 WorkingDirectory=/home/ubuntu/bxc
 # 24/7 daemon mode (default). Lightweight `fast` profile for sustained
 # background crawling on a shared VPS; bump to `stealth` for JS-heavy targets.
+# All crawls go through Redis+SQLite caching layer for instant MCP fetches
+# (bxc_get_url_data etc hit cache first; crawler populates in bg).
 ExecStart=/usr/local/bin/bxc crawl-worker --profile fast --queue bxc-autonomous-crawler
 Restart=always
 RestartSec=10

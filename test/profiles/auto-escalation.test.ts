@@ -111,21 +111,31 @@ describe("auto-escalation: signal detection", () => {
 
 describe("auto-escalation: profile chain", () => {
 	it("should have correct escalation order", () => {
-		expect(ESCALATION_ORDER).toEqual(["static", "fast", "ghost"]);
+		expect(ESCALATION_ORDER).toEqual(["static", "http", "fast", "stealth", "max"]);
 	});
 
-	it("should escalate from static to fast", () => {
+	it("should escalate from static to http", () => {
 		const next = nextProfile("static");
+		expect(next).toBe("http");
+	});
+
+	it("should escalate from http to fast", () => {
+		const next = nextProfile("http");
 		expect(next).toBe("fast");
 	});
 
-	it("should escalate from fast to ghost", () => {
+	it("should escalate from fast to stealth", () => {
 		const next = nextProfile("fast");
-		expect(next).toBe("ghost");
+		expect(next).toBe("stealth");
 	});
 
-	it("should not escalate from ghost (end of chain)", () => {
-		const next = nextProfile("ghost");
+	it("should escalate from stealth to max", () => {
+		const next = nextProfile("stealth");
+		expect(next).toBe("max");
+	});
+
+	it("should not escalate from max (end of chain)", () => {
+		const next = nextProfile("max");
 		expect(next).toBeNull();
 	});
 

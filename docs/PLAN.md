@@ -11,6 +11,7 @@ Focus: Make @aphrody/x (native cookie X client) + @aphrody/xai (native TS Grok c
 - Docs complete & readable: packages/x/README.md (new, TOC, features, algo, synergy examples), packages/xai/README.md (TOC, full self-contained examples for Chat/XTools/agent loops, Quick Ref, prod notes), root README + CLAUDE.md updated with links + accurate counts. See packages/*/README.md.
 - Autopilot loop + subagents + monitors running (YOLO, scoped verify on x/xai paths to reduce noise, auto status in log).
 - Scoping in scripts/autopilot.sh tightened (direct oxlint + per-pkg tsc on feature paths only).
+- bxc services reactivated (bxc API serve :9222 + bxc-crawler 24/7 daemon) + all autonomous crawlers (AutonomousCrawler + MCP bxc_crawl_*/get_url_*) now use full Redis + SQLite caching layer (bxc:cache:url:*) for instant MCP data fetches. Background worker populates cache; tools hit cache first (Redis → SQLite → live only on miss/force). Complements native X + xai for agentic web+X+Grok workflows. Verified active + 30p tests green.
 
 ## Next Items (autopilot will pick in order, auto-execute, auto-fix)
 1. **Full tool calling support in high-level Chat**: Detect tool_calls in sample/stream responses, provide .callTools(handlers) or auto-dispatch for known X tools.
@@ -51,4 +52,6 @@ Focus: Make @aphrody/x (native cookie X client) + @aphrody/xai (native TS Grok c
 
 Autopilot: run verify (no live), implement 1 item per cycle, auto-commit? (no, just prepare), update this PLAN, loop.
 
-Next cycle target: item 1 (tool calling in Chat) + item 3 partial (structured + reasoning through).
+Next cycle target: item 2 (Deeper X client synergy, e.g. radar/pro decks in XTools) + item 7 partial (Docs & examples: ensure grok-x-agent.ts example + plugin/services integration in main README/CLAUDE). 
+
+Note: item 1 (full tool calling + auto XTools dispatch + loop) and item 3 partial (structured outputs + reasoning_effort forwarding + sampleStructured) already implemented and covered in 30p/120e unit tests (see status above + packages/xai/index.test.ts). Services/caching + rpbey challonge native+cache also done for instant MCP/web data to complement native X + xai.

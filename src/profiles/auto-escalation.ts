@@ -33,16 +33,17 @@ import type { Page } from "../api/browser.ts";
 /**
  * Escalation step in the profile hierarchy.
  */
-/** Escalation steps — only Lightpanda-backed profiles are allowed. */
-export type EscalationStep = "static" | "fast" | "ghost";
+export type EscalationStep = "static" | "http" | "fast" | "stealth" | "max";
 
 /**
  * Order of escalation: start with the fastest, escalate to slower profiles on failure.
  */
 export const ESCALATION_ORDER: readonly EscalationStep[] = [
 	"static",
+	"http",
 	"fast",
-	"ghost",
+	"stealth",
+	"max",
 ];
 
 /**
@@ -69,20 +70,6 @@ export interface EscalationSignal {
 
 /**
  * Detect if a response indicates the need to escalate to a more capable profile.
- *
- * Checks for:
- * - HTTP 403 Forbidden (likely bot protection)
- * - Cloudflare challenge messages
- * - DataDome protection
- * - CAPTCHA widgets (Turnstile, reCAPTCHA, hCaptcha)
- * - Very small response body with SPA placeholder markers (likely JS-rendered)
- *
- * Does NOT escalate for:
- * - Any 4xx/5xx status codes other than 403 (these are "real" errors, not bot blocks)
- * - Generic small HTML like error pages (404, 500)
- * - Small but valid responses (e.g., minimal API responses)
- *
- * Returns null if the response looks successful (no escalation needed).
  */
 export function detectEscalationSignal(
 	body: string,
@@ -181,7 +168,7 @@ export async function autoEscalate(
 	attempts: EscalationStep[];
 }> {
 	let profile = options.startProfile ?? "static";
-	const maxAttempts = options.maxAttempts ?? 4;
+	const maxAttempts = options.maxAttempts ?? 5;
 	const log = options.log ?? (() => {});
 	const attempts: EscalationStep[] = [];
 
@@ -193,15 +180,8 @@ export async function autoEscalate(
 
 		let page: Page;
 		try {
-			// Dynamically import the profile module
-			const profileModule = await import(`./${profile}/index.ts`);
-			const launch = profileModule.launch;
-			if (typeof launch !== "function") {
-				throw new Error(`Profile ${profile} has no launch() export`);
-			}
-
-			const browser = await launch();
-			page = await browser.newPage();
+			const { Browser } = await import("../api/browser.ts");
+			page = (await Browser.newPage({ profile })) as Page;
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
 			log(`[escalation] Profile ${profile} failed to launch: ${msg}`);

@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/bxc-test",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "publishConfig": {
     "access": "public"
   },
@@ -34,7 +34,7 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@aphrody/bxc": "^0.6.4"
+    "@aphrody/bxc": "^0.6.7"
   },
   "peerDependenciesMeta": {
     "@aphrody/bxc": {
