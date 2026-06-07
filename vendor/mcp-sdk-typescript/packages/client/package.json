@@ -93,7 +93,7 @@
 		"@modelcontextprotocol/eslint-config": "workspace:^",
 		"@modelcontextprotocol/test-helpers": "workspace:^",
 		"@cfworker/json-schema": "^4.1.1",
-		"@types/content-type": "^1.1.8",
+		"@types/content-type": "^2.0.0",
 		"@types/cross-spawn": "^6.0.6",
 		"@types/eventsource": "^1.1.15",
 		"@typescript/native-preview": "^7.0.0-dev.20251217.1",
