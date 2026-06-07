@@ -1,0 +1,268 @@
+/* bxc Gemini TTS — popup, composants Material 3 (thème aphrody sombre). */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 312px;
+  margin: 0;
+  padding: 16px;
+  font-family: var(--md-sys-typescale-font);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Header */
+.hdr h1 {
+  margin: 0;
+  font-size: 22px; /* title-large */
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.hdr .sub {
+  margin: 4px 0 14px;
+  font-size: 12px; /* body-small */
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Surface container (card) */
+.card {
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.card-title {
+  margin: 2px 0 6px;
+  font-size: 13px; /* title-small */
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  letter-spacing: 0.00625rem;
+}
+.card-desc {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.card-desc code,
+.ai-text code {
+  font-family: ui-monospace, monospace;
+  background: var(--md-sys-color-surface-container-highest);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* status pill */
+.status {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+}
+.status.ok {
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);
+}
+.status.err {
+  color: var(--md-sys-color-on-error);
+  background: var(--md-sys-color-error);
+}
+
+/* textarea M3 */
+.ta {
+  width: 100%;
+  resize: vertical;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.ta:focus-visible {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+}
+
+/* AI output */
+.ai-out {
+  margin-top: 8px;
+}
+.ai-text {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+  color: var(--md-sys-color-on-surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 14px; /* body-medium */
+}
+.row > span:first-child {
+  flex: 0 0 auto;
+  color: var(--md-sys-color-on-surface);
+}
+.row em {
+  font-style: normal;
+  color: var(--md-sys-color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* M3 outlined select field */
+.field select {
+  flex: 1 1 auto;
+  min-width: 0;
+  appearance: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+}
+.field select:focus-visible {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+}
+.field option {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* M3 switch */
+.switch {
+  position: relative;
+  width: 52px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+.switch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.switch .track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-highest);
+  border: 2px solid var(--md-sys-color-outline);
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+.switch .thumb {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  transform: translate(0, -50%);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-outline);
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized),
+    width var(--md-sys-motion-duration-short4), height var(--md-sys-motion-duration-short4),
+    background var(--md-sys-motion-duration-short4);
+}
+.switch input:checked + .track {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+.switch input:checked + .track .thumb {
+  width: 24px;
+  height: 24px;
+  transform: translate(20px, -50%);
+  background: var(--md-sys-color-on-primary);
+}
+.switch input:focus-visible + .track {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* M3 slider */
+.slider-row {
+  flex-wrap: wrap;
+}
+input[type="range"] {
+  flex: 1 1 100%;
+  margin: 6px 0 0;
+  accent-color: var(--md-sys-color-primary);
+}
+
+/* M3 buttons */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.btn {
+  position: relative;
+  flex: 1;
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: inherit;
+  font-size: 13px; /* label-large */
+  font-weight: 500;
+  letter-spacing: 0.00625rem;
+  overflow: hidden;
+  color: var(--md-sys-color-primary);
+  background: transparent;
+}
+/* state layer */
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+.btn:hover::before {
+  opacity: 0.08;
+}
+.btn:active::before {
+  opacity: 0.12;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.btn.filled {
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
+}
+.btn.tonal {
+  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-secondary-container);
+}
+.btn.text {
+  flex: 0 0 auto;
+}
+
+.hint {
+  margin: 12px 2px 0;
+  min-height: 14px;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
