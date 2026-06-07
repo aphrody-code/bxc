@@ -1,0 +1,59 @@
+/**
+ * Tokens Material 3 — thème aphrody (sombre).
+ * Palette dérivée de la couleur signature aphrody #984061 (rose), reprise
+ * telle quelle de aphrody/packages/m3-theme/tokens.css (bloc .dark).
+ * Plus les familles shape / elevation / motion de @aphrody/m3-tokens.
+ */
+:root {
+  /* Couleurs (rôles sémantiques M3, sombre) */
+  --md-sys-color-primary: #ffa5c9;
+  --md-sys-color-on-primary: #5e1133;
+  --md-sys-color-primary-container: #7b2949;
+  --md-sys-color-on-primary-container: #ffc0e5;
+  --md-sys-color-secondary: #e3bdc6;
+  --md-sys-color-on-secondary: #422931;
+  --md-sys-color-secondary-container: #5a3f47;
+  --md-sys-color-on-secondary-container: #ffd8e2;
+  --md-sys-color-tertiary: #efbd94;
+  --md-sys-color-error: #ff8575;
+  --md-sys-color-on-error: #720000;
+  --md-sys-color-background: #201a1b;
+  --md-sys-color-on-background: #ebe0e1;
+  --md-sys-color-surface: #201a1b;
+  --md-sys-color-on-surface: #ebe0e1;
+  --md-sys-color-surface-variant: #514347;
+  --md-sys-color-on-surface-variant: #d5c2c6;
+  --md-sys-color-outline: #9e8c90;
+  --md-sys-color-outline-variant: #514347;
+  --md-sys-color-surface-dim: #171213;
+  --md-sys-color-surface-container-lowest: #120d0e;
+  --md-sys-color-surface-container-low: #241e1f;
+  --md-sys-color-surface-container: #2f282a;
+  --md-sys-color-surface-container-high: #3a3334;
+  --md-sys-color-surface-container-highest: #484042;
+  --md-sys-color-shadow: #000000;
+
+  /* Shape — corners M3 */
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 9999px;
+
+  /* Elevation — ombres M3 (key-light .3 + ambient .15) */
+  --md-sys-elevation-level1:
+    0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --md-sys-elevation-level2:
+    0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --md-sys-elevation-level3:
+    0 4px 8px 3px rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.3);
+
+  /* Motion — easings M3 */
+  --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-duration-short4: 200ms;
+
+  /* Typescale — famille (Google Sans) */
+  --md-sys-typescale-font: "Google Sans", "Roboto", system-ui, sans-serif;
+}
