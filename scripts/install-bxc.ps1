@@ -16,7 +16,7 @@ $ZipUrl = "https://github.com/aphrody-code/bxc/releases/download/v$Version/bxc-w
 $ZipPath = Join-Path $InstallDir "bxc.zip"
 
 Write-Output "Downloading Bxc..."
-& curl -#SfLo $ZipPath $ZipUrl
+& curl.exe -#SfLo $ZipPath $ZipUrl
 
 Write-Output "Extracting Bxc..."
 Expand-Archive -Path $ZipPath -DestinationPath $InstallDir -Force
