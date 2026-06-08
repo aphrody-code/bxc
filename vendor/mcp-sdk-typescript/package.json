@@ -68,7 +68,7 @@
 		"@typescript/native-preview": "^7.0.0-dev.20251217.1",
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-n": "^17.23.1",
+		"eslint-plugin-n": "^18.0.1",
 		"fast-glob": "^3.3.3",
 		"lefthook": "^2.0.16",
 		"prettier": "3.6.2",
