@@ -4,6 +4,12 @@ import { QueryIdStore } from "../config/query-ids";
 import { getOperation } from "../config/catalog";
 import { featuresFor, CREATE_TWEET_FEATURES_KNOWN_GOOD, DEFAULT_FEATURES } from "./features";
 import {
+  HermesTweetClient,
+  readHermesTweetReadBackendFromEnv,
+  shouldUseHermesTweetReadBackend,
+  type HermesTweetReadBackend,
+} from "./hermes";
+import {
   XError,
   checkApiErrors,
   walkTimelineTweets,
@@ -76,28 +82,38 @@ export function authHeaders(
 }
 
 export class XClient {
-  public session: XSession;
+  public session?: XSession;
   public clientUuid: string;
   public clientDeviceId: string;
   public queryIds: QueryIdStore;
   public lastRateLimit: RateLimit | null = null;
+  private readonly hermesTweet: HermesTweetClient;
+  private readonly readBackend: HermesTweetReadBackend;
 
-  constructor(session: XSession, queryIds?: QueryIdStore) {
+  constructor(
+    session?: XSession,
+    queryIds?: QueryIdStore,
+    hermesTweet = new HermesTweetClient(),
+    readBackend = readHermesTweetReadBackendFromEnv()
+  ) {
     this.session = session;
     this.clientUuid = crypto.randomUUID();
     this.clientDeviceId = crypto.randomUUID();
     this.queryIds = queryIds || new QueryIdStore();
+    this.hermesTweet = hermesTweet;
+    this.readBackend = readBackend;
   }
 
   public transactionId(): string {
-    return this.session.transaction_id || crypto.randomUUID().replace(/-/g, "");
+    return this.session?.transaction_id || crypto.randomUUID().replace(/-/g, "");
   }
 
   /** Run any HTTP request pre-populated with X auth headers. Keeps cookies updated and retries transient issues. */
   public async request(url: string, init: RequestInit = {}): Promise<Response> {
+    const session = this.requireSession();
     const headers = new Headers(init.headers || {});
 
-    const defaults = authHeaders(this.session, this.clientUuid, this.clientDeviceId);
+    const defaults = authHeaders(session, this.clientUuid, this.clientDeviceId);
     for (const [k, v] of Object.entries(defaults)) {
       if (!headers.has(k)) {
         headers.set(k, v);
@@ -155,28 +171,43 @@ export class XClient {
     for (const cookie of setCookies) {
       const [keyval] = cookie.split(";");
       const [key, val] = keyval.split("=").map((s) => s.trim());
-      if (key === "auth_token" && val && this.session.auth_token !== val) {
-        this.session.auth_token = val;
+      if (key === "auth_token" && val && session.auth_token !== val) {
+        session.auth_token = val;
         cookieRotated = true;
-      } else if (key === "ct0" && val && this.session.ct0 !== val) {
-        this.session.ct0 = val;
+      } else if (key === "ct0" && val && session.ct0 !== val) {
+        session.ct0 = val;
         cookieRotated = true;
       }
     }
 
-    if (cookieRotated && this.session.filePath) {
+    if (cookieRotated && session.filePath) {
       if (process.env.APHRODY_X_DEBUG) {
         console.log(
-          `[session] Cookies rotated. Persisting updated session to ${this.session.filePath}...`
+          `[session] Cookies rotated. Persisting updated session to ${session.filePath}...`
         );
       }
-      this.session.save().catch((e: any) => {
+      session.save().catch((e: any) => {
         console.error(`[session] Failed to persist rotated session: ${e.message}`);
       });
     }
 
     this.captureRateLimit(res.headers);
     return res;
+  }
+
+  private requireSession(): XSession {
+    if (!this.session) {
+      throw new XError("X session is required. Set X_AUTH_TOKEN and X_CT0, or configure the Hermes Tweet read backend for supported public reads.", -1);
+    }
+    return this.session;
+  }
+
+  private shouldUseHermesTweetReadBackend(): boolean {
+    return shouldUseHermesTweetReadBackend(
+      this.readBackend,
+      Boolean(this.session),
+      this.hermesTweet.hasApiKey()
+    );
   }
 
   public captureRateLimit(headers: Headers): void {
@@ -592,6 +623,10 @@ export class XClient {
   }
 
   public async userByScreenName(handle: string): Promise<UserInfo> {
+    if (this.shouldUseHermesTweetReadBackend()) {
+      return await this.hermesTweet.userByScreenName(handle);
+    }
+
     const variables = {
       screen_name: handle,
       withSafetyModeUserFields: true,
@@ -684,12 +719,20 @@ export class XClient {
   }
 
   public async getTweet(tweetId: string, quoteDepth?: number): Promise<Tweet | null> {
+    if (this.shouldUseHermesTweetReadBackend()) {
+      return await this.hermesTweet.getTweet(tweetId);
+    }
+
     const json = await this.tweetDetailRaw(tweetId);
     const page = walkTimelineTweets(json, quoteDepth);
     return page.tweets.find((t) => t.id === tweetId) || null;
   }
 
   public async thread(tweetId: string, cursor?: string, quoteDepth?: number): Promise<TweetPage> {
+    if (this.shouldUseHermesTweetReadBackend()) {
+      return await this.hermesTweet.thread(tweetId, cursor);
+    }
+
     const json = await this.tweetDetailRaw(tweetId, cursor);
     return walkTimelineTweets(json, quoteDepth);
   }
@@ -718,6 +761,10 @@ export class XClient {
     product = "Latest",
     quoteDepth?: number
   ): Promise<TweetPage> {
+    if (this.shouldUseHermesTweetReadBackend()) {
+      return await this.hermesTweet.search(query, count, cursor, product);
+    }
+
     const variables: any = {
       rawQuery: query,
       count,
@@ -736,6 +783,10 @@ export class XClient {
     cursor?: string,
     quoteDepth?: number
   ): Promise<TweetPage> {
+    if (this.shouldUseHermesTweetReadBackend()) {
+      return await this.hermesTweet.userTweets(userId, count, cursor);
+    }
+
     const variables: any = {
       userId,
       count,

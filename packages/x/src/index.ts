@@ -3,6 +3,15 @@
 export { XSession, type XSessionData } from "./core/session";
 export { API_BASE } from "./core/client";
 export {
+  HermesTweetClient,
+  hermesTweetHeaders,
+  readHermesTweetConfigFromEnv,
+  readHermesTweetReadBackendFromEnv,
+  shouldUseHermesTweetReadBackend,
+  type HermesTweetConfig,
+  type HermesTweetReadBackend,
+} from "./core/hermes";
+export {
   XClient,
   type RateLimit,
   type TweetResult,
@@ -137,4 +146,3 @@ export {
   type RankingContext,
   type ScoredPost,
 } from "./algo";
-

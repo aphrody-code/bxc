@@ -101,8 +101,8 @@ export function parseTweetResult(result: any, quoteDepth = DEFAULT_QUOTE_DEPTH):
 
   let view_count: number | undefined;
   const vc = tweet.views?.count;
-  if (vc) {
-    const num = parseInt(vc, 10);
+  if (vc !== undefined && vc !== null) {
+    const num = Number.parseInt(String(vc), 10);
     if (!isNaN(num)) {
       view_count = num;
     }

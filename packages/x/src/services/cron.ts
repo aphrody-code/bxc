@@ -16,7 +16,7 @@ export function startSyncCron(
   options: SyncOptions = {}
 ) {
   const cronExpr = options.cronExpression || "*/15 * * * *"; // every 15 minutes default
-  const handle = client.session.handle || "viewer";
+  const handle = client.session?.handle || "viewer";
 
   return Bun.cron(
     {

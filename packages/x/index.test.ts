@@ -2,9 +2,15 @@
 import { expect, test, describe } from "bun:test";
 import { XSession } from "./src/core/session";
 import { XClient } from "./src/core/client";
+import {
+  HermesTweetClient,
+  hermesTweetHeaders,
+  shouldUseHermesTweetReadBackend,
+} from "./src/core/hermes";
 import { getOperation, allOperations } from "./src/config/catalog";
 import { featuresFor } from "./src/core/features";
 import { parsePostCount } from "./src/services/news";
+import { parseTweetResult } from "./src/core/parse";
 import { Store, edge } from "./src/db/store";
 import { parseArchiveArray, archiveTweetToTweet } from "./src/db/archive";
 import {
@@ -43,11 +49,124 @@ describe("X Client Unit Tests", () => {
     expect(parsePostCount("no number here")).toBeNull();
   });
 
+  test("tweet parsing preserves a zero view count", () => {
+    const tweet = parseTweetResult({
+      rest_id: "zero-views",
+      legacy: { full_text: "New tweet" },
+      views: { count: 0 },
+      core: {
+        user_results: {
+          result: { core: { name: "Aphrody", screen_name: "aphrody_code" } },
+        },
+      },
+    });
+
+    expect(tweet?.view_count).toBe(0);
+  });
+
   test("session string parsing", () => {
     const cookieStr = "auth_token=abc123xyz; ct0=csrf456tuv";
     const session = XSession.fromCookieString(cookieStr);
     expect(session.auth_token).toBe("abc123xyz");
     expect(session.ct0).toBe("csrf456tuv");
+  });
+
+  test("Hermes Tweet backend selection and headers", () => {
+    expect(hermesTweetHeaders("xq_test")).toEqual({
+      Accept: "application/json",
+      "x-api-key": "xq_test",
+    });
+    expect(hermesTweetHeaders("other_token")).toEqual({
+      Accept: "application/json",
+      Authorization: "Bearer other_token",
+    });
+    expect(shouldUseHermesTweetReadBackend("x", false, true)).toBe(false);
+    expect(shouldUseHermesTweetReadBackend("hermes", true, true)).toBe(true);
+    expect(shouldUseHermesTweetReadBackend("auto", true, true)).toBe(false);
+    expect(shouldUseHermesTweetReadBackend("auto", false, true)).toBe(true);
+    expect(shouldUseHermesTweetReadBackend("auto", false, false)).toBe(false);
+  });
+
+  test("Hermes Tweet backend normalizes public read operations", async () => {
+    const calls: Array<{ path: string; search: string; apiKey: string | null }> = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = new URL(String(input));
+      const headers = new Headers(init?.headers);
+      calls.push({
+        path: url.pathname,
+        search: url.search,
+        apiKey: headers.get("x-api-key"),
+      });
+
+      if (url.pathname === "/api/v1/x/users/aphrody_code") {
+        return new Response(JSON.stringify({
+          data: {
+            id: "42",
+            username: "aphrody_code",
+            name: "Aphrody",
+            followers_count: 123,
+            following_count: 7,
+          },
+        }));
+      }
+
+      if (url.pathname === "/api/v1/x/tweets/200") {
+        return new Response(JSON.stringify({
+          data: {
+            tweet: {
+              id: "200",
+              text: "",
+              author: { username: "media_only", name: "Media Only" },
+              media: [{ type: "photo", url: "https://example.com/image.jpg" }],
+            },
+          },
+        }));
+      }
+
+      return new Response(JSON.stringify({
+        tweets: [
+          { text: "Missing ID" },
+          {
+            id: "100",
+            text: "Hello from Hermes Tweet",
+            author: { username: "aphrody_code", name: "Aphrody" },
+            like_count: 9,
+            reply_count: 1,
+          },
+        ],
+        nextCursor: "next-page",
+      }));
+    };
+    const hermes = new HermesTweetClient({ apiKey: "xq_test", fetchImpl });
+    const client = new XClient(undefined, undefined, hermes, "auto");
+
+    const profile = await client.userByScreenName("aphrody_code");
+    const search = await client.search("bxc", 5);
+    const tweets = await client.userTweets("42", 5);
+    const mediaOnlyTweet = await client.getTweet("200");
+
+    expect(profile).toEqual({
+      id: "42",
+      name: "Aphrody",
+      screen_name: "aphrody_code",
+      followers_count: 123,
+      friends_count: 7,
+    });
+    expect(search.tweets[0].text).toBe("Hello from Hermes Tweet");
+    expect(search.tweets).toHaveLength(1);
+    expect(search.next_cursor).toBe("next-page");
+    expect(tweets.tweets[0].author.username).toBe("aphrody_code");
+    expect(mediaOnlyTweet?.id).toBe("200");
+    expect(mediaOnlyTweet?.text).toBe("");
+    expect(mediaOnlyTweet?.media?.[0].type).toBe("photo");
+    expect(calls.map((call) => call.path)).toEqual([
+      "/api/v1/x/users/aphrody_code",
+      "/api/v1/x/tweets/search",
+      "/api/v1/x/users/42/tweets",
+      "/api/v1/x/tweets/200",
+    ]);
+    expect(calls[1].search).toContain("q=bxc");
+    expect(calls.every((call) => call.apiKey === "xq_test")).toBe(true);
   });
 
   test("SQLite store operations", () => {
