@@ -32,6 +32,16 @@ bun.lock
 tmp/
 .tmp/
 
+# Standalone builds produced by `bun build --compile` (258 Mo pièce, non suivis
+# par git). "files" inclut bin/ pour le lanceur `bin/bxc` ; sans ces règles le
+# tarball passait de 1,4 Mo à 516 Mo. Le binaire autonome se distribue par
+# l'installateur, pas par npm.
+bin/*.compiled
+bin/bxc.old-*
+
+# Sorties d'exécution des acteurs (crawls locaux, jamais du code)
+src/actors/**/storage/
+
 # Claude Code plugin assets (separate distribution channel)
 .claude/
 .claude-plugin/
