@@ -26,7 +26,7 @@ async function getOrCreatePage(
 
 const server = new McpServer({
 	name: "bxc-native-mcp",
-	version: "0.6.6",
+	version: "0.9.0",
 });
 
 /** Maps a friendly search vertical to Google's `udm` result-mode code. */
@@ -1806,6 +1806,186 @@ server.registerTool(
 				break;
 			}
 		}
+
+		return {
+			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+		};
+	},
+);
+
+// Autonomous purge of the authenticated account's following list.
+// Destructive and irreversible: plan-only unless `confirm: true` is passed.
+// The heavy lifting (rate governor + resumable journal) lives in
+// `@aphrody/x` → `purgeFollowing`; see packages/x/src/services/unfollow.ts.
+server.registerTool(
+	"bxc_x_unfollow_purge",
+	{
+		description:
+			"Empty the authenticated X account's following list, accounts that do not follow back first, then mutuals. Rate-limit aware (randomised pacing + rolling 15 min / 24 h budgets + x-rate-limit headers) and resumable across runs via an on-disk journal. DESTRUCTIVE AND IRREVERSIBLE: without confirm=true this only plans the queue and returns counts, which is the right call for any exploratory use.",
+		inputSchema: z.object({
+			confirm: z
+				.boolean()
+				.default(false)
+				.describe(
+					"Must be true to actually unfollow. Left false, the tool reads the follow graph and returns the plan without mutating anything.",
+				),
+			limit: z
+				.number()
+				.int()
+				.min(1)
+				.max(1000)
+				.optional()
+				.describe("Cap the number of accounts removed in this call. Recommended for agent-driven runs."),
+			non_mutual_only: z
+				.boolean()
+				.default(false)
+				.describe("Stop after the accounts that do not follow back; never touch mutuals."),
+			refresh: z
+				.boolean()
+				.default(false)
+				.describe("Re-read the follow graph and rebuild the queue instead of resuming the journal."),
+			per_window: z
+				.number()
+				.int()
+				.min(1)
+				.max(200)
+				.optional()
+				.describe("Max removals per rolling 15 min window (default 45)."),
+			per_day: z
+				.number()
+				.int()
+				.min(1)
+				.max(1000)
+				.optional()
+				.describe("Max removals per rolling 24 h (default 400)."),
+			cookie: z
+				.string()
+				.optional()
+				.describe('Explicit "auth_token=...; ct0=..." pair (overrides session/env).'),
+		}),
+	},
+	async (args) => {
+		const { XClient, XSession, purgeFollowing } = await import("@aphrody/x");
+		const session = args.cookie
+			? XSession.fromCookieString(args.cookie)
+			: XSession.loadOrEnv();
+		const client = new XClient(session);
+
+		const report = await purgeFollowing(client, {
+			dryRun: !args.confirm,
+			limit: args.limit,
+			nonMutualOnly: args.non_mutual_only,
+			refresh: args.refresh,
+			perWindow: args.per_window,
+			perDay: args.per_day,
+			// An agent call must never block for hours on a rate-limit window.
+			once: true,
+		});
+
+		const { planned, ...summary } = report;
+		const payload = {
+			...summary,
+			eta_iso: report.eta_epoch ? new Date(report.eta_epoch).toISOString() : undefined,
+			planned_count: planned.length,
+			planned_preview: planned.slice(0, 25),
+			note: report.dry_run
+				? "Plan only — nothing was unfollowed. Re-call with confirm=true to execute."
+				: "Budgets are enforced per call; re-call to continue draining the queue.",
+		};
+
+		return {
+			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+		};
+	},
+);
+
+// Autonomous purge of the authenticated account's own posts.
+// Destructive and irreversible: plan-only unless `confirm: true` is passed.
+// Engine: `@aphrody/x` → `purgeTweets` (packages/x/src/services/purge-tweets.ts).
+server.registerTool(
+	"bxc_x_purge_tweets",
+	{
+		description:
+			"Delete the authenticated X account's own tweets, replies and media posts below a like threshold, least-liked first. Walks all three timelines (UserTweets, UserTweetsAndReplies, UserMedia) since none is a superset of the others. Rate-limit aware (randomised pacing + rolling 15 min / 24 h budgets + x-rate-limit headers) and resumable across runs via an on-disk journal. DESTRUCTIVE AND IRREVERSIBLE: without confirm=true this only plans the queue and returns counts, which is the right call for any exploratory use.",
+		inputSchema: z.object({
+			confirm: z
+				.boolean()
+				.default(false)
+				.describe(
+					"Must be true to actually delete. Left false, the tool reads the timelines and returns the plan without mutating anything.",
+				),
+			max_likes: z
+				.number()
+				.int()
+				.min(0)
+				.default(1000)
+				.describe(
+					"Keep posts with at least this many likes; everything strictly below is queued.",
+				),
+			kinds: z
+				.array(z.enum(["tweet", "reply", "media", "retweet"]))
+				.optional()
+				.describe("Which kinds to delete. Default: tweet, reply and media."),
+			include_retweets: z
+				.boolean()
+				.default(false)
+				.describe(
+					"Also undo retweets. Off by default: a retweet's like count belongs to someone else's post, so the threshold says nothing about it.",
+				),
+			keep_ids: z
+				.array(z.string())
+				.optional()
+				.describe("Post ids to never touch (pinned post, keepsakes)."),
+			limit: z
+				.number()
+				.int()
+				.min(1)
+				.max(1000)
+				.optional()
+				.describe("Cap the number of posts deleted in this call. Recommended for agent-driven runs."),
+			refresh: z
+				.boolean()
+				.default(false)
+				.describe("Re-walk the timelines and rebuild the queue instead of resuming the journal."),
+			per_window: z.number().int().min(1).max(200).optional().describe("Max deletions per rolling 15 min window (default 45)."),
+			per_day: z.number().int().min(1).max(1000).optional().describe("Max deletions per rolling 24 h (default 400)."),
+			cookie: z
+				.string()
+				.optional()
+				.describe('Explicit "auth_token=...; ct0=..." pair (overrides session/env).'),
+		}),
+	},
+	async (args) => {
+		const { XClient, XSession, purgeTweets } = await import("@aphrody/x");
+		const session = args.cookie
+			? XSession.fromCookieString(args.cookie)
+			: XSession.loadOrEnv();
+		const client = new XClient(session);
+
+		const report = await purgeTweets(client, {
+			dryRun: !args.confirm,
+			maxLikes: args.max_likes,
+			kinds: args.kinds,
+			includeRetweets: args.include_retweets,
+			protectIds: args.keep_ids,
+			limit: args.limit,
+			refresh: args.refresh,
+			perWindow: args.per_window,
+			perDay: args.per_day,
+			// An agent call must never block for hours on a rate-limit window.
+			once: true,
+		});
+
+		const { planned, ...summary } = report;
+		const payload = {
+			...summary,
+			eta_iso: report.eta_epoch ? new Date(report.eta_epoch).toISOString() : undefined,
+			planned_count: planned.length,
+			planned_preview: planned.slice(0, 25),
+			note: report.dry_run
+				? "Plan only — nothing was deleted. Re-call with confirm=true to execute."
+				: "Budgets are enforced per call; re-call to continue draining the queue.",
+		};
 
 		return {
 			content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],

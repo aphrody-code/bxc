@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.7.0] - 2026-08-31
+
+### Added
+
+- **Objectif directeur — vie privée.** Le cap du dépôt devient la protection
+  des informations personnelles, la confidentialité et l'anonymat en ligne ; le
+  moteur Zero-Spawn est le moyen, plus la fin. Feuille de route P0→P5 dans
+  [`MEGA-PLAN.md`](MEGA-PLAN.md).
+- **Noyau PII** — `src/privacy/pii.ts`, exporté par `@aphrody/bxc/privacy` et
+  `@aphrody/bxc/privacy/pii` : `detectPii`, `redactPii`, `redactObject`,
+  `summarizePii`, `pseudonymize`, plus les validateurs `luhn`, `ibanIsValid`,
+  `nirIsValid`. Précision > rappel — seul ce qui se valide est signalé, `siren`
+  reste hors des types par défaut. Pseudonymisation HMAC à sel **obligatoire** :
+  elle refuse plutôt que de dégrader en hash nu. 100 % local, rien ne sort de la
+  machine. Tests : `test/privacy/pii.test.ts`.
+- **Purges autonomes X** — noyau partagé
+  `packages/x/src/services/purge-engine.ts` (`RateGovernor`, taxonomie
+  d'erreurs, `runMutationQueue`, `readWithBackoff`) : trois freins indépendants
+  (jitter 4-11 s, 45 / fenêtre de 15 min, 400 / 24 h), lecture des en-têtes
+  `x-rate-limit-*`, journaux reprenables en 0600 sous `~/.aphrody/`.
+  - `unfollow.ts` (`purgeFollowing`) — vide la liste d'abonnements, non-mutuels
+    d'abord. CLI `bxc x unfollow`, MCP `bxc_x_unfollow_purge`.
+  - `purge-tweets.ts` (`purgeTweets`) — supprime tweets / réponses / médias sous
+    un seuil de likes, les moins likés d'abord, en parcourant les trois
+    timelines ; retweets hors périmètre par défaut. CLI `bxc x purge-tweets`,
+    MCP `bxc_x_purge_tweets`.
+  - Les deux : **dry-run par défaut**, `--yes` pour exécuter. 81 tests à horloge
+    injectée, aucun appel live.
+- **Exploitation VPS des purges** — daemons `bxc-x-unfollow.service` /
+  `bxc-x-purge-tweets.service` (auto-retry ; sortie **77** = credentials
+  rejetés → `RestartPreventExitStatus`, **130** = arrêt propre →
+  `SuccessExitStatus`) et watchdog commun `bxc-x-purge-doctor.timer`
+  (`scripts/x-purge-doctor.sh`, 10 min). Opt-in — non installés par
+  `bxc-control deploy`. Procédure dans [`DEPLOY.md`](DEPLOY.md).
+- `EXIT.NOPERM` (77, sysexits `EX_NOPERM`) dans `src/cli/shared.ts` : credentials
+  rejetés, réessayer ne sert à rien.
+
+### Changed
+
+- **`scripts/build-standalone.ts` ne renomme plus les identifiants par défaut.**
+  `--minify` cassait les `eval` CDP qui référencent des fonctions par nom (ex.
+  `awaitPromise`) : tout binaire compilé échouait sur les commandes navigateur.
+  Le build garde `--minify-whitespace --minify-syntax` ; `BXC_FULL_MINIFY=1`
+  réactive le renommage.
+- `bin/bxc` accepte `BXC_FROM_SOURCE=1` pour court-circuiter le binaire
+  standalone et repasser par les sources.
+
+### Meta
+
+- Versions alignées : racine `0.7.0`, `ai.json` et `gemini-extension.json`
+  rattrapés depuis un `0.6.4` périmé, serveur MCP `0.9.0`,
+  `@aphrody/x` **1.1.0** (nouvelle surface publique : `purge-engine`,
+  `unfollow`, `purge-tweets`).
+- `bun.lock` régénéré : le SDK MCP publié (`^1.30.0`) remplace l'entrée
+  `workspace:*` restée dans le verrou après la version précédente.
+
+---
+
 ## [0.6.2] - 2026-06-04
 
 ### Changed

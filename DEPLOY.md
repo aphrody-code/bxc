@@ -112,6 +112,79 @@ Builds bxc MCP, aphrody Rust CLI/MCP, runs `vps-sync-agent-stack.sh`, optional y
 
 ---
 
+## Purges autonomes X (optionnel)
+
+Deux purges indépendantes, même architecture :
+
+| Unité | Rôle |
+| --- | --- |
+| `bxc-x-unfollow.service` | vide la liste d'abonnements, non-mutuels d'abord |
+| `bxc-x-purge-tweets.service` | supprime tweets/réponses/médias sous le seuil de likes, moins likés d'abord |
+| `bxc-x-purge-doctor.timer` | surveille et répare **les deux**, toutes les 10 min |
+
+Chaque daemon dort lui-même à travers les fenêtres de 15 min et le plafond de
+24 h — `--per-window 8` étale les 400/jour sur ~12 h au lieu d'une rafale de
+2 h 30. Files et budgets glissants vivent dans
+`~/.aphrody/x-unfollow-<handle>.json` et `~/.aphrody/x-purge-tweets-<handle>.json`,
+donc un redémarrage ne rejoue rien et ne peut pas provoquer de rafale.
+
+**Auto-retry.** `Restart=on-failure` + `RestartSec=120`, sans plafond de
+redémarrages (`StartLimitIntervalSec=0`) : kill, OOM, coupure réseau, série de
+5xx — ça repart. Deux exceptions volontaires : `SuccessExitStatus=130` (arrêt
+propre sur SIGTERM, journal à jour) et `RestartPreventExitStatus=77`
+(credentials rejetés — relancer ne répare rien, et marteler X avec un cookie
+mort est le meilleur moyen de faire flaguer le compte).
+
+**Auto-fix.** `bxc-x-purge-doctor` (`scripts/x-purge-doctor.sh`) tourne en root
+toutes les 10 min. Il teste la session **une fois** puis applique à chaque
+purge installée (une unité absente est ignorée, pas signalée) :
+
+| Constat | Réparation |
+| --- | --- |
+| binaire absent ou périmé | alerte (rebuild manuel requis) |
+| session X rejetée | resync depuis `~/.bxc/cookies/xcom.json`, sinon arrêt des daemons + alerte |
+| journal illisible | replanification (`--refresh`) |
+| file vide | arrêt + `disable` du daemon |
+| unité en `failed` | `reset-failed` puis `start` |
+| daemon arrêté, file non vide | `start` |
+| aucune progression depuis 25 h | `restart` |
+
+```bash
+# 1. Vérifier les plans (lecture seule, aucune mutation)
+bxc x unfollow
+bxc x purge-tweets --max-likes 1000
+
+# 2. Installer
+sudo install -m755 ~/bxc/scripts/x-purge-doctor.sh /usr/local/bin/bxc-x-purge-doctor
+sudo install -m644 ~/bxc/scripts/deploy/bxc-x-unfollow.service     /etc/systemd/system/
+sudo install -m644 ~/bxc/scripts/deploy/bxc-x-purge-tweets.service /etc/systemd/system/
+sudo install -m644 ~/bxc/scripts/deploy/bxc-x-purge-doctor.service /etc/systemd/system/
+sudo install -m644 ~/bxc/scripts/deploy/bxc-x-purge-doctor.timer   /etc/systemd/system/
+sudo install -d -m 0700 -o ubuntu -g ubuntu /var/log/bxc   # les journaux nomment le compte et le contenu supprime
+sudo systemctl daemon-reload
+
+# 3. Activer ce dont tu as besoin (les deux sont independantes)
+sudo systemctl enable --now bxc-x-unfollow.service
+sudo systemctl enable --now bxc-x-purge-tweets.service
+sudo systemctl enable --now bxc-x-purge-doctor.timer
+
+# 4. Suivre
+systemctl status bxc-x-unfollow.service bxc-x-purge-tweets.service
+tail -f /var/log/bxc/x-unfollow.log /var/log/bxc/x-purge-tweets.log
+tail -f /var/log/bxc/x-purge-doctor.log
+jq '.queue | length' ~/.aphrody/x-*.json
+
+# Diagnostic sans rien changer
+sudo /usr/local/bin/bxc-x-purge-doctor --dry-run
+sudo /usr/local/bin/bxc-x-purge-doctor --dry-run --only tweets
+```
+
+Arrêt : `sudo systemctl disable --now bxc-x-purge-doctor.timer <unite>`
+(désactiver le doctor aussi, sinon il relance le daemon au tick suivant). Les
+files sont conservées — réactiver reprend exactement où ça s'était arrêté.
+
+---
+
 ## Clean rebuild
 
 ```bash

@@ -9,6 +9,23 @@ bxc — moteur de navigation "Zero-Spawn" pour agents IA. Bun runtime + Rust V8
 bindings + historique Zig DOM. Publié sur GitHub Packages comme
 `@aphrody/bxc` (repo `aphrody-code/bxc`), consommé par `rpb-challonge` (vps).
 
+## Objectif directeur (depuis 2026-08-27)
+
+**Protection des informations personnelles, confidentialité, anonymat en ligne.**
+Le moteur de navigation est le moyen, plus la fin. Évaluer toute feature à
+l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
+
+- **Noyau commun** : `src/privacy/pii.ts` (export `@aphrody/bxc/privacy`) —
+  détection + caviardage des données identifiantes. Tout ce qui doit
+  *reconnaître* une donnée perso passe par là, comme les deux purges X
+  partagent `purge-engine.ts`. Précision > rappel : ce qui se valide est validé
+  (Luhn, IBAN mod-97, clé NIR) ; `siren` est hors des types par défaut (9
+  chiffres sur 10 passent Luhn). Pseudonymisation HMAC à sel obligatoire —
+  refuser plutôt que dégrader en hash nu. Tests : `test/privacy/pii.test.ts`.
+- **Briques existantes qui servent déjà l'objectif** : purges X (minimisation
+  des données publiées), `src/profiles/fingerprint.ts` + `ghost/`
+  (empreinte de navigation), `src/cookies/` (cloisonnement des sessions).
+
 ## Rappels critiques
 
 - **Test scope** : `bun test test/ packages/ src/` — **jamais sans path**, sinon
@@ -21,10 +38,29 @@ bindings + historique Zig DOM. Publié sur GitHub Packages comme
   - `packages/x/README.md` (complete: features, algo ranking from x-algorithm, X+Grok synergy, usage, CLI, MCP, prod notes).
   - `packages/xai/README.md` (complete & lisible: TOC, auth/SuperGrok, high-level Chat API with full examples for createChat/append/sample/stream/executeToolCalls/sampleStructured, XTools + tool defs + injectable for tests, native integration loops, quick ref, prod notes, contributing).
   See packages/xai/examples/grok-x-agent.ts for runnable native X + Grok example (docs item 7).
+  - **Purges autonomes** : noyau partage `packages/x/src/services/purge-engine.ts`
+    (`RateGovernor`, taxonomie d'erreurs, `runMutationQueue`, `readWithBackoff`). Trois freins
+    independants (jitter 4-11 s, 45 / fenetre 15 min, 400 / 24 h) + headers `x-rate-limit-*`,
+    journaux reprenables 0600 sous `~/.aphrody/`. **Un fix dans le noyau vaut pour les deux.**
+    - `unfollow.ts` (`purgeFollowing`) — vide les abonnements, non-mutuels d'abord.
+      CLI `bxc x unfollow`, MCP `bxc_x_unfollow_purge`, journal `x-unfollow-<handle>.json`.
+    - `purge-tweets.ts` (`purgeTweets`) — supprime tweets/reponses/medias sous un seuil de
+      likes, moins likes d'abord ; parcourt les 3 timelines (aucune n'est un sur-ensemble des
+      autres) ; retweets hors scope par defaut (leurs likes ne sont pas les tiens).
+      CLI `bxc x purge-tweets`, MCP `bxc_x_purge_tweets`, journal `x-purge-tweets-<handle>.json`.
+    Les deux : dry-run par defaut, `--yes` pour executer. Exploitation VPS : daemons
+    `bxc-x-unfollow.service` / `bxc-x-purge-tweets.service` (auto-retry ; code de sortie **77**
+    = credentials rejetes → `RestartPreventExitStatus`, **130** = arret propre →
+    `SuccessExitStatus`) + watchdog commun `scripts/x-purge-doctor.sh`.
+    Tests : `packages/x/unfollow.test.ts` (41) + `packages/x/purge-tweets.test.ts` (40),
+    horloge injectee, aucun appel live.
   - Root README.md table and sections link to them.
-  - Keep in sync with code changes (new Chat methods, XTools, etc.). Tests: see `packages/x/index.test.ts` and `packages/xai/index.test.ts` (30 pass + 2 live-skipped = 32 total across packages, 120 expects; covers Chat full surface + stream/toolDeltas/execute/sampleStructured, XTools injectable+auto-dispatch+defs, algo rank full (filters/scoring/diversity), cross synergy with mock XClient, no live by default).
+  - Keep in sync with code changes (new Chat methods, XTools, etc.). Tests: see `packages/x/index.test.ts`, `packages/x/unfollow.test.ts`, `packages/x/purge-tweets.test.ts` et `packages/xai/index.test.ts` (118 pass + 2 live-skipped = 120 total across packages; covers Chat full surface + stream/toolDeltas/execute/sampleStructured, XTools injectable+auto-dispatch+defs, algo rank full (filters/scoring/diversity), cross synergy with mock XClient, no live by default).
   - Sub-docs: packages/x/docs/ (COVERAGE.md updated with algo/tests notes, X_PRO.md, etc.).
 - **`packages/xai`** (avec `packages/x`): client xAI/Grok natif. Toujours étendre createChat pour features Python SDK (reasoning_effort, search_parameters, structured zod/simple), XTools pour actions x (tweets/news/whoami+), améliorer erreurs Chat, tests unit tool-calling, compat SUPER_GROK_TOKEN. Mettre à jour README + CLAUDE. Focus combo Grok+X production agents. Vérif: bun test packages/xai/ + typecheck + lint (scoped, no live).
+- **Services longs testables** : injecter `now` / `sleep` / `random` dans les
+  options (cf. `packages/x/src/services/purge-engine.ts`) → budgets, fenêtres
+  glissantes et backoff se testent sur horloge factice, sans attente réelle.
 - **MCP server** : `src/mcp/server.ts` (`bxc-native-mcp`, version = const en
   haut du fichier). Build : `bun run build:mcp` → `dist/standalone/bxc-mcp`.
   Manifest Gemini = `gemini-extension.json` (pointe sur `/usr/local/bin/bxc-mcp`).
@@ -42,6 +78,8 @@ bun install                                  # deps workspace
 bun test test/ packages/ src/                # scope interne uniquement
 bun run build                                # rust-bridge + msvc + standalone
 bun run build:linux                          # Linux Rust cdylib + standalone
+BXC_TARGETS=linux-x64 bun scripts/build-standalone.ts  # rebuild TS seul (sans cargo)
+sudo install -m755 dist/standalone/bxc-linux-x64 /usr/local/bin/bxc  # deploy binaire seul
 bun run typecheck                            # tsc --noEmit sur workspaces
 bun run lint                                 # oxlint .
 
@@ -52,6 +90,8 @@ bun src/cli/index.ts google search <q>       # Google Atlas Audits
 bun src/cli/index.ts xcom profile <user>     # Twitter profile markdown / screenshot
 bun src/cli/index.ts x whoami                # Native X client (profile|tweets|search|news|whoami|rank|foryou + x-algorithm)
 bun src/cli/index.ts x foryou                # demo local For You ranking (integrated from xai-org/x-algorithm)
+bun src/cli/index.ts x unfollow              # purge autonome des abonnements (dry-run ; --yes pour executer)
+bun src/cli/index.ts x purge-tweets          # purge autonome des posts sous N likes (dry-run ; --yes)
 
 # Stack binaire
 cargo build -p bxc-engine --release          # moteur Rust
@@ -68,7 +108,11 @@ bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.tom
 > ajouter un `case "<name>"` dans `src/cli/index.ts`, et une ligne dans `printUsage()`.
 
 > **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-crawler.service`
-> (24/7 `crawl-worker`). Units source dans `scripts/deploy/`. Repo **PUBLIC** depuis 2026-06-01.
+> (24/7 `crawl-worker`) + `bxc-x-unfollow.service` / `bxc-x-purge-tweets.service`
+> (daemons de purge X) + `bxc-x-purge-doctor.timer` (watchdog auto-fix commun,
+> 10 min) — les purges sont opt-in, non installees par `bxc-control deploy`,
+> cf. DEPLOY.md. Units source dans `scripts/deploy/`. Repo **PUBLIC** depuis
+> 2026-06-01.
 
 ## Layout
 
@@ -138,10 +182,33 @@ gh release create vX.Y.Z --repo aphrody-code/bxc --title "bxc vX.Y.Z" --notes "<
   plus à l'import — les chemins texte (extractTitle/stripTags/markdown) retombent
   sur un fallback JS pur (`src/internal/html-to-markdown.ts`), seules les requêtes
   CSS natives lèvent une erreur actionnable. Override : `BXC_RUST_BRIDGE_LIB`.
-- **Test scope walk vendor** : `bun test test/ src/` discover quand même
-  `vendor/mcp-sdk-typescript/**` → ~60-140 échecs préexistants (Zod v4, Task
-  pagination, capabilities, CF-workers qui exige `pnpm`). Ce ne sont PAS des
-  régressions bxc — filtrer le bruit MCP-SDK avant de conclure.
+- **Test scope walk vendor** : `bun test <paths>` discover quand même
+  `vendor/mcp-sdk-typescript/**` ET `vendor/chroma/**` → ~200 échecs
+  préexistants (Zod v4, Task pagination, capabilities, `chromadb` absent,
+  CF-workers qui exige `pnpm`). Ce ne sont PAS des régressions bxc. Pour un
+  signal net, nommer les cibles exactes :
+  `bun test packages/x packages/xai test/cli/install.test.ts`.
+- **`bxc x <cmd> --help` sort en 1** (`EXIT.MISUSE`) : sous `set -o pipefail`,
+  `bxc … --help | grep -q X` renvoie 1 même quand grep matche. Capturer la
+  sortie d'abord (`H="$(bxc … --help 2>&1 || true)"; grep -q X <<<"$H"`).
+- **`pgrep -f '<motif>'` s'auto-matche aussi, en pire** : une boucle
+  `while pgrep -f foo; do sleep; done` écrite *dans* un script passé en heredoc
+  à Bash met le motif dans la ligne de commande du shell parent → la condition
+  est vraie pour toujours et l'attente ne sort jamais. Filtrer par nom de
+  binaire (`pgrep -x`), ou tester un fichier sentinelle écrit en fin de tâche.
+- **`pkill -f '<motif>'` s'auto-matche** : la commande de l'outil Bash contient
+  le motif → le shell courant se tue (exit 143/144, patch en cours perdu).
+  Utiliser TaskStop sur l'id de tâche, ou `systemctl stop`.
+- **Timer systemd sur `Type=oneshot`** : `OnUnitActiveSec` ne se replanifie pas
+  (`NextElapseUSecMonotonic=infinity`, `NEXT` vide dans `list-timers`) → utiliser
+  `OnUnitInactiveSec`. `Persistent=` ne s'applique qu'à `OnCalendar`. Vérifier
+  avec `systemctl list-timers <unit>` que `NEXT` est renseigné.
+- **Timelines X** : (1) un retweet est attribué au **retweeteur** — `author_id`
+  vaut le tien, un contrôle d'auteur ne détecte rien ; utiliser le préfixe
+  `RT @handle:`. (2) X sert des curseurs frais sur des pages déjà vues :
+  `!next_cursor` n'est pas une fin de timeline fiable, il faut une garde
+  « N pages sans rien de neuf ». (3) Les chemins de **lecture** ont besoin d'un
+  backoff 429 autant que les mutations (cf. `readWithBackoff`).
 - **Mapping de profiles des scrapers** : Le CLI expose `stealth`, `max`, `fast`, `static` et `http`. Certains scrapers internes (comme `fut` ou `voiranime`) n'acceptent qu'un sous-ensemble (ex: `ghost` ou `static`). Veillez à bien mapper les types de profile CLI vers les options attendues par les scrapers sous peine d'erreurs strictes à la compilation TypeScript (`tsc --noEmit`).
 - **Pipe masque le code retour** : `cargo build … | tail` renvoie l'exit de `tail` (0), pas de cargo. Capturer le vrai code : `cmd > /tmp/x.log 2>&1; echo $?`.
 - **`links="sqlite3"` (rusqlite)** : `libsqlite3-sys` déclare `links` → UNE seule version de rusqlite peut être linkée dans le cdylib. Toutes les crates de `rust-bridge/` doivent partager `rusqlite 0.37` (via `{ workspace = true }`). Aligner les deps partagées sur `[workspace.dependencies]` (features additives OK : `uuid = { workspace = true, features = ["fast-rng"] }`).

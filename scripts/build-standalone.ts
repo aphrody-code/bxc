@@ -186,7 +186,13 @@ async function buildOne(
 		"--compile",
 		`--target=${t.target}`,
 		`--outfile=${out}`,
-		"--minify",
+		// Par defaut on NE renomme PAS les identifiants : `--minify` casse les eval
+		// CDP qui referencent des fonctions par nom (ex. `awaitPromise`), et le
+		// binaire echoue sur toutes les commandes navigateur. On garde
+		// whitespace+syntax pour la taille. BXC_FULL_MINIFY=1 pour reactiver.
+		...(process.env.BXC_FULL_MINIFY
+			? ["--minify"]
+			: ["--minify-whitespace", "--minify-syntax"]),
 		"--sourcemap=linked",
 		"--compile-exec-argv=--smol",
 		"--no-compile-autoload-tsconfig",

@@ -92,3 +92,4 @@ storage/
 
 # Registry auth token — never commit
 /.npmrc
+data/ostendis/
