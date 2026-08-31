@@ -45,11 +45,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
-- **`scripts/build-standalone.ts` ne renomme plus les identifiants par défaut.**
-  `--minify` cassait les `eval` CDP qui référencent des fonctions par nom (ex.
-  `awaitPromise`) : tout binaire compilé échouait sur les commandes navigateur.
-  Le build garde `--minify-whitespace --minify-syntax` ; `BXC_FULL_MINIFY=1`
-  réactive le renommage.
+- **Les binaires standalone ne sont plus minifiés du tout.** Les `eval` CDP
+  référencent des fonctions par nom (`awaitPromise`) depuis des chaînes que le
+  bundler ne voit pas : `--minify` les cassait en renommant, et
+  `--minify-syntax` les cassait aussi en réécrivant les déclarations. Tout
+  binaire compilé échouait sur les commandes navigateur (`bxc recon <url>` →
+  « awaitPromise is not defined »). `scripts/build-standalone.ts` et
+  `build:mcp` compilent désormais sans minification ; `BXC_MINIFY=1` la
+  réactive en connaissance de cause.
 - `bin/bxc` accepte `BXC_FROM_SOURCE=1` pour court-circuiter le binaire
   standalone et repasser par les sources.
 
