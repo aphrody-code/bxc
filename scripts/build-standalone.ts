@@ -186,13 +186,14 @@ async function buildOne(
 		"--compile",
 		`--target=${t.target}`,
 		`--outfile=${out}`,
-		// Par defaut on NE renomme PAS les identifiants : `--minify` casse les eval
-		// CDP qui referencent des fonctions par nom (ex. `awaitPromise`), et le
-		// binaire echoue sur toutes les commandes navigateur. On garde
-		// whitespace+syntax pour la taille. BXC_FULL_MINIFY=1 pour reactiver.
-		...(process.env.BXC_FULL_MINIFY
-			? ["--minify"]
-			: ["--minify-whitespace", "--minify-syntax"]),
+		// AUCUNE minification par defaut. Les eval CDP referencent des fonctions
+		// par nom (`awaitPromise`) et vivent dans des chaines que le bundler ne
+		// voit pas : `--minify` les casse en renommant, mais `--minify-syntax`
+		// les casse aussi en reecrivant les declarations concernees. Verifie sur
+		// v0.7.0 : avec l'un ou l'autre, `bxc recon <url>` sort
+		// « awaitPromise is not defined » ; sans les deux, il rend le rapport.
+		// BXC_MINIFY=1 pour reactiver en connaissance de cause.
+		...(process.env.BXC_MINIFY ? ["--minify"] : []),
 		"--sourcemap=linked",
 		"--compile-exec-argv=--smol",
 		"--no-compile-autoload-tsconfig",
