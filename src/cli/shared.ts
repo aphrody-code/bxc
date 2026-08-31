@@ -86,5 +86,7 @@ export const EXIT = {
 	MISUSE: 1,
 	DATA_ERR: 65,
 	SOFTWARE: 70,
+	/** Credentials rejected (sysexits EX_NOPERM). Retrying will not help. */
+	NOPERM: 77,
 	SIGINT: 130,
 } as const;

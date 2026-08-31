@@ -1,0 +1,17 @@
+[Unit]
+Description=Déclenche le doctor des purges X toutes les 10 min
+Documentation=https://github.com/aphrody-code/bxc
+
+[Timer]
+# Toutes les 10 min : assez serré pour rattraper vite un daemon tombé, assez
+# lâche pour ne pas peser. OnUnitInactiveSec (et non OnUnitActiveSec) car le
+# doctor est un oneshot dont la durée varie avec les appels réseau.
+OnBootSec=3min
+OnUnitInactiveSec=10min
+RandomizedDelaySec=1min
+AccuracySec=30s
+# Pas de Persistent= : il ne s'applique qu'aux declencheurs OnCalendar. La
+# reprise apres reboot vient d'OnBootSec.
+
+[Install]
+WantedBy=timers.target

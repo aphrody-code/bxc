@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/bxc",
-  "version": "0.6.7",
+  "version": "0.7.0",
   "publishConfig": {
     "access": "public"
   },
@@ -34,6 +34,8 @@
     ".": "./src/api/browser.ts",
     "./browser": "./src/api/browser.ts",
     "./detect": "./src/detect.ts",
+    "./privacy": "./src/privacy/index.ts",
+    "./privacy/pii": "./src/privacy/pii.ts",
     "./google": "./src/google/index.ts",
     "./google/gemini-web": "./src/google/gemini-web.ts",
     "./google/gemini-session": "./src/google/gemini-session.ts",
@@ -127,8 +129,8 @@
     "@aphrody/worldbeyblade": "0.1.5",
     "@aphrody/xcom": "0.1.6",
     "@aphrody/zukan": "0.1.5",
-    "@aphrody/x": "1.0.10",
-    "@aphrody/xai": "1.0.5"
+    "@aphrody/x": "1.1.0",
+    "@aphrody/xai": "1.0.6"
   },
   "license": "Apache-2.0"
 }

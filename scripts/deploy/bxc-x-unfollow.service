@@ -1,0 +1,55 @@
+[Unit]
+Description=Bxc X — purge autonome des abonnements (non-mutuels d'abord)
+Documentation=https://github.com/aphrody-code/bxc
+After=network-online.target
+Wants=network-online.target
+
+# Jamais de plafond de redémarrages : le défaut systemd (5 en 10 s puis
+# abandon définitif) transformerait une série de coupures réseau en arrêt
+# permanent de la purge.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bxc
+
+# Daemon long : sans --once, le moteur dort lui-même à travers les fenêtres de
+# 15 min et le plafond de 24 h, et ne rend la main qu'une fois la file vide.
+#
+# --per-window 8 au lieu du défaut 45 : en continu on veut étaler, pas faire un
+# pic. 8 par fenêtre ≈ 32/h, soit les 400/jour répartis sur ~12 h au lieu d'une
+# rafale de 2 h 30.
+ExecStart=/usr/local/bin/bxc x unfollow --yes --per-window 8
+
+# Auto-retry : tout arrêt inattendu (kill, OOM, coupure réseau, 5xx en série)
+# repart après 2 min. La file et les budgets glissants vivent dans
+# ~/.aphrody/x-unfollow-<handle>.json, donc un redémarrage ne rejoue rien et ne
+# peut pas provoquer de rafale.
+Restart=on-failure
+RestartSec=120
+
+# 130 = SIGINT/SIGTERM traité proprement par la CLI (journal à jour). C'est une
+# sortie normale, pas un échec — sinon `systemctl stop` laisse l'unité en
+# failed et le doctor la relancerait aussitôt.
+SuccessExitStatus=130
+
+# 77 = credentials rejetés. Relancer ne répare rien et marteler X avec un
+# cookie mort est le meilleur moyen de faire flaguer le compte : on s'arrête et
+# c'est bxc-x-purge-doctor qui tente la resynchronisation de session.
+RestartPreventExitStatus=77
+
+# Session X : ~/.aphrody/x-session.json (prioritaire) ou variables d'env.
+# EnvironmentFile=/home/ubuntu/.config/bxc/x-session.env
+
+MemoryMax=512M
+Nice=15
+# Les journaux nomment le compte et le contenu supprime : meme exigence que les
+# journaux de reprise en 0600. Sans UMask, systemd cree le .log en 0644.
+UMask=0077
+
+StandardOutput=append:/var/log/bxc/x-unfollow.log
+StandardError=append:/var/log/bxc/x-unfollow.log
+
+[Install]
+WantedBy=multi-user.target

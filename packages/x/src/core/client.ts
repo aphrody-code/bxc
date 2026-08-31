@@ -750,6 +750,52 @@ export class XClient {
     return await this.timelineTweets("UserTweets", variables, quoteDepth);
   }
 
+  /**
+   * A user's timeline **including replies**. `UserTweets` omits them, so this
+   * is the only way to enumerate an account's own replies for archival or
+   * deletion.
+   */
+  public async userTweetsAndReplies(
+    userId: string,
+    count: number,
+    cursor?: string,
+    quoteDepth?: number
+  ): Promise<TweetPage> {
+    const variables: any = {
+      userId,
+      count,
+      includePromotedContent: false,
+      withCommunity: true,
+      withVoice: true,
+      withV2Timeline: true,
+    };
+    if (cursor) {
+      variables.cursor = cursor;
+    }
+    return await this.timelineTweets("UserTweetsAndReplies", variables, quoteDepth);
+  }
+
+  /** A user's media tab (posts carrying photos / videos / GIFs). */
+  public async userMedia(
+    userId: string,
+    count: number,
+    cursor?: string,
+    quoteDepth?: number
+  ): Promise<TweetPage> {
+    const variables: any = {
+      userId,
+      count,
+      includePromotedContent: false,
+      withClientEventToken: false,
+      withVoice: true,
+      withV2Timeline: true,
+    };
+    if (cursor) {
+      variables.cursor = cursor;
+    }
+    return await this.timelineTweets("UserMedia", variables, quoteDepth);
+  }
+
   public async home(
     count: number,
     cursor?: string,

@@ -43,7 +43,10 @@ case "$OS" in
     ;;
 esac
 
-if [ -n "$BINARY" ] && [ -x "$BXC_ROOT/dist/standalone/$BINARY" ]; then
+# BXC_FROM_SOURCE=1 force le passage par les sources : les binaires construits
+# avec un renommage d'identifiants cassent les eval CDP qui referencent des
+# fonctions par nom (ex. `awaitPromise`). Cf. scripts/build-standalone.ts.
+if [ -z "${BXC_FROM_SOURCE:-}" ] && [ -n "$BINARY" ] && [ -x "$BXC_ROOT/dist/standalone/$BINARY" ]; then
   exec "$BXC_ROOT/dist/standalone/$BINARY" "$@"
 fi
 

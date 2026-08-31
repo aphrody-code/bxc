@@ -28,6 +28,31 @@
 
 ---
 
+## 🛡️ Objectif directeur — vie privée (2026-08-27)
+
+Le cap du repo est désormais la **protection des informations personnelles, la
+confidentialité et l'anonymat de l'utilisateur sur internet**. Le moteur
+Zero-Spawn décrit ci-dessous reste la fondation technique — c'est le moyen, pas
+la fin : savoir naviguer, lire et agir sans navigateur externe est précisément
+ce qui permet d'auditer et de réduire son exposition sans confier ses données à
+un service tiers.
+
+Les cinq chantiers, dans l'ordre où ils se débloquent :
+
+| # | Chantier | Ce que ça fait | État |
+|---|---|---|---|
+| **P0** | **Noyau PII** — `src/privacy/pii.ts` | Reconnaître et caviarder une donnée identifiante. Brique partagée par tous les autres. | ✅ fait |
+| **P1** | **Audit d'exposition** — `bxc privacy scan` | Ce que l'internet publie sur vous : moteurs, réseaux, fuites, agrégateurs. Réutilise `search`, `x`, `crawler`. | à faire |
+| **P2** | **Minimisation** — `bxc privacy purge` | Effacer ce qu'on a soi-même publié. Les purges X (`purge-engine.ts`) en sont la première implémentation. | 🟡 X seulement |
+| **P3** | **Effacement** — `bxc privacy erase` | Demandes RGPD art. 17 / opt-out courtiers en données, suivies et relancées. | à faire |
+| **P4** | **Anonymat de navigation** — `bxc privacy identity` | Identités cloisonnées : empreinte, cookies, sortie réseau. S'appuie sur `profiles/fingerprint.ts`, `ghost/`, `cookies/`, le pool de proxies. | 🟡 briques éparses |
+| **P5** | **Veille** — `bxc privacy watch` | Alerte quand une donnée réapparaît quelque part. S'appuie sur le crawler 24/7. | à faire |
+
+Principe transverse : **rien ne sort de la machine**. Un outil de vie privée qui
+téléverse le corpus à analyser chez un tiers a déjà perdu.
+
+---
+
 ## 🎯 Vision en 3 lignes
 
 ```ts
