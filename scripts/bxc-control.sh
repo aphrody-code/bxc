@@ -79,18 +79,21 @@ deploy_all() {
 
   # 3. Copy binaries (bxc to both bin dirs; bxc-mcp to both for CLI + MCP clients)
   log "Installing standalone bxc binary to /home/ubuntu/.local/bin/bxc..."
-  cp "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/home/ubuntu/.local/bin/bxc"
+  # --remove-destination : ~/.local/bin/bxc a deja ete un lien symbolique vers
+  # bin/bxc du depot, et `cp` suit les liens — chaque deploy ecrasait alors le
+  # wrapper versionne par un binaire de 270 Mo.
+  cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/home/ubuntu/.local/bin/bxc"
 
   log "Installing standalone bxc binary to /usr/local/bin/bxc..."
-  sudo cp "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/usr/local/bin/bxc"
+  sudo cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/usr/local/bin/bxc"
   sudo chmod +x "/usr/local/bin/bxc"
 
   log "Installing standalone bxc-mcp binary to /usr/local/bin/bxc-mcp..."
-  sudo cp "${REPO_ROOT}/dist/standalone/bxc-mcp" "/usr/local/bin/bxc-mcp"
+  sudo cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-mcp" "/usr/local/bin/bxc-mcp"
   sudo chmod +x "/usr/local/bin/bxc-mcp"
 
   log "Installing standalone bxc-mcp binary to /home/ubuntu/.local/bin/bxc-mcp (Claude/Gemini MCP target)..."
-  cp "${REPO_ROOT}/dist/standalone/bxc-mcp" "/home/ubuntu/.local/bin/bxc-mcp"
+  cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-mcp" "/home/ubuntu/.local/bin/bxc-mcp"
   chmod +x "/home/ubuntu/.local/bin/bxc-mcp"
 
   # 4. Install / refresh systemd unit files from the repo
