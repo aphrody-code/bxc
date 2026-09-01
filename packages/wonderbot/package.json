@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "Wonderbot — bot Discord dédié à IETV (Inazuma Eleven TV)",
+  "description": "Wonderbot — bot Discord d'un catalogue d'épisodes",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

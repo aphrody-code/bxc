@@ -171,7 +171,7 @@ export class Wonderbot {
 	}
 
 	/**
-	 * Publie `/ietv` selon la portée configurée.
+	 * Publie `/episodes` selon la portée configurée.
 	 *
 	 * Les deux portées s'ADDITIONNENT côté Discord : une publication globale
 	 * laisse en place d'éventuelles commandes de guilde, et le membre voit alors
@@ -188,7 +188,7 @@ export class Wonderbot {
 				// Idempotent : sans commande de guilde, c'est un appel à vide.
 				await application.commands.set([], guilde.id);
 			}
-			this.journaliser(`${ICONES.succes} /ietv publiée globalement (propagation : quelques minutes)`);
+			this.journaliser(`${ICONES.succes} /${DEFINITION_IETV.name} publiée globalement (propagation : quelques minutes)`);
 			return;
 		}
 
@@ -207,7 +207,7 @@ export class Wonderbot {
 		for (const guilde of rejointes) {
 			await application.commands.set([DEFINITION_IETV], guilde);
 		}
-		this.journaliser(`${ICONES.succes} /ietv publiée sur ${rejointes.length} serveur(s)`);
+		this.journaliser(`${ICONES.succes} /${DEFINITION_IETV.name} publiée sur ${rejointes.length} serveur(s)`);
 	}
 
 	private async traiterInteraction(interaction: Interaction): Promise<void> {
@@ -239,7 +239,7 @@ export class Wonderbot {
 			);
 		} catch (err) {
 			this.journaliser(
-				`${ICONES.echec} /ietv a levé : ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`
+				`${ICONES.echec} /${DEFINITION_IETV.name} a levé : ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`
 			);
 			reponse = {
 				embeds: [

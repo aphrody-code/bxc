@@ -1,10 +1,16 @@
 # @aphrody/wonderbot
 
-**Wonderbot** — le bot Discord du catalogue **Inazuma Eleven TV**.
+**Wonderbot** — le bot Discord d'un catalogue d'épisodes.
 
-Il sert une seule racine de commandes, `/ietv`, adossée au cache SQLite de
+Il sert une seule racine de commandes, `/episodes`, adossée au cache SQLite de
 [`@aphrody/ietv`](../ietv) qu'il rafraîchit lui-même. Aucun serveur HTTP
 intermédiaire, aucun démon cron séparé : un processus, une base.
+
+> **Surfaces publiques.** Le nom de la commande, ses descriptions, le pied de
+> page des embeds et les noms de salons sont vus par chaque membre : aucun n'y
+> emploie de nom déposé. La racine s'appelait `/ietv`, elle a été renommée pour
+> cette raison, et `MARQUE_PAR_DEFAUT.piedDePage` ne nomme plus de produit. Les
+> identifiants internes (paquet, fichiers, variables) ne sont pas concernés.
 
 ```bash
 bxc wonderbot doctor     # vérifie la configuration et le catalogue, sans Discord
@@ -17,11 +23,11 @@ bxc wonderbot start      # passerelle + rafraîchissement périodique + annonces
 
 | Commande | Ce qu'elle fait |
 | --- | --- |
-| `/ietv recherche texte:<mot> [langue] [limite]` | Cherche dans les titres, VF et VOSTFR confondues |
-| `/ietv episode saison:<n> numero:<n> [langue]` | Toutes les versions d'un épisode — un champ par source et par langue |
-| `/ietv saison numero:<n> [langue]` | Les épisodes d'une saison, dans l'ordre |
-| `/ietv catalogue` | Volumes, sources, répartition VF/VOSTFR, fraîcheur |
-| `/ietv rafraichir` | Rescrape les sept sources. Réservé aux **administrateurs du serveur** et aux rôles de `WONDERBOT_STAFF_ROLE_IDS`, réponse éphémère |
+| `/episodes recherche texte:<mot> [langue] [limite]` | Cherche dans les titres, VF et VOSTFR confondues |
+| `/episodes episode saison:<n> numero:<n> [langue]` | Toutes les versions d'un épisode — un champ par source et par langue |
+| `/episodes saison numero:<n> [langue]` | Les épisodes d'une saison, dans l'ordre |
+| `/episodes catalogue` | Volumes, sources, répartition VF/VOSTFR, fraîcheur |
+| `/episodes rafraichir` | Rescrape les sept sources. Réservé aux **administrateurs du serveur** et aux rôles de `WONDERBOT_STAFF_ROLE_IDS`, réponse éphémère |
 
 Les quatre premières répondent en millisecondes : elles lisent le cache, jamais
 YouTube. C'est aussi ce qui évite qu'un serveur de deux mille membres déclenche
@@ -54,7 +60,7 @@ Le premier nom trouvé gagne — les variantes historiques évitent de dupliquer
 | `WONDERBOT_COMMAND_SCOPE` | `guildes` (propagation immédiate) ou `globale` (quelques minutes, tout serveur qui invite) |
 | `WONDERBOT_ANNOUNCE_CHANNEL_ID` | Salon des nouveautés ; absent ⇒ aucune annonce |
 | `WONDERBOT_ANNOUNCE_ROLE_ID` | Rôle mentionné dans l'annonce |
-| `WONDERBOT_STAFF_ROLE_IDS` | Rôles autorisés à `/ietv rafraichir` **en plus** des administrateurs ; vide ⇒ administrateurs seuls |
+| `WONDERBOT_STAFF_ROLE_IDS` | Rôles autorisés à `/episodes rafraichir` **en plus** des administrateurs ; vide ⇒ administrateurs seuls |
 | `WONDERBOT_REFRESH_INTERVAL_MS` | Période, défaut 6 h, plancher 60 s |
 | `WONDERBOT_ANNOUNCE_LIMIT` | Épisodes annoncés d'un coup, défaut 5 |
 | `IETV_CACHE_PATH` | Base SQLite ; défaut `~/.cache/ietv/episodes.db` |
