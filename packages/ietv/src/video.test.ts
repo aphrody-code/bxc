@@ -29,6 +29,14 @@ import {
 	type HlsConstructor,
 } from "./video-player.ts";
 import {
+	extraireJsonLd,
+	identifiantOfficiel,
+	parserCategories,
+	parserEpisodes,
+	slugDeUrl,
+	titreSansPrefixe,
+} from "./official.ts";
+import {
 	COMPRESSION_PROFILES,
 	VideoCodec,
 	VideoTranscoder,
@@ -776,5 +784,80 @@ describe("VideoTranscoder", () => {
 	it("échoue proprement sur une entrée illisible", async () => {
 		const transcoder = new VideoTranscoder();
 		await expect(transcoder.probe(join(tmpdir(), "ietv-absent-xyz.mp4"))).rejects.toThrow();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Lecture du site officiel (JSON-LD)
+// ---------------------------------------------------------------------------
+
+const LD_INDEX = `<html><head>
+<script id="server-seo-jsonld" type="application/ld+json">{"@context":"https://schema.org","@graph":[
+{"@type":"WebSite","name":"Inazuma TV+"},
+{"@type":"ItemList","name":"Inazuma Eleven categories","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Saison 1","url":"https://inazuma-eleven.fr/tv/watch/saison1?lang=fr"},
+{"@type":"ListItem","position":4,"name":"GO","url":"https://inazuma-eleven.fr/tv/watch/go?lang=fr"}]}]}</script>
+</head><body><div id="episode-list"></div></body></html>`;
+
+const LD_SAISON = `<html><head>
+<script type="application/ld+json">{"@graph":[
+{"@type":"BreadcrumbList"},
+{"@type":"ItemList","name":"Episode list (saison1)","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Épisode 1 - Jouons au Football","url":"https://inazuma-eleven.fr/tv/watch/saison1/ep-1?lang=fr"},
+{"@type":"ListItem","position":2,"name":"Épisode 12 - La Tornade","url":"https://inazuma-eleven.fr/tv/watch/saison1/ep-12?lang=fr"}]}]}</script>
+</head><body></body></html>`;
+
+describe("site officiel", () => {
+	it("aplatit le @graph des blocs JSON-LD", () => {
+		const objets = extraireJsonLd(LD_INDEX);
+		expect(objets.map((o) => o["@type"])).toEqual(["WebSite", "ItemList"]);
+	});
+
+	it("ignore un bloc JSON-LD illisible sans perdre les autres", () => {
+		const html = `<script type="application/ld+json">{cassé</script>${LD_INDEX}`;
+		expect(extraireJsonLd(html)).toHaveLength(2);
+	});
+
+	it("lit les catégories et leur slug", () => {
+		const categories = parserCategories(LD_INDEX);
+		expect(categories.map((c) => [c.position, c.slug])).toEqual([
+			[1, "saison1"],
+			[4, "go"],
+		]);
+	});
+
+	it("lit les épisodes en prenant le numéro de l'URL, pas le rang", () => {
+		// Le rang saute dès qu'un épisode manque au site ; `/ep-12` porte le vrai
+		// numéro de diffusion.
+		const episodes = parserEpisodes(LD_SAISON);
+		expect(episodes.map((e) => e.numero)).toEqual([1, 12]);
+		expect(episodes[1]!.titre).toBe("La Tornade");
+	});
+
+	it("retire le préfixe « Épisode N - » du titre", () => {
+		expect(titreSansPrefixe("Épisode 3 - À la recherche")).toBe("À la recherche");
+		expect(titreSansPrefixe("Episode 7: Le choc")).toBe("Le choc");
+		expect(titreSansPrefixe("Un titre sans préfixe")).toBe("Un titre sans préfixe");
+	});
+
+	it("dérive un identifiant stable, reproductible d'un scraping à l'autre", () => {
+		expect(identifiantOfficiel("saison1", 12)).toBe("off-saison1-12");
+		expect(identifiantOfficiel("saison1", 12)).toBe(identifiantOfficiel("saison1", 12));
+		expect(identifiantOfficiel("go", 12)).not.toBe(identifiantOfficiel("saison1", 12));
+	});
+
+	it("extrait le slug malgré les paramètres et la barre finale", () => {
+		expect(slugDeUrl("https://x/tv/watch/chronoStones?lang=fr")).toBe("chronoStones");
+		expect(slugDeUrl("https://x/tv/watch/films/")).toBe("films");
+	});
+
+	it("rend une liste vide plutôt que de lever sur une page sans JSON-LD", () => {
+		expect(parserCategories("<html><body>rien</body></html>")).toEqual([]);
+		expect(parserEpisodes("<html><body>rien</body></html>")).toEqual([]);
+	});
+
+	it("ne confond pas la liste des catégories et celle des épisodes", () => {
+		expect(parserEpisodes(LD_INDEX)).toEqual([]);
+		expect(parserCategories(LD_SAISON)).toEqual([]);
 	});
 });

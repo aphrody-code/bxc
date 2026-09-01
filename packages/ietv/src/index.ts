@@ -51,6 +51,12 @@ import { detectPii, redactPii, redactObject, type PiiMatch } from "@aphrody/bxc/
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
+import {
+	identifiantOfficiel,
+	parserCategories,
+	parserEpisodes,
+	type CategorieOfficielle,
+} from "./official.ts";
 
 type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
 
@@ -1073,53 +1079,66 @@ export class IETVScraper {
 	/**
 	 * Scrape inazuma-eleven.fr official site for complete episode list.
 	 */
+	/**
+	 * Récupère une page en HTTP simple, sans navigateur.
+	 *
+	 * ── POURQUOI PAS `fetchHtml` ───────────────────────────────────────────
+	 * Le site officiel rend son HTML côté serveur : un navigateur n'y apporte
+	 * rien et y ajoute un mode de panne. Mesuré le 2026-09-02 : `fetchHtml`
+	 * rendait la page d'INDEX (20 262 o, titre de l'index) pour *toutes* les
+	 * URL de catégorie, y compris au tout premier appel, là où un `fetch` sur
+	 * la même URL rend bien la page attendue (23 519 o, avec sa liste
+	 * d'épisodes). Le contournement est aussi le bon choix : pas de navigateur
+	 * pour du HTML statique.
+	 */
+	private async fetchTexte(url: string): Promise<{ status: number; html: string }> {
+		const reponse = await fetch(url, {
+			headers: {
+				"User-Agent":
+					"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36",
+				"Accept-Language": "fr-FR,fr;q=0.9",
+			},
+			signal: AbortSignal.timeout(this.timeoutMs),
+		});
+		return { status: reponse.status, html: await reponse.text() };
+	}
+
 	async scrapeOfficialSite(): Promise<ChannelInfo> {
-		const officialUrl = "https://inazuma-eleven.fr/tv/watch?lang=fr";
+		const racine = "https://inazuma-eleven.fr/tv/watch?lang=fr";
 
-		const { status, html } = await this.fetchHtml(officialUrl);
+		const index = await this.fetchTexte(racine);
 		this.stats.httpRequests++;
-
-		if (status !== 200) {
-			throw new Error(`scrapeOfficialSite: HTTP ${status}`);
+		if (index.status !== 200) {
+			throw new Error(`scrapeOfficialSite: HTTP ${index.status} sur ${racine}`);
 		}
 
-		// Parse official site episodes
-		const videos = this.parseOfficialSiteEpisodes(html);
-
-		// Group by season
-		const seasonMap = new Map<number, VideoRef[]>();
-		let maxSeason = 0;
-
-		for (const video of videos) {
-			if (video.season === null) continue;
-			if (!seasonMap.has(video.season)) {
-				seasonMap.set(video.season, []);
-				maxSeason = Math.max(maxSeason, video.season);
-			}
-			seasonMap.get(video.season)!.push(video);
+		const categories = parserCategories(index.html);
+		if (categories.length === 0) {
+			throw new Error(
+				"scrapeOfficialSite : aucune catégorie dans le JSON-LD de l'index. " +
+					"Le site a probablement changé de balisage — vérifier `parserCategories`."
+			);
 		}
 
-		// Sort episodes within each season
-		for (const eps of seasonMap.values()) {
-			eps.sort((a, b) => {
-				const aEp = a.episode ?? 0;
-				const bEp = b.episode ?? 0;
-				return aEp - bEp;
-			});
-		}
+		// Une page par catégorie, en parallèle borné : `fetchHtml` passe déjà par
+		// la file de concurrence du scraper.
+		const parCategorie = await Promise.all(
+			categories.map(async (categorie) => ({
+				categorie,
+				episodes: await this.episodesDeCategorie(categorie),
+			}))
+		);
 
-		// Build season array
-		const seasons: SeasonInfo[] = [];
-		for (let s = 1; s <= maxSeason; s++) {
-			const episodes = seasonMap.get(s) ?? [];
-			seasons.push({
-				season: s,
-				episodes,
-				totalEpisodes: episodes.length,
-			});
-		}
+		const seasons: SeasonInfo[] = parCategorie
+			.filter((entree) => entree.episodes.length > 0)
+			.map((entree) => ({
+				season: entree.categorie.position,
+				episodes: entree.episodes,
+				totalEpisodes: entree.episodes.length,
+			}))
+			.sort((a, b) => a.season - b.season);
 
-		const totalEpisodes = videos.filter((v) => v.episode !== null).length;
+		const totalEpisodes = seasons.reduce((somme, saison) => somme + saison.totalEpisodes, 0);
 		this.stats.channelsScraped++;
 		this.stats.totalEpisodes += totalEpisodes;
 
@@ -1131,6 +1150,38 @@ export class IETVScraper {
 			seasons,
 			totalEpisodes,
 		};
+	}
+
+	/**
+	 * Épisodes d'une catégorie du site officiel.
+	 *
+	 * Une catégorie qui échoue rend une liste vide au lieu de faire tomber tout
+	 * le scraping : neuf saisons valent mieux que zéro.
+	 */
+	private async episodesDeCategorie(categorie: CategorieOfficielle): Promise<VideoRef[]> {
+		try {
+			const page = await this.fetchTexte(categorie.url);
+			this.stats.httpRequests++;
+			if (page.status !== 200) return [];
+
+			return parserEpisodes(page.html).map((episode) => ({
+				title: `${categorie.nom} — ${episode.titre}`,
+				videoId: identifiantOfficiel(categorie.slug, episode.numero),
+				url: episode.url,
+				description: null,
+				thumbnail: null,
+				publishDate: null,
+				season: categorie.position,
+				episode: episode.numero,
+				// `?lang=fr` sert la version française doublée ; le site ne propose
+				// pas de piste sous-titrée à cette adresse.
+				language: "vf" as LanguageVersion,
+				duration: null,
+				viewCount: null,
+			}));
+		} catch {
+			return [];
+		}
 	}
 
 	/**
