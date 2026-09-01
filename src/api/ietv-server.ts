@@ -27,6 +27,7 @@
  */
 
 import IETVScraper, { type ChannelInfo, type ScrapingStats } from "@aphrody/ietv";
+import { IETVCache } from "@aphrody/ietv/cache";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -39,6 +40,7 @@ interface IETVServerConfig {
 	host?: string;
 	cacheEnabled?: boolean;
 	corsOrigins?: string[];
+	cachePath?: string;
 }
 
 interface ApiResponse<T> {
@@ -59,13 +61,13 @@ interface SearchQuery {
 }
 
 // ============================================================================
-// In-memory cache avec expiration
+// Layer de cache en mémoire (pour requêtes fréquentes)
 // ============================================================================
 
-class MemoryCache<T> {
+class RequestCache<T> {
 	private cache = new Map<string, { data: T; expiry: number }>();
 
-	set(key: string, value: T, ttlMs = 3600000): void {
+	set(key: string, value: T, ttlMs = 60000): void {
 		this.cache.set(key, {
 			data: value,
 			expiry: Date.now() + ttlMs,
@@ -93,18 +95,21 @@ class MemoryCache<T> {
 
 export class IETVRestServer {
 	private scraper: IETVScraper;
-	private cache: MemoryCache<any>;
+	private sqliteCache: IETVCache;
+	private requestCache: RequestCache<any>;
 	private config: Required<IETVServerConfig>;
 	private lastScrapeTime = 0;
 
 	constructor(config: IETVServerConfig = {}) {
 		this.scraper = new IETVScraper();
-		this.cache = new MemoryCache();
+		this.sqliteCache = new IETVCache(config.cachePath ?? "~/.cache/ietv/episodes.db");
+		this.requestCache = new RequestCache();
 		this.config = {
 			port: config.port ?? 3000,
 			host: config.host ?? "0.0.0.0",
 			cacheEnabled: config.cacheEnabled ?? true,
 			corsOrigins: config.corsOrigins ?? ["*"],
+			cachePath: config.cachePath ?? "~/.cache/ietv/episodes.db",
 		};
 	}
 
@@ -194,8 +199,17 @@ export class IETVRestServer {
 	 */
 	private async handleChannelSource(source: string): Promise<Response> {
 		const cacheKey = `channel-${source}`;
-		const cached = this.cache.get(cacheKey);
+
+		// L1: Check in-memory cache (60s)
+		const cached = this.requestCache.get(cacheKey);
 		if (cached) return this.jsonResponse({ success: true, data: cached });
+
+		// L2: Check SQLite cache
+		const sqliteCached = this.sqliteCache.getChannel(source);
+		if (sqliteCached && this.config.cacheEnabled) {
+			this.requestCache.set(cacheKey, sqliteCached, 60000); // 1m request cache
+			return this.jsonResponse({ success: true, data: sqliteCached });
+		}
 
 		try {
 			let data: ChannelInfo;
@@ -212,8 +226,10 @@ export class IETVRestServer {
 				return this.jsonResponse({ success: false, error: "Unknown source" }, 400);
 			}
 
+			// Persist to SQLite
 			if (this.config.cacheEnabled) {
-				this.cache.set(cacheKey, data, 3600000); // 1h cache
+				this.sqliteCache.saveChannel(data);
+				this.requestCache.set(cacheKey, data, 60000);
 			}
 
 			this.lastScrapeTime = Date.now();
@@ -231,8 +247,26 @@ export class IETVRestServer {
 	 */
 	private async handleAll(): Promise<Response> {
 		const cacheKey = "all-episodes";
-		const cached = this.cache.get(cacheKey);
+
+		// L1: Check in-memory cache (60s)
+		const cached = this.requestCache.get(cacheKey);
 		if (cached) return this.jsonResponse({ success: true, data: cached });
+
+		// L2: Check SQLite cache
+		if (this.config.cacheEnabled) {
+			const sqliteCached = this.sqliteCache.getAllChannels();
+			if (sqliteCached.length > 0) {
+				const response = {
+					channels: sqliteCached,
+					totalChannels: sqliteCached.length,
+					totalEpisodes: sqliteCached.reduce((sum, ch) => sum + ch.totalEpisodes, 0),
+					elapsedMs: 0,
+					fromCache: true,
+				};
+				this.requestCache.set(cacheKey, response, 60000);
+				return this.jsonResponse({ success: true, data: response });
+			}
+		}
 
 		try {
 			const startTime = Date.now();
@@ -240,15 +274,21 @@ export class IETVRestServer {
 			const elapsedMs = Date.now() - startTime;
 			const stats = this.scraper.getStats();
 
+			// Save to SQLite
+			for (const channel of data) {
+				this.sqliteCache.saveChannel(channel);
+			}
+
 			const response = {
 				channels: data,
 				totalChannels: data.length,
 				totalEpisodes: data.reduce((sum, ch) => sum + ch.totalEpisodes, 0),
 				elapsedMs,
+				fromCache: false,
 			};
 
 			if (this.config.cacheEnabled) {
-				this.cache.set(cacheKey, response, 3600000);
+				this.requestCache.set(cacheKey, response, 60000);
 			}
 
 			this.lastScrapeTime = Date.now();
@@ -263,46 +303,37 @@ export class IETVRestServer {
 
 	/**
 	 * GET /api/ietv/search?q=term&lang=vf&season=1
+	 * Utilise SQLite pour des requêtes rapides + pas de scrape live
 	 */
-	private async handleSearch(params: SearchQuery): Promise<Response> {
-		const { q, season, lang, source, limit = 100 } = params;
+	private handleSearch(params: SearchQuery): Response {
+		const { q, season, episode, lang, source, limit = 100 } = params;
 
-		if (!q && !season && !lang) {
+		if (!q && !season && !episode && !lang && !source) {
 			return this.jsonResponse(
-				{ success: false, error: "Provide q, season, or lang" },
+				{ success: false, error: "Provide q, season, episode, lang, or source" },
 				400,
 			);
 		}
 
 		try {
-			const data = await this.scraper.getAllChannelEpisodes();
-			let results: any[] = [];
-
-			for (const channel of data) {
-				for (const s of channel.seasons) {
-					if (season && s.season !== season) continue;
-
-					for (const ep of s.episodes) {
-						if (lang && ep.language !== lang) continue;
-						if (q && !ep.title.toLowerCase().includes(q.toLowerCase())) continue;
-						if (source && !channel.channel.includes(source)) continue;
-
-						results.push({
-							channel: channel.channel,
-							season: s.season,
-							...ep,
-						});
-
-						if (results.length >= limit) break;
-					}
-					if (results.length >= limit) break;
-				}
-				if (results.length >= limit) break;
-			}
+			// Query SQLite cache (zero scraping)
+			const results = this.sqliteCache.search({
+				q,
+				season: season ? Number(season) : undefined,
+				episode: episode ? Number(episode) : undefined,
+				language: lang === "vf" || lang === "vostfr" ? lang : undefined,
+				channel: source,
+				limit: Number(limit),
+			});
 
 			return this.jsonResponse({
 				success: true,
-				data: { results, count: results.length },
+				data: {
+					results,
+					count: results.length,
+					fromCache: true,
+					queryParams: { q, season, episode, lang, source, limit },
+				},
 			});
 		} catch (err) {
 			return this.jsonResponse({ success: false, error: String(err) }, 500);
@@ -311,15 +342,20 @@ export class IETVRestServer {
 
 	/**
 	 * GET /api/ietv/stats
+	 * Retourne les stats du scraper + cache SQLite
 	 */
 	private handleStats(): Response {
 		const stats = this.scraper.getStats();
+		const cacheStats = this.sqliteCache.getStats();
+
 		return this.jsonResponse({
 			success: true,
 			data: {
 				...stats,
+				cache: cacheStats,
 				lastScrapeTime: this.lastScrapeTime,
 				cacheEnabled: this.config.cacheEnabled,
+				cachePath: this.config.cachePath,
 			},
 		});
 	}
@@ -353,7 +389,8 @@ export class IETVRestServer {
 
 	async close(): Promise<void> {
 		await this.scraper.close();
-		this.cache.clear();
+		this.sqliteCache.close();
+		this.requestCache.clear();
 	}
 }
 
