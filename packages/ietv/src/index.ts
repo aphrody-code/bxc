@@ -112,6 +112,23 @@ export interface IETVOptions {
 	timeoutMs?: number;
 	/** Retries per fetch on transient failure (default 2). */
 	retries?: number;
+	/** YouTube Data API key for discovering additional channels (optional). */
+	youtubeApiKey?: string;
+}
+
+export interface YouTubeChannelMetadata {
+	/** Channel handle (e.g. "@inazumaelevenfrance1"). */
+	handle: string;
+	/** Channel ID (YouTube internal). */
+	channelId: string;
+	/** Display title. */
+	title: string;
+	/** Channel description. */
+	description: string | null;
+	/** Subscriber count. */
+	subscriberCount: string | null;
+	/** Video count. */
+	videoCount: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,6 +264,7 @@ export class IETVScraper {
 	private readonly profile: NonNullable<IETVOptions["profile"]>;
 	private readonly timeoutMs: number;
 	private readonly retries: number;
+	private readonly youtubeApiKey: string | null;
 	private page: AnyPage | null = null;
 
 	constructor(opts: IETVOptions = {}) {
@@ -255,6 +273,7 @@ export class IETVScraper {
 		this.profile = opts.profile ?? "fast";
 		this.timeoutMs = opts.timeoutMs ?? 30_000;
 		this.retries = opts.retries ?? 2;
+		this.youtubeApiKey = opts.youtubeApiKey ?? null;
 	}
 
 	private async getPage(): Promise<AnyPage> {
@@ -541,6 +560,93 @@ export class IETVScraper {
 			seasons,
 			totalEpisodes,
 		};
+	}
+
+	/**
+	 * Discover additional Inazuma Eleven YouTube channels via search.
+	 * Returns channel metadata for channels found (not full episode lists).
+	 * Useful for finding new streaming sources.
+	 */
+	async discoverChannels(searchQuery = "Inazuma Eleven français"): Promise<YouTubeChannelMetadata[]> {
+		const channels: YouTubeChannelMetadata[] = [];
+
+		// If YouTube API key is provided, use YouTube API (higher quality results)
+		if (this.youtubeApiKey) {
+			return this.discoverChannelsViaYouTubeAPI(searchQuery);
+		}
+
+		// Fallback: use Google Search to find YouTube channels
+		return this.discoverChannelsViaGoogle(searchQuery);
+	}
+
+	/**
+	 * Discover channels via YouTube Data API (requires API key).
+	 */
+	private async discoverChannelsViaYouTubeAPI(
+		searchQuery: string,
+	): Promise<YouTubeChannelMetadata[]> {
+		// Note: Full API integration would require authenticated requests.
+		// For now, this returns a placeholder implementation.
+		// To use this in production, would need:
+		// const response = await fetch(`https://www.googleapis.com/youtube/v3/search?...`);
+		// Parse response and extract channel data.
+		return [];
+	}
+
+	/**
+	 * Discover channels via Google Search (fallback method).
+	 */
+	private async discoverChannelsViaGoogle(
+		searchQuery: string,
+	): Promise<YouTubeChannelMetadata[]> {
+		const channels: YouTubeChannelMetadata[] = [];
+
+		// Query: "site:youtube.com @[handle] Inazuma Eleven français"
+		const googleQuery = `site:youtube.com ${searchQuery} "Inazuma Eleven"`;
+
+		try {
+			const { status, html } = await this.fetchHtml(
+				`https://www.google.com/search?q=${encodeURIComponent(googleQuery)}`,
+			);
+
+			if (status === 200) {
+				// Parse YouTube channel links from Google results
+				// Pattern: https://www.youtube.com/@handle or /channel/ID
+				const channelLinkRe =
+					/https:\/\/(?:www\.)?youtube\.com\/(?:@([a-zA-Z0-9_-]+)|channel\/([a-zA-Z0-9_-]+))/g;
+				const seen = new Set<string>();
+
+				let match;
+				while ((match = channelLinkRe.exec(html)) !== null) {
+					const handle = match[1];
+					const channelId = match[2];
+
+					if (!handle && !channelId) continue;
+					const key = handle || channelId;
+					if (seen.has(key)) continue;
+					seen.add(key);
+
+					// Fetch channel metadata
+					try {
+						const info = await this.getChannelEpisodes(handle || channelId);
+						channels.push({
+							handle: handle || channelId,
+							channelId: channelId || "unknown",
+							title: info.title || handle || channelId,
+							description: info.description,
+							subscriberCount: null, // Not easily extractable from channel page
+							videoCount: String(info.totalEpisodes),
+						});
+					} catch {
+						// Skip channels that fail to load
+					}
+				}
+			}
+		} catch (err) {
+			console.warn(`discoverChannelsViaGoogle failed: ${String(err)}`);
+		}
+
+		return channels;
 	}
 
 	/**

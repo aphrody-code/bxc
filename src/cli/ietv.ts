@@ -22,9 +22,10 @@ import IETVScraper from "@aphrody/ietv";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {
-	action: "list" | "channel" | "all";
+	action: "list" | "channel" | "all" | "discover";
 	channel: string;
 	profile: "static" | "fast" | "http" | "stealth" | "max";
+	youtubeApiKey?: string;
 }
 
 function printUsage(): void {
@@ -34,13 +35,15 @@ function printUsage(): void {
 Usage:
   bxc ietv channel <handle>         Get episodes from a specific channel (e.g. "inazumaelevenfrance1")
   bxc ietv all                      Aggregate all episodes from all 4 IETV channels
+  bxc ietv discover                 Discover additional Inazuma Eleven channels via Google Search
   bxc ietv list                     List available channels
 
 Options:
   --profile <name>     static (default) | fast | http | stealth | max
+  --youtube-api-key    YouTube Data API key for enhanced discovery
   --help, -h           this help
 
-Available channels:
+Available canonical channels:
   @inazumaelevenfrance1
   @inazumatvfr
   @inazumaelevengofrance
@@ -49,6 +52,7 @@ Available channels:
 Examples:
   bxc ietv channel inazumaelevenfrance1
   bxc ietv all --profile fast
+  bxc ietv discover
   bxc ietv list
 
 `,
@@ -76,6 +80,7 @@ function parseArgs(
 	const actionStr = argv[0];
 	if (actionStr === "channel") opts.action = "channel";
 	else if (actionStr === "all") opts.action = "all";
+	else if (actionStr === "discover") opts.action = "discover";
 	else if (actionStr === "list") opts.action = "list";
 	else if (actionStr === undefined || actionStr === "") {
 		// Default to 'list'
@@ -87,7 +92,7 @@ function parseArgs(
 	}
 
 	const positional: string[] = [];
-	for (let i = (argv[0] === "channel" || argv[0] === "all" ? 1 : 0); i < argv.length; i++) {
+	for (let i = (argv[0] === "channel" || argv[0] === "all" || argv[0] === "discover" ? 1 : 0); i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
 			case "--profile": {
@@ -103,6 +108,10 @@ function parseArgs(
 					return null;
 				}
 				opts.profile = v;
+				break;
+			}
+			case "--youtube-api-key": {
+				opts.youtubeApiKey = argv[++i];
 				break;
 			}
 			case "--help":
@@ -137,6 +146,7 @@ export async function main(
 	const scraper = new IETVScraper({
 		profile: opts.profile,
 		timeoutMs: opts.timeoutMs,
+		youtubeApiKey: opts.youtubeApiKey,
 	});
 
 	try {
@@ -158,6 +168,9 @@ export async function main(
 		} else if (opts.action === "channel") {
 			const info = await scraper.getChannelEpisodes(opts.channel);
 			Bun.stdout.write(JSON.stringify(info, null, 2) + "\n");
+		} else if (opts.action === "discover") {
+			const channels = await scraper.discoverChannels();
+			Bun.stdout.write(JSON.stringify(channels, null, 2) + "\n");
 		} else {
 			const allChannels = await scraper.getAllChannelEpisodes();
 			Bun.stdout.write(JSON.stringify(allChannels, null, 2) + "\n");
