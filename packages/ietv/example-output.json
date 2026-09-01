@@ -7,10 +7,10 @@
   "seasons": [
     {
       "season": 1,
-      "totalEpisodes": 51,
+      "totalEpisodes": 102,
       "episodes": [
         {
-          "title": "Inazuma Eleven - Saison 1 Episode 001",
+          "title": "Inazuma Eleven - Saison 1 Episode 001 VF",
           "videoId": "7_MpAKKVT-c",
           "url": "https://www.youtube.com/watch?v=7_MpAKKVT-c",
           "description": "Les débuts de Haruto et Arion dans l'équipe de football.",
@@ -18,11 +18,25 @@
           "publishDate": "2024-01-15",
           "season": 1,
           "episode": 1,
+          "language": "vf",
           "duration": 1380,
           "viewCount": "125K"
         },
         {
-          "title": "Inazuma Eleven - Saison 1 Episode 002",
+          "title": "Inazuma Eleven - Saison 1 Episode 001 VOSTFR",
+          "videoId": "7_MpAKKVT-e",
+          "url": "https://www.youtube.com/watch?v=7_MpAKKVT-e",
+          "description": "Les débuts de Haruto et Arion dans l'équipe de football (VO JP).",
+          "thumbnail": "https://i.ytimg.com/vi/7_MpAKKVT-e/maxresdefault.jpg",
+          "publishDate": "2024-01-16",
+          "season": 1,
+          "episode": 1,
+          "language": "vostfr",
+          "duration": 1380,
+          "viewCount": "89K"
+        },
+        {
+          "title": "Inazuma Eleven - Saison 1 Episode 002 VF",
           "videoId": "8_MpAKKVT-d",
           "url": "https://www.youtube.com/watch?v=8_MpAKKVT-d",
           "description": "L'entraînement intensif commence.",
@@ -30,6 +44,7 @@
           "publishDate": "2024-01-22",
           "season": 1,
           "episode": 2,
+          "language": "vf",
           "duration": 1380,
           "viewCount": "98K"
         }
@@ -37,10 +52,10 @@
     },
     {
       "season": 2,
-      "totalEpisodes": 51,
+      "totalEpisodes": 102,
       "episodes": [
         {
-          "title": "Inazuma Eleven Go - Saison 2 Episode 001",
+          "title": "Inazuma Eleven Go - Saison 2 Episode 001 VF",
           "videoId": "9_MpAKKVT-e",
           "url": "https://www.youtube.com/watch?v=9_MpAKKVT-e",
           "description": "Une nouvelle génération se lève avec Tenma à la tête.",
@@ -48,8 +63,22 @@
           "publishDate": "2024-02-01",
           "season": 2,
           "episode": 1,
+          "language": "vf",
           "duration": 1380,
           "viewCount": "110K"
+        },
+        {
+          "title": "Inazuma Eleven Go - Saison 2 Episode 001 VOSTFR",
+          "videoId": "9_MpAKKVT-f",
+          "url": "https://www.youtube.com/watch?v=9_MpAKKVT-f",
+          "description": "Une nouvelle génération se lève avec Tenma (VO JP + Subs FR).",
+          "thumbnail": "https://i.ytimg.com/vi/9_MpAKKVT-f/maxresdefault.jpg",
+          "publishDate": "2024-02-02",
+          "season": 2,
+          "episode": 1,
+          "language": "vostfr",
+          "duration": 1380,
+          "viewCount": "95K"
         }
       ]
     }

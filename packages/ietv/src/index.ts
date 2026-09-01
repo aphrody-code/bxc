@@ -54,6 +54,8 @@ type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
 // Public types
 // ---------------------------------------------------------------------------
 
+export type LanguageVersion = "vf" | "vostfr" | "unknown";
+
 export interface VideoRef {
 	/** Raw video title from YouTube. */
 	title: string;
@@ -71,6 +73,8 @@ export interface VideoRef {
 	season: number | null;
 	/** Parsed episode number, when derivable. */
 	episode: number | null;
+	/** Language version: "vf" (dubbed French), "vostfr" (original + French subtitles), or "unknown". */
+	language: LanguageVersion;
 	/** Video duration in seconds, when available. */
 	duration: number | null;
 	/** View count, when available. */
@@ -154,6 +158,33 @@ function videoIdFromUrl(url: string): string {
  * - "Ep. 5" or "Episode 5" (assumes season 1 if none found)
  * - Trailing number is episode
  */
+/**
+ * Detect language version (VF or VOSTFR) from video title.
+ * VF = Version Française (dubbed)
+ * VOSTFR = Version Originale Sous-Titrée Française (original + French subtitles)
+ */
+export function detectLanguage(title: string): LanguageVersion {
+	const titleLower = title.toLowerCase();
+
+	// Check for explicit VOSTFR markers
+	if (/vostfr|v\.o\.stfr|v\.o\. stfr|original.*sous-titr|japanese.*french|jp.*fr/.test(titleLower)) {
+		return "vostfr";
+	}
+
+	// Check for explicit VF markers
+	if (/\bvf\b|version.*fran[çc]aise|fran[çc]ais.*dub|doublage|dubbing.*fr/.test(titleLower)) {
+		return "vf";
+	}
+
+	// Default heuristic: if contains "Saison" but no explicit marker, assume VF (most common)
+	// This can be overridden by explicit markers above
+	if (/saison|season/i.test(titleLower)) {
+		return "vf";
+	}
+
+	return "unknown";
+}
+
 export function parseSeasonEpisode(title: string): { season: number | null; episode: number | null } {
 	// Pattern 1: S##E## or Season 1 Episode 5 (or Saison 1 Épisode 5)
 	const m1 = /[Ss](?:eason|aison)?\s*(\d{1,2})[^\d]*[Ee](?:pisode)?\s*(\d{1,3})/i.exec(title);
@@ -311,6 +342,7 @@ export class IETVScraper {
 				// Convert to VideoRef objects
 				for (const [videoId, title] of videoIds) {
 					const { season, episode } = parseSeasonEpisode(title);
+					const language = detectLanguage(title);
 					videos.push({
 						title,
 						videoId,
@@ -320,6 +352,7 @@ export class IETVScraper {
 						publishDate: null,
 						season,
 						episode,
+						language,
 						duration: null,
 						viewCount: null,
 					});
@@ -358,6 +391,7 @@ export class IETVScraper {
 
 				const title = titleMatch ? stripHtml(titleMatch[1]) : `Video ${videoId}`;
 				const { season, episode } = parseSeasonEpisode(title);
+				const language = detectLanguage(title);
 
 				videos.push({
 					title,
@@ -368,6 +402,7 @@ export class IETVScraper {
 					publishDate: null,
 					season,
 					episode,
+					language,
 					duration: null,
 					viewCount: null,
 				});
@@ -395,6 +430,7 @@ export class IETVScraper {
 				? stripHtml(titleMatch[1] || titleMatch[2])
 				: `Video ${videoId}`;
 			const { season, episode } = parseSeasonEpisode(title);
+			const language = detectLanguage(title);
 
 			videos.push({
 				title,
@@ -405,6 +441,7 @@ export class IETVScraper {
 				publishDate: null,
 				season,
 				episode,
+				language,
 				duration: null,
 				viewCount: null,
 			});

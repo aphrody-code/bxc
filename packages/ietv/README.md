@@ -88,7 +88,9 @@ The scraper aggregates from these official Inazuma Eleven French YouTube channel
 }
 ```
 
-## Episode Parsing
+## Episode & Language Parsing
+
+### Episode Numbers
 
 Episode numbers are parsed from video titles using these patterns (in order of precedence):
 
@@ -96,6 +98,27 @@ Episode numbers are parsed from video titles using these patterns (in order of p
 2. `Saison/Season X Épisode/Episode Y`: "Saison 1 Épisode 5" → season 1, episode 5
 3. `Ep. N` format: "Inazuma Eleven Ep. 5" → season 1, episode 5 (defaults to season 1)
 4. Trailing numbers: last numeric sequence is treated as episode number
+
+### Language Versions
+
+Videos are automatically classified as:
+
+- **VF** (Version Française) — dubbed in French
+  - Detected from: "VF", "Version Française", "Doublage", "Dubbed"
+  - Default when title contains "Saison"
+
+- **VOSTFR** (Version Originale Sous-Titrée Française) — original audio + French subtitles
+  - Detected from: "VOSTFR", "V.O.STFR", "VO Japonaise", "Japanese Original", "JP French Subs"
+  - Takes precedence over VF markers when both found
+
+- **Unknown** — unable to determine from title
+
+This allows filtering episodes by preferred language version:
+
+```ts
+const vfOnly = episodes.filter(ep => ep.language === "vf");
+const vostfrOnly = episodes.filter(ep => ep.language === "vostfr");
+```
 
 ## Options
 
@@ -113,6 +136,24 @@ interface IETVOptions {
 ```
 
 **Note**: YouTube requires JavaScript execution to load dynamic content. Default profile is `"fast"` which executes JavaScript. Use `"static"` only if you know the page has server-rendered video lists.
+
+## Exports
+
+The module exports the following for advanced use:
+
+```ts
+// Types
+export type LanguageVersion = "vf" | "vostfr" | "unknown";
+export interface VideoRef { /* ... */ }
+export interface SeasonInfo { /* ... */ }
+export interface ChannelInfo { /* ... */ }
+export interface IETVOptions { /* ... */ }
+
+// Functions
+export function parseSeasonEpisode(title: string): { season, episode }
+export function detectLanguage(title: string): LanguageVersion
+export class IETVScraper { /* ... */ }
+```
 
 ## Limitations
 

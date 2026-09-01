@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { parseSeasonEpisode } from "./index.ts";
+import { parseSeasonEpisode, detectLanguage } from "./index.ts";
 
 describe("IETV Episode Parsing", () => {
 	it("parses Season X Episode Y format", () => {
@@ -64,5 +64,35 @@ describe("IETV Episode Parsing", () => {
 		const result = parseSeasonEpisode("Saison 3 - Episode 15");
 		expect(result.season).toBe(3);
 		expect(result.episode).toBe(15);
+	});
+});
+
+describe("IETV Language Detection", () => {
+	it("detects VF (Version Française)", () => {
+		expect(detectLanguage("Inazuma Eleven - Saison 1 Episode 1 VF")).toBe("vf");
+		expect(detectLanguage("Inazuma Eleven VF - Doublage Français")).toBe("vf");
+		expect(detectLanguage("Saison 1 Episode 1 - Version Française")).toBe("vf");
+	});
+
+	it("detects VOSTFR (Version Originale Sous-Titrée Française)", () => {
+		expect(detectLanguage("Inazuma Eleven - Saison 1 Episode 1 VOSTFR")).toBe("vostfr");
+		expect(detectLanguage("Inazuma Eleven VOSTFR - Japanese Original")).toBe("vostfr");
+		expect(detectLanguage("Episode 1 V.O.STFR - Japonais Sous-Titré")).toBe("vostfr");
+		expect(detectLanguage("Inazuma Eleven JP French Subtitles")).toBe("vostfr");
+	});
+
+	it("defaults to VF when no explicit marker", () => {
+		expect(detectLanguage("Inazuma Eleven - Saison 1 Episode 1")).toBe("vf");
+		expect(detectLanguage("Saison 2 Episode 5")).toBe("vf");
+	});
+
+	it("marks as unknown without language clue", () => {
+		expect(detectLanguage("Random Video Title 123")).toBe("unknown");
+		expect(detectLanguage("Video 456")).toBe("unknown");
+	});
+
+	it("prioritizes VOSTFR over VF when both present", () => {
+		// If both markers are present, VOSTFR takes precedence
+		expect(detectLanguage("Inazuma Eleven VOSTFR VF")).toBe("vostfr");
 	});
 });
