@@ -9,7 +9,11 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./cache": "./src/cache.ts"
+    "./cache": "./src/cache.ts",
+    "./video": "./src/video.ts",
+    "./video-player": "./src/video-player.ts",
+    "./video-codec": "./src/video-codec.ts",
+    "./video-search": "./src/video-search.ts"
   },
   "keywords": [
     "inazuma-eleven",
