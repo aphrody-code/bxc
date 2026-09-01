@@ -922,6 +922,153 @@ export class IETVScraper {
 	}
 
 	/**
+	 * Scrape Pluto.tv for Inazuma Eleven episodes (FAST streaming service).
+	 * Supports multiple regions: no (Norvège), fr (France), etc.
+	 */
+	async scrapePlutuTv(region = "no"): Promise<ChannelInfo> {
+		const baseUrl = `https://pluto.tv/${region}/shows/inazuma-eleven-ptv2`;
+
+		try {
+			// Try to fetch the show page which contains season/episode data
+			const { status, html } = await this.fetchHtml(`${baseUrl}/season/1`);
+			this.stats.httpRequests++;
+
+			if (status !== 200) {
+				// Try without season suffix for full listing
+				const fullResp = await this.fetchHtml(baseUrl);
+				this.stats.httpRequests++;
+				if (fullResp.status !== 200) {
+					throw new Error(`scrapePlutuTv: HTTP ${fullResp.status}`);
+				}
+				return this.parsePlutuTvPage(fullResp.html, baseUrl, region);
+			}
+
+			return this.parsePlutuTvPage(html, baseUrl, region);
+		} catch (err) {
+			throw new Error(`scrapePlutuTv(${region}): ${String(err)}`);
+		}
+	}
+
+	/**
+	 * Parse Pluto.tv show page for episodes (handles JSON-LD schema + DOM structure).
+	 */
+	private parsePlutuTvPage(html: string, baseUrl: string, region: string): ChannelInfo {
+		const videos: VideoRef[] = [];
+
+		// Try to extract from JSON-LD schema (most reliable)
+		const jsonLdRe = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g;
+		let match;
+
+		while ((match = jsonLdRe.exec(html)) !== null) {
+			try {
+				const jsonData = JSON.parse(match[1]) as any;
+
+				// Handle different JSON-LD structures
+				if (jsonData.containsSeason && Array.isArray(jsonData.containsSeason)) {
+					for (const season of jsonData.containsSeason) {
+						if (season.episode && Array.isArray(season.episode)) {
+							for (const ep of season.episode) {
+								const title = ep.name || ep.episodeNumber || "";
+								if (!title) continue;
+
+								const { season: seasonNum, episode: epNum } = parseSeasonEpisode(
+									title + (season.seasonNumber ? ` Season ${season.seasonNumber}` : ""),
+								);
+								const language = detectLanguage(title);
+
+								videos.push({
+									title,
+									videoId: Buffer.from(`pluto-tv-${ep.url || title}`).toString("base64").slice(0, 11),
+									url: ep.url || `${baseUrl}/season/${season.seasonNumber || 1}`,
+									description: ep.description || null,
+									thumbnail: ep.image || null,
+									publishDate: ep.datePublished || null,
+									season: seasonNum,
+									episode: epNum,
+									language,
+									duration: ep.duration ? parseInt(ep.duration.replace(/\D/g, ""), 10) : null,
+									viewCount: null,
+								});
+							}
+						}
+					}
+				}
+			} catch {
+				// JSON-LD parse failed, try DOM parsing
+			}
+		}
+
+		// Fallback: parse episode links from DOM
+		if (videos.length === 0) {
+			const episodeRe = /<a[^>]*href="([^"]*episode[^"]*)"[^>]*>[\s\S]*?<(?:h[2-4]|span)[^>]*>([^<]+)<\/(?:h[2-4]|span)>/gi;
+
+			while ((match = episodeRe.exec(html)) !== null) {
+				const url = match[1];
+				const title = stripHtml(match[2]);
+
+				if (title.length < 3) continue;
+
+				const { season, episode } = parseSeasonEpisode(title);
+				const language = detectLanguage(title);
+
+				videos.push({
+					title,
+					videoId: Buffer.from(`pluto-tv-${url}`).toString("base64").slice(0, 11),
+					url: url.startsWith("http") ? url : `${baseUrl}${url}`,
+					description: null,
+					thumbnail: null,
+					publishDate: null,
+					season,
+					episode,
+					language,
+					duration: null,
+					viewCount: null,
+				});
+			}
+		}
+
+		// Group by season
+		const seasonMap = new Map<number, VideoRef[]>();
+		let maxSeason = 0;
+
+		for (const video of videos) {
+			if (video.season === null) continue;
+			if (!seasonMap.has(video.season)) {
+				seasonMap.set(video.season, []);
+				maxSeason = Math.max(maxSeason, video.season);
+			}
+			seasonMap.get(video.season)!.push(video);
+		}
+
+		for (const eps of seasonMap.values()) {
+			eps.sort((a, b) => (a.episode ?? 0) - (b.episode ?? 0));
+		}
+
+		const seasons: SeasonInfo[] = [];
+		for (let s = 1; s <= maxSeason; s++) {
+			const episodes = seasonMap.get(s) ?? [];
+			seasons.push({
+				season: s,
+				episodes,
+				totalEpisodes: episodes.length,
+			});
+		}
+
+		const totalEpisodes = videos.filter((v) => v.episode !== null).length;
+		this.stats.channelsScraped++;
+		this.stats.totalEpisodes += totalEpisodes;
+
+		return {
+			channel: `pluto-tv-${region}`,
+			title: `Pluto.tv (${region.toUpperCase()}) - Inazuma Eleven`,
+			description: "Free Ad-Supported Streaming Service (FAST)",
+			avatar: null,
+			seasons,
+			totalEpisodes,
+		};
+	}
+
+	/**
 	 * Scrape inazuma-eleven.fr official site for complete episode list.
 	 */
 	async scrapeOfficialSite(): Promise<ChannelInfo> {
@@ -1062,38 +1209,65 @@ export class IETVScraper {
 	}
 
 	/**
-	 * Aggregate episodes from multiple Inazuma Eleven French channels (parallel with Bun).
+	 * Scrape Pluto.tv across multiple regions (France, Norway, etc).
+	 */
+	async scrapePlutuTvRegions(regions = ["no", "fr"]): Promise<ChannelInfo[]> {
+		const promises = regions.map(async (region) => {
+			try {
+				return await this.scrapePlutuTv(region);
+			} catch (err) {
+				console.warn(`Failed to fetch Pluto.tv ${region}: ${String(err)}`);
+				return null;
+			}
+		});
+
+		const results = await Promise.all(promises);
+		return results.filter((info): info is ChannelInfo => info !== null);
+	}
+
+	/**
+	 * Aggregate episodes from all sources: YouTube channels + official site + Pluto.tv (parallel).
 	 */
 	async getAllChannelEpisodes(): Promise<Array<ChannelInfo>> {
-		const channels = [
+		const youtubeChannels = [
 			"inazumaelevenfrance1",
 			"inazumatvfr",
 			"inazumaelevengofrance",
 			"InazumaTVFR__",
 		];
 
-		// Use Promise.all for true parallelism (Bun native concurrency)
-		const promises = channels.map(async (handle) => {
-			try {
-				return await this.getChannelEpisodes(handle);
-			} catch (err) {
-				console.warn(`Failed to fetch ${handle}: ${String(err)}`);
-				return null;
-			}
-		});
+		// Parallel tasks using Promise.all (Bun native concurrency)
+		const [youtubeResults, officialSite, plutuResults] = await Promise.all([
+			// YouTube channels
+			Promise.all(
+				youtubeChannels.map(async (handle) => {
+					try {
+						return await this.getChannelEpisodes(handle);
+					} catch (err) {
+						console.warn(`Failed to fetch ${handle}: ${String(err)}`);
+						return null;
+					}
+				}),
+			),
+			// Official site
+			(async () => {
+				try {
+					return await this.scrapeOfficialSite();
+				} catch (err) {
+					console.warn(`Failed to fetch official site: ${String(err)}`);
+					return null;
+				}
+			})(),
+			// Pluto.tv regions
+			this.scrapePlutuTvRegions(["no", "fr"]).catch(() => []),
+		]);
 
-		const results = await Promise.all(promises);
+		// Combine all results
+		const allResults: ChannelInfo[] = [];
 
-		// Also fetch official site in parallel
-		let officialSite: ChannelInfo | null = null;
-		try {
-			officialSite = await this.scrapeOfficialSite();
-		} catch (err) {
-			console.warn(`Failed to fetch official site: ${String(err)}`);
-		}
-
-		const allResults = results.filter((info): info is ChannelInfo => info !== null);
-		if (officialSite) allResults.unshift(officialSite);
+		if (officialSite) allResults.push(officialSite);
+		allResults.push(...youtubeResults.filter((info): info is ChannelInfo => info !== null));
+		allResults.push(...plutuResults);
 
 		return allResults;
 	}
