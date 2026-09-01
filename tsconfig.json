@@ -42,5 +42,11 @@
 		"benchmarks/**/*",
 		"types/**/*"
 	],
-	"exclude": ["vendor", "node_modules", "../../node_modules", "patches"]
+	"exclude": [
+		"vendor",
+		"node_modules",
+		"../../node_modules",
+		"patches",
+		"examples/**/*.tsx"
+	]
 }

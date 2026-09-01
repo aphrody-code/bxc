@@ -4,13 +4,36 @@
  * Tables:
  *   - channels (source, title, description, totalEpisodes, lastScrape)
  *   - seasons (channel_id, season, totalEpisodes)
- *   - episodes (channel_id, season, episode, videoId, title, url, thumbnail, language, duration, quality)
+ *   - episodes (channel_id, season, episode, videoId, title, url, description,
+ *     thumbnail, publishDate, viewCount, language, duration, quality)
  *   - search_index (videoId, title_fts) pour recherche rapide
  */
 
 import { Database } from "bun:sqlite";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import type { ChannelInfo, SeasonInfo, VideoRef } from "./index";
+
+/** `VideoRef` tel que stocké en cache : le nom de chaîne d'origine en plus. */
+export type CachedVideoRef = VideoRef & { channel?: string };
+
+/** Filtres acceptés par {@link IETVCache.search}. */
+export interface CacheSearchQuery {
+	q?: string;
+	season?: number;
+	episode?: number;
+	language?: "vf" | "vostfr";
+	channel?: string;
+	limit?: number;
+}
+
+/** Compteurs renvoyés par {@link IETVCache.getStats}. */
+export interface CacheStats {
+	channels: number;
+	seasons: number;
+	episodes: number;
+	byLanguage: Record<string, number>;
+	lastUpdate: number;
+}
 
 export class IETVCache {
 	private db: Database;
@@ -20,7 +43,7 @@ export class IETVCache {
 		this.dbPath = dbPath.replace("~", process.env.HOME || "/root");
 		const dir = this.dbPath.substring(0, this.dbPath.lastIndexOf("/"));
 		if (!existsSync(dir)) {
-			Bun.shell(`mkdir -p "${dir}"`).sync();
+			mkdirSync(dir, { recursive: true });
 		}
 
 		this.db = new Database(this.dbPath, { create: true });
@@ -37,6 +60,7 @@ export class IETVCache {
         channel TEXT UNIQUE NOT NULL,
         title TEXT,
         description TEXT,
+        avatar TEXT,
         totalEpisodes INTEGER DEFAULT 0,
         lastScrape INTEGER DEFAULT 0,
         createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer)),
@@ -61,8 +85,11 @@ export class IETVCache {
         videoId TEXT UNIQUE NOT NULL,
         title TEXT NOT NULL,
         url TEXT NOT NULL,
+        description TEXT,
         thumbnail TEXT,
-        language TEXT CHECK(language IN ('vf', 'vostfr')),
+        publishDate TEXT,
+        viewCount TEXT,
+        language TEXT CHECK(language IN ('vf', 'vostfr', 'unknown')),
         duration INTEGER,
         quality TEXT,
         createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer)),
@@ -81,6 +108,29 @@ export class IETVCache {
       CREATE INDEX IF NOT EXISTS idx_episodes_language ON episodes(language);
       CREATE INDEX IF NOT EXISTS idx_episodes_title ON episodes(title COLLATE NOCASE);
     `);
+
+		this.migrateSchema();
+	}
+
+	/**
+	 * Ajoute les colonnes manquantes sur une base créée par une version
+	 * antérieure — `CREATE TABLE IF NOT EXISTS` ne met pas à jour un schéma
+	 * existant.
+	 */
+	private migrateSchema() {
+		const addColumn = (table: string, column: string, type: string) => {
+			const cols = this.db.prepare(`PRAGMA table_info(${table})`).all() as {
+				name: string;
+			}[];
+			if (!cols.some((c) => c.name === column)) {
+				this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+			}
+		};
+
+		addColumn("channels", "avatar", "TEXT");
+		addColumn("episodes", "description", "TEXT");
+		addColumn("episodes", "publishDate", "TEXT");
+		addColumn("episodes", "viewCount", "TEXT");
 	}
 
 	// =========================================================================
@@ -89,8 +139,8 @@ export class IETVCache {
 
 	saveChannel(info: ChannelInfo) {
 		const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO channels (channel, title, description, totalEpisodes, lastScrape, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO channels (channel, title, description, avatar, totalEpisodes, lastScrape, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
 		const now = Date.now();
@@ -98,6 +148,7 @@ export class IETVCache {
 			info.channel,
 			info.title,
 			info.description || null,
+			info.avatar || null,
 			info.totalEpisodes,
 			now,
 			now
@@ -120,8 +171,9 @@ export class IETVCache {
 				this.db
 					.prepare(
 						`INSERT OR REPLACE INTO episodes
-           (channel_id, season, episode, videoId, title, url, thumbnail, language, duration, quality)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+           (channel_id, season, episode, videoId, title, url, description, thumbnail,
+            publishDate, viewCount, language, duration, quality)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 					)
 					.run(
 						channelId.id,
@@ -130,9 +182,12 @@ export class IETVCache {
 						ep.videoId,
 						ep.title,
 						ep.url,
+						ep.description || null,
 						ep.thumbnail || null,
+						ep.publishDate || null,
+						ep.viewCount || null,
 						ep.language,
-						ep.duration || null,
+						ep.duration ?? null,
 						ep.quality || null
 					);
 			}
@@ -142,7 +197,7 @@ export class IETVCache {
 	getChannel(channel: string): ChannelInfo | null {
 		const ch = this.db
 			.prepare(
-				"SELECT id, channel, title, description, totalEpisodes FROM channels WHERE channel = ?"
+				"SELECT id, channel, title, description, avatar, totalEpisodes FROM channels WHERE channel = ?"
 			)
 			.get(channel) as any;
 
@@ -158,6 +213,7 @@ export class IETVCache {
 			channel: ch.channel,
 			title: ch.title,
 			description: ch.description,
+			avatar: ch.avatar,
 			totalEpisodes: ch.totalEpisodes,
 			seasons: seasons.map((s) => ({
 				season: s.season,
@@ -172,7 +228,7 @@ export class IETVCache {
 	getAllChannels(): ChannelInfo[] {
 		const channels = this.db
 			.prepare(
-				"SELECT id, channel, title, description, totalEpisodes FROM channels ORDER BY channel"
+				"SELECT id, channel, title, description, avatar, totalEpisodes FROM channels ORDER BY channel"
 			)
 			.all() as any[];
 
@@ -187,6 +243,7 @@ export class IETVCache {
 				channel: ch.channel,
 				title: ch.title,
 				description: ch.description,
+				avatar: ch.avatar,
 				totalEpisodes: ch.totalEpisodes,
 				seasons: seasons.map((s) => ({
 					season: s.season,
@@ -205,7 +262,8 @@ export class IETVCache {
 		return (
 			this.db
 				.prepare(
-					`SELECT videoId, season, episode, title, url, thumbnail, language, duration, quality
+					`SELECT videoId, season, episode, title, url, description, thumbnail,
+                publishDate, viewCount, language, duration, quality
          FROM episodes WHERE channel_id = ? AND season = ? ORDER BY episode`
 				)
 				.all(channelId, season) as any[]
@@ -213,25 +271,22 @@ export class IETVCache {
 			videoId: ep.videoId,
 			title: ep.title,
 			url: ep.url,
+			description: ep.description ?? null,
 			season: ep.season,
 			episode: ep.episode,
-			thumbnail: ep.thumbnail,
+			thumbnail: ep.thumbnail ?? null,
+			publishDate: ep.publishDate ?? null,
+			viewCount: ep.viewCount ?? null,
 			language: ep.language,
-			duration: ep.duration,
-			quality: ep.quality,
+			duration: ep.duration ?? null,
+			quality: ep.quality ?? null,
 		}));
 	}
 
-	search(query: {
-		q?: string;
-		season?: number;
-		episode?: number;
-		language?: "vf" | "vostfr";
-		channel?: string;
-		limit?: number;
-	}): VideoRef[] {
+	search(query: CacheSearchQuery): CachedVideoRef[] {
 		let sql = `
-      SELECT DISTINCT e.videoId, e.season, e.episode, e.title, e.url, e.thumbnail, e.language, e.duration, e.quality,
+      SELECT DISTINCT e.videoId, e.season, e.episode, e.title, e.url, e.description, e.thumbnail,
+             e.publishDate, e.viewCount, e.language, e.duration, e.quality,
              c.channel, c.title as channel_title
       FROM episodes e
       JOIN channels c ON e.channel_id = c.id
@@ -272,12 +327,15 @@ export class IETVCache {
 			videoId: ep.videoId,
 			title: ep.title,
 			url: ep.url,
+			description: ep.description ?? null,
 			season: ep.season,
 			episode: ep.episode,
-			thumbnail: ep.thumbnail,
+			thumbnail: ep.thumbnail ?? null,
+			publishDate: ep.publishDate ?? null,
+			viewCount: ep.viewCount ?? null,
 			language: ep.language,
-			duration: ep.duration,
-			quality: ep.quality,
+			duration: ep.duration ?? null,
+			quality: ep.quality ?? null,
 			channel: ep.channel,
 		}));
 	}
@@ -286,7 +344,7 @@ export class IETVCache {
 	// Statistics
 	// =========================================================================
 
-	getStats() {
+	getStats(): CacheStats {
 		const channels = this.db.prepare("SELECT COUNT(*) as count FROM channels").get() as any;
 		const seasons = this.db.prepare("SELECT COUNT(*) as count FROM seasons").get() as any;
 		const episodes = this.db.prepare("SELECT COUNT(*) as count FROM episodes").get() as any;
@@ -304,7 +362,7 @@ export class IETVCache {
 			channels: channels.count || 0,
 			seasons: seasons.count || 0,
 			episodes: episodes.count || 0,
-			byLanguage: byLanguage.reduce((acc: any, row: any) => {
+			byLanguage: byLanguage.reduce<Record<string, number>>((acc, row) => {
 				acc[row.language] = row.count;
 				return acc;
 			}, {}),

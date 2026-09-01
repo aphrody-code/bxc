@@ -51,7 +51,7 @@ bxc (IETV) │
 │  ├─ ietv-discord-bot.ts
 │  ├─ ietv-web-component.tsx
 │  ├─ ietv-react-native.tsx
-│  ├─ ietv-tauri-app.ts
+│  ├─ ietv-tauri-app.tsx
 │  └─ ietv-cache-advanced.ts ⭐ NEW
 │
 └─ test/ietv/

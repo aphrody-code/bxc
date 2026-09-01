@@ -7,6 +7,8 @@
       "dependencies": {
         "@aphrody/challonge": "0.1.6",
         "@aphrody/fut": "0.1.5",
+        "@aphrody/ietv": "0.1.0",
+        "@aphrody/ietv-client": "1.0.0",
         "@aphrody/voiranime": "0.1.5",
         "@aphrody/worldbeyblade": "0.1.5",
         "@aphrody/x": "1.1.0",
@@ -70,6 +72,10 @@
     "packages/ietv": {
       "name": "@aphrody/ietv",
       "version": "0.1.0",
+    },
+    "packages/ietv-client": {
+      "name": "@aphrody/ietv-client",
+      "version": "1.0.0",
     },
     "packages/next-playwright": {
       "name": "@aphrody/next-playwright",
@@ -567,6 +573,8 @@
     "@aphrody/fut": ["@aphrody/fut@workspace:packages/fut"],
 
     "@aphrody/ietv": ["@aphrody/ietv@workspace:packages/ietv"],
+
+    "@aphrody/ietv-client": ["@aphrody/ietv-client@workspace:packages/ietv-client"],
 
     "@aphrody/next-playwright": ["@aphrody/next-playwright@workspace:packages/next-playwright"],
 

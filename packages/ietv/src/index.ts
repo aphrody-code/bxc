@@ -88,6 +88,8 @@ export interface VideoRef {
 	duration: number | null;
 	/** View count, when available. */
 	viewCount: string | null;
+	/** Rendition label (`"1080p"`, …) when a source exposes one. */
+	quality?: string | null;
 }
 
 export interface SeasonInfo {
