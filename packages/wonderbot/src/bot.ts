@@ -372,9 +372,16 @@ export class Wonderbot {
 	private async rafraichirSiPerime(): Promise<void> {
 		if (!this.config.rafraichirAuDemarrage) return;
 
-		const dernier = this.catalogue.resume().dernierRafraichissement;
+		const resume = this.catalogue.resume();
+		const dernier = resume.dernierRafraichissement;
 		const age = Date.now() - dernier;
-		if (dernier > 0 && age < this.config.intervalleRafraichissementMs) {
+
+		// Le compte d'épisodes prime sur l'horodatage : un rafraîchissement qui
+		// s'est terminé sans rien ramener pose quand même sa date, et sans cette
+		// condition un catalogue VIDE serait considéré « à jour » pendant six
+		// heures. Observé en production dès le premier démarrage.
+		const vide = resume.stats.episodes === 0;
+		if (!vide && dernier > 0 && age < this.config.intervalleRafraichissementMs) {
 			this.journaliser(
 				`${ICONES.horloge} catalogue à jour (${Math.round(age / 60_000)} min) — pas de rafraîchissement au démarrage`
 			);
@@ -382,7 +389,7 @@ export class Wonderbot {
 		}
 
 		this.journaliser(
-			`${ICONES.rafraichir} catalogue ${dernier === 0 ? "vide" : "périmé"} — rafraîchissement au démarrage`
+			`${ICONES.rafraichir} catalogue ${vide ? "vide" : "périmé"} — rafraîchissement au démarrage`
 		);
 		try {
 			const resultat = await this.planificateur.declencher();
