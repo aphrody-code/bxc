@@ -22,27 +22,30 @@ import IETVScraper, { loadYouTubeApiKey, loadGCloudCredentials } from "@aphrody/
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {
-	action: "list" | "channel" | "all" | "discover" | "check-auth" | "official";
+	action: "list" | "channel" | "all" | "discover" | "check-auth" | "official" | "pluto";
 	channel: string;
 	profile: "static" | "fast" | "http" | "stealth" | "max";
 	youtubeApiKey?: string;
 	checkAuth?: boolean;
+	region?: string;
 }
 
 function printUsage(): void {
 	Bun.stdout.write(
-		`bxc ietv — Inazuma Eleven TV (IETV) — YouTube channel scraper
+		`bxc ietv — Inazuma Eleven TV (IETV) — Multi-source streaming scraper
 
 Usage:
-  bxc ietv channel <handle>         Get episodes from a specific channel (e.g. "inazumaelevenfrance1")
-  bxc ietv all                      Aggregate all episodes from all 4 IETV channels
-  bxc ietv official                 Scrape official inazuma-eleven.fr site (most complete)
+  bxc ietv channel <handle>         Get episodes from a specific YouTube channel (e.g. "inazumaelevenfrance1")
+  bxc ietv all                      Aggregate all sources (YouTube + Official + Pluto.tv) in parallel
+  bxc ietv official                 Scrape official inazuma-eleven.fr site
+  bxc ietv pluto [region]           Scrape Pluto.tv FAST service (no, fr, es, etc)
   bxc ietv discover                 Discover additional Inazuma Eleven channels via Google Search
   bxc ietv check-auth               Verify YouTube API credentials status
   bxc ietv list                     List available channels
 
 Options:
   --profile <name>     static (default) | fast | http | stealth | max
+  --region <code>      Pluto.tv region code (default: no, fr)
   --youtube-api-key    YouTube Data API key for enhanced discovery
   --check-auth         Check authentication status
   --help, -h           this help
@@ -92,6 +95,7 @@ function parseArgs(
 	else if (actionStr === "discover") opts.action = "discover";
 	else if (actionStr === "check-auth") opts.action = "check-auth";
 	else if (actionStr === "official") opts.action = "official";
+	else if (actionStr === "pluto") opts.action = "pluto";
 	else if (actionStr === "list") opts.action = "list";
 	else if (actionStr === undefined || actionStr === "") {
 		// Default to 'list'
@@ -103,7 +107,7 @@ function parseArgs(
 	}
 
 	const positional: string[] = [];
-	for (let i = (argv[0] === "channel" || argv[0] === "all" || argv[0] === "discover" || argv[0] === "official" ? 1 : 0); i < argv.length; i++) {
+	for (let i = (argv[0] === "channel" || argv[0] === "all" || argv[0] === "discover" || argv[0] === "official" || argv[0] === "pluto" ? 1 : 0); i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
 			case "--profile": {
@@ -123,6 +127,10 @@ function parseArgs(
 			}
 			case "--youtube-api-key": {
 				opts.youtubeApiKey = argv[++i];
+				break;
+			}
+			case "--region": {
+				opts.region = argv[++i];
 				break;
 			}
 			case "--check-auth": {
@@ -187,6 +195,10 @@ export async function main(
 			Bun.stdout.write(JSON.stringify(status, null, 2) + "\n");
 		} else if (opts.action === "official") {
 			const info = await scraper.scrapeOfficialSite();
+			Bun.stdout.write(JSON.stringify(info, null, 2) + "\n");
+		} else if (opts.action === "pluto") {
+			const region = opts.region || "no";
+			const info = await scraper.scrapePlutuTv(region);
 			Bun.stdout.write(JSON.stringify(info, null, 2) + "\n");
 		} else if (opts.action === "list") {
 			Bun.stdout.write(
