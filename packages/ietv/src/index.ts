@@ -47,6 +47,9 @@
  */
 
 import { Browser } from "@aphrody/bxc";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { readFileSync, existsSync } from "node:fs";
 
 type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
 
@@ -129,6 +132,87 @@ export interface YouTubeChannelMetadata {
 	subscriberCount: string | null;
 	/** Video count. */
 	videoCount: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Credential loading (secure)
+// ---------------------------------------------------------------------------
+
+/**
+ * Load YouTube API key from secure sources (in order of precedence):
+ * 1. YOUTUBE_API_KEY environment variable
+ * 2. ~/.ietv/auth.json (key field)
+ * 3. ~/.aphrody/ietv-credentials.json (youtube_api_key field)
+ * 4. gcloud auth application-default access token (fallback, requires gcloud CLI)
+ */
+export function loadYouTubeApiKey(): string | null {
+	// 1. Environment variable
+	const envKey = process.env.YOUTUBE_API_KEY?.trim();
+	if (envKey) return envKey;
+
+	// 2. ~/.ietv/auth.json
+	try {
+		const authPath = join(homedir(), ".ietv", "auth.json");
+		if (existsSync(authPath)) {
+			const content = readFileSync(authPath, "utf-8");
+			const auth = JSON.parse(content);
+			if (auth.key && typeof auth.key === "string") {
+				return auth.key.trim();
+			}
+		}
+	} catch {
+		// Silently fail and continue to next source
+	}
+
+	// 3. ~/.aphrody/ietv-credentials.json
+	try {
+		const credsPath = join(homedir(), ".aphrody", "ietv-credentials.json");
+		if (existsSync(credsPath)) {
+			const content = readFileSync(credsPath, "utf-8");
+			const creds = JSON.parse(content);
+			if (creds.youtube_api_key && typeof creds.youtube_api_key === "string") {
+				return creds.youtube_api_key.trim();
+			}
+		}
+	} catch {
+		// Silently fail
+	}
+
+	// 4. gcloud auth (requires gcloud CLI installed)
+	// Note: This is a placeholder; full integration would require spawning gcloud process
+	// For now, we return null and let the caller fall back to Google Search discovery
+
+	return null;
+}
+
+/**
+ * Load gcloud credentials for YouTube Data API.
+ * Returns the path to the service account JSON file or access token.
+ */
+export function loadGCloudCredentials(): {
+	type: "service-account" | "access-token" | null;
+	path?: string;
+	token?: string;
+} {
+	// 1. GOOGLE_APPLICATION_CREDENTIALS env var (gcloud default)
+	const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim();
+	if (credPath && existsSync(credPath)) {
+		return { type: "service-account", path: credPath };
+	}
+
+	// 2. ~/.google/application_default_credentials.json (gcloud default path)
+	const defaultPath = join(homedir(), ".config", "gcloud", "application_default_credentials.json");
+	if (existsSync(defaultPath)) {
+		return { type: "service-account", path: defaultPath };
+	}
+
+	// 3. ~/.aphrody/gcloud-credentials.json (Aphrody convention)
+	const aphrodyPath = join(homedir(), ".aphrody", "gcloud-credentials.json");
+	if (existsSync(aphrodyPath)) {
+		return { type: "service-account", path: aphrodyPath };
+	}
+
+	return { type: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -273,7 +357,8 @@ export class IETVScraper {
 		this.profile = opts.profile ?? "fast";
 		this.timeoutMs = opts.timeoutMs ?? 30_000;
 		this.retries = opts.retries ?? 2;
-		this.youtubeApiKey = opts.youtubeApiKey ?? null;
+		// Try to load API key from secure sources if not provided
+		this.youtubeApiKey = opts.youtubeApiKey ?? loadYouTubeApiKey();
 	}
 
 	private async getPage(): Promise<AnyPage> {
@@ -585,12 +670,59 @@ export class IETVScraper {
 	private async discoverChannelsViaYouTubeAPI(
 		searchQuery: string,
 	): Promise<YouTubeChannelMetadata[]> {
-		// Note: Full API integration would require authenticated requests.
-		// For now, this returns a placeholder implementation.
-		// To use this in production, would need:
-		// const response = await fetch(`https://www.googleapis.com/youtube/v3/search?...`);
-		// Parse response and extract channel data.
-		return [];
+		if (!this.youtubeApiKey) return [];
+
+		const channels: YouTubeChannelMetadata[] = [];
+
+		try {
+			// YouTube Data API v3 search endpoint
+			const apiUrl = new URL("https://www.googleapis.com/youtube/v3/search");
+			apiUrl.searchParams.set("key", this.youtubeApiKey);
+			apiUrl.searchParams.set("q", searchQuery);
+			apiUrl.searchParams.set("type", "channel");
+			apiUrl.searchParams.set("part", "snippet");
+			apiUrl.searchParams.set("maxResults", "50");
+
+			const response = await fetch(apiUrl.toString());
+
+			if (!response.ok) {
+				console.warn(
+					`YouTube API error: ${response.status} ${response.statusText}`,
+				);
+				return [];
+			}
+
+			const data = (await response.json()) as {
+				items?: Array<{
+					id?: { channelId?: string };
+					snippet?: {
+						title?: string;
+						description?: string;
+						channelId?: string;
+					};
+				}>;
+			};
+
+			if (!data.items) return [];
+
+			for (const item of data.items) {
+				const channelId = item.id?.channelId || item.snippet?.channelId;
+				if (!channelId) continue;
+
+				channels.push({
+					handle: `@${(item.snippet?.title || channelId).toLowerCase().replace(/\s+/g, "")}`,
+					channelId,
+					title: item.snippet?.title || channelId,
+					description: item.snippet?.description || null,
+					subscriberCount: null, // Would require additional API call
+					videoCount: null,
+				});
+			}
+		} catch (err) {
+			console.warn(`discoverChannelsViaYouTubeAPI failed: ${String(err)}`);
+		}
+
+		return channels;
 	}
 
 	/**

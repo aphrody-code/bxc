@@ -18,14 +18,15 @@
  * `bxc ietv <action> [arg]` — Inazuma Eleven TV (YouTube channels) scraper
  */
 
-import IETVScraper from "@aphrody/ietv";
+import IETVScraper, { loadYouTubeApiKey, loadGCloudCredentials } from "@aphrody/ietv";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {
-	action: "list" | "channel" | "all" | "discover";
+	action: "list" | "channel" | "all" | "discover" | "check-auth";
 	channel: string;
 	profile: "static" | "fast" | "http" | "stealth" | "max";
 	youtubeApiKey?: string;
+	checkAuth?: boolean;
 }
 
 function printUsage(): void {
@@ -36,12 +37,19 @@ Usage:
   bxc ietv channel <handle>         Get episodes from a specific channel (e.g. "inazumaelevenfrance1")
   bxc ietv all                      Aggregate all episodes from all 4 IETV channels
   bxc ietv discover                 Discover additional Inazuma Eleven channels via Google Search
+  bxc ietv check-auth               Verify YouTube API credentials status
   bxc ietv list                     List available channels
 
 Options:
   --profile <name>     static (default) | fast | http | stealth | max
   --youtube-api-key    YouTube Data API key for enhanced discovery
+  --check-auth         Check authentication status
   --help, -h           this help
+
+Credentials (auto-loaded in order):
+  1. YOUTUBE_API_KEY environment variable
+  2. ~/.ietv/auth.json (key field)
+  3. ~/.aphrody/ietv-credentials.json (youtube_api_key field)
 
 Available canonical channels:
   @inazumaelevenfrance1
@@ -81,6 +89,7 @@ function parseArgs(
 	if (actionStr === "channel") opts.action = "channel";
 	else if (actionStr === "all") opts.action = "all";
 	else if (actionStr === "discover") opts.action = "discover";
+	else if (actionStr === "check-auth") opts.action = "check-auth";
 	else if (actionStr === "list") opts.action = "list";
 	else if (actionStr === undefined || actionStr === "") {
 		// Default to 'list'
@@ -112,6 +121,11 @@ function parseArgs(
 			}
 			case "--youtube-api-key": {
 				opts.youtubeApiKey = argv[++i];
+				break;
+			}
+			case "--check-auth": {
+				opts.action = "check-auth";
+				opts.checkAuth = true;
 				break;
 			}
 			case "--help":
@@ -150,7 +164,26 @@ export async function main(
 	});
 
 	try {
-		if (opts.action === "list") {
+		if (opts.action === "check-auth") {
+			const apiKey = loadYouTubeApiKey();
+			const gcloudCreds = loadGCloudCredentials();
+			const status = {
+				youtube_api_key: apiKey ? "✓ Found" : "✗ Not found",
+				gcloud_credentials: gcloudCreds.type ? `✓ ${gcloudCreds.type}` : "✗ Not found",
+				gcloud_path: gcloudCreds.path || null,
+				sources: {
+					env_youtube_api_key: !!process.env.YOUTUBE_API_KEY,
+					ietv_auth_json: !!process.env.HOME && require("fs").existsSync(
+						require("path").join(process.env.HOME, ".ietv", "auth.json")
+					),
+					aphrody_ietv_credentials: !!process.env.HOME && require("fs").existsSync(
+						require("path").join(process.env.HOME, ".aphrody", "ietv-credentials.json")
+					),
+					google_application_credentials: !!process.env.GOOGLE_APPLICATION_CREDENTIALS,
+				},
+			};
+			Bun.stdout.write(JSON.stringify(status, null, 2) + "\n");
+		} else if (opts.action === "list") {
 			Bun.stdout.write(
 				JSON.stringify(
 					{
