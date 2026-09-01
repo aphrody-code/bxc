@@ -1,5 +1,5 @@
 [Unit]
-# Wonderbot — bot Discord du catalogue Inazuma Eleven TV.
+# Wonderbot — bot Discord du catalogue d'épisodes.
 #
 # Un seul processus : il tient la passerelle Discord ET rafraîchit lui-même le
 # catalogue IETV toutes les six heures. Pas de démon cron séparé, pas de serveur
@@ -27,7 +27,7 @@
 # Installation :
 #   sudo cp scripts/deploy/bxc-wonderbot.service /etc/systemd/system/
 #   sudo systemctl daemon-reload && sudo systemctl enable --now bxc-wonderbot
-Description=Wonderbot — bot Discord du catalogue Inazuma Eleven TV
+Description=Wonderbot — bot Discord du catalogue d'épisodes
 Documentation=https://github.com/aphrody-code/bxc
 After=network-online.target
 Wants=network-online.target
@@ -98,7 +98,7 @@ ProtectSystem=strict
 ProtectHome=read-only
 # Le catalogue est la SEULE chose que le service écrit sous $HOME. Sans cette
 # ligne, ProtectHome=read-only rendrait l'ouverture SQLite EROFS et le bot
-# planterait au premier `/ietv`.
+# planterait au premier `/episodes`.
 ReadWritePaths=/home/ubuntu/.cache/ietv /tmp
 PrivateTmp=true
 ProtectKernelTunables=true
