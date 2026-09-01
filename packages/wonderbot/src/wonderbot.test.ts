@@ -38,6 +38,13 @@ import {
 	nomFilSaison,
 	type PasserelleForum,
 } from "./forum.ts";
+import {
+	CLE_LACUNES,
+	Reparateur,
+	decrireLacune,
+	detecterLacunes,
+	lacunesDeSaison,
+} from "./lacunes.ts";
 import { Planificateur } from "./planificateur.ts";
 import { MARQUE_PAR_DEFAUT } from "./ui/theme.ts";
 import { Fiche, tailleEmbed } from "./ui/embed.ts";
@@ -1130,5 +1137,172 @@ describe("SynchronisationForum", () => {
 
 	it("nomme le fil avec le compte d'épisodes", () => {
 		expect(nomFilSaison(4, 51)).toBe("Saison 4 — 51 épisode(s)");
+	});
+});
+
+
+// ---------------------------------------------------------------------------
+// Épisodes manquants et réparation
+// ---------------------------------------------------------------------------
+
+describe("lacunesDeSaison", () => {
+	const saison = (numeros: (number | null)[]) =>
+		numeros.map((n, i) => episode({ videoId: `v${i}`, episode: n }));
+
+	it("trouve un trou au milieu d'une saison", () => {
+		const l = lacunesDeSaison(1, saison([1, 2, 4, 5]));
+		expect(l).toEqual({ saison: 1, manquants: [3], borne: { debut: 1, fin: 5 } });
+	});
+
+	it("trouve plusieurs trous", () => {
+		expect(lacunesDeSaison(2, saison([1, 4, 7]))?.manquants).toEqual([2, 3, 5, 6]);
+	});
+
+	it("ne signale rien sur une saison complète", () => {
+		expect(lacunesDeSaison(1, saison([1, 2, 3]))).toBeNull();
+	});
+
+	it("ne cherche RIEN au-delà du dernier épisode connu", () => {
+		// Une saison qui s'arrête à E12 est en cours de diffusion, pas trouée.
+		expect(lacunesDeSaison(1, saison([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]))).toBeNull();
+	});
+
+	it("ignore une saison trop petite pour avoir un intervalle", () => {
+		expect(lacunesDeSaison(1, saison([]))).toBeNull();
+		expect(lacunesDeSaison(1, saison([5]))).toBeNull();
+	});
+
+	it("ignore les épisodes sans numéro", () => {
+		expect(lacunesDeSaison(1, saison([1, null, 3]))?.manquants).toEqual([2]);
+	});
+
+	it("ne compte pas deux fois un épisode présent en deux langues", () => {
+		const doubles = [
+			episode({ videoId: "a", episode: 1 }),
+			episode({ videoId: "b", episode: 1, language: "vostfr" }),
+			episode({ videoId: "c", episode: 3 }),
+		];
+		expect(lacunesDeSaison(1, doubles)?.manquants).toEqual([2]);
+	});
+
+	it("balaie tout le catalogue", () => {
+		const trous = detecterLacunes(
+			new Map([
+				[2, saison([1, 3])],
+				[1, saison([1, 2])],
+			])
+		);
+		expect(trous.map((t) => t.saison)).toEqual([2]);
+	});
+
+	it("décrit un trou de façon lisible, en bornant l'aperçu", () => {
+		expect(decrireLacune({ saison: 3, manquants: [7, 12], borne: { debut: 1, fin: 20 } })).toBe(
+			"S03 · E07, E12"
+		);
+		const beaucoup = { saison: 1, manquants: Array.from({ length: 20 }, (_, i) => i + 2), borne: { debut: 1, fin: 30 } };
+		expect(decrireLacune(beaucoup)).toContain("(+8)");
+	});
+});
+
+describe("Reparateur", () => {
+	const stockage = () => {
+		const meta = new Map<string, string>();
+		return {
+			meta,
+			lireMeta: (c: string) => meta.get(c) ?? null,
+			ecrireMeta: (c: string, v: string) => void meta.set(c, v),
+		};
+	};
+	const trou = (saison: number, manquants: number[]) => ({
+		saison,
+		manquants,
+		borne: { debut: 1, fin: 50 },
+	});
+
+	it("retente un trou jamais vu", () => {
+		const d = new Reparateur({ stockage: stockage() }).evaluer([trou(1, [7])]);
+		expect(d.retenter).toBe(true);
+		expect(d.nouveaux).toEqual(["1:7"]);
+		expect(d.confirmes).toEqual([]);
+	});
+
+	it("cesse de retenter après le nombre de tentatives prévu", () => {
+		const support = stockage();
+		const r = new Reparateur({ stockage: support, tentativesMax: 2 });
+
+		expect(r.evaluer([trou(1, [7])]).retenter).toBe(true);
+		expect(r.evaluer([trou(1, [7])]).retenter).toBe(true);
+		const troisieme = r.evaluer([trou(1, [7])]);
+
+		expect(troisieme.retenter).toBe(false);
+		expect(troisieme.confirmes).toEqual(["1:7"]);
+		expect(r.confirmes()).toEqual(new Set(["1:7"]));
+	});
+
+	it("rend ses tentatives à un trou qui a disparu puis revient", () => {
+		const support = stockage();
+		const r = new Reparateur({ stockage: support, tentativesMax: 1 });
+
+		r.evaluer([trou(1, [7])]);
+		expect(r.evaluer([trou(1, [7])]).confirmes).toEqual(["1:7"]);
+		// L'épisode réapparaît : plus aucun trou.
+		r.evaluer([]);
+		// Puis il redisparaît — une source qui republie mérite qu'on retente.
+		expect(r.evaluer([trou(1, [7])]).retenter).toBe(true);
+	});
+
+	it("traite chaque épisode manquant séparément", () => {
+		const support = stockage();
+		const r = new Reparateur({ stockage: support, tentativesMax: 1 });
+		r.evaluer([trou(1, [7])]);
+		const d = r.evaluer([trou(1, [7, 9])]);
+		expect(d.confirmes).toEqual(["1:7"]);
+		expect(d.nouveaux).toEqual(["1:9"]);
+		expect(d.retenter).toBe(true);
+	});
+
+	it("ne retente jamais quand la réparation est désactivée", () => {
+		const d = new Reparateur({ stockage: stockage(), tentativesMax: 0 }).evaluer([trou(1, [7])]);
+		expect(d.retenter).toBe(false);
+		expect(d.confirmes).toEqual(["1:7"]);
+	});
+
+	it("repart de zéro sur un registre abîmé", () => {
+		const support = stockage();
+		support.ecrireMeta(CLE_LACUNES, "pas du json");
+		expect(new Reparateur({ stockage: support }).evaluer([trou(1, [7])]).retenter).toBe(true);
+	});
+
+	it("oublie tout à la réinitialisation", () => {
+		const support = stockage();
+		const r = new Reparateur({ stockage: support, tentativesMax: 1 });
+		r.evaluer([trou(1, [7])]);
+		r.reinitialiser();
+		expect(r.confirmes().size).toBe(0);
+	});
+});
+
+describe("configuration de la réparation", () => {
+	const base = {
+		WONDERBOT_DISCORD_TOKEN: "jeton",
+		WONDERBOT_APPLICATION_ID: "1544463751279812740",
+		HOME: "/home/test",
+	};
+
+	it("active la réparation et le rafraîchissement de démarrage par défaut", () => {
+		const c = lireConfig(base);
+		expect(c.rafraichirAuDemarrage).toBe(true);
+		expect(c.tentativesReparation).toBe(2);
+		expect(c.delaiReparationMs).toBe(900_000);
+	});
+
+	it("laisse désactiver chacun des deux", () => {
+		const c = lireConfig({ ...base, WONDERBOT_REFRESH_ON_START: "0", WONDERBOT_AUTOFIX_ATTEMPTS: "0" });
+		expect(c.rafraichirAuDemarrage).toBe(false);
+		expect(c.tentativesReparation).toBe(0);
+	});
+
+	it("plancher le délai de réparation à une minute", () => {
+		expect(lireConfig({ ...base, WONDERBOT_AUTOFIX_DELAY_MS: "1000" }).delaiReparationMs).toBe(60_000);
 	});
 });

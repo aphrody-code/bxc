@@ -75,6 +75,32 @@ ligne un épisode ancien (rattrapage de saison) serait manquée par un curseur
 temporel. Il est élagué à chaque passage sur ce que le catalogue contient
 encore, il ne grossit donc pas indéfiniment.
 
+## Rafraîchissement automatique et réparation
+
+**Au démarrage**, le bot rafraîchit **si et seulement si** le catalogue est vide
+ou plus vieux que l'intervalle. Le « si » est tout l'intérêt : rescraper à
+chaque `systemctl restart` coûterait plusieurs minutes de navigateur pour rien,
+et un service qui redémarre en boucle martèlerait les sources. Ensuite, la
+boucle périodique prend le relais (6 h par défaut).
+
+**Quand un épisode manque au milieu d'une saison**, le bot retente.
+
+- Un **trou** est un numéro absent *entre* le premier et le dernier épisode
+  connus. Une saison qui s'arrête à E12 n'a pas de trou — elle est en cours de
+  diffusion. On ne cherche jamais au-delà du dernier épisode connu.
+- Chaque trou a un nombre **fixe** de tentatives (2 par défaut), espacées de
+  15 min. Sans cette borne, un catalogue durablement incomplet relancerait un
+  scraping toutes les quinze minutes, pour toujours.
+- Passé ce compte, le trou est **confirmé** : le bot cesse d'y revenir et
+  l'affiche dans le fil de la saison, sous « ⚠️ Introuvables ». Un épisode qu'on
+  sait manquant est une information ; la taire laisse croire la liste complète.
+- Un trou qui disparaît **récupère ses tentatives** : une source qui republie
+  son catalogue mérite qu'on retente.
+- Une seule réparation en vol à la fois.
+
+`WONDERBOT_AUTOFIX_ATTEMPTS=0` désactive la réparation,
+`WONDERBOT_REFRESH_ON_START=0` le rafraîchissement de démarrage.
+
 ## Configuration
 
 Le premier nom trouvé gagne — les variantes historiques évitent de dupliquer un
@@ -91,6 +117,9 @@ Le premier nom trouvé gagne — les variantes historiques évitent de dupliquer
 | `WONDERBOT_ANNOUNCE_ROLE_ID` | Rôle mentionné dans l'annonce |
 | `WONDERBOT_STAFF_ROLE_IDS` | Rôles autorisés à `/episodes rafraichir` **en plus** des administrateurs ; vide ⇒ administrateurs seuls |
 | `WONDERBOT_REFRESH_INTERVAL_MS` | Période, défaut 6 h, plancher 60 s |
+| `WONDERBOT_REFRESH_ON_START` | `0` pour ne pas rafraîchir au démarrage même si le catalogue est périmé |
+| `WONDERBOT_AUTOFIX_ATTEMPTS` | Tentatives par épisode manquant, défaut 2 ; `0` désactive |
+| `WONDERBOT_AUTOFIX_DELAY_MS` | Délai avant une tentative, défaut 15 min, plancher 60 s |
 | `WONDERBOT_ANNOUNCE_LIMIT` | Épisodes annoncés d'un coup, défaut 5 |
 | `IETV_CACHE_PATH` | Base SQLite ; défaut `~/.cache/ietv/episodes.db` |
 
@@ -136,6 +165,7 @@ src/
 ├── catalogue.ts       lecture + rafraîchissement du cache IETV (cache et scraper injectables)
 ├── annonces.ts        journal des épisodes déjà annoncés (PUR + persistance)
 ├── forum.ts           un fil par saison, tenu à jour (passerelle Discord injectable)
+├── lacunes.ts         détection des épisodes manquants + réparation bornée (PUR + persistance)
 ├── planificateur.ts   boucle périodique (minuteurs injectables)
 ├── commands/ietv.ts   les cinq sous-commandes → embeds (ne connaît PAS discord.js)
 ├── ui/                charte : couleurs, icônes, budget des embeds, mise en forme
