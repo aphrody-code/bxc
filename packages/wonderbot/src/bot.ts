@@ -20,6 +20,7 @@ import {
 	Events,
 	GatewayIntentBits,
 	MessageFlags,
+	PermissionFlagsBits,
 	type ChatInputCommandInteraction,
 	type Interaction,
 	type SendableChannels,
@@ -58,11 +59,35 @@ export function rolesDeLInteraction(interaction: ChatInputCommandInteraction): s
 	return cache ? [...cache.keys()] : [];
 }
 
-/** Un des rôles de l'appelant figure-t-il parmi ceux du staff ? */
-export function estStaff(roles: readonly string[], rolesStaff: readonly string[]): boolean {
+/**
+ * L'appelant peut-il déclencher un rafraîchissement ?
+ *
+ * Un administrateur du serveur le peut TOUJOURS. Ne gater que sur une liste de
+ * rôles laisserait un serveur fraîchement configuré sans personne pour lancer
+ * le premier scraping — pas même son propriétaire — tant qu'un rôle n'est pas
+ * créé puis reporté dans `WONDERBOT_STAFF_ROLE_IDS`. La liste sert à ÉLARGIR
+ * l'accès au-delà des administrateurs, pas à le définir.
+ */
+export function estStaff(
+	roles: readonly string[],
+	rolesStaff: readonly string[],
+	estAdministrateur = false
+): boolean {
+	if (estAdministrateur) return true;
 	if (rolesStaff.length === 0) return false;
 	const autorises = new Set(rolesStaff);
 	return roles.some((role) => autorises.has(role));
+}
+
+/**
+ * L'appelant est-il administrateur du serveur ?
+ *
+ * `memberPermissions` est calculé par Discord et livré DANS l'interaction : il
+ * tient compte des surcharges de salon et ne demande aucun intent privilégié.
+ * Il vaut `null` en message privé — là, personne n'est administrateur de rien.
+ */
+export function estAdministrateur(interaction: ChatInputCommandInteraction): boolean {
+	return interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) ?? false;
 }
 
 /** Adaptateur d'options : discord.js → l'interface neutre des commandes. */
@@ -205,7 +230,11 @@ export class Wonderbot {
 				{
 					catalogue: this.catalogue,
 					marque: this.config.marque,
-					estStaff: estStaff(rolesDeLInteraction(interaction), this.config.rolesStaff),
+					estStaff: estStaff(
+						rolesDeLInteraction(interaction),
+						this.config.rolesStaff,
+						estAdministrateur(interaction)
+					),
 				}
 			);
 		} catch (err) {

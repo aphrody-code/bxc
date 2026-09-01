@@ -81,6 +81,10 @@ l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
   - **Aucun intent privilégié** : `Guilds` seul. Les rôles de l'appelant sont
     dans la charge utile de l'interaction ; demander `GuildMembers` sans l'avoir
     coché dans le portail ferme la passerelle (4014) et fait boucler le service.
+  - **`/ietv rafraichir` est ouvert aux administrateurs du serveur**, en plus de
+    `WONDERBOT_STAFF_ROLE_IDS` : gater sur la seule liste de rôles laisse un
+    serveur neuf sans personne pour lancer le premier scraping, propriétaire
+    compris. `memberPermissions` arrive dans l'interaction, aucun intent requis.
   - **La visibilité se fige au `deferReply`** : `editReply` refuse le drapeau
     `Ephemeral`. Le choix privé/public se fait donc AVANT d'exécuter la commande
     (`reponsePrivee()`).

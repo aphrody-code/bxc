@@ -725,13 +725,20 @@ describe("/ietv", () => {
 // ---------------------------------------------------------------------------
 
 describe("estStaff", () => {
-	it("refuse tout le monde quand aucun rôle n'est déclaré", () => {
+	it("refuse un membre ordinaire quand aucun rôle n'est déclaré", () => {
 		expect(estStaff(["1"], [])).toBe(false);
 	});
 
 	it("accepte dès qu'un rôle correspond", () => {
 		expect(estStaff(["1", "2"], ["2", "3"])).toBe(true);
 		expect(estStaff(["1"], ["2"])).toBe(false);
+	});
+
+	it("accepte toujours un administrateur, même sans rôle déclaré", () => {
+		// Sans cette règle, un serveur neuf n'a personne pour lancer le premier
+		// scraping — pas même son propriétaire.
+		expect(estStaff([], [], true)).toBe(true);
+		expect(estStaff(["1"], ["2"], true)).toBe(true);
 	});
 });
 

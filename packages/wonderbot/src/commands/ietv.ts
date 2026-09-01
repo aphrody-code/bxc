@@ -374,8 +374,9 @@ async function rafraichir(contexte: ContexteCommande): Promise<Reponse> {
 	if (!contexte.estStaff) {
 		return echec(
 			"Réservé au staff",
-			"Le rafraîchissement rescrape toutes les sources : il est limité aux rôles déclarés " +
-				"dans `WONDERBOT_STAFF_ROLE_IDS`. Le catalogue se met à jour tout seul, régulièrement.",
+			"Le rafraîchissement rescrape toutes les sources : il est réservé aux administrateurs " +
+				"du serveur et aux rôles déclarés dans `WONDERBOT_STAFF_ROLE_IDS`. Le catalogue se " +
+				"met à jour tout seul, régulièrement.",
 			contexte.marque
 		);
 	}

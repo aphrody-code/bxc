@@ -21,7 +21,7 @@ bxc wonderbot start      # passerelle + rafraîchissement périodique + annonces
 | `/ietv episode saison:<n> numero:<n> [langue]` | Toutes les versions d'un épisode — un champ par source et par langue |
 | `/ietv saison numero:<n> [langue]` | Les épisodes d'une saison, dans l'ordre |
 | `/ietv catalogue` | Volumes, sources, répartition VF/VOSTFR, fraîcheur |
-| `/ietv rafraichir` | Rescrape les sept sources. Réservé aux rôles de `WONDERBOT_STAFF_ROLE_IDS`, réponse éphémère |
+| `/ietv rafraichir` | Rescrape les sept sources. Réservé aux **administrateurs du serveur** et aux rôles de `WONDERBOT_STAFF_ROLE_IDS`, réponse éphémère |
 
 Les quatre premières répondent en millisecondes : elles lisent le cache, jamais
 YouTube. C'est aussi ce qui évite qu'un serveur de deux mille membres déclenche
@@ -54,7 +54,7 @@ Le premier nom trouvé gagne — les variantes historiques évitent de dupliquer
 | `WONDERBOT_COMMAND_SCOPE` | `guildes` (propagation immédiate) ou `globale` (quelques minutes, tout serveur qui invite) |
 | `WONDERBOT_ANNOUNCE_CHANNEL_ID` | Salon des nouveautés ; absent ⇒ aucune annonce |
 | `WONDERBOT_ANNOUNCE_ROLE_ID` | Rôle mentionné dans l'annonce |
-| `WONDERBOT_STAFF_ROLE_IDS` | Rôles autorisés à `/ietv rafraichir` ; vide ⇒ personne |
+| `WONDERBOT_STAFF_ROLE_IDS` | Rôles autorisés à `/ietv rafraichir` **en plus** des administrateurs ; vide ⇒ administrateurs seuls |
 | `WONDERBOT_REFRESH_INTERVAL_MS` | Période, défaut 6 h, plancher 60 s |
 | `WONDERBOT_ANNOUNCE_LIMIT` | Épisodes annoncés d'un coup, défaut 5 |
 | `IETV_CACHE_PATH` | Base SQLite ; défaut `~/.cache/ietv/episodes.db` |
