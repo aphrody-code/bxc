@@ -94,6 +94,13 @@ l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
     (`reponsePrivee()`).
   - **Rafraîchir = scraper d'abord, remplacer ensuite.** Vider la base avant de
     scraper laisse un catalogue vide quand le réseau tombe.
+  - **Rafraîchissement au démarrage SI périmé** (jamais systématique : un
+    `restart` en boucle martèlerait les sources) + boucle 6 h.
+  - **Réparation bornée** : un trou = un numéro absent ENTRE le premier et le
+    dernier épisode connus (une saison qui s'arrête à E12 est en cours, pas
+    trouée). 2 tentatives espacées de 15 min par trou, puis il est *confirmé* et
+    affiché dans le fil de la saison au lieu d'être retenté indéfiniment. Un trou
+    disparu récupère ses tentatives.
   - **Le forum = le catalogue** (`WONDERBOT_FORUM_CHANNEL_ID`) : un fil par
     saison, message d'ouverture MODIFIÉ et non republié (sinon les réponses des
     membres sont noyées), fil retrouvé par identifiant mémorisé en cache, jamais

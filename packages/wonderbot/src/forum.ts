@@ -50,6 +50,12 @@ export interface OptionsForum {
 	marque: Marque;
 	/** Étiquettes du forum, par libellé en minuscules → identifiant. */
 	etiquettes?: Readonly<Record<string, string>>;
+	/**
+	 * Trous confirmés (`"3:7"`), affichés dans le fil de la saison. Un épisode
+	 * qu'on sait manquant est une information utile — la taire laisse croire
+	 * que la liste est complète.
+	 */
+	lacunesConfirmees?: ReadonlySet<string>;
 }
 
 export interface ResultatSynchronisation {
@@ -105,6 +111,18 @@ export class SynchronisationForum {
 		this.options = options;
 	}
 
+	/** Numéros confirmés manquants pour une saison, croissants. */
+	private manquantsDe(saison: number): number[] {
+		const confirmes = this.options.lacunesConfirmees;
+		if (!confirmes || confirmes.size === 0) return [];
+		const prefixe = `${saison}:`;
+		return [...confirmes]
+			.filter((cle) => cle.startsWith(prefixe))
+			.map((cle) => Number(cle.slice(prefixe.length)))
+			.filter((n) => Number.isFinite(n))
+			.sort((a, b) => a - b);
+	}
+
 	private table(): Map<number, string> {
 		return analyserTableFils(this.options.stockage.lireMeta(CLE_FILS));
 	}
@@ -145,6 +163,13 @@ export class SynchronisationForum {
 			if (index === pages.length - 1) {
 				f.champ("Épisodes", String(liste.episodes), { enLigne: true });
 				f.champ("Versions", repartitionLangues(langues), { enLigne: true });
+				const manquants = this.manquantsDe(saison);
+				if (manquants.length > 0) {
+					f.champ(
+						`${ICONES.attention} Introuvables`,
+						manquants.map((n) => `E${String(n).padStart(2, "0")}`).join(", ")
+					);
+				}
 			}
 			return f.finir(index === pages.length - 1 && liste.omis > 0 ? `${liste.omis} non listé(s)` : undefined);
 		});

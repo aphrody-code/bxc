@@ -58,6 +58,20 @@ export {
 } from "./commands/ietv.ts";
 
 export {
+	CLE_LACUNES,
+	Reparateur,
+	decrireLacune,
+	detecterLacunes,
+	empreinte,
+	empreintes,
+	lacunesDeSaison,
+	type DecisionReparation,
+	type LacuneSaison,
+	type OptionsReparateur,
+	type StockageLacunes,
+} from "./lacunes.ts";
+
+export {
 	CLE_FILS,
 	SynchronisationForum,
 	analyserTableFils,

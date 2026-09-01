@@ -133,6 +133,16 @@ export class Catalogue {
 		return [...saisons].sort((a, b) => a - b);
 	}
 
+	/** Épisodes groupés par saison — ce que consomme la détection des trous. */
+	parSaison(): Map<number, EpisodeCatalogue[]> {
+		const groupes = new Map<number, EpisodeCatalogue[]>();
+		for (const episode of this.ouvrir().search({ limit: PLAFOND_BALAYAGE })) {
+			if (episode.season === null) continue;
+			groupes.set(episode.season, [...(groupes.get(episode.season) ?? []), episode]);
+		}
+		return groupes;
+	}
+
 	/** Compteurs, sources et fraîcheur — ce que sert `/episodes catalogue`. */
 	resume(): ResumeCatalogue {
 		const cache = this.ouvrir();

@@ -60,6 +60,19 @@ export interface ConfigWonderbot {
 	intervalleRafraichissementMs: number;
 	/** Nombre maximal d'épisodes annoncés d'un coup (anti-inondation). */
 	plafondAnnonces: number;
+	/**
+	 * Rafraîchir au démarrage quand le catalogue est vide ou plus vieux que
+	 * l'intervalle. Évite qu'un redémarrage laisse un catalogue périmé pendant
+	 * six heures — sans rescraper à chaque `systemctl restart`.
+	 */
+	rafraichirAuDemarrage: boolean;
+	/**
+	 * Retenter automatiquement quand un épisode manque au milieu d'une saison.
+	 * `0` désactive la réparation.
+	 */
+	tentativesReparation: number;
+	/** Délai avant une tentative de réparation. */
+	delaiReparationMs: number;
 	marque: Marque;
 }
 
@@ -80,6 +93,14 @@ const INTERVALLE_PAR_DEFAUT_MS = 6 * 60 * 60 * 1000;
 /** Une minute : en dessous, on martèle YouTube pour rien. */
 const INTERVALLE_MINIMUM_MS = 60_000;
 const PLAFOND_ANNONCES_PAR_DEFAUT = 5;
+/**
+ * Deux tentatives : la première rattrape un scraping partiel (le cas courant),
+ * la seconde une source momentanément indisponible. Au-delà, l'épisode n'existe
+ * pas — le redemander n'y changera rien.
+ */
+const TENTATIVES_REPARATION_PAR_DEFAUT = 2;
+/** 15 min : assez pour qu'une indisponibilité passagère se soit résorbée. */
+const DELAI_REPARATION_PAR_DEFAUT_MS = 15 * 60 * 1000;
 
 function lireBrut(env: EnvLisible, variables: readonly string[]): { variable: string; valeur: string } | null {
 	for (const variable of variables) {
@@ -207,6 +228,16 @@ export function lireConfig(env: EnvLisible): ConfigWonderbot {
 			defaut: PLAFOND_ANNONCES_PAR_DEFAUT,
 			minimum: 1,
 		}),
+		// Actif par défaut : un catalogue périmé est le défaut le plus visible
+		// pour un membre, et le plus silencieux pour l'exploitant.
+		rafraichirAuDemarrage: (env.WONDERBOT_REFRESH_ON_START ?? "1").trim() !== "0",
+		tentativesReparation: Number.parseInt((env.WONDERBOT_AUTOFIX_ATTEMPTS ?? "").trim(), 10) >= 0
+			? Number.parseInt((env.WONDERBOT_AUTOFIX_ATTEMPTS ?? "").trim(), 10)
+			: TENTATIVES_REPARATION_PAR_DEFAUT,
+		delaiReparationMs: lireEntier(env.WONDERBOT_AUTOFIX_DELAY_MS, {
+			defaut: DELAI_REPARATION_PAR_DEFAUT_MS,
+			minimum: 60_000,
+		}),
 		marque: MARQUE_PAR_DEFAUT,
 	};
 }
@@ -225,6 +256,10 @@ export function resumerConfig(config: ConfigWonderbot): string {
 		? `salon ${config.salonAnnonces}${config.roleAnnonces ? ` (mention <@&${config.roleAnnonces}>)` : ""}`
 		: "désactivées";
 	const heures = (config.intervalleRafraichissementMs / 3_600_000).toFixed(1);
+	const reparation =
+		config.tentativesReparation > 0
+			? `réparation ${config.tentativesReparation} tentative(s) après ${(config.delaiReparationMs / 60_000).toFixed(0)} min`
+			: "réparation désactivée";
 	return [
 		`application ${config.applicationId}`,
 		`commandes ${portee}`,
@@ -232,5 +267,6 @@ export function resumerConfig(config: ConfigWonderbot): string {
 		`rafraîchissement toutes les ${heures} h`,
 		`annonces ${annonces}`,
 		forum,
+		reparation,
 	].join(" · ");
 }

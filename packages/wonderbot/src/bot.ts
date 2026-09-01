@@ -29,6 +29,7 @@ import {
 
 import { JournalAnnonces } from "./annonces.ts";
 import { SynchronisationForum, type PasserelleForum } from "./forum.ts";
+import { Reparateur, decrireLacune, detecterLacunes } from "./lacunes.ts";
 import { catalogueReel, type Catalogue, type ResultatRafraichissement } from "./catalogue.ts";
 import { resumerConfig, type ConfigWonderbot } from "./config.ts";
 import {
@@ -108,6 +109,9 @@ export class Wonderbot {
 	private readonly journaliser: (message: string) => void;
 	private readonly planificateur: Planificateur;
 	private forum: SynchronisationForum | null = null;
+	private readonly reparateur: Reparateur;
+	/** Minuteur de la tentative de réparation en attente, s'il y en a une. */
+	private reparationEnAttente: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(options: OptionsBot) {
 		this.config = options.config;
@@ -119,6 +123,11 @@ export class Wonderbot {
 			new Client({
 				intents: [GatewayIntentBits.Guilds],
 			});
+
+		this.reparateur = new Reparateur({
+			stockage: this.catalogue,
+			tentativesMax: this.config.tentativesReparation,
+		});
 
 		this.planificateur = new Planificateur({
 			intervalleMs: this.config.intervalleRafraichissementMs,
@@ -170,6 +179,10 @@ export class Wonderbot {
 				if (planifier) {
 					await this.synchroniserForum();
 					this.planificateur.demarrer();
+					// Après la résolution : un premier scraping prend plusieurs
+					// minutes, l'appelant n'a pas à l'attendre pour savoir que le
+					// bot répond.
+					void this.rafraichirSiPerime();
 				}
 				resoudre();
 			});
@@ -329,6 +342,7 @@ export class Wonderbot {
 				stockage: this.catalogue,
 				marque: this.config.marque,
 				etiquettes,
+				lacunesConfirmees: this.reparateur.confirmes(),
 			});
 			const r = await this.forum.synchroniser();
 			const total = r.crees.length + r.majs.length + r.recrees.length;
@@ -347,6 +361,89 @@ export class Wonderbot {
 		}
 	}
 
+	/**
+	 * Rafraîchit au démarrage SI le catalogue est vide ou périmé.
+	 *
+	 * Le « si » est tout l'intérêt : rescraper à chaque `systemctl restart`
+	 * coûterait plusieurs minutes de navigateur pour rien, et un redémarrage en
+	 * boucle martèlerait les sources. À l'inverse, ne jamais rafraîchir au
+	 * démarrage laisse un catalogue périmé jusqu'à six heures.
+	 */
+	private async rafraichirSiPerime(): Promise<void> {
+		if (!this.config.rafraichirAuDemarrage) return;
+
+		const dernier = this.catalogue.resume().dernierRafraichissement;
+		const age = Date.now() - dernier;
+		if (dernier > 0 && age < this.config.intervalleRafraichissementMs) {
+			this.journaliser(
+				`${ICONES.horloge} catalogue à jour (${Math.round(age / 60_000)} min) — pas de rafraîchissement au démarrage`
+			);
+			return;
+		}
+
+		this.journaliser(
+			`${ICONES.rafraichir} catalogue ${dernier === 0 ? "vide" : "périmé"} — rafraîchissement au démarrage`
+		);
+		try {
+			const resultat = await this.planificateur.declencher();
+			await this.apresRafraichissement(resultat);
+		} catch (err) {
+			this.journaliser(
+				`${ICONES.attention} rafraîchissement de démarrage échoué : ${err instanceof Error ? err.message : String(err)}`
+			);
+		}
+	}
+
+	/**
+	 * Cherche les épisodes manquants au milieu d'une saison et programme une
+	 * tentative de rattrapage.
+	 *
+	 * Un seul rattrapage en vol à la fois, et seulement pour des trous qui ont
+	 * encore des tentatives : sans ces deux bornes, un catalogue durablement
+	 * incomplet relancerait un scraping toutes les quinze minutes, pour
+	 * toujours.
+	 */
+	private planifierReparation(): void {
+		if (this.config.tentativesReparation <= 0) return;
+
+		const lacunes = detecterLacunes(this.catalogue.parSaison());
+		if (lacunes.length === 0) return;
+
+		const decision = this.reparateur.evaluer(lacunes);
+
+		if (decision.confirmes.length > 0) {
+			this.journaliser(
+				`${ICONES.attention} ${decision.confirmes.length} épisode(s) introuvable(s) après ` +
+					`${this.config.tentativesReparation} tentative(s) : ${lacunes.map(decrireLacune).join(" · ")}`
+			);
+		}
+		if (!decision.retenter) return;
+
+		if (this.reparationEnAttente !== null) {
+			this.journaliser(`${ICONES.horloge} réparation déjà programmée — celle-ci est ignorée`);
+			return;
+		}
+
+		this.journaliser(
+			`${ICONES.rafraichir} ${decision.nouveaux.length} trou(s) détecté(s) — nouvelle tentative dans ` +
+				`${Math.round(this.config.delaiReparationMs / 60_000)} min : ${lacunes.map(decrireLacune).join(" · ")}`
+		);
+
+		this.reparationEnAttente = setTimeout(() => {
+			this.reparationEnAttente = null;
+			void this.planificateur
+				.declencher()
+				.then((resultat) => this.apresRafraichissement(resultat))
+				.catch((err) =>
+					this.journaliser(
+						`${ICONES.attention} tentative de réparation échouée : ${err instanceof Error ? err.message : String(err)}`
+					)
+				);
+		}, this.config.delaiReparationMs);
+		// Le minuteur ne doit pas retenir le processus au moment de l'arrêt.
+		this.reparationEnAttente.unref?.();
+	}
+
 	/** Publie les nouveautés après un rafraîchissement réussi. */
 	private async apresRafraichissement(resultat: ResultatRafraichissement): Promise<void> {
 		this.journaliser(
@@ -354,6 +451,7 @@ export class Wonderbot {
 				`${resultat.sources} source(s), ${(resultat.dureeMs / 1000).toFixed(1)} s`
 		);
 
+		this.planifierReparation();
 		await this.synchroniserForum();
 
 		if (!this.config.salonAnnonces) return;
@@ -401,6 +499,10 @@ export class Wonderbot {
 
 	/** Coupe la boucle, ferme la passerelle et la base. */
 	async arreter(): Promise<void> {
+		if (this.reparationEnAttente !== null) {
+			clearTimeout(this.reparationEnAttente);
+			this.reparationEnAttente = null;
+		}
 		this.planificateur.arreter();
 		await this.client.destroy();
 		this.catalogue.fermer();
