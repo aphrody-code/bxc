@@ -7,7 +7,14 @@
  * testable sans jeton, sans réseau et sans base.
  */
 
-export { Wonderbot, estStaff, optionsDeLInteraction, rolesDeLInteraction, type OptionsBot } from "./bot.ts";
+export {
+	Wonderbot,
+	estAdministrateur,
+	estStaff,
+	optionsDeLInteraction,
+	rolesDeLInteraction,
+	type OptionsBot,
+} from "./bot.ts";
 
 export {
 	Catalogue,
