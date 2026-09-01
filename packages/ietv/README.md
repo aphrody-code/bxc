@@ -163,12 +163,43 @@ export function detectLanguage(title: string): LanguageVersion
 export class IETVScraper { /* ... */ }
 ```
 
+## Authentication & Credentials
+
+The scraper automatically loads YouTube API credentials from secure sources (in order):
+
+1. **YOUTUBE_API_KEY** environment variable
+2. **~/.ietv/auth.json** (JSON file with `key` field)
+3. **~/.aphrody/ietv-credentials.json** (JSON file with `youtube_api_key` field)
+4. **gcloud** (requires `gcloud auth application-default login`)
+
+### Setup via Aphrody
+
+```bash
+# Create credentials directory
+mkdir -p ~/.aphrody
+
+# Store YouTube API key securely
+echo '{"youtube_api_key": "YOUR_API_KEY"}' > ~/.aphrody/ietv-credentials.json
+chmod 600 ~/.aphrody/ietv-credentials.json
+```
+
+### Setup via gcloud
+
+```bash
+# Authenticate with Google Cloud
+gcloud auth application-default login
+
+# Or set service account credentials
+export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/service-account.json
+```
+
 ## Channel Discovery
 
 The scraper can discover additional Inazuma Eleven channels beyond the canonical four:
 
 ```ts
 const scraper = new IETVScraper();
+// Credentials are auto-loaded from ~/.aphrody/ or environment
 const discoveredChannels = await scraper.discoverChannels(
   "Inazuma Eleven français replay"
 );
@@ -176,15 +207,18 @@ const discoveredChannels = await scraper.discoverChannels(
 
 Discovery methods (in order of preference):
 
-1. **YouTube Data API** (if `youtubeApiKey` provided) — most accurate, requires authentication
+1. **YouTube Data API** (automatic if credentials found) — most accurate, ~50 results
 2. **Google Search** (fallback) — finds YouTube channels via Google results, slower but free
 
 ```bash
-# Discover via Google Search
+# Discover with auto-loaded credentials
 bxc ietv discover
 
-# Or with YouTube API key for better results
+# Or override with explicit API key
 bxc ietv discover --youtube-api-key "YOUR_API_KEY"
+
+# List credentials status
+bxc ietv --check-auth
 ```
 
 ## Limitations
