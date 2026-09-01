@@ -71,6 +71,31 @@ l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
   Use it (or load its skills/agents) for any bxc-like project. It follows the anthropics/claude-code plugin-dev patterns (see `plugins/plugin-dev-reference/`).
   Update the plugin when you add major capabilities to bxc (new agents, skills, cross-platform notes). The plugin README contains the install + adaptation guide for other projects.
 
+- **`packages/ietv` + `packages/wonderbot`** : catalogue Inazuma Eleven TV et son
+  bot Discord. **Le bot ne scrape jamais en direct** — il lit le cache SQLite
+  (`~/.cache/ietv/episodes.db`, `IETV_CACHE_PATH`) et le rafraîchit lui-même
+  toutes les 6 h ; c'est ce qui évite qu'un serveur de 2 000 membres déclenche
+  2 000 scrapings. Un seul module (`src/bot.ts`) parle à discord.js, tout le
+  reste (config, catalogue, annonces, planificateur, commandes, rendu) se teste
+  avec des objets littéraux — 63 cas, sans jeton, sans réseau, sans SQLite.
+  - **Aucun intent privilégié** : `Guilds` seul. Les rôles de l'appelant sont
+    dans la charge utile de l'interaction ; demander `GuildMembers` sans l'avoir
+    coché dans le portail ferme la passerelle (4014) et fait boucler le service.
+  - **La visibilité se fige au `deferReply`** : `editReply` refuse le drapeau
+    `Ephemeral`. Le choix privé/public se fait donc AVANT d'exécuter la commande
+    (`reponsePrivee()`).
+  - **Rafraîchir = scraper d'abord, remplacer ensuite.** Vider la base avant de
+    scraper laisse un catalogue vide quand le réseau tombe.
+  - **Le premier passage n'annonce rien** : il amorce le journal, sinon un bot
+    fraîchement installé déverserait 1 200 messages. Le journal mémorise des
+    identifiants, pas une date (une source peut remettre en ligne un épisode
+    ancien).
+  - `packages/ietv/src/video-*.ts` : player media-chrome + hls.js et transcodage
+    mediabunny. `media-chrome`, `hls.js` et `@mediabunny/server` sont des peers
+    **optionnelles** chargées à l'exécution — rien n'entre dans le binaire `bxc`.
+    Bun n'implémente pas WebCodecs : sans `@mediabunny/server`, `transcode()`
+    échoue d'emblée en nommant le paquet à installer.
+
 ## Commandes essentielles
 
 ```bash
@@ -92,6 +117,9 @@ bun src/cli/index.ts x whoami                # Native X client (profile|tweets|s
 bun src/cli/index.ts x foryou                # demo local For You ranking (integrated from xai-org/x-algorithm)
 bun src/cli/index.ts x unfollow              # purge autonome des abonnements (dry-run ; --yes pour executer)
 bun src/cli/index.ts x purge-tweets          # purge autonome des posts sous N likes (dry-run ; --yes)
+bun src/cli/index.ts wonderbot doctor        # Wonderbot : config + catalogue, sans Discord
+bun src/cli/index.ts wonderbot refresh       # rafraîchit le catalogue IETV (sans Discord)
+bun src/cli/index.ts wonderbot start         # bot Discord /ietv (passerelle + rafraîchissement)
 
 # Stack binaire
 cargo build -p bxc-engine --release          # moteur Rust
@@ -110,7 +138,7 @@ bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.tom
 > **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-crawler.service`
 > (24/7 `crawl-worker`) + `bxc-x-unfollow.service` / `bxc-x-purge-tweets.service`
 > (daemons de purge X) + `bxc-x-purge-doctor.timer` (watchdog auto-fix commun,
-> 10 min) — les purges sont opt-in, non installees par `bxc-control deploy`,
+> 10 min) + `bxc-wonderbot.service` (bot Discord IETV, opt-in) — les purges sont opt-in, non installees par `bxc-control deploy`,
 > cf. DEPLOY.md. Units source dans `scripts/deploy/`. Repo **PUBLIC** depuis
 > 2026-06-01.
 
@@ -126,6 +154,8 @@ bxc/
 │   ├── voiranime/                # VoirAnime catalog & embed resolver
 │   ├── worldbeyblade/            # Scraper & metagame sub-package
 │   ├── xcom/                     # X.com profile markdown scraper
+│   ├── ietv/                     # @aphrody/ietv — catalogue Inazuma Eleven TV (scraper + cache SQLite + video)
+│   ├── wonderbot/                # @aphrody/wonderbot — bot Discord /ietv (discord.js, cache-first)
 │   ├── x/                        # @aphrody/x — headless X/Twitter client (pure TS port) + examples/
 │   └── zukan/                    # Inazuma Eleven Character database scraper
 ├── rust-bridge/                  # FFI Rust ↔ Bun (lol_html, V8 bindings)

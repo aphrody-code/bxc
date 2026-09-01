@@ -1,0 +1,35 @@
+{
+  "name": "@aphrody/wonderbot",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Wonderbot — bot Discord dédié à IETV (Inazuma Eleven TV)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts",
+    "./catalogue": "./src/catalogue.ts",
+    "./annonces": "./src/annonces.ts",
+    "./planificateur": "./src/planificateur.ts",
+    "./ui": "./src/ui/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "keywords": [
+    "inazuma-eleven",
+    "discord",
+    "bot",
+    "ietv",
+    "streaming"
+  ],
+  "dependencies": {
+    "@aphrody/ietv": "0.1.0",
+    "discord.js": "^14.26.4"
+  },
+  "license": "Apache-2.0"
+}

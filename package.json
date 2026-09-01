@@ -60,7 +60,10 @@
     "./types/ConnectionTransport": "./types/ConnectionTransport.ts",
     "./crawler": "./src/crawler/index.ts",
     "./sdk/actor": "./src/sdk/Actor.ts",
-    "./recon": "./src/cli/recon.ts"
+    "./recon": "./src/cli/recon.ts",
+    "./scrapers/ietv": "./packages/ietv/src/index.ts",
+    "./ietv": "./packages/ietv/src/index.ts",
+    "./wonderbot": "./packages/wonderbot/src/index.ts"
   },
   "scripts": {
     "dev": "bun --watch src/serverless/standalone.ts",
@@ -132,7 +135,8 @@
     "@aphrody/x": "1.1.0",
     "@aphrody/xai": "1.0.6",
     "@aphrody/ietv": "0.1.0",
-    "@aphrody/ietv-client": "1.0.0"
+    "@aphrody/ietv-client": "1.0.0",
+    "@aphrody/wonderbot": "0.1.0"
   },
   "license": "Apache-2.0"
 }

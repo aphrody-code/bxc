@@ -1,0 +1,117 @@
+[Unit]
+# Wonderbot — bot Discord du catalogue Inazuma Eleven TV.
+#
+# Un seul processus : il tient la passerelle Discord ET rafraîchit lui-même le
+# catalogue IETV toutes les six heures. Pas de démon cron séparé, pas de serveur
+# HTTP intermédiaire — le bot lit et écrit directement la base SQLite du
+# scraper.
+#
+# ── AVANT LA PREMIÈRE INSTALLATION ─────────────────────────────────────────
+#   1. Portail développeur Discord → l'application Wonderbot → Bot → Reset
+#      Token. Les intents privilégiés restent TOUS DÉSACTIVÉS : le bot ne
+#      demande que `Guilds`. Cocher « Server Members » ou « Message Content »
+#      n'apporterait rien et élargirait l'accès pour rien.
+#   2. Poser le jeton — voir EnvironmentFile plus bas. JAMAIS dans ce fichier,
+#      qui est suivi par git.
+#   3. Inviter le bot avec les scopes `bot` + `applications.commands` :
+#        https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>
+#          &scope=bot%20applications.commands&permissions=19456
+#      Sans `applications.commands`, le bot apparaît en ligne et reste
+#      strictement muet — aucune commande n'existe.
+#      19456 = ViewChannel (1024) + SendMessages (2048) + EmbedLinks (16384),
+#      et rien d'autre : le bot ne modère personne et ne joint aucun fichier.
+#   4. Amorcer le catalogue : `bxc wonderbot refresh` (le premier scraping des
+#      sept sources prend quelques minutes ; le service démarre sans, mais
+#      répondrait « catalogue vide »).
+#
+# Installation :
+#   sudo cp scripts/deploy/bxc-wonderbot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now bxc-wonderbot
+Description=Wonderbot — bot Discord du catalogue Inazuma Eleven TV
+Documentation=https://github.com/aphrody-code/bxc
+After=network-online.target
+Wants=network-online.target
+
+# Jamais de plafond de redémarrages : le défaut systemd (5 en 10 s puis abandon
+# définitif) transformerait une coupure réseau de quelques minutes en bot
+# éteint jusqu'à intervention humaine.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/bxc
+
+# Ordre volontaire, du plus commun au plus spécifique — le dernier lu gagne.
+# `/etc/bxc-wonderbot.env` (root:root 0600) est l'emplacement recommandé du
+# jeton, hors du dépôt ; à défaut, `.env` fait l'affaire (il est gitignoré).
+EnvironmentFile=-/home/ubuntu/bxc/.env
+EnvironmentFile=-/etc/bxc-wonderbot.env
+Environment=NODE_ENV=production
+
+# `PATH` est OBLIGATOIRE : systemd n'en fournit pas qui contienne
+# /home/ubuntu/.bun/bin.
+Environment=PATH=/home/ubuntu/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Catalogue partagé avec la CLI `bxc ietv` et `bxc wonderbot refresh`. Le
+# chemin est posé explicitement parce que `ProtectHome=` plus bas ne rend
+# accessible en écriture que ce répertoire précis : SQLite en mode WAL écrit
+# des fichiers voisins (-wal, -shm), une base « lue seulement » ne suffit pas.
+Environment=IETV_CACHE_PATH=/home/ubuntu/.cache/ietv/episodes.db
+
+ExecStart=/usr/local/bin/bxc wonderbot start
+
+# `always` : une déconnexion Discord qui se solde par une sortie en code 0
+# n'était jamais relancée — le bot restait silencieux sans qu'aucune unité ne
+# soit en échec.
+Restart=always
+RestartSec=15
+
+# 130 = SIGINT/SIGTERM traité proprement par la CLI. C'est une sortie normale,
+# pas un échec : sinon `systemctl stop` laisse l'unité en failed.
+SuccessExitStatus=130
+
+# 77 = configuration refusée (jeton absent, identifiant d'application invalide).
+# Relancer ne répare rien, et marteler la passerelle avec un mauvais jeton est
+# le meilleur moyen de faire limiter l'application par Discord.
+RestartPreventExitStatus=77
+
+TimeoutStopSec=20s
+KillMode=mixed
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bxc-wonderbot
+
+# ── Limites de ressources ──
+# Le bot ne tient que la passerelle et une base SQLite ; le rafraîchissement,
+# lui, lance un navigateur toutes les six heures — d'où la marge.
+MemoryMax=1G
+MemoryHigh=768M
+TasksMax=512
+CPUWeight=100
+Nice=5
+OOMScoreAdjust=-200
+
+# ── Durcissement (MemoryDenyWriteExecute INTERDIT — casse le JIT de Bun) ──
+ProtectSystem=strict
+ProtectHome=read-only
+# Le catalogue est la SEULE chose que le service écrit sous $HOME. Sans cette
+# ligne, ProtectHome=read-only rendrait l'ouverture SQLite EROFS et le bot
+# planterait au premier `/ietv`.
+ReadWritePaths=/home/ubuntu/.cache/ietv /tmp
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+NoNewPrivileges=true
+RemoveIPC=true
+# `PrivateDevices` et `RestrictNamespaces` ne sont PAS posés : le
+# rafraîchissement lance Chromium, qui a besoin de /dev/shm et de ses espaces
+# de noms pour son bac à sable.
+
+[Install]
+WantedBy=multi-user.target
