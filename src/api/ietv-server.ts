@@ -364,7 +364,11 @@ export class IETVRestServer {
 	// Helpers
 	// ========================================================================
 
-	private jsonResponse<T>(data: ApiResponse<T>, status = 200): Response {
+	private jsonResponse<T>(
+		body: Omit<ApiResponse<T>, "timestamp">,
+		status = 200
+	): Response {
+		const data: ApiResponse<T> = { ...body, timestamp: Date.now() };
 		return new Response(JSON.stringify(data), {
 			status,
 			headers: {

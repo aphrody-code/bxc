@@ -8,7 +8,7 @@
  * - Cache management
  */
 
-import { IETVCache } from "@aphrody/ietv/cache";
+import { IETVCache, type CacheSearchQuery } from "@aphrody/ietv/cache";
 import IETVScraper from "@aphrody/ietv";
 
 // ============================================================================
@@ -164,7 +164,7 @@ async function offlineMode() {
 	console.log("─".repeat(40));
 
 	// User searches while offline
-	const queries = [
+	const queries: CacheSearchQuery[] = [
 		{ q: "power", limit: 10 },
 		{ season: 1, language: "vf", limit: 20 },
 		{ q: "victory", season: 5, limit: 5 },

@@ -130,7 +130,9 @@
     "@aphrody/xcom": "0.1.6",
     "@aphrody/zukan": "0.1.5",
     "@aphrody/x": "1.1.0",
-    "@aphrody/xai": "1.0.6"
+    "@aphrody/xai": "1.0.6",
+    "@aphrody/ietv": "0.1.0",
+    "@aphrody/ietv-client": "1.0.0"
   },
   "license": "Apache-2.0"
 }
