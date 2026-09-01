@@ -1,7 +1,8 @@
 /**
- * Video Search Engine — metadata indexing + fuzzy matching
+ * Recherche d'épisodes — appariement flou par-dessus l'index FTS5 du cache.
  *
- * Sera complété avec meilleure lib après recherche
+ * SQLite FTS5 (cf. `cache.ts`) couvre le catalogue IETV ; cette couche ajoute
+ * le classement et la tolérance aux fautes de frappe côté application.
  */
 
 import type { VideoRef, ChannelInfo } from "./index";
@@ -196,10 +197,11 @@ export class VideoSearch {
 
 		if (!sourceVideo) return [];
 
-		// Find similar by season + language
+		// Une saison ou une langue inconnue ne restreint rien : on omet le
+		// critère plutôt que de chercher `null`.
 		return this.search({
-			season: sourceVideo.season,
-			language: sourceVideo.language,
+			...(sourceVideo.season !== null ? { season: sourceVideo.season } : {}),
+			...(sourceVideo.language !== "unknown" ? { language: sourceVideo.language } : {}),
 			limit,
 			sortBy: "relevance",
 		});
@@ -226,8 +228,11 @@ export class VideoSearch {
 			}
 		}
 
-		// Sort by season (recent first)
-		return allEpisodes.sort((a, b) => b.video.season - a.video.season).slice(0, limit);
+		// Saison décroissante ; les épisodes sans saison identifiée ferment
+		// la marche.
+		return allEpisodes
+			.sort((a, b) => (b.video.season ?? -1) - (a.video.season ?? -1))
+			.slice(0, limit);
 	}
 
 	/**
