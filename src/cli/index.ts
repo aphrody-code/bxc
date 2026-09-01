@@ -62,6 +62,7 @@ Subcommands:
   worldbeyblade worldbeyblade.org automation tools (profile, thread, PMs)
   fut       FIFA Ultimate Team (FUTGG/FUTBin) player price & stats scraper
   voiranime VoirAnime streaming site catalog search & resolver (e.g. "inazuma")
+  ietv      Inazuma Eleven TV (IETV) — YouTube channels scraper (seasons & episodes)
   google    Google properties auditor & client
   xcom      X.com profile scraper
   x         Native X/Twitter client (profile, tweets, search, news, rank, foryou) via cookie auth + local x-algorithm ranking
@@ -199,6 +200,12 @@ async function main() {
 
 		case "voiranime": {
 			const mod = await import("./voiranime.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "ietv": {
+			const mod = await import("./ietv.ts");
 			await mod.main(args, opts);
 			break;
 		}

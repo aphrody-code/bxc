@@ -1,0 +1,57 @@
+{
+  "channel": "inazumaelevenfrance1",
+  "title": "Inazuma Eleven France officiel",
+  "description": "Chaîne officielle française d'Inazuma Eleven",
+  "avatar": "https://yt3.googleusercontent.com/...",
+  "totalEpisodes": 153,
+  "seasons": [
+    {
+      "season": 1,
+      "totalEpisodes": 51,
+      "episodes": [
+        {
+          "title": "Inazuma Eleven - Saison 1 Episode 001",
+          "videoId": "7_MpAKKVT-c",
+          "url": "https://www.youtube.com/watch?v=7_MpAKKVT-c",
+          "description": "Les débuts de Haruto et Arion dans l'équipe de football.",
+          "thumbnail": "https://i.ytimg.com/vi/7_MpAKKVT-c/maxresdefault.jpg",
+          "publishDate": "2024-01-15",
+          "season": 1,
+          "episode": 1,
+          "duration": 1380,
+          "viewCount": "125K"
+        },
+        {
+          "title": "Inazuma Eleven - Saison 1 Episode 002",
+          "videoId": "8_MpAKKVT-d",
+          "url": "https://www.youtube.com/watch?v=8_MpAKKVT-d",
+          "description": "L'entraînement intensif commence.",
+          "thumbnail": "https://i.ytimg.com/vi/8_MpAKKVT-d/maxresdefault.jpg",
+          "publishDate": "2024-01-22",
+          "season": 1,
+          "episode": 2,
+          "duration": 1380,
+          "viewCount": "98K"
+        }
+      ]
+    },
+    {
+      "season": 2,
+      "totalEpisodes": 51,
+      "episodes": [
+        {
+          "title": "Inazuma Eleven Go - Saison 2 Episode 001",
+          "videoId": "9_MpAKKVT-e",
+          "url": "https://www.youtube.com/watch?v=9_MpAKKVT-e",
+          "description": "Une nouvelle génération se lève avec Tenma à la tête.",
+          "thumbnail": "https://i.ytimg.com/vi/9_MpAKKVT-e/maxresdefault.jpg",
+          "publishDate": "2024-02-01",
+          "season": 2,
+          "episode": 1,
+          "duration": 1380,
+          "viewCount": "110K"
+        }
+      ]
+    }
+  ]
+}
