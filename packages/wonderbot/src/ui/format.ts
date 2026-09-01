@@ -135,3 +135,105 @@ export function trierEpisodes<T extends EpisodeCatalogue>(episodes: readonly T[]
 		return a.title.localeCompare(b.title, "fr");
 	});
 }
+
+/**
+ * Regroupe les versions d'un même épisode. Le catalogue tient une entrée par
+ * source ET par langue : présentées à plat, la saison 1 affiche cent lignes
+ * pour cinquante épisodes.
+ */
+export function grouperParEpisode(
+	episodes: readonly EpisodeCatalogue[]
+): { numero: number | null; versions: EpisodeCatalogue[] }[] {
+	const groupes = new Map<number | null, EpisodeCatalogue[]>();
+	for (const episode of trierEpisodes(episodes)) {
+		const cle = episode.episode;
+		groupes.set(cle, [...(groupes.get(cle) ?? []), episode]);
+	}
+	return [...groupes.entries()]
+		.map(([numero, versions]) => ({ numero, versions }))
+		.sort((a, b) => (a.numero ?? Number.MAX_SAFE_INTEGER) - (b.numero ?? Number.MAX_SAFE_INTEGER));
+}
+
+/**
+ * Raccourcit une URL YouTube en `youtu.be/<id>`.
+ *
+ * Ce n'est pas de la cosmétique : une liste de saison tient 51 épisodes × 2
+ * langues, et 15 caractères gagnés par lien font 1 500 caractères sur la page —
+ * la différence entre une saison complète et une saison tronquée.
+ */
+export function lienCourt(episode: EpisodeCatalogue): string {
+	if (/^[a-zA-Z0-9_-]{11}$/.test(episode.videoId) && /youtube\.com|youtu\.be/.test(episode.url)) {
+		return `https://youtu.be/${episode.videoId}`;
+	}
+	return episode.url;
+}
+
+/**
+ * Une ligne par épisode, un lien par langue : `**E05** · 🇫🇷 VF · 💬 VOSTFR`,
+ * les libellés étant les liens.
+ *
+ * Le TITRE est délibérément absent : dans une liste de saison il répète le
+ * numéro (« Inazuma Eleven — Épisode 5 VF ») et coûte le tiers du budget. Il
+ * reste disponible sur `/episodes episode`.
+ */
+export function ligneSaison(numero: number | null, versions: readonly EpisodeCatalogue[]): string {
+	const code = numero !== null ? `E${String(numero).padStart(2, "0")}` : "—";
+	const liens = versions
+		.map((version) => `[${libelleLangue(version.language)}](${lienCourt(version)})`)
+		.join(" · ");
+	return `**${code}** · ${liens}`;
+}
+
+/**
+ * Découpe la liste d'une saison en PAGES tenant chacune dans une description
+ * d'embed, sans dépasser le budget total d'un message.
+ *
+ * Un message Discord accepte dix embeds mais 6 000 caractères en tout : une
+ * saison complète ne rentre pas dans une seule description (4 096) et doit donc
+ * déborder, sans jamais franchir le total.
+ */
+export function listerSaison(
+	episodes: readonly EpisodeCatalogue[],
+	options: { budgetPage?: number; budgetTotal?: number } = {}
+): { pages: string[]; episodes: number; omis: number } {
+	const budgetPage = options.budgetPage ?? LIMITES.description;
+	const budgetTotal = options.budgetTotal ?? LIMITES.totalEmbed;
+
+	const groupes = grouperParEpisode(episodes);
+	const pages: string[] = [];
+	let courante: string[] = [];
+	let taillePage = 0;
+	let tailleTotale = 0;
+	let poses = 0;
+
+	// Réserve pour le titre, les compteurs et le pied de page, qui comptent eux
+	// aussi dans le total du message.
+	const reserve = 400;
+
+	for (const groupe of groupes) {
+		const ligne = ligneSaison(groupe.numero, groupe.versions);
+		const cout = ligne.length + 1;
+
+		if (tailleTotale + cout > budgetTotal - reserve) break;
+
+		if (taillePage + cout > budgetPage) {
+			pages.push(courante.join("\n"));
+			courante = [];
+			taillePage = 0;
+		}
+
+		courante.push(ligne);
+		taillePage += cout;
+		tailleTotale += cout;
+		poses++;
+	}
+
+	if (courante.length > 0) pages.push(courante.join("\n"));
+
+	const omis = groupes.length - poses;
+	if (omis > 0 && pages.length > 0) {
+		pages[pages.length - 1] += `\n\n*…et ${omis} épisode(s) de plus — \`/episodes saison\`.*`;
+	}
+
+	return { pages, episodes: groupes.length, omis: Math.max(0, omis) };
+}

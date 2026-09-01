@@ -58,6 +58,18 @@ export {
 } from "./commands/ietv.ts";
 
 export {
+	CLE_FILS,
+	SynchronisationForum,
+	analyserTableFils,
+	etiquettesDeSaison,
+	nomFilSaison,
+	type OptionsForum,
+	type PasserelleForum,
+	type ResultatSynchronisation,
+	type StockageFils,
+} from "./forum.ts";
+
+export {
 	Planificateur,
 	type EtatPlanificateur,
 	type OptionsPlanificateur,

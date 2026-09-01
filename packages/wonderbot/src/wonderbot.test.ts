@@ -30,6 +30,14 @@ import {
 	reponsePrivee,
 	type ContexteCommande,
 } from "./commands/ietv.ts";
+import {
+	CLE_FILS,
+	SynchronisationForum,
+	analyserTableFils,
+	etiquettesDeSaison,
+	nomFilSaison,
+	type PasserelleForum,
+} from "./forum.ts";
 import { Planificateur } from "./planificateur.ts";
 import { MARQUE_PAR_DEFAUT } from "./ui/theme.ts";
 import { Fiche, tailleEmbed } from "./ui/embed.ts";
@@ -39,7 +47,10 @@ import {
 	formaterDuree,
 	horodatageRelatif,
 	libelleLangue,
+	grouperParEpisode,
+	lienCourt,
 	listerEpisodes,
+	listerSaison,
 	repartitionLangues,
 	trierEpisodes,
 	type EpisodeCatalogue,
@@ -890,5 +901,234 @@ describe("Planificateur", () => {
 
 		expect(h.enAttente).toHaveLength(0);
 		expect(planificateur.instantane().actif).toBe(false);
+	});
+});
+
+
+// ---------------------------------------------------------------------------
+// Forum : le catalogue en fils de discussion
+// ---------------------------------------------------------------------------
+
+describe("format des saisons", () => {
+	it("regroupe les versions d'un même épisode", () => {
+		const groupes = grouperParEpisode([
+			episode({ videoId: "a", episode: 1 }),
+			episode({ videoId: "b", episode: 1, language: "vostfr" }),
+			episode({ videoId: "c", episode: 2 }),
+		]);
+		expect(groupes.map((g) => g.numero)).toEqual([1, 2]);
+		expect(groupes[0]!.versions).toHaveLength(2);
+	});
+
+	it("met un lien par langue sur la ligne de l'épisode", () => {
+		const liste = listerSaison([
+			episode({ videoId: "a", episode: 1, url: "https://cdn.test/a" }),
+			episode({ videoId: "b", episode: 1, language: "vostfr", url: "https://cdn.test/b" }),
+		]);
+		expect(liste.episodes).toBe(1);
+		expect(liste.pages[0]).toContain("**E01**");
+		expect(liste.pages[0]).toContain("(https://cdn.test/a)");
+		expect(liste.pages[0]).toContain("(https://cdn.test/b)");
+	});
+
+	it("raccourcit les liens YouTube, et seulement eux", () => {
+		expect(lienCourt(episode({ videoId: "dQw4w9WgXcQ", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" })))
+			.toBe("https://youtu.be/dQw4w9WgXcQ");
+		expect(lienCourt(episode({ videoId: "abc", url: "https://inazuma.test/ep1" })))
+			.toBe("https://inazuma.test/ep1");
+	});
+
+	it("fait tenir une saison complète, quitte à déborder sur un second embed", () => {
+		// 51 épisodes en deux langues avec de vraies URL YouTube : le cas réel
+		// d'une saison complète, qui ne rentre PAS dans une seule description.
+		const episodes = Array.from({ length: 51 }, (_, i) => [
+			episode({
+				videoId: `vf${String(i).padStart(9, "0")}`,
+				episode: i + 1,
+				url: `https://www.youtube.com/watch?v=vf${String(i).padStart(9, "0")}`,
+			}),
+			episode({
+				videoId: `vo${String(i).padStart(9, "0")}`,
+				episode: i + 1,
+				language: "vostfr",
+				url: `https://www.youtube.com/watch?v=vo${String(i).padStart(9, "0")}`,
+			}),
+		]).flat();
+
+		const liste = listerSaison(episodes);
+		expect(liste.episodes).toBe(51);
+		expect(liste.omis).toBe(0);
+		for (const page of liste.pages) expect(page.length).toBeLessThanOrEqual(4096);
+		// Le total du message reste sous la limite de Discord.
+		expect(liste.pages.reduce((n, p) => n + p.length, 0)).toBeLessThanOrEqual(6000);
+	});
+
+	it("annonce ce qu'il a dû écarter et renvoie vers la commande", () => {
+		const episodes = Array.from({ length: 400 }, (_, i) =>
+			episode({ videoId: `v${i}`, episode: i + 1, url: `https://cdn.test/${"x".repeat(60)}${i}` })
+		);
+		const liste = listerSaison(episodes);
+		expect(liste.omis).toBeGreaterThan(0);
+		expect(liste.pages.at(-1)).toContain("/episodes saison");
+	});
+});
+
+describe("SynchronisationForum", () => {
+	function passerelleFactice() {
+		const fils = new Map<string, { nom: string; embed: any; tags: string[] }>();
+		let suivant = 0;
+		const journal: string[] = [];
+		const passerelle: PasserelleForum = {
+			filsExistants: async () => [...fils.keys()],
+			creerFil: async (nom, embed, tags) => {
+				const id = `fil${++suivant}`;
+				fils.set(id, { nom, embed, tags });
+				journal.push(`creer:${nom}`);
+				return id;
+			},
+			majFil: async (id, nom, embed, tags) => {
+				fils.set(id, { nom, embed, tags });
+				journal.push(`maj:${id}`);
+			},
+		};
+		return { passerelle, fils, journal };
+	}
+
+	const stockage = () => {
+		const meta = new Map<string, string>();
+		return {
+			meta,
+			lireMeta: (c: string) => meta.get(c) ?? null,
+			ecrireMeta: (c: string, v: string) => void meta.set(c, v),
+		};
+	};
+
+	const ETIQUETTES = { vf: "tag-vf", vostfr: "tag-vo" };
+
+	it("crée un fil par saison au premier passage", async () => {
+		const { catalogue } = catalogueAvec([
+			episode({ videoId: "a", season: 1, episode: 1 }),
+			episode({ videoId: "b", season: 2, episode: 1 }),
+		]);
+		const { passerelle, fils } = passerelleFactice();
+		const support = stockage();
+
+		const r = await new SynchronisationForum({
+			catalogue,
+			passerelle,
+			stockage: support,
+			marque: MARQUE_PAR_DEFAUT,
+			etiquettes: ETIQUETTES,
+		}).synchroniser();
+
+		expect(r.crees).toEqual([1, 2]);
+		expect(fils.size).toBe(2);
+		expect([...fils.values()][0]!.nom).toBe("Saison 1 — 1 épisode(s)");
+	});
+
+	it("modifie le fil existant au lieu d'en créer un second", async () => {
+		const { catalogue } = catalogueAvec([episode({ videoId: "a", season: 1, episode: 1 })]);
+		const { passerelle, fils, journal } = passerelleFactice();
+		const support = stockage();
+		const sync = () =>
+			new SynchronisationForum({
+				catalogue,
+				passerelle,
+				stockage: support,
+				marque: MARQUE_PAR_DEFAUT,
+				etiquettes: ETIQUETTES,
+			}).synchroniser();
+
+		await sync();
+		const r = await sync();
+
+		expect(r.majs).toEqual([1]);
+		expect(r.crees).toEqual([]);
+		expect(fils.size).toBe(1);
+		expect(journal).toEqual(["creer:Saison 1 — 1 épisode(s)", "maj:fil1"]);
+	});
+
+	it("recrée un fil supprimé à la main", async () => {
+		const { catalogue } = catalogueAvec([episode({ videoId: "a", season: 1, episode: 1 })]);
+		const { passerelle, fils } = passerelleFactice();
+		const support = stockage();
+		const options = {
+			catalogue,
+			passerelle,
+			stockage: support,
+			marque: MARQUE_PAR_DEFAUT,
+			etiquettes: ETIQUETTES,
+		};
+
+		await new SynchronisationForum(options).synchroniser();
+		fils.clear(); // quelqu'un a supprimé le fil dans Discord
+
+		const r = await new SynchronisationForum(options).synchroniser();
+		expect(r.recrees).toEqual([1]);
+		expect(fils.size).toBe(1);
+	});
+
+	it("étiquette selon les langues réellement présentes", async () => {
+		const { catalogue } = catalogueAvec([
+			episode({ videoId: "a", season: 1, episode: 1 }),
+			episode({ videoId: "b", season: 1, episode: 2, language: "vostfr" }),
+			episode({ videoId: "c", season: 2, episode: 1, language: "vostfr" }),
+		]);
+		const { passerelle, fils } = passerelleFactice();
+		await new SynchronisationForum({
+			catalogue,
+			passerelle,
+			stockage: stockage(),
+			marque: MARQUE_PAR_DEFAUT,
+			etiquettes: ETIQUETTES,
+		}).synchroniser();
+
+		const [s1, s2] = [...fils.values()];
+		expect(s1!.tags.sort()).toEqual(["tag-vf", "tag-vo"]);
+		expect(s2!.tags).toEqual(["tag-vo"]);
+	});
+
+	it("ignore une étiquette absente du forum plutôt que d'échouer", () => {
+		expect(etiquettesDeSaison({ vf: 3, vostfr: 1 }, { vf: "t1" })).toEqual(["t1"]);
+		expect(etiquettesDeSaison({ vf: 3 }, {})).toEqual([]);
+	});
+
+	it("ne touche à rien quand le catalogue est vide", async () => {
+		const { catalogue } = catalogueAvec([]);
+		const { passerelle, journal } = passerelleFactice();
+		const r = await new SynchronisationForum({
+			catalogue,
+			passerelle,
+			stockage: stockage(),
+			marque: MARQUE_PAR_DEFAUT,
+		}).synchroniser();
+
+		expect(r).toEqual({ crees: [], majs: [], recrees: [] });
+		expect(journal).toEqual([]);
+	});
+
+	it("mémorise la correspondance saison → fil", async () => {
+		const { catalogue } = catalogueAvec([episode({ videoId: "a", season: 3, episode: 1 })]);
+		const { passerelle } = passerelleFactice();
+		const support = stockage();
+		await new SynchronisationForum({
+			catalogue,
+			passerelle,
+			stockage: support,
+			marque: MARQUE_PAR_DEFAUT,
+		}).synchroniser();
+
+		expect(analyserTableFils(support.lireMeta(CLE_FILS))).toEqual(new Map([[3, "fil1"]]));
+	});
+
+	it("repart d'une table vide quand la métadonnée est abîmée", () => {
+		expect(analyserTableFils("pas du json")).toEqual(new Map());
+		expect(analyserTableFils('["a"]')).toEqual(new Map());
+		expect(analyserTableFils(null)).toEqual(new Map());
+		expect(analyserTableFils('{"2":"fil9"}')).toEqual(new Map([[2, "fil9"]]));
+	});
+
+	it("nomme le fil avec le compte d'épisodes", () => {
+		expect(nomFilSaison(4, 51)).toBe("Saison 4 — 51 épisode(s)");
 	});
 });

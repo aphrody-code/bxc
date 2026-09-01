@@ -47,6 +47,11 @@ export interface ConfigWonderbot {
 	cheminCache: string;
 	/** Salon des annonces de nouveaux épisodes, `null` pour ne rien annoncer. */
 	salonAnnonces: string | null;
+	/**
+	 * Salon FORUM tenant le catalogue — un fil par saison. `null` pour ne rien
+	 * y publier.
+	 */
+	salonForum: string | null;
 	/** Rôle mentionné après une annonce, `null` si aucun. */
 	roleAnnonces: string | null;
 	/** Rôles autorisés à déclencher un rafraîchissement. Vide = personne. */
@@ -181,6 +186,7 @@ export function lireConfig(env: EnvLisible): ConfigWonderbot {
 			: "guildes";
 
 	const salon = (env.WONDERBOT_ANNOUNCE_CHANNEL_ID ?? "").trim();
+	const forum = (env.WONDERBOT_FORUM_CHANNEL_ID ?? "").trim();
 	const role = (env.WONDERBOT_ANNOUNCE_ROLE_ID ?? "").trim();
 
 	return {
@@ -190,6 +196,7 @@ export function lireConfig(env: EnvLisible): ConfigWonderbot {
 		portee,
 		cheminCache: cheminCacheParDefaut(env),
 		salonAnnonces: FLOCON.test(salon) ? salon : null,
+		salonForum: FLOCON.test(forum) ? forum : null,
 		roleAnnonces: FLOCON.test(role) ? role : null,
 		rolesStaff: lireFlocons(env.WONDERBOT_STAFF_ROLE_IDS),
 		intervalleRafraichissementMs: lireEntier(env.WONDERBOT_REFRESH_INTERVAL_MS, {
@@ -213,6 +220,7 @@ export function resumerConfig(config: ConfigWonderbot): string {
 		config.portee === "globale"
 			? "globale (tout serveur qui invite le bot)"
 			: `guildes ${config.guildes.join(", ")}`;
+	const forum = config.salonForum ? `forum ${config.salonForum}` : "forum désactivé";
 	const annonces = config.salonAnnonces
 		? `salon ${config.salonAnnonces}${config.roleAnnonces ? ` (mention <@&${config.roleAnnonces}>)` : ""}`
 		: "désactivées";
@@ -223,5 +231,6 @@ export function resumerConfig(config: ConfigWonderbot): string {
 		`catalogue ${config.cheminCache}`,
 		`rafraîchissement toutes les ${heures} h`,
 		`annonces ${annonces}`,
+		forum,
 	].join(" · ");
 }
