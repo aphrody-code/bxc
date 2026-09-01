@@ -47,6 +47,7 @@
  */
 
 import { Browser } from "@aphrody/bxc";
+import { detectPii, redactPii, redactObject, type PiiMatch } from "@aphrody/bxc/privacy";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
@@ -122,6 +123,21 @@ export interface IETVOptions {
 	retries?: number;
 	/** YouTube Data API key for discovering additional channels (optional). */
 	youtubeApiKey?: string;
+}
+
+export interface ScrapingStats {
+	/** Nombre de chaînes scrappées. */
+	channelsScraped: number;
+	/** Nombre total d'épisodes trouvés. */
+	totalEpisodes: number;
+	/** Temps écoulé en millisecondes. */
+	elapsedMs: number;
+	/** Nombre de requêtes HTTP. */
+	httpRequests: number;
+	/** Nombre de hits cache. */
+	cacheHits: number;
+	/** Données suspectes détectées (PII). */
+	suspiciousMatches: PiiMatch[];
 }
 
 export interface YouTubeChannelMetadata {
@@ -394,6 +410,15 @@ export class IETVScraper {
 	private page: AnyPage | null = null;
 	private readonly fetchQueue: FetchQueue;
 	private readonly enableCache: boolean;
+	private stats: ScrapingStats = {
+		channelsScraped: 0,
+		totalEpisodes: 0,
+		elapsedMs: 0,
+		httpRequests: 0,
+		cacheHits: 0,
+		suspiciousMatches: [],
+	};
+	private startTime = Date.now();
 
 	constructor(opts: IETVOptions = {}) {
 		// YouTube requires JavaScript execution to load videos, so we default to "fast"
@@ -405,6 +430,7 @@ export class IETVScraper {
 		this.youtubeApiKey = opts.youtubeApiKey ?? loadYouTubeApiKey();
 		this.fetchQueue = new FetchQueue(CONCURRENT_FETCHES);
 		this.enableCache = true;
+		this.startTime = Date.now();
 
 		// Initialize cache directories
 		try {
@@ -436,6 +462,7 @@ export class IETVScraper {
 				const stat = await Bun.file(cachePath).stat?.();
 				const age = Date.now() - (stat?.mtime?.getTime() ?? 0);
 				if (age < 24 * 60 * 60 * 1000) {
+					this.stats.cacheHits++;
 					return await cacheFile.text();
 				}
 			}
@@ -703,6 +730,7 @@ export class IETVScraper {
 
 		const handle = channelHandleOrUrl.replace(/^@/, "");
 		const { status, html } = await this.fetchHtml(channelUrl);
+		this.stats.httpRequests++;
 
 		if (status !== 200) {
 			throw new Error(`getChannelEpisodes(${channelUrl}): HTTP ${status}`);
@@ -746,6 +774,8 @@ export class IETVScraper {
 		}
 
 		const totalEpisodes = videos.filter((v) => v.episode !== null).length;
+		this.stats.channelsScraped++;
+		this.stats.totalEpisodes += totalEpisodes;
 
 		return {
 			channel: handle,
@@ -916,6 +946,38 @@ export class IETVScraper {
 
 		// Filter out failures
 		return results.filter((info): info is ChannelInfo => info !== null);
+	}
+
+	/**
+	 * Scraping statistics (with PII detection from bxc/privacy).
+	 */
+	getStats(): ScrapingStats {
+		return {
+			...this.stats,
+			elapsedMs: Date.now() - this.startTime,
+		};
+	}
+
+	/**
+	 * Redact sensitive data from channel info using bxc privacy module.
+	 */
+	redactChannelInfo(info: ChannelInfo): ChannelInfo {
+		// Redact descriptions, titles, and other fields
+		return redactObject(info, { salt: "ietv-anonymize" });
+	}
+
+	/**
+	 * Détect potentially sensitive data in scraped content (PII).
+	 */
+	checkForSensitiveData(channels: ChannelInfo[]): PiiMatch[] {
+		const allMatches: PiiMatch[] = [];
+		for (const channel of channels) {
+			const text = JSON.stringify(channel);
+			const matches = detectPii(text);
+			allMatches.push(...matches);
+		}
+		this.stats.suspiciousMatches = allMatches;
+		return allMatches;
 	}
 
 	/**
