@@ -81,10 +81,14 @@ l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
   - **Aucun intent privilégié** : `Guilds` seul. Les rôles de l'appelant sont
     dans la charge utile de l'interaction ; demander `GuildMembers` sans l'avoir
     coché dans le portail ferme la passerelle (4014) et fait boucler le service.
-  - **`/ietv rafraichir` est ouvert aux administrateurs du serveur**, en plus de
+  - **`/episodes rafraichir` est ouvert aux administrateurs du serveur**, en plus de
     `WONDERBOT_STAFF_ROLE_IDS` : gater sur la seule liste de rôles laisse un
     serveur neuf sans personne pour lancer le premier scraping, propriétaire
     compris. `memberPermissions` arrive dans l'interaction, aucun intent requis.
+  - **Surfaces publiques sans nom déposé** : nom et descriptions de la commande,
+    pied de page des embeds, noms de salons. La racine s'appelait `/ietv` — d'où
+    le renommage en `/episodes`. Les journaux dérivent de `DEFINITION_IETV.name`
+    pour qu'un renommage ne laisse plus de message obsolète.
   - **La visibilité se fige au `deferReply`** : `editReply` refuse le drapeau
     `Ephemeral`. Le choix privé/public se fait donc AVANT d'exécuter la commande
     (`reponsePrivee()`).
@@ -159,7 +163,7 @@ bxc/
 │   ├── worldbeyblade/            # Scraper & metagame sub-package
 │   ├── xcom/                     # X.com profile markdown scraper
 │   ├── ietv/                     # @aphrody/ietv — catalogue Inazuma Eleven TV (scraper + cache SQLite + video)
-│   ├── wonderbot/                # @aphrody/wonderbot — bot Discord /ietv (discord.js, cache-first)
+│   ├── wonderbot/                # @aphrody/wonderbot — bot Discord /episodes (discord.js, cache-first)
 │   ├── x/                        # @aphrody/x — headless X/Twitter client (pure TS port) + examples/
 │   └── zukan/                    # Inazuma Eleven Character database scraper
 ├── rust-bridge/                  # FFI Rust ↔ Bun (lol_html, V8 bindings)

@@ -1,7 +1,7 @@
 /**
- * @aphrody/wonderbot — Wonderbot, le bot Discord d'Inazuma Eleven TV.
+ * @aphrody/wonderbot — Wonderbot, le bot Discord du catalogue d'épisodes.
  *
- * Le bot lit le catalogue IETV depuis le cache SQLite de `@aphrody/ietv` et le
+ * Le bot lit le catalogue depuis le cache SQLite de `@aphrody/ietv` et le
  * rafraîchit lui-même : aucun serveur HTTP intermédiaire, aucune dépendance à
  * un démon tiers. Tout ce qui n'est pas la passerelle Discord (`bot.ts`) est
  * testable sans jeton, sans réseau et sans base.

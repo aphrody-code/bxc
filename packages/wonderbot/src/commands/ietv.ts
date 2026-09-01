@@ -1,5 +1,9 @@
 /**
- * `/ietv` — la seule racine de commandes de Wonderbot.
+ * `/episodes` — la seule racine de commandes de Wonderbot.
+ *
+ * ⚠ Le nom de la commande, ses descriptions et ses réponses sont PUBLICS : ils
+ * s'affichent dans le client Discord de chaque membre. Aucun n'emploie de nom
+ * déposé — la racine s'appelait `/ietv`, elle a été renommée pour cette raison.
  *
  * ── LES HANDLERS NE CONNAISSENT PAS DISCORD.JS ─────────────────────────────
  * Chaque sous-commande reçoit des options déjà lues et rend une {@link Reponse}
@@ -46,8 +50,8 @@ const LIMITE_DEFAUT = 10;
  * dans un test.
  */
 export const DEFINITION_IETV = {
-	name: "ietv",
-	description: "Le catalogue Inazuma Eleven TV — épisodes VF et VOSTFR",
+	name: "episodes",
+	description: "Le catalogue d'épisodes du serveur — VF et VOSTFR",
 	options: [
 		{
 			type: TYPE.sousCommande,
@@ -217,7 +221,7 @@ export async function executerIetv(
 		default:
 			return echec(
 				"Sous-commande inconnue",
-				`\`${sousCommande}\` n'existe pas. Tape \`/ietv\` et choisis dans la liste.`,
+				`\`${sousCommande}\` n'existe pas. Tape \`/episodes\` et choisis dans la liste.`,
 				contexte.marque
 			);
 	}
@@ -241,7 +245,7 @@ function recherche(options: OptionsCommande, contexte: ContexteCommande): Repons
 		return vide(
 			"Aucun épisode",
 			`Rien pour « ${texte} »${mentionLangue(langue)}. Essaie un mot-clé plus court, ` +
-				"ou `/ietv saison` pour parcourir une saison entière.",
+				"ou `/episodes saison` pour parcourir une saison entière.",
 			contexte.marque
 		);
 	}
@@ -265,7 +269,7 @@ function episode(options: OptionsCommande, contexte: ContexteCommande): Reponse 
 	if (saisonDemandee === null || numero === null) {
 		return echec(
 			"Épisode incomplet",
-			"Il faut la saison ET le numéro : `/ietv episode saison:1 numero:5`.",
+			"Il faut la saison ET le numéro : `/episodes episode saison:1 numero:5`.",
 			contexte.marque
 		);
 	}
@@ -277,7 +281,7 @@ function episode(options: OptionsCommande, contexte: ContexteCommande): Reponse 
 		const disponibles = contexte.catalogue.saisonsDisponibles();
 		const piste =
 			disponibles.length === 0
-				? "Le catalogue est vide : lance `/ietv rafraichir` ou attends le prochain passage."
+				? "Le catalogue est vide : lance `/episodes rafraichir` ou attends le prochain passage."
 				: `Saisons au catalogue : ${disponibles.join(", ")}.`;
 		return vide(
 			`S${saisonDemandee}E${numero} introuvable`,
@@ -309,7 +313,7 @@ function episode(options: OptionsCommande, contexte: ContexteCommande): Reponse 
 function saison(options: OptionsCommande, contexte: ContexteCommande): Reponse {
 	const numero = options.entier("numero");
 	if (numero === null) {
-		return echec("Saison manquante", "Précise la saison : `/ietv saison numero:2`.", contexte.marque);
+		return echec("Saison manquante", "Précise la saison : `/episodes saison numero:2`.", contexte.marque);
 	}
 
 	const langue = lireLangue(options);
@@ -320,7 +324,7 @@ function saison(options: OptionsCommande, contexte: ContexteCommande): Reponse {
 		return vide(
 			`Saison ${numero} absente`,
 			disponibles.length === 0
-				? "Le catalogue est vide : lance `/ietv rafraichir`."
+				? "Le catalogue est vide : lance `/episodes rafraichir`."
 				: `Saisons au catalogue : ${disponibles.join(", ")}.`,
 			contexte.marque
 		);
@@ -346,7 +350,7 @@ function catalogue(contexte: ContexteCommande): Reponse {
 		return vide(
 			"Catalogue vide",
 			"Aucun épisode en base. Le premier rafraîchissement n'a pas encore tourné — " +
-				"`/ietv rafraichir` le déclenche tout de suite.",
+				"`/episodes rafraichir` le déclenche tout de suite.",
 			contexte.marque
 		);
 	}

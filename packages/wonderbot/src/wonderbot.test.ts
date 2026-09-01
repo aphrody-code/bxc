@@ -253,7 +253,14 @@ describe("format", () => {
 describe("Fiche", () => {
 	it("pose un pied avec la marque", () => {
 		const embed = new Fiche({ titre: "Titre" }).finir("note");
-		expect(embed.footer?.text).toBe("note · Wonderbot · Inazuma Eleven TV");
+		expect(embed.footer?.text).toBe("note · Wonderbot · catalogue d'épisodes");
+	});
+
+	it("ne nomme aucune marque déposée dans le pied de page", () => {
+		// Le pied est public : il s'affiche sous chaque réponse du bot.
+		const pied = new Fiche({ titre: "T" }).finir();
+		expect(pied.footer?.text.toLowerCase()).not.toContain("inazuma");
+		expect(pied.footer?.text.toLowerCase()).not.toContain("ietv");
 	});
 
 	it("refuse un champ qui ferait dépasser le budget, et le signale", () => {
@@ -575,9 +582,9 @@ describe("annonces", () => {
 // Commandes
 // ---------------------------------------------------------------------------
 
-describe("/ietv", () => {
-	it("déclare cinq sous-commandes", () => {
-		expect(DEFINITION_IETV.name).toBe("ietv");
+describe("/episodes", () => {
+	it("déclare cinq sous-commandes sous un nom sans marque déposée", () => {
+		expect(DEFINITION_IETV.name).toBe("episodes");
 		expect(DEFINITION_IETV.options.map((o) => o.name)).toEqual([
 			"recherche",
 			"episode",
@@ -620,7 +627,7 @@ describe("/ietv", () => {
 			contexte(catalogue)
 		);
 		expect(texteDe(reponse)).toContain("Aucun épisode");
-		expect(texteDe(reponse)).toContain("/ietv saison");
+		expect(texteDe(reponse)).toContain("/episodes saison");
 	});
 
 	it("rend un champ par version d'un épisode", async () => {
@@ -673,7 +680,7 @@ describe("/ietv", () => {
 	it("dit quoi faire quand le catalogue est vide", async () => {
 		const { catalogue } = catalogueAvec([]);
 		const reponse = await executerIetv("catalogue", optionsDepuisObjet({}), contexte(catalogue));
-		expect(texteDe(reponse)).toContain("/ietv rafraichir");
+		expect(texteDe(reponse)).toContain("/episodes rafraichir");
 	});
 
 	it("réserve le rafraîchissement au staff", async () => {

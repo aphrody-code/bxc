@@ -78,8 +78,14 @@ export interface Marque {
 	couleur: number;
 }
 
+/**
+ * Identité affichée sur Discord.
+ *
+ * ⚠ Le pied de page est PUBLIC : il apparaît sous chaque réponse du bot. Il ne
+ * nomme donc aucune marque déposée — le bot parle de « catalogue d'épisodes ».
+ */
 export const MARQUE_PAR_DEFAUT: Marque = Object.freeze({
 	nom: "Wonderbot",
-	piedDePage: "Inazuma Eleven TV",
+	piedDePage: "catalogue d'épisodes",
 	couleur: COULEURS.marque,
 });

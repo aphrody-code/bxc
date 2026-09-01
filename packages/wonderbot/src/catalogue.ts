@@ -1,5 +1,5 @@
 /**
- * Catalogue IETV — la seule porte d'entrée du bot sur les données.
+ * Catalogue — la seule porte d'entrée du bot sur les données.
  *
  * Les commandes ne lisent JAMAIS le scraper : elles lisent le cache SQLite,
  * qu'un rafraîchissement périodique alimente. Une commande répond donc en
@@ -77,7 +77,7 @@ export interface ResultatRafraichissement {
 export const CLE_DERNIER_RAFRAICHISSEMENT = "wonderbot:dernier-rafraichissement";
 
 /**
- * Plafond de lecture pour les balayages complets. Le catalogue IETV tient dans
+ * Plafond de lecture pour les balayages complets. Le catalogue tient dans
  * ~1 200 épisodes ; la borne est là pour qu'une base anormalement grosse ne
  * fasse pas exploser la mémoire du bot, pas pour tronquer un cas nominal.
  */
@@ -133,7 +133,7 @@ export class Catalogue {
 		return [...saisons].sort((a, b) => a - b);
 	}
 
-	/** Compteurs, sources et fraîcheur — ce que sert `/ietv catalogue`. */
+	/** Compteurs, sources et fraîcheur — ce que sert `/episodes catalogue`. */
 	resume(): ResumeCatalogue {
 		const cache = this.ouvrir();
 		const sources = cache
@@ -168,7 +168,7 @@ export class Catalogue {
 	 * jusqu'au prochain passage.
 	 *
 	 * Deux appels concurrents partagent la même exécution : le planificateur et
-	 * `/ietv rafraichir` écrivent la même base.
+	 * `/episodes rafraichir` écrivent la même base.
 	 */
 	rafraichir(): Promise<ResultatRafraichissement> {
 		this.rafraichissementEnCours ??= this.executerRafraichissement().finally(() => {
