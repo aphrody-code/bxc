@@ -37,24 +37,34 @@ await scraper.close();
 ### CLI
 
 ```bash
-# Get episodes from a specific channel
+# Get episodes from a specific YouTube channel
 bxc ietv channel inazumaelevenfrance1
 bxc ietv channel inazumatvfr --profile fast
 
-# Aggregate all episodes from canonical channels
+# Scrape official inazuma-eleven.fr streaming site (most complete)
+bxc ietv official
+
+# Aggregate all episodes from all 4 YouTube channels + official site
 bxc ietv all
 
-# Discover additional Inazuma Eleven channels
+# Discover additional Inazuma Eleven channels via Google Search
 bxc ietv discover
 
-# List canonical channels
+# Verify YouTube API credentials
+bxc ietv check-auth
+
+# List canonical YouTube channels
 bxc ietv list
 ```
 
-## Channels
+## Channels & Sources
 
-The scraper aggregates from these official Inazuma Eleven French YouTube channels:
+### Official Streaming Site
+- **inazuma-eleven.fr** (most complete) — https://inazuma-eleven.fr/tv/watch?lang=fr
+  - Official French streaming platform
+  - Complete episode catalog with proper metadata
 
+### YouTube Channels
 - `@inazumaelevenfrance1` — https://www.youtube.com/@inazumaelevenfrance1
 - `@inazumatvfr` — https://www.youtube.com/@inazumatvfr
 - `@inazumaelevengofrance` — https://www.youtube.com/@inazumaelevengofrance

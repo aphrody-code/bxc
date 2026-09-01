@@ -22,7 +22,7 @@ import IETVScraper, { loadYouTubeApiKey, loadGCloudCredentials } from "@aphrody/
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
 
 interface CliOptions extends CommonOptions {
-	action: "list" | "channel" | "all" | "discover" | "check-auth";
+	action: "list" | "channel" | "all" | "discover" | "check-auth" | "official";
 	channel: string;
 	profile: "static" | "fast" | "http" | "stealth" | "max";
 	youtubeApiKey?: string;
@@ -36,6 +36,7 @@ function printUsage(): void {
 Usage:
   bxc ietv channel <handle>         Get episodes from a specific channel (e.g. "inazumaelevenfrance1")
   bxc ietv all                      Aggregate all episodes from all 4 IETV channels
+  bxc ietv official                 Scrape official inazuma-eleven.fr site (most complete)
   bxc ietv discover                 Discover additional Inazuma Eleven channels via Google Search
   bxc ietv check-auth               Verify YouTube API credentials status
   bxc ietv list                     List available channels
@@ -90,6 +91,7 @@ function parseArgs(
 	else if (actionStr === "all") opts.action = "all";
 	else if (actionStr === "discover") opts.action = "discover";
 	else if (actionStr === "check-auth") opts.action = "check-auth";
+	else if (actionStr === "official") opts.action = "official";
 	else if (actionStr === "list") opts.action = "list";
 	else if (actionStr === undefined || actionStr === "") {
 		// Default to 'list'
@@ -101,7 +103,7 @@ function parseArgs(
 	}
 
 	const positional: string[] = [];
-	for (let i = (argv[0] === "channel" || argv[0] === "all" || argv[0] === "discover" ? 1 : 0); i < argv.length; i++) {
+	for (let i = (argv[0] === "channel" || argv[0] === "all" || argv[0] === "discover" || argv[0] === "official" ? 1 : 0); i < argv.length; i++) {
 		const a = argv[i];
 		switch (a) {
 			case "--profile": {
@@ -183,6 +185,9 @@ export async function main(
 				},
 			};
 			Bun.stdout.write(JSON.stringify(status, null, 2) + "\n");
+		} else if (opts.action === "official") {
+			const info = await scraper.scrapeOfficialSite();
+			Bun.stdout.write(JSON.stringify(info, null, 2) + "\n");
 		} else if (opts.action === "list") {
 			Bun.stdout.write(
 				JSON.stringify(

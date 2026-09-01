@@ -922,6 +922,146 @@ export class IETVScraper {
 	}
 
 	/**
+	 * Scrape inazuma-eleven.fr official site for complete episode list.
+	 */
+	async scrapeOfficialSite(): Promise<ChannelInfo> {
+		const officialUrl = "https://inazuma-eleven.fr/tv/watch?lang=fr";
+
+		const { status, html } = await this.fetchHtml(officialUrl);
+		this.stats.httpRequests++;
+
+		if (status !== 200) {
+			throw new Error(`scrapeOfficialSite: HTTP ${status}`);
+		}
+
+		// Parse official site episodes
+		const videos = this.parseOfficialSiteEpisodes(html);
+
+		// Group by season
+		const seasonMap = new Map<number, VideoRef[]>();
+		let maxSeason = 0;
+
+		for (const video of videos) {
+			if (video.season === null) continue;
+			if (!seasonMap.has(video.season)) {
+				seasonMap.set(video.season, []);
+				maxSeason = Math.max(maxSeason, video.season);
+			}
+			seasonMap.get(video.season)!.push(video);
+		}
+
+		// Sort episodes within each season
+		for (const eps of seasonMap.values()) {
+			eps.sort((a, b) => {
+				const aEp = a.episode ?? 0;
+				const bEp = b.episode ?? 0;
+				return aEp - bEp;
+			});
+		}
+
+		// Build season array
+		const seasons: SeasonInfo[] = [];
+		for (let s = 1; s <= maxSeason; s++) {
+			const episodes = seasonMap.get(s) ?? [];
+			seasons.push({
+				season: s,
+				episodes,
+				totalEpisodes: episodes.length,
+			});
+		}
+
+		const totalEpisodes = videos.filter((v) => v.episode !== null).length;
+		this.stats.channelsScraped++;
+		this.stats.totalEpisodes += totalEpisodes;
+
+		return {
+			channel: "inazuma-eleven.fr (official)",
+			title: "Site Officiel Inazuma Eleven France",
+			description: "Plateforme de streaming officielle française",
+			avatar: null,
+			seasons,
+			totalEpisodes,
+		};
+	}
+
+	/**
+	 * Parse episodes from inazuma-eleven.fr official site.
+	 */
+	private parseOfficialSiteEpisodes(html: string): VideoRef[] {
+		const videos: VideoRef[] = [];
+
+		// Look for episode links in the site structure
+		// Pattern: episode containers with title, link, thumbnail
+		const episodeRe =
+			/<(?:div|article)[^>]*class="[^"]*episode[^"]*"[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>[\s\S]*?<(?:h[2-4]|span)[^>]*>([^<]+)<\/(?:h[2-4]|span)>[\s\S]*?<img[^>]*src="([^"]+)"[^>]*>[\s\S]*?<\/(?:div|article)>/gi;
+
+		let match;
+		const seen = new Set<string>();
+
+		while ((match = episodeRe.exec(html)) !== null) {
+			const url = match[1];
+			const title = stripHtml(match[2]);
+			const thumbnail = match[3];
+
+			// Extract video ID or use URL hash
+			const videoId = url.match(/(?:id=|v=|\/)?([a-zA-Z0-9_-]{8,})/) ?.[1] ||
+				Buffer.from(url).toString("base64").slice(0, 11);
+
+			if (seen.has(videoId)) continue;
+			seen.add(videoId);
+
+			const { season, episode } = parseSeasonEpisode(title);
+			const language = detectLanguage(title);
+
+			videos.push({
+				title,
+				videoId,
+				url: url.startsWith("http") ? url : `https://inazuma-eleven.fr${url}`,
+				description: null,
+				thumbnail: thumbnail.startsWith("http") ? thumbnail : `https://inazuma-eleven.fr${thumbnail}`,
+				publishDate: null,
+				season,
+				episode,
+				language,
+				duration: null,
+				viewCount: null,
+			});
+		}
+
+		// Fallback: look for simple links containing episode patterns
+		if (videos.length === 0) {
+			const linkRe =
+				/<a[^>]*href="([^"]*ep(?:isode|od)?[^"]*)"[^>]*>([^<]+)<\/a>/gi;
+			while ((match = linkRe.exec(html)) !== null) {
+				const url = match[1];
+				const title = stripHtml(match[2]);
+
+				if (title.length < 5 || seen.has(url)) continue;
+				seen.add(url);
+
+				const { season, episode } = parseSeasonEpisode(title);
+				const language = detectLanguage(title);
+
+				videos.push({
+					title,
+					videoId: Buffer.from(url).toString("base64").slice(0, 11),
+					url: url.startsWith("http") ? url : `https://inazuma-eleven.fr${url}`,
+					description: null,
+					thumbnail: null,
+					publishDate: null,
+					season,
+					episode,
+					language,
+					duration: null,
+					viewCount: null,
+				});
+			}
+		}
+
+		return videos;
+	}
+
+	/**
 	 * Aggregate episodes from multiple Inazuma Eleven French channels (parallel with Bun).
 	 */
 	async getAllChannelEpisodes(): Promise<Array<ChannelInfo>> {
@@ -944,8 +1084,18 @@ export class IETVScraper {
 
 		const results = await Promise.all(promises);
 
-		// Filter out failures
-		return results.filter((info): info is ChannelInfo => info !== null);
+		// Also fetch official site in parallel
+		let officialSite: ChannelInfo | null = null;
+		try {
+			officialSite = await this.scrapeOfficialSite();
+		} catch (err) {
+			console.warn(`Failed to fetch official site: ${String(err)}`);
+		}
+
+		const allResults = results.filter((info): info is ChannelInfo => info !== null);
+		if (officialSite) allResults.unshift(officialSite);
+
+		return allResults;
 	}
 
 	/**
