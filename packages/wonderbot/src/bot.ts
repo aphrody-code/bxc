@@ -16,6 +16,7 @@
  */
 
 import {
+	ChannelType,
 	Client,
 	Events,
 	GatewayIntentBits,
@@ -27,6 +28,7 @@ import {
 } from "discord.js";
 
 import { JournalAnnonces } from "./annonces.ts";
+import { SynchronisationForum, type PasserelleForum } from "./forum.ts";
 import { catalogueReel, type Catalogue, type ResultatRafraichissement } from "./catalogue.ts";
 import { resumerConfig, type ConfigWonderbot } from "./config.ts";
 import {
@@ -105,6 +107,7 @@ export class Wonderbot {
 	private readonly journal: JournalAnnonces;
 	private readonly journaliser: (message: string) => void;
 	private readonly planificateur: Planificateur;
+	private forum: SynchronisationForum | null = null;
 
 	constructor(options: OptionsBot) {
 		this.config = options.config;
@@ -161,7 +164,13 @@ export class Wonderbot {
 					rejeter(err instanceof Error ? err : new Error(String(err)));
 					return;
 				}
-				if (planifier) this.planificateur.demarrer();
+				// Réconciliation au démarrage : sans elle, un fil supprimé ou un
+				// catalogue amorcé hors ligne attendraient le prochain
+				// rafraîchissement, soit six heures.
+				if (planifier) {
+					await this.synchroniserForum();
+					this.planificateur.demarrer();
+				}
 				resoudre();
 			});
 		});
@@ -254,12 +263,98 @@ export class Wonderbot {
 		await interaction.editReply({ embeds: reponse.embeds });
 	}
 
+	/**
+	 * Passerelle forum branchée sur discord.js.
+	 *
+	 * Les étiquettes du salon sont lues à CHAQUE synchronisation : elles se
+	 * modifient depuis le client Discord, et une table figée au démarrage
+	 * poserait des identifiants d'étiquettes supprimées — ce que l'API refuse.
+	 */
+	private async passerelleForum(salonId: string): Promise<{
+		passerelle: PasserelleForum;
+		etiquettes: Record<string, string>;
+	}> {
+		const salon = await this.client.channels.fetch(salonId);
+		if (!salon || salon.type !== ChannelType.GuildForum) {
+			throw new Error(
+				`le salon ${salonId} n'est pas un forum — WONDERBOT_FORUM_CHANNEL_ID doit désigner un salon de type forum`
+			);
+		}
+
+		const etiquettes = Object.fromEntries(
+			salon.availableTags.map((tag) => [tag.name.toLowerCase(), tag.id])
+		);
+
+		const passerelle: PasserelleForum = {
+			filsExistants: async () => {
+				// Actifs ET archivés : Discord archive les fils inactifs, et un fil
+				// archivé existe toujours — le recréer ferait un doublon.
+				const actifs = await salon.threads.fetchActive();
+				const archives = await salon.threads.fetchArchived({ type: "public", limit: 100 });
+				return [...actifs.threads.keys(), ...archives.threads.keys()];
+			},
+			creerFil: async (nom, embeds, tags) => {
+				const fil = await salon.threads.create({
+					name: nom,
+					message: { embeds },
+					appliedTags: tags,
+				});
+				return fil.id;
+			},
+			majFil: async (filId, nom, embeds, tags) => {
+				const fil = await salon.threads.fetch(filId);
+				if (!fil) return;
+				// Un fil archivé doit être rouvert avant d'être modifié.
+				if (fil.archived) await fil.setArchived(false);
+				if (fil.name !== nom) await fil.setName(nom);
+				await fil.setAppliedTags(tags);
+				// Le message d'ouverture porte l'identifiant du fil : on le MODIFIE
+				// au lieu de republier, pour ne pas noyer les réponses des membres.
+				const ouverture = await fil.fetchStarterMessage().catch(() => null);
+				await ouverture?.edit({ embeds });
+			},
+		};
+
+		return { passerelle, etiquettes };
+	}
+
+	/** Met le forum en accord avec le catalogue, si un forum est configuré. */
+	private async synchroniserForum(): Promise<void> {
+		if (!this.config.salonForum) return;
+		try {
+			const { passerelle, etiquettes } = await this.passerelleForum(this.config.salonForum);
+			this.forum = new SynchronisationForum({
+				catalogue: this.catalogue,
+				passerelle,
+				stockage: this.catalogue,
+				marque: this.config.marque,
+				etiquettes,
+			});
+			const r = await this.forum.synchroniser();
+			const total = r.crees.length + r.majs.length + r.recrees.length;
+			if (total > 0) {
+				this.journaliser(
+					`${ICONES.saison} forum synchronisé — ${r.crees.length} fil(s) créé(s), ` +
+						`${r.majs.length} mis à jour${r.recrees.length > 0 ? `, ${r.recrees.length} recréé(s)` : ""}`
+				);
+			}
+		} catch (err) {
+			// Un forum indisponible ne doit pas faire échouer le rafraîchissement :
+			// les commandes, elles, répondent toujours.
+			this.journaliser(
+				`${ICONES.attention} synchronisation du forum impossible : ${err instanceof Error ? err.message : String(err)}`
+			);
+		}
+	}
+
 	/** Publie les nouveautés après un rafraîchissement réussi. */
 	private async apresRafraichissement(resultat: ResultatRafraichissement): Promise<void> {
 		this.journaliser(
 			`${ICONES.succes} catalogue rafraîchi — ${resultat.stats.episodes} épisode(s), ` +
 				`${resultat.sources} source(s), ${(resultat.dureeMs / 1000).toFixed(1)} s`
 		);
+
+		await this.synchroniserForum();
 
 		if (!this.config.salonAnnonces) return;
 

@@ -33,6 +33,34 @@ Les quatre premières répondent en millisecondes : elles lisent le cache, jamai
 YouTube. C'est aussi ce qui évite qu'un serveur de deux mille membres déclenche
 deux mille scrapings.
 
+## Le forum comme catalogue
+
+Quand `WONDERBOT_FORUM_CHANNEL_ID` désigne un salon **forum**, le bot y tient
+**un fil par saison** : le message d'ouverture liste les épisodes, un lien par
+langue, et le fil reste ouvert aux discussions des membres.
+
+- **Un fil par saison, pas par épisode** : douze cents fils seraient illisibles,
+  et Discord archive les plus anciens.
+- **Le bot modifie, il ne republie pas.** Le message d'ouverture porte
+  l'identifiant du fil et se modifie ; republier à chaque rafraîchissement
+  noierait les réponses des membres sous des listes identiques.
+- **Le fil est retrouvé par identifiant**, mémorisé dans le cache : un
+  renommage ne casse rien, et un fil supprimé à la main est recréé.
+- **Rien n'est jamais supprimé** : une saison qui disparaît du catalogue est
+  plus souvent un scraping raté qu'une saison retirée.
+- Les étiquettes `VF` / `VOSTFR` sont posées d'après les langues réellement
+  présentes ; une étiquette absente du forum est ignorée plutôt que fatale.
+
+Une saison complète (51 épisodes × 2 langues) **ne tient pas** dans une seule
+description d'embed. D'où un format volontairement compact — pas de titre
+d'épisode, liens raccourcis en `youtu.be` — et un découpage en plusieurs embeds
+sous le plafond de 6 000 caractères que Discord applique à l'ensemble d'un
+message. Au-delà, le fil renvoie vers `/episodes saison`.
+
+Côté salon : refuser `CREATE_PUBLIC_THREADS` à `@everyone` — la liste des fils
+**est** la liste des saisons, laisser ouvrir un fil quelconque la transformerait
+en salon de discussion.
+
 ## Annonces des nouveautés
 
 Après chaque rafraîchissement, les épisodes absents du passage précédent sont
@@ -59,6 +87,7 @@ Le premier nom trouvé gagne — les variantes historiques évitent de dupliquer
 | `WONDERBOT_GUILD_ID` · `DISCORD_GUILD_ID` | Guilde(s) ; **vide ⇒ commandes globales** |
 | `WONDERBOT_COMMAND_SCOPE` | `guildes` (propagation immédiate) ou `globale` (quelques minutes, tout serveur qui invite) |
 | `WONDERBOT_ANNOUNCE_CHANNEL_ID` | Salon des nouveautés ; absent ⇒ aucune annonce |
+| `WONDERBOT_FORUM_CHANNEL_ID` | Salon forum tenant le catalogue (un fil par saison) ; absent ⇒ pas de forum |
 | `WONDERBOT_ANNOUNCE_ROLE_ID` | Rôle mentionné dans l'annonce |
 | `WONDERBOT_STAFF_ROLE_IDS` | Rôles autorisés à `/episodes rafraichir` **en plus** des administrateurs ; vide ⇒ administrateurs seuls |
 | `WONDERBOT_REFRESH_INTERVAL_MS` | Période, défaut 6 h, plancher 60 s |
@@ -106,6 +135,7 @@ src/
 ├── config.ts          env → configuration validée (PUR)
 ├── catalogue.ts       lecture + rafraîchissement du cache IETV (cache et scraper injectables)
 ├── annonces.ts        journal des épisodes déjà annoncés (PUR + persistance)
+├── forum.ts           un fil par saison, tenu à jour (passerelle Discord injectable)
 ├── planificateur.ts   boucle périodique (minuteurs injectables)
 ├── commands/ietv.ts   les cinq sous-commandes → embeds (ne connaît PAS discord.js)
 ├── ui/                charte : couleurs, icônes, budget des embeds, mise en forme

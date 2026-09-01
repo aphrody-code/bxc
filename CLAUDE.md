@@ -94,6 +94,11 @@ l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
     (`reponsePrivee()`).
   - **Rafraîchir = scraper d'abord, remplacer ensuite.** Vider la base avant de
     scraper laisse un catalogue vide quand le réseau tombe.
+  - **Le forum = le catalogue** (`WONDERBOT_FORUM_CHANNEL_ID`) : un fil par
+    saison, message d'ouverture MODIFIÉ et non republié (sinon les réponses des
+    membres sont noyées), fil retrouvé par identifiant mémorisé en cache, jamais
+    supprimé. Une saison complète ne tient pas dans un embed (4 096) → format
+    compact + découpage sous les 6 000 du message.
   - **Le premier passage n'annonce rien** : il amorce le journal, sinon un bot
     fraîchement installé déverserait 1 200 messages. Le journal mémorise des
     identifiants, pas une date (une source peut remettre en ligne un épisode
