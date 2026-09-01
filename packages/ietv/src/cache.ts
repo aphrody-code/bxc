@@ -11,7 +11,7 @@
 
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync } from "fs";
-import type { ChannelInfo, SeasonInfo, VideoRef } from "./index";
+import type { ChannelInfo, VideoRef } from "./index";
 
 /** `VideoRef` tel que stocké en cache : le nom de chaîne d'origine en plus. */
 export type CachedVideoRef = VideoRef & { channel?: string };

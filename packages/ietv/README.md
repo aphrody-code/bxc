@@ -173,6 +173,92 @@ export function detectLanguage(title: string): LanguageVersion
 export class IETVScraper { /* ... */ }
 ```
 
+Subpath exports: `./cache` (SQLite cache), `./video-player`, `./video-codec`,
+`./video-search`, and `./video` (barrel over the three).
+
+## Video: playback & transcoding
+
+Two optional surfaces, published under their own subpaths so the scraper stays
+dependency-free:
+
+| Subpath | Purpose | Runtime deps |
+| --- | --- | --- |
+| `@aphrody/ietv/video-player` | HLS/MP4 playback with a skinnable UI | `media-chrome`, `hls.js` (optional peers) |
+| `@aphrody/ietv/video-codec` | Transcoding & compression profiles | `mediabunny` (bundled), `@mediabunny/server` (optional peer) |
+| `@aphrody/ietv/video` | Barrel re-exporting both plus the search layer | — |
+
+### Player (browser)
+
+`media-chrome` provides the controls, `hls.js` the HLS protocol. Both are
+loaded lazily at mount time, so importing the module server-side is free.
+
+```bash
+npm install media-chrome hls.js
+```
+
+```ts
+import { IETVPlayer } from "@aphrody/ietv/video-player";
+
+const player = new IETVPlayer({ autoplay: false, startQuality: "auto" });
+await player.mount(document.querySelector("#player")!);
+await player.load("https://cdn.example/ep1.m3u8"); // format inferred from the URL
+
+player.getQualities();     // [{ index: -1, label: "auto" }, { index: 0, label: "360p" }, …]
+player.setQuality(1);      // pin a variant, or "auto" to hand back to the ABR
+player.getStats();         // resolution, bitrate, measured fps, buffer health, bandwidth
+player.destroy();
+```
+
+Native HLS (Safari) is preferred when available. Fatal `hls.js` errors are
+recovered per the upstream playbook — reload on network errors, buffer flush on
+media errors — and only surface to `onError` when unrecoverable. Without
+`media-chrome` installed the player falls back to the browser's native
+controls instead of failing.
+
+### Transcoding (server)
+
+[mediabunny](https://mediabunny.dev) encodes through WebCodecs. Bun and Node
+don't implement it, so install `@mediabunny/server` (FFmpeg bindings) to get
+encoders; `ensureNativeCodecs()` registers them on first use.
+
+```bash
+npm install @mediabunny/server
+```
+
+```ts
+import {
+  COMPRESSION_PROFILES,
+  VideoTranscoder,
+} from "@aphrody/ietv/video-codec";
+
+const transcoder = new VideoTranscoder();
+
+await transcoder.probe("ep1.mkv");
+// { durationSeconds, video: { codec, width, height, rotation }, audio: {…} }
+
+const result = await transcoder.transcode("ep1.mkv", "ep1.mp4", {
+  profile: COMPRESSION_PROFILES.web_720,
+  onProgress: (p) => process.stdout.write(`\r${(p * 100).toFixed(0)} %`),
+});
+// { sizeBytes, elapsedMs, videoCodec: "h265", discarded: [] }
+```
+
+Profiles carry both a target `bitrate` (bits/s) and a `quantizer` (FFmpeg's CRF
+equivalent) so the encoder can hold quality constant when it supports it:
+
+| Profile | Codec | Resolution | Bitrate | Quantizer |
+| --- | --- | --- | --- | --- |
+| `mobile_360` | H.264 / AAC | 360p | 500 kbps | 28 |
+| `mobile_480` | H.264 / AAC | 480p | 1 Mbps | 26 |
+| `web_720` | H.265 / AAC | 720p | 2 Mbps | 26 |
+| `desktop_1080` | H.265 / AAC | 1080p | 4 Mbps | 24 |
+| `av1_1080` | AV1 / Opus | 1080p | 1.5 Mbps | 32 |
+
+`VideoCodec.recommendProfile(device, bandwidthMbps)` picks one, and
+`VideoCodec.estimateFileSize(durationSeconds, profile)` sizes the output before
+running the job. Without an available encoder, `transcode()` fails up front with
+the install hint rather than an opaque WebCodecs error.
+
 ## Authentication & Credentials
 
 The scraper automatically loads YouTube API credentials from secure sources (in order):

@@ -100,14 +100,34 @@
 
 | Phase | Component | Library | Priority | Status |
 |-------|-----------|---------|----------|--------|
-| **1** | Player | media-chrome + hls.js | High | Ready |
-| **1** | Search | SQLite FTS5 (existing) | Immediate | ✅ Done |
-| **2** | Compression | mediabunny + @mediabunny/server | High | Ready |
-| **2** | Thumbnails | YouTube free URLs | Medium | Ready |
+| **1** | Player | media-chrome + hls.js | High | ✅ Done — `src/video-player.ts` |
+| **1** | Search | SQLite FTS5 (existing) | Immediate | ✅ Done — `src/cache.ts` + `src/video-search.ts` |
+| **2** | Compression | mediabunny + @mediabunny/server | High | ✅ Done — `src/video-codec.ts` |
+| **2** | Thumbnails | YouTube free URLs | Medium | Ready (no lib needed) |
 | **3** | Metadata | mediainfo.js | Medium | Planned |
 | **3** | Advanced search | meilisearch | Future | Planned |
 
-**Estimated NPM additions**: ~300 KB (media-chrome 42KB + hls.js 177KB + mediabunny 80KB + optional extras)
+### Ce qui a été implémenté (2026-09-01)
+
+- **`src/video-player.ts`** — `IETVPlayer` : montage media-chrome autour d'une
+  balise `<video>`, HLS via hls.js avec préférence pour le décodage natif
+  (Safari), sélection de variante, statistiques réelles (fps mesurés, santé du
+  tampon, bande passante) et reprise sur erreur fatale. `media-chrome` et
+  `hls.js` sont des `peerDependencies` **optionnelles** chargées au montage :
+  importer le module côté serveur ne coûte rien, et sans media-chrome le player
+  retombe sur les contrôles natifs.
+- **`src/video-codec.ts`** — `VideoTranscoder` (probe + transcode mediabunny,
+  progression, annulation par `AbortSignal`) et profils portant à la fois un
+  débit cible et un quantizer (l'équivalent CRF). Bun n'implémente pas
+  WebCodecs : `ensureNativeCodecs()` charge paresseusement
+  `@mediabunny/server` (optionnel) et, à défaut d'encodeur, `transcode()`
+  échoue d'emblée avec le paquet à installer.
+- **Tests** : `src/video.test.ts` (62 cas) — doublures hls.js et `<video>`,
+  moteur de conversion et horloge injectés, aucun encodage ni réseau réel.
+- **Retiré** : `src/video-libs.ts`, catalogue de bibliothèques qui doublonnait
+  ce document sans code exécutable.
+
+**NPM additions**: `mediabunny` en dépendance (167 KB, tree-shakable) ; `media-chrome` (42 KB), `hls.js` (177 KB) et `@mediabunny/server` en peers optionnels — rien n'entre dans le binaire `bxc`, qui n'importe que le scraper.
 
 ---
 

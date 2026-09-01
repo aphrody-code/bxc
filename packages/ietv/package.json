@@ -15,6 +15,10 @@
     "./video-codec": "./src/video-codec.ts",
     "./video-search": "./src/video-search.ts"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
   "keywords": [
     "inazuma-eleven",
     "youtube",
@@ -22,6 +26,28 @@
     "streaming",
     "anime"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "mediabunny": "^1.55.5"
+  },
+  "peerDependencies": {
+    "@mediabunny/server": "^1.55.5",
+    "hls.js": "^1.7.1",
+    "media-chrome": "^4.19.2"
+  },
+  "peerDependenciesMeta": {
+    "@mediabunny/server": {
+      "optional": true
+    },
+    "hls.js": {
+      "optional": true
+    },
+    "media-chrome": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "hls.js": "^1.7.1",
+    "media-chrome": "^4.19.2"
+  },
   "license": "Apache-2.0"
 }
