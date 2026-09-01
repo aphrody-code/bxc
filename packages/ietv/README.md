@@ -37,9 +37,17 @@ await scraper.close();
 ### CLI
 
 ```bash
+# Get episodes from a specific channel
 bxc ietv channel inazumaelevenfrance1
 bxc ietv channel inazumatvfr --profile fast
+
+# Aggregate all episodes from canonical channels
 bxc ietv all
+
+# Discover additional Inazuma Eleven channels
+bxc ietv discover
+
+# List canonical channels
 bxc ietv list
 ```
 
@@ -155,12 +163,37 @@ export function detectLanguage(title: string): LanguageVersion
 export class IETVScraper { /* ... */ }
 ```
 
+## Channel Discovery
+
+The scraper can discover additional Inazuma Eleven channels beyond the canonical four:
+
+```ts
+const scraper = new IETVScraper();
+const discoveredChannels = await scraper.discoverChannels(
+  "Inazuma Eleven français replay"
+);
+```
+
+Discovery methods (in order of preference):
+
+1. **YouTube Data API** (if `youtubeApiKey` provided) — most accurate, requires authentication
+2. **Google Search** (fallback) — finds YouTube channels via Google results, slower but free
+
+```bash
+# Discover via Google Search
+bxc ietv discover
+
+# Or with YouTube API key for better results
+bxc ietv discover --youtube-api-key "YOUR_API_KEY"
+```
+
 ## Limitations
 
 - YouTube's anti-bot measures may rate-limit or block requests in some profiles.
 - Episode parsing relies on title conventions; inconsistently-named videos may not parse correctly.
 - Video descriptions, durations, and view counts are extracted from HTML when available but may not be complete.
-- For production use, consider using the official [YouTube Data API](https://developers.google.com/youtube/v3).
+- Discovery via Google Search is slower and may miss some channels.
+- For production use, consider using the official [YouTube Data API](https://developers.google.com/youtube/v3) with authentication.
 
 ## License
 
