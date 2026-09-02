@@ -273,7 +273,12 @@ export class Wonderbot {
 			};
 		}
 
-		await interaction.editReply({ embeds: reponse.embeds });
+		await interaction.editReply({
+			embeds: reponse.embeds,
+			// `content` vide explicitement : sans lui, discord.js laisse en place
+			// le contenu d'une réponse précédente sur la même interaction.
+			content: reponse.contenu ?? "",
+		});
 	}
 
 	/**

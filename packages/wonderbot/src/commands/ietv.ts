@@ -190,6 +190,27 @@ function lireLangue(options: OptionsCommande): Langue | undefined {
 	return brut === "vf" || brut === "vostfr" ? brut : undefined;
 }
 
+/** Plateformes dont Discord sait rendre un lecteur inline. */
+const HOTES_LISIBLES = ["youtube.com", "youtu.be", "twitch.tv", "vimeo.com", "dailymotion.com"];
+
+/**
+ * L'URL produit-elle un lecteur dans Discord ?
+ *
+ * Discord n'intègre de lecteur que pour les plateformes qu'il connaît. Une page
+ * de site, même si elle contient une vidéo, ne rend qu'une carte. Le test porte
+ * sur l'HÔTE, pas sur la chaîne entière : un chemin contenant « youtube » sur un
+ * autre domaine ne doit pas passer pour lisible.
+ */
+export function estLisibleEnLigne(url: string): boolean {
+	let hote: string;
+	try {
+		hote = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+	} catch {
+		return false;
+	}
+	return HOTES_LISIBLES.some((connu) => hote === connu || hote.endsWith(`.${connu}`));
+}
+
 /** Suffixe `(VF)` accolé aux titres quand un filtre de langue est actif. */
 function mentionLangue(langue: Langue | undefined): string {
 	return langue ? ` — ${libelleLangue(langue)}` : "";
@@ -307,7 +328,15 @@ function episode(options: OptionsCommande, contexte: ContexteCommande): Reponse 
 		);
 	}
 
-	return { embeds: [f.finir(`${versions.length} version(s)`)] };
+	// URL nue en contenu : c'est ce que Discord transforme en lecteur. On prend
+	// la première version lisible en ligne — une page de site ne donne qu'une
+	// carte, seule une URL de plateforme vidéo produit un lecteur.
+	const jouable = versions.find((version) => estLisibleEnLigne(version.url));
+
+	return {
+		embeds: [f.finir(`${versions.length} version(s)`)],
+		...(jouable ? { contenu: jouable.url } : {}),
+	};
 }
 
 function saison(options: OptionsCommande, contexte: ContexteCommande): Reponse {

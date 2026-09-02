@@ -50,16 +50,18 @@ import { Browser } from "@aphrody/bxc";
 import { detectPii, redactPii, redactObject, type PiiMatch } from "@aphrody/bxc/privacy";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { readFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import {
 	extraireChannelId,
 	parserFluxYoutube,
 	urlFlux,
 } from "./youtube-feed.ts";
 import {
+	extraireIdYoutube,
 	identifiantOfficiel,
 	parserCategories,
 	parserEpisodes,
+	urlYoutube,
 	type CategorieOfficielle,
 } from "./official.ts";
 
@@ -1196,6 +1198,76 @@ export class IETVScraper {
 	}
 
 	/**
+	 * Identifiants YouTube des épisodes d'une catégorie, résolus une seule fois.
+	 *
+	 * ── POURQUOI UN CACHE SUR DISQUE ───────────────────────────────────────
+	 * L'identifiant n'existe que sur la page de l'épisode : le résoudre coûte
+	 * une requête par épisode, soit 355 requêtes au site à CHAQUE
+	 * rafraîchissement — toutes les six heures, pour une donnée qui ne change
+	 * jamais. Une fois connue, elle est écrite sur disque et plus jamais
+	 * redemandée : en régime stable, seuls les épisodes nouveaux coûtent une
+	 * requête.
+	 */
+	private async resoudreIdsYoutube(
+		categorie: CategorieOfficielle,
+		episodes: readonly { numero: number; url: string }[]
+	): Promise<Map<number, string>> {
+		const fichier = join(DATA_CACHE_DIR, `youtube-${categorie.slug}.json`);
+		let connus: Record<string, string> = {};
+		try {
+			if (existsSync(fichier)) {
+				connus = JSON.parse(readFileSync(fichier, "utf8")) as Record<string, string>;
+			}
+		} catch {
+			// Cache illisible : on repart de zéro plutôt que d'échouer.
+			connus = {};
+		}
+
+		const manquants = episodes.filter((episode) => !connus[String(episode.numero)]);
+		let ajouts = 0;
+
+		// Par paquets : 355 requêtes simultanées feraient tomber le site, et une
+		// boucle strictement séquentielle prendrait plusieurs minutes.
+		const LOT = 8;
+		for (let i = 0; i < manquants.length; i += LOT) {
+			const lot = manquants.slice(i, i + LOT);
+			const resolus = await Promise.all(
+				lot.map(async (episode) => {
+					try {
+						const page = await this.fetchTexte(episode.url);
+						this.stats.httpRequests++;
+						return page.status === 200
+							? ([episode.numero, extraireIdYoutube(page.html)] as const)
+							: ([episode.numero, null] as const);
+					} catch {
+						return [episode.numero, null] as const;
+					}
+				})
+			);
+			for (const [numero, id] of resolus) {
+				if (id) {
+					connus[String(numero)] = id;
+					ajouts++;
+				}
+			}
+		}
+
+		if (ajouts > 0) {
+			try {
+				if (!existsSync(DATA_CACHE_DIR)) mkdirSync(DATA_CACHE_DIR, { recursive: true });
+				writeFileSync(fichier, JSON.stringify(connus), "utf8");
+			} catch {
+				// Cache non écrit : la résolution recommencera au prochain passage,
+				// ce qui est lent mais pas faux.
+			}
+		}
+
+		return new Map(
+			Object.entries(connus).map(([numero, id]) => [Number.parseInt(numero, 10), id] as const)
+		);
+	}
+
+	/**
 	 * Épisodes d'une catégorie du site officiel.
 	 *
 	 * Une catégorie qui échoue rend une liste vide au lieu de faire tomber tout
@@ -1207,21 +1279,33 @@ export class IETVScraper {
 			this.stats.httpRequests++;
 			if (page.status !== 200) return [];
 
-			return parserEpisodes(page.html).map((episode) => ({
-				title: `${categorie.nom} — ${episode.titre}`,
-				videoId: identifiantOfficiel(categorie.slug, episode.numero),
-				url: episode.url,
-				description: null,
-				thumbnail: null,
-				publishDate: null,
-				season: categorie.position,
-				episode: episode.numero,
-				// `?lang=fr` sert la version française doublée ; le site ne propose
-				// pas de piste sous-titrée à cette adresse.
-				language: "vf" as LanguageVersion,
-				duration: null,
-				viewCount: null,
-			}));
+			const listes = parserEpisodes(page.html);
+			const identifiants = await this.resoudreIdsYoutube(categorie, listes);
+
+			return listes.map((episode) => {
+				const idYoutube = identifiants.get(episode.numero) ?? null;
+				return {
+					title: `${categorie.nom} — ${episode.titre}`,
+					// L'identifiant YouTube quand on l'a : il unifie cet épisode avec
+					// la même vidéo vue par le flux d'une chaîne, au lieu d'en faire
+					// deux entrées distinctes.
+					videoId: idYoutube ?? identifiantOfficiel(categorie.slug, episode.numero),
+					// L'URL YouTube est ce qui produit un LECTEUR dans Discord ; la
+					// page du site n'y donne qu'une carte. On retombe sur la page
+					// quand l'identifiant n'a pas pu être résolu.
+					url: idYoutube ? urlYoutube(idYoutube) : episode.url,
+					description: null,
+					thumbnail: idYoutube ? `https://i.ytimg.com/vi/${idYoutube}/hqdefault.jpg` : null,
+					publishDate: null,
+					season: categorie.position,
+					episode: episode.numero,
+					// `?lang=fr` sert la version française doublée ; le site ne propose
+					// pas de piste sous-titrée à cette adresse.
+					language: "vf" as LanguageVersion,
+					duration: null,
+					viewCount: null,
+				};
+			});
 		} catch {
 			return [];
 		}

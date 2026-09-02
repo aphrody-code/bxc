@@ -31,6 +31,16 @@ export interface Embed {
 /** Ce qu'une commande rend, et que le bot passe tel quel à `editReply`. */
 export interface Reponse {
 	embeds: Embed[];
+	/**
+	 * Texte du message, à côté des embeds.
+	 *
+	 * ── C'EST LA SEULE FAÇON D'OBTENIR UN LECTEUR ──────────────────────────
+	 * Discord ne rend un lecteur vidéo que pour une URL **nue en contenu de
+	 * message**. Un lien Markdown dans une description d'embed ne produit
+	 * rien : il reste un lien. Une commande qui veut faire jouer une vidéo
+	 * dans Discord doit donc poser son URL ici.
+	 */
+	contenu?: string;
 	/** Réponse visible du seul appelant. */
 	prive?: boolean;
 }

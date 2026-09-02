@@ -25,6 +25,7 @@ import { cheminCacheParDefaut, lireConfig, lireEntier, lireFlocons, resumerConfi
 import { estStaff } from "./bot.ts";
 import {
 	DEFINITION_IETV,
+	estLisibleEnLigne,
 	executerIetv,
 	optionsDepuisObjet,
 	reponsePrivee,
@@ -1304,5 +1305,47 @@ describe("configuration de la réparation", () => {
 
 	it("plancher le délai de réparation à une minute", () => {
 		expect(lireConfig({ ...base, WONDERBOT_AUTOFIX_DELAY_MS: "1000" }).delaiReparationMs).toBe(60_000);
+	});
+});
+
+describe("estLisibleEnLigne", () => {
+	it("reconnaît les plateformes dont Discord rend un lecteur", () => {
+		expect(estLisibleEnLigne("https://www.youtube.com/watch?v=xbpo3u3P9dc")).toBe(true);
+		expect(estLisibleEnLigne("https://youtu.be/xbpo3u3P9dc")).toBe(true);
+	});
+
+	it("refuse une page de site, même si elle contient une vidéo", () => {
+		expect(estLisibleEnLigne("https://inazuma-eleven.fr/tv/watch/saison1/ep-1?lang=fr")).toBe(false);
+	});
+
+	it("teste l'hôte, pas la chaîne — un chemin trompeur ne passe pas", () => {
+		expect(estLisibleEnLigne("https://exemple.test/youtube.com/watch?v=x")).toBe(false);
+		expect(estLisibleEnLigne("pas une url")).toBe(false);
+	});
+});
+
+describe("/episodes episode — lecteur", () => {
+	it("pose l'URL YouTube en contenu, seul moyen d'obtenir un lecteur", async () => {
+		const { catalogue } = catalogueAvec([
+			episode({ videoId: "yt1", season: 1, episode: 3, url: "https://www.youtube.com/watch?v=yt1" }),
+		]);
+		const reponse = await executerIetv(
+			"episode",
+			optionsDepuisObjet({ saison: 1, numero: 3 }),
+			contexte(catalogue)
+		);
+		expect(reponse.contenu).toBe("https://www.youtube.com/watch?v=yt1");
+	});
+
+	it("ne pose aucun contenu quand aucune version n'est lisible en ligne", async () => {
+		const { catalogue } = catalogueAvec([
+			episode({ videoId: "off-1", season: 1, episode: 3, url: "https://inazuma-eleven.fr/tv/x" }),
+		]);
+		const reponse = await executerIetv(
+			"episode",
+			optionsDepuisObjet({ saison: 1, numero: 3 }),
+			contexte(catalogue)
+		);
+		expect(reponse.contenu).toBeUndefined();
 	});
 });
