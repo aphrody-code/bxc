@@ -223,9 +223,12 @@ export class SynchronisationForum {
 
 		const pages = liste.pages.length > 0 ? liste.pages : ["Aucun épisode référencé pour cette saison."];
 
+		// Le nom donné par la source fait autorité : le dixième arc s'appelle
+		// « Films », pas « Saison 10 ».
+		const libelle = nomArc?.trim() || `Saison ${saison}`;
 		const embeds = pages.map((page, index) => {
 			const f = fiche({
-				titre: index === 0 ? `${ICONES.saison} Saison ${saison}` : `Saison ${saison} (suite)`,
+				titre: index === 0 ? `${ICONES.saison} ${libelle}` : `${libelle} (suite)`,
 				marque: this.options.marque,
 			}).description(page);
 
