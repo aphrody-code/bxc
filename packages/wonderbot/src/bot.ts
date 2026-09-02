@@ -19,7 +19,6 @@ import {
 	ActionRowBuilder,
 	ChannelType,
 	Client,
-	ComponentType,
 	Events,
 	GatewayIntentBits,
 	MessageFlags,
