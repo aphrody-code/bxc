@@ -71,6 +71,7 @@ export class IETVCache {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channel_id INTEGER NOT NULL,
         season INTEGER NOT NULL,
+        name TEXT,
         totalEpisodes INTEGER DEFAULT 0,
         createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer)),
         FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE CASCADE,
@@ -128,6 +129,7 @@ export class IETVCache {
 		};
 
 		addColumn("channels", "avatar", "TEXT");
+		addColumn("seasons", "name", "TEXT");
 		addColumn("episodes", "description", "TEXT");
 		addColumn("episodes", "publishDate", "TEXT");
 		addColumn("episodes", "viewCount", "TEXT");
@@ -162,9 +164,9 @@ export class IETVCache {
 		for (const season of info.seasons) {
 			this.db
 				.prepare(
-					"INSERT OR REPLACE INTO seasons (channel_id, season, totalEpisodes) VALUES (?, ?, ?)"
+					"INSERT OR REPLACE INTO seasons (channel_id, season, name, totalEpisodes) VALUES (?, ?, ?, ?)"
 				)
-				.run(channelId.id, season.season, season.totalEpisodes);
+				.run(channelId.id, season.season, season.name ?? null, season.totalEpisodes);
 
 			// Save episodes
 			for (const ep of season.episodes) {
@@ -205,7 +207,7 @@ export class IETVCache {
 
 		const seasons = this.db
 			.prepare(
-				"SELECT season, totalEpisodes FROM seasons WHERE channel_id = ? ORDER BY season"
+				"SELECT season, name, totalEpisodes FROM seasons WHERE channel_id = ? ORDER BY season"
 			)
 			.all(ch.id) as any[];
 
@@ -217,6 +219,7 @@ export class IETVCache {
 			totalEpisodes: ch.totalEpisodes,
 			seasons: seasons.map((s) => ({
 				season: s.season,
+				name: s.name ?? null,
 				totalEpisodes: s.totalEpisodes,
 				episodes: this.getEpisodesBySeason(ch.id, s.season),
 			})),
@@ -235,7 +238,7 @@ export class IETVCache {
 		return channels.map((ch) => {
 			const seasons = this.db
 				.prepare(
-					"SELECT season, totalEpisodes FROM seasons WHERE channel_id = ? ORDER BY season"
+					"SELECT season, name, totalEpisodes FROM seasons WHERE channel_id = ? ORDER BY season"
 				)
 				.all(ch.id) as any[];
 
@@ -247,6 +250,7 @@ export class IETVCache {
 				totalEpisodes: ch.totalEpisodes,
 				seasons: seasons.map((s) => ({
 					season: s.season,
+					name: s.name ?? null,
 					totalEpisodes: s.totalEpisodes,
 					episodes: this.getEpisodesBySeason(ch.id, s.season),
 				})),

@@ -126,11 +126,25 @@ export class Catalogue {
 
 	/** Saisons présentes dans le catalogue, croissantes. */
 	saisonsDisponibles(): number[] {
-		const saisons = new Set<number>();
+		return [...this.nomsDeSaisons().keys()].sort((a, b) => a - b);
+	}
+
+	/**
+	 * Nom de chaque arc, quand une source le donne : « Saison 1 », « Films ».
+	 * Sans lui le dixième arc s'afficherait « Saison 10 » alors qu'il s'agit des
+	 * films.
+	 */
+	nomsDeSaisons(): Map<number, string | null> {
+		const noms = new Map<number, string | null>();
 		for (const chaine of this.ouvrir().getAllChannels()) {
-			for (const saison of chaine.seasons) saisons.add(saison.season);
+			for (const saison of chaine.seasons) {
+				// Le premier nom rencontré gagne : les chaînes YouTube n'en
+				// fournissent pas, le site officiel oui.
+				const connu = noms.get(saison.season);
+				noms.set(saison.season, connu ?? saison.name ?? null);
+			}
 		}
-		return [...saisons].sort((a, b) => a - b);
+		return noms;
 	}
 
 	/** Épisodes groupés par saison — ce que consomme la détection des trous. */

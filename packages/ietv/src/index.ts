@@ -53,16 +53,18 @@ import { join } from "node:path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import {
 	extraireChannelId,
+	langueDeChaine,
 	parserFluxYoutube,
 	urlFlux,
 } from "./youtube-feed.ts";
 import {
-	extraireIdYoutube,
 	identifiantOfficiel,
+	parserMetaEpisode,
 	parserCategories,
 	parserEpisodes,
 	urlYoutube,
 	type CategorieOfficielle,
+	type MetaEpisode,
 } from "./official.ts";
 
 type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
@@ -108,6 +110,12 @@ export interface VideoRef {
 export interface SeasonInfo {
 	/** Season number. */
 	season: number;
+	/**
+	 * Nom de l'arc tel que la source le nomme — « Saison 1 », « Chrono Stones »,
+	 * « Films ». Sans lui, le dixième arc s'affiche « Saison 10 » alors qu'il
+	 * s'agit des films.
+	 */
+	name?: string | null;
 	/** Episodes in this season, ordered by episode number (ascending). */
 	episodes: VideoRef[];
 	/** Total episode count (should equal episodes.length when complete). */
@@ -782,8 +790,12 @@ export class IETVScraper {
 		}
 
 		const entrees = parserFluxYoutube(flux.html);
+		// Contexte de chaîne, faute de marqueur dans le titre de la vidéo.
+		const langueChaine = langueDeChaine(handle, entrees[0]?.chaine ?? null);
+
 		const videos = entrees.map((entree): VideoRef => {
 			const { season, episode } = parseSeasonEpisode(entree.titre);
+			const langueTitre = detectLanguage(entree.titre);
 			return {
 				title: entree.titre,
 				videoId: entree.videoId,
@@ -793,7 +805,8 @@ export class IETVScraper {
 				publishDate: entree.publie,
 				season,
 				episode,
-				language: detectLanguage(entree.titre),
+				// Le marqueur du titre prime toujours sur le contexte de la chaîne.
+				language: langueTitre !== "unknown" ? langueTitre : (langueChaine ?? "unknown"),
 				duration: null,
 				viewCount: null,
 			};
@@ -1178,6 +1191,9 @@ export class IETVScraper {
 			.filter((entree) => entree.episodes.length > 0)
 			.map((entree) => ({
 				season: entree.categorie.position,
+				// Le nom du site fait autorité : « Films » ne doit pas s'afficher
+				// « Saison 10 ».
+				name: entree.categorie.nom,
 				episodes: entree.episodes,
 				totalEpisodes: entree.episodes.length,
 			}))
@@ -1208,15 +1224,15 @@ export class IETVScraper {
 	 * redemandée : en régime stable, seuls les épisodes nouveaux coûtent une
 	 * requête.
 	 */
-	private async resoudreIdsYoutube(
+	private async resoudreMetaEpisodes(
 		categorie: CategorieOfficielle,
 		episodes: readonly { numero: number; url: string }[]
-	): Promise<Map<number, string>> {
-		const fichier = join(DATA_CACHE_DIR, `youtube-${categorie.slug}.json`);
-		let connus: Record<string, string> = {};
+	): Promise<Map<number, MetaEpisode>> {
+		const fichier = join(DATA_CACHE_DIR, `meta-${categorie.slug}.json`);
+		let connus: Record<string, MetaEpisode> = {};
 		try {
 			if (existsSync(fichier)) {
-				connus = JSON.parse(readFileSync(fichier, "utf8")) as Record<string, string>;
+				connus = JSON.parse(readFileSync(fichier, "utf8")) as Record<string, MetaEpisode>;
 			}
 		} catch {
 			// Cache illisible : on repart de zéro plutôt que d'échouer.
@@ -1237,16 +1253,16 @@ export class IETVScraper {
 						const page = await this.fetchTexte(episode.url);
 						this.stats.httpRequests++;
 						return page.status === 200
-							? ([episode.numero, extraireIdYoutube(page.html)] as const)
+							? ([episode.numero, parserMetaEpisode(page.html)] as const)
 							: ([episode.numero, null] as const);
 					} catch {
 						return [episode.numero, null] as const;
 					}
 				})
 			);
-			for (const [numero, id] of resolus) {
-				if (id) {
-					connus[String(numero)] = id;
+			for (const [numero, meta] of resolus) {
+				if (meta) {
+					connus[String(numero)] = meta;
 					ajouts++;
 				}
 			}
@@ -1263,7 +1279,7 @@ export class IETVScraper {
 		}
 
 		return new Map(
-			Object.entries(connus).map(([numero, id]) => [Number.parseInt(numero, 10), id] as const)
+			Object.entries(connus).map(([numero, meta]) => [Number.parseInt(numero, 10), meta] as const)
 		);
 	}
 
@@ -1280,12 +1296,13 @@ export class IETVScraper {
 			if (page.status !== 200) return [];
 
 			const listes = parserEpisodes(page.html);
-			const identifiants = await this.resoudreIdsYoutube(categorie, listes);
+			const metas = await this.resoudreMetaEpisodes(categorie, listes);
 
 			return listes.map((episode) => {
-				const idYoutube = identifiants.get(episode.numero) ?? null;
+				const meta = metas.get(episode.numero);
+				const idYoutube = meta?.idYoutube ?? null;
 				return {
-					title: `${categorie.nom} — ${episode.titre}`,
+					title: `${categorie.nom} — ${meta?.titre ?? episode.titre}`,
 					// L'identifiant YouTube quand on l'a : il unifie cet épisode avec
 					// la même vidéo vue par le flux d'une chaîne, au lieu d'en faire
 					// deux entrées distinctes.
@@ -1294,8 +1311,10 @@ export class IETVScraper {
 					// page du site n'y donne qu'une carte. On retombe sur la page
 					// quand l'identifiant n'a pas pu être résolu.
 					url: idYoutube ? urlYoutube(idYoutube) : episode.url,
-					description: null,
-					thumbnail: idYoutube ? `https://i.ytimg.com/vi/${idYoutube}/hqdefault.jpg` : null,
+					description: meta?.description ?? null,
+					thumbnail:
+						meta?.vignette ??
+						(idYoutube ? `https://i.ytimg.com/vi/${idYoutube}/hqdefault.jpg` : null),
 					publishDate: null,
 					season: categorie.position,
 					episode: episode.numero,

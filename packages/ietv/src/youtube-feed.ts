@@ -96,3 +96,24 @@ export function extraireChannelId(html: string): string | null {
 export function urlFlux(channelId: string): string {
 	return `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
 }
+
+/**
+ * Langue déduite du NOM d'une chaîne, quand son titre n'en dit rien.
+ *
+ * ── POURQUOI CE N'EST PAS DANS `detectLanguage` ────────────────────────────
+ * `detectLanguage` ne voit que le titre d'une vidéo. Or « Inazuma Eleven France
+ * - Épisode 127 » ne porte aucun marqueur : la langue est dans le nom de la
+ * CHAÎNE, pas dans celui de l'épisode. Sans ce contexte, 29 épisodes de
+ * doublage français restaient classés « langue inconnue ».
+ *
+ * La déduction ne s'applique QUE faute de marqueur explicite : une chaîne
+ * française qui publie une vidéo intitulée « [VOSTFR] … » reste en VOSTFR.
+ * Rend `null` quand le nom ne tranche pas — mieux vaut inconnu que faux.
+ */
+export function langueDeChaine(handle: string, titre: string | null): "vf" | "vostfr" | null {
+	const contexte = `${handle} ${titre ?? ""}`.toLowerCase();
+	// L'ordre compte : une chaîne « … VOSTFR » contient souvent aussi « fr ».
+	if (/vostfr|sous-?titr|subbed/.test(contexte)) return "vostfr";
+	if (/france|français|francais|\bvf\b/.test(contexte)) return "vf";
+	return null;
+}

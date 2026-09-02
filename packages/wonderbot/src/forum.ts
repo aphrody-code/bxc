@@ -149,9 +149,13 @@ export function analyserTableFils(brut: string | null): Map<number, string> {
 	}
 }
 
-/** Nom du fil d'une saison. Stable : c'est lui qui se lit dans la liste du forum. */
-export function nomFilSaison(saison: number, episodes: number): string {
-	return `Saison ${saison} — ${episodes} épisode(s)`;
+/**
+ * Nom du fil d'un arc. C'est lui qui se lit dans la liste du forum, d'où
+ * l'importance du nom donné par la source : « Films — 5 » plutôt que
+ * « Saison 10 — 5 ».
+ */
+export function nomFilSaison(saison: number, episodes: number, nom?: string | null): string {
+	return `${nom?.trim() || `Saison ${saison}`} — ${episodes} épisode(s)`;
 }
 
 /**
@@ -206,7 +210,7 @@ export class SynchronisationForum {
 	 * description. Les compteurs vont sur le DERNIER : posés sur le premier, ils
 	 * sépareraient la liste en deux moitiés sans rapport visuel.
 	 */
-	construireEmbeds(saison: number): {
+	construireEmbeds(saison: number, nomArc?: string | null): {
 		embeds: Embed[];
 		episodes: number;
 		langues: Record<string, number>;
@@ -255,12 +259,13 @@ export class SynchronisationForum {
 		}
 
 		const table = this.table();
+		const noms = this.options.catalogue.nomsDeSaisons();
 		const vivants = new Set(await this.options.passerelle.filsExistants());
 		const etiquettes = this.options.etiquettes ?? {};
 		const resultat: ResultatSynchronisation = { crees: [], majs: [], recrees: [] };
 
 		for (const saison of saisons) {
-			const { embeds, episodes, langues } = this.construireEmbeds(saison);
+			const { embeds, episodes, langues } = this.construireEmbeds(saison, noms.get(saison));
 			const numeros = [
 				...new Set(
 					this.options.catalogue
@@ -270,7 +275,7 @@ export class SynchronisationForum {
 				),
 			].sort((a, b) => a - b);
 			const menus = menusDeSaison(saison, numeros);
-			const nom = nomFilSaison(saison, episodes);
+			const nom = nomFilSaison(saison, episodes, noms.get(saison));
 			const tags = etiquettesDeSaison(langues, etiquettes);
 			const connu = table.get(saison);
 
