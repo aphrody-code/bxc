@@ -34,6 +34,9 @@ import {
 import {
 	CLE_FILS,
 	SynchronisationForum,
+	lireValeurOption,
+	menusDeSaison,
+	valeurOption,
 	analyserTableFils,
 	etiquettesDeSaison,
 	nomFilSaison,
@@ -56,7 +59,6 @@ import {
 	horodatageRelatif,
 	libelleLangue,
 	grouperParEpisode,
-	lienCourt,
 	listerEpisodes,
 	listerSaison,
 	repartitionLangues,
@@ -928,22 +930,17 @@ describe("format des saisons", () => {
 		expect(groupes[0]!.versions).toHaveLength(2);
 	});
 
-	it("met un lien par langue sur la ligne de l'épisode", () => {
+	it("liste les langues d'un épisode SANS lien sortant", () => {
 		const liste = listerSaison([
 			episode({ videoId: "a", episode: 1, url: "https://cdn.test/a" }),
 			episode({ videoId: "b", episode: 1, language: "vostfr", url: "https://cdn.test/b" }),
 		]);
 		expect(liste.episodes).toBe(1);
 		expect(liste.pages[0]).toContain("**E01**");
-		expect(liste.pages[0]).toContain("(https://cdn.test/a)");
-		expect(liste.pages[0]).toContain("(https://cdn.test/b)");
-	});
-
-	it("raccourcit les liens YouTube, et seulement eux", () => {
-		expect(lienCourt(episode({ videoId: "dQw4w9WgXcQ", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" })))
-			.toBe("https://youtu.be/dQw4w9WgXcQ");
-		expect(lienCourt(episode({ videoId: "abc", url: "https://inazuma.test/ep1" })))
-			.toBe("https://inazuma.test/ep1");
+		expect(liste.pages[0]).toContain("VF");
+		expect(liste.pages[0]).toContain("VOSTFR");
+		// Aucune URL : un lien sortirait le membre du serveur sans rien lui jouer.
+		expect(liste.pages[0]).not.toContain("http");
 	});
 
 	it("fait tenir une saison complète, quitte à déborder sur un second embed", () => {
@@ -971,31 +968,51 @@ describe("format des saisons", () => {
 		expect(liste.pages.reduce((n, p) => n + p.length, 0)).toBeLessThanOrEqual(6000);
 	});
 
-	it("annonce ce qu'il a dû écarter et renvoie vers la commande", () => {
+	it("annonce ce qu'il a dû écarter", () => {
 		const episodes = Array.from({ length: 400 }, (_, i) =>
-			episode({ videoId: `v${i}`, episode: i + 1, url: `https://cdn.test/${"x".repeat(60)}${i}` })
+			episode({ videoId: `v${i}`, episode: i + 1, title: "T".repeat(120) })
 		);
-		const liste = listerSaison(episodes);
+		const liste = listerSaison(episodes, { budgetPage: 600, budgetTotal: 900 });
 		expect(liste.omis).toBeGreaterThan(0);
-		expect(liste.pages.at(-1)).toContain("/episodes saison");
+		expect(liste.pages.at(-1)).toContain("de plus");
 	});
 });
 
+function passerelleForumFactice() {
+	const fils = new Map<string, { nom: string; embed: any; menus: any[]; tags: string[] }>();
+	let suivant = 0;
+	const journal: string[] = [];
+	const passerelle: PasserelleForum = {
+		filsExistants: async () => [...fils.keys()],
+		creerFil: async (nom, embed, menus, tags) => {
+			const id = `fil${++suivant}`;
+			fils.set(id, { nom, embed, menus, tags });
+			journal.push(`creer:${nom}`);
+			return id;
+		},
+		majFil: async (id, nom, embed, menus, tags) => {
+			fils.set(id, { nom, embed, menus, tags });
+			journal.push(`maj:${id}`);
+		},
+	};
+	return { passerelle, fils, journal };
+}
+
 describe("SynchronisationForum", () => {
 	function passerelleFactice() {
-		const fils = new Map<string, { nom: string; embed: any; tags: string[] }>();
+		const fils = new Map<string, { nom: string; embed: any; menus: any[]; tags: string[] }>();
 		let suivant = 0;
 		const journal: string[] = [];
 		const passerelle: PasserelleForum = {
 			filsExistants: async () => [...fils.keys()],
-			creerFil: async (nom, embed, tags) => {
+			creerFil: async (nom, embed, menus, tags) => {
 				const id = `fil${++suivant}`;
-				fils.set(id, { nom, embed, tags });
+				fils.set(id, { nom, embed, menus, tags });
 				journal.push(`creer:${nom}`);
 				return id;
 			},
-			majFil: async (id, nom, embed, tags) => {
-				fils.set(id, { nom, embed, tags });
+			majFil: async (id, nom, embed, menus, tags) => {
+				fils.set(id, { nom, embed, menus, tags });
 				journal.push(`maj:${id}`);
 			},
 		};
@@ -1347,5 +1364,49 @@ describe("/episodes episode — lecteur", () => {
 			contexte(catalogue)
 		);
 		expect(reponse.contenu).toBeUndefined();
+	});
+});
+
+describe("menus du forum", () => {
+	it("découpe une saison par tranches de 25", () => {
+		const menus = menusDeSaison(3, Array.from({ length: 60 }, (_, i) => i + 1));
+		expect(menus).toHaveLength(3);
+		expect(menus[0]!.options).toHaveLength(25);
+		expect(menus[2]!.options).toHaveLength(10);
+		expect(menus[0]!.placeholder).toBe("Épisodes 1 à 25");
+	});
+
+	it("ne pose qu'un menu sans intitulé de tranche pour une petite saison", () => {
+		const menus = menusDeSaison(7, [1, 2, 3]);
+		expect(menus).toHaveLength(1);
+		expect(menus[0]!.placeholder).toBe("Choisis un épisode à regarder");
+	});
+
+	it("s'arrête à cinq menus — un message n'accepte pas plus de rangées", () => {
+		expect(menusDeSaison(1, Array.from({ length: 300 }, (_, i) => i + 1))).toHaveLength(5);
+	});
+
+	it("encode et relit le couple saison/épisode", () => {
+		expect(valeurOption(3, 46)).toBe("3:46");
+		expect(lireValeurOption("3:46")).toEqual({ saison: 3, numero: 46 });
+		expect(lireValeurOption("cassé")).toBeNull();
+	});
+
+	it("pose un menu sur chaque fil créé", async () => {
+		const { catalogue } = catalogueAvec([
+			episode({ videoId: "a", season: 1, episode: 1 }),
+			episode({ videoId: "b", season: 1, episode: 2 }),
+		]);
+		const { passerelle, fils } = passerelleForumFactice();
+		await new SynchronisationForum({
+			catalogue,
+			passerelle,
+			stockage: { lireMeta: () => null, ecrireMeta: () => {} },
+			marque: MARQUE_PAR_DEFAUT,
+		}).synchroniser();
+
+		const menus = [...fils.values()][0]!.menus;
+		expect(menus).toHaveLength(1);
+		expect(menus[0].options.map((o: any) => o.value)).toEqual(["1:1", "1:2"]);
 	});
 });

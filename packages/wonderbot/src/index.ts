@@ -74,6 +74,11 @@ export {
 
 export {
 	CLE_FILS,
+	PREFIXE_MENU,
+	lireValeurOption,
+	menusDeSaison,
+	valeurOption,
+	type MenuEpisodes,
 	SynchronisationForum,
 	analyserTableFils,
 	etiquettesDeSaison,

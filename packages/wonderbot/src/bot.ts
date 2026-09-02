@@ -16,11 +16,14 @@
  */
 
 import {
+	ActionRowBuilder,
 	ChannelType,
 	Client,
+	ComponentType,
 	Events,
 	GatewayIntentBits,
 	MessageFlags,
+	StringSelectMenuBuilder,
 	PermissionFlagsBits,
 	type ChatInputCommandInteraction,
 	type Interaction,
@@ -28,7 +31,13 @@ import {
 } from "discord.js";
 
 import { JournalAnnonces } from "./annonces.ts";
-import { SynchronisationForum, type PasserelleForum } from "./forum.ts";
+import {
+	PREFIXE_MENU,
+	SynchronisationForum,
+	lireValeurOption,
+	type MenuEpisodes,
+	type PasserelleForum,
+} from "./forum.ts";
 import { Reparateur, decrireLacune, detecterLacunes } from "./lacunes.ts";
 import { catalogueReel, type Catalogue, type ResultatRafraichissement } from "./catalogue.ts";
 import { resumerConfig, type ConfigWonderbot } from "./config.ts";
@@ -99,6 +108,18 @@ export function optionsDeLInteraction(interaction: ChatInputCommandInteraction):
 		chaine: (nom) => interaction.options.getString(nom),
 		entier: (nom) => interaction.options.getInteger(nom),
 	};
+}
+
+/** Traduit les menus neutres en rangées d'action discord.js. */
+function rangeesDeMenus(menus: readonly MenuEpisodes[]) {
+	return menus.map((menu) =>
+		new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+			new StringSelectMenuBuilder()
+				.setCustomId(menu.customId)
+				.setPlaceholder(menu.placeholder)
+				.addOptions(menu.options.map((option) => ({ label: option.label, value: option.value })))
+		)
+	);
 }
 
 export class Wonderbot {
@@ -232,7 +253,43 @@ export class Wonderbot {
 		this.journaliser(`${ICONES.succes} /${DEFINITION_IETV.name} publiée sur ${rejointes.length} serveur(s)`);
 	}
 
+	/**
+	 * Un membre a choisi un épisode dans le menu d'un fil.
+	 *
+	 * Réponse ÉPHÉMÈRE : le lecteur n'apparaît que pour lui. Une réponse
+	 * publique remplirait le fil d'un message par visionnage et noierait la
+	 * liste que le fil est censé porter.
+	 */
+	private async traiterMenu(interaction: Interaction): Promise<void> {
+		if (!interaction.isStringSelectMenu()) return;
+		if (!interaction.customId.startsWith(`${PREFIXE_MENU}:`)) return;
+
+		await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+		const choix = lireValeurOption(interaction.values[0] ?? "");
+		if (!choix) {
+			await interaction.editReply({ content: "Sélection illisible — réessaie." });
+			return;
+		}
+
+		const reponse = await executerIetv(
+			"episode",
+			{ chaine: () => null, entier: (nom) => (nom === "saison" ? choix.saison : nom === "numero" ? choix.numero : null) },
+			{
+				catalogue: this.catalogue,
+				marque: this.config.marque,
+				estStaff: false,
+			}
+		);
+
+		await interaction.editReply({ embeds: reponse.embeds, content: reponse.contenu ?? "" });
+	}
+
 	private async traiterInteraction(interaction: Interaction): Promise<void> {
+		if (interaction.isStringSelectMenu()) {
+			await this.traiterMenu(interaction);
+			return;
+		}
 		if (!interaction.isChatInputCommand()) return;
 		if (interaction.commandName !== DEFINITION_IETV.name) return;
 
@@ -311,15 +368,15 @@ export class Wonderbot {
 				const archives = await salon.threads.fetchArchived({ type: "public", limit: 100 });
 				return [...actifs.threads.keys(), ...archives.threads.keys()];
 			},
-			creerFil: async (nom, embeds, tags) => {
+			creerFil: async (nom, embeds, menus, tags) => {
 				const fil = await salon.threads.create({
 					name: nom,
-					message: { embeds },
+					message: { embeds, components: rangeesDeMenus(menus) },
 					appliedTags: tags,
 				});
 				return fil.id;
 			},
-			majFil: async (filId, nom, embeds, tags) => {
+			majFil: async (filId, nom, embeds, menus, tags) => {
 				const fil = await salon.threads.fetch(filId);
 				if (!fil) return;
 				// Un fil archivé doit être rouvert avant d'être modifié.
@@ -329,7 +386,7 @@ export class Wonderbot {
 				// Le message d'ouverture porte l'identifiant du fil : on le MODIFIE
 				// au lieu de republier, pour ne pas noyer les réponses des membres.
 				const ouverture = await fil.fetchStarterMessage().catch(() => null);
-				await ouverture?.edit({ embeds });
+				await ouverture?.edit({ embeds, components: rangeesDeMenus(menus) });
 			},
 		};
 
