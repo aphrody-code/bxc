@@ -165,3 +165,24 @@ export function parserEpisodes(html: string): EpisodeOfficiel[] {
 export function identifiantOfficiel(slug: string, numero: number): string {
 	return `off-${slug}-${numero}`;
 }
+
+/**
+ * Identifiant YouTube porté par une page d'épisode.
+ *
+ * Les épisodes du site officiel SONT des vidéos YouTube : la page les intègre
+ * en iframe et annonce sa vignette via `og:image`. Récupérer cet identifiant
+ * change tout côté Discord — une URL YouTube nue y produit un vrai lecteur,
+ * là où un lien vers la page du site ne donne qu'une carte.
+ */
+export function extraireIdYoutube(html: string): string | null {
+	const trouve =
+		/youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{11})/.exec(html) ??
+		/img\.youtube\.com\/vi\/([A-Za-z0-9_-]{11})/.exec(html) ??
+		/youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/.exec(html);
+	return trouve ? trouve[1]! : null;
+}
+
+/** URL de visionnage YouTube — la forme que Discord sait lire en lecteur. */
+export function urlYoutube(videoId: string): string {
+	return `https://www.youtube.com/watch?v=${videoId}`;
+}

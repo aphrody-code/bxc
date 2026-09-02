@@ -50,6 +50,7 @@ export {
 
 export {
 	DEFINITION_IETV,
+	estLisibleEnLigne,
 	executerIetv,
 	optionsDepuisObjet,
 	reponsePrivee,
