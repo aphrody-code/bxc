@@ -36,9 +36,9 @@ describe("IETV Episode Parsing", () => {
 		expect(result.episode).toBe(3);
 	});
 
-	it("parses Ep. N format with default season", () => {
+	it("parses Ep. N format without inventing a season", () => {
 		const result = parseSeasonEpisode("Inazuma Eleven Ep. 7");
-		expect(result.season).toBe(1);
+		expect(result.season).toBeNull();
 		expect(result.episode).toBe(7);
 	});
 
@@ -56,7 +56,7 @@ describe("IETV Episode Parsing", () => {
 
 	it("handles trailing numbers as episode when no season specified", () => {
 		const result = parseSeasonEpisode("Inazuma Eleven 42");
-		expect(result.season).toBe(1);
+		expect(result.season).toBeNull();
 		expect(result.episode).toBe(42);
 	});
 

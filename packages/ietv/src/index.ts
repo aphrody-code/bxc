@@ -52,6 +52,11 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import {
+	extraireChannelId,
+	parserFluxYoutube,
+	urlFlux,
+} from "./youtube-feed.ts";
+import {
 	identifiantOfficiel,
 	parserCategories,
 	parserEpisodes,
@@ -315,6 +320,38 @@ export function detectLanguage(title: string): LanguageVersion {
 	return "unknown";
 }
 
+/** Saison explicitement nommée dans le titre, `null` si aucune. */
+function saisonDuTitre(title: string): number | null {
+	const trouve = /[Ss](?:aison|eason)\s*(\d{1,2})/i.exec(title);
+	return trouve ? parseInt(trouve[1], 10) : null;
+}
+
+/**
+ * Situe un épisode numéroté en CONTINU dans son arc.
+ *
+ * Les chaînes YouTube numérotent d'une traite (« Épisode 113 ») là où le
+ * catalogue est découpé en arcs. Connaissant la taille de chaque arc, on
+ * retrouve le couple saison/épisode : 113 avec des arcs de 26, 41 et 60 tombe
+ * en saison 3, épisode 46.
+ *
+ * Rend `null` au-delà du total connu : mieux vaut un épisode non classé qu'un
+ * épisode classé au hasard.
+ */
+export function situerAbsolu(
+	numeroAbsolu: number,
+	taillesParSaison: readonly { season: number; totalEpisodes: number }[]
+): { season: number; episode: number } | null {
+	if (!Number.isFinite(numeroAbsolu) || numeroAbsolu < 1) return null;
+
+	let restant = numeroAbsolu;
+	for (const arc of [...taillesParSaison].sort((a, b) => a.season - b.season)) {
+		if (arc.totalEpisodes <= 0) continue;
+		if (restant <= arc.totalEpisodes) return { season: arc.season, episode: restant };
+		restant -= arc.totalEpisodes;
+	}
+	return null;
+}
+
 export function parseSeasonEpisode(title: string): { season: number | null; episode: number | null } {
 	// Pattern 1: S##E## or Season 1 Episode 5 (or Saison 1 Épisode 5)
 	const m1 = /[Ss](?:eason|aison)?\s*(\d{1,2})[^\d]*[Ee](?:pisode)?\s*(\d{1,3})/i.exec(title);
@@ -326,16 +363,17 @@ export function parseSeasonEpisode(title: string): { season: number | null; epis
 	}
 
 	// Pattern 2: Episodé X (French) or Episode X — handles accented É/è
-	// Uses word boundaries and case-insensitive matching to catch Episode/Épisode variants
+	//
+	// ⚠ La saison vaut `null` quand le titre n'en nomme aucune, et c'est
+	// délibéré : renvoyer 1 par défaut rangeait TOUTES les vidéos d'une chaîne
+	// qui numérote en continu (« Épisode 113 ») dans la saison 1, y créant une
+	// centaine de trous que la réparation automatique aurait retentés sans fin.
+	// Une saison inconnue se déduit ailleurs, à partir des tailles réelles des
+	// arcs (`situerAbsolu`), ou reste inconnue.
 	const m2 = /[Éè]?[Ee]pisod[eéèê]\s*(\d{1,3})|épis(?:od)?[eéèê]\s*(\d{1,3})/i.exec(title);
 	if (m2) {
-		// Try to guess season from context (if contains "Saison" or "Season")
-		const season = (() => {
-			const sm = /[Ss]aison\s*(\d{1,2})/i.exec(title);
-			return sm ? parseInt(sm[1], 10) : 1;
-		})();
 		return {
-			season,
+			season: saisonDuTitre(title),
 			episode: parseInt(m2[1] || m2[2], 10),
 		};
 	}
@@ -343,27 +381,13 @@ export function parseSeasonEpisode(title: string): { season: number | null; epis
 	// Pattern 3: Ep. 5 (short form)
 	const m3 = /\bEp\.?\s*(\d{1,3})/i.exec(title);
 	if (m3) {
-		const season = (() => {
-			const sm = /[Ss](?:aison|eason)?\s*(\d{1,2})/i.exec(title);
-			return sm ? parseInt(sm[1], 10) : 1;
-		})();
-		return {
-			season,
-			episode: parseInt(m3[1], 10),
-		};
+		return { season: saisonDuTitre(title), episode: parseInt(m3[1], 10) };
 	}
 
 	// Pattern 4: Trailing number (last sequence of 1-3 digits)
 	const m4 = /(\d{1,3})(?!\d)/i.exec(title);
 	if (m4) {
-		const season = (() => {
-			const sm = /[Ss](?:aison|eason)?\s*(\d{1,2})/i.exec(title);
-			return sm ? parseInt(sm[1], 10) : 1;
-		})();
-		return {
-			season,
-			episode: parseInt(m4[1], 10),
-		};
+		return { season: saisonDuTitre(title), episode: parseInt(m4[1], 10) };
 	}
 
 	return { season: null, episode: null };
@@ -725,71 +749,90 @@ export class IETVScraper {
 	/**
 	 * Fetch + parse all episodes from a YouTube channel.
 	 */
-	async getChannelEpisodes(channelHandleOrUrl: string): Promise<ChannelInfo> {
-		// Normalize channel identifier
-		let channelUrl: string;
-		if (channelHandleOrUrl.startsWith("http")) {
-			channelUrl = channelHandleOrUrl;
-		} else if (channelHandleOrUrl.startsWith("@")) {
-			channelUrl = `https://www.youtube.com/${channelHandleOrUrl}/videos`;
-		} else {
-			channelUrl = `https://www.youtube.com/@${channelHandleOrUrl}/videos`;
-		}
-
-		const handle = channelHandleOrUrl.replace(/^@/, "");
-		const { status, html } = await this.fetchHtml(channelUrl);
+	/**
+	 * Vidéos brutes d'une chaîne, via son flux Atom.
+	 *
+	 * La saison peut valoir `null` : les chaînes numérotent souvent en continu.
+	 * C'est l'appelant qui décide quoi en faire — les écarter, ou les situer
+	 * dans leur arc avec {@link situerAbsolu}.
+	 */
+	private async videosDeChaine(handle: string): Promise<{ videos: VideoRef[]; titre: string | null }> {
+		// Une page de chaîne juste pour son identifiant : le flux Atom exige un
+		// `channel_id`, et le handle ne suffit pas.
+		const page = await this.fetchTexte(`https://www.youtube.com/@${handle}`);
 		this.stats.httpRequests++;
-
-		if (status !== 200) {
-			throw new Error(`getChannelEpisodes(${channelUrl}): HTTP ${status}`);
+		if (page.status !== 200) {
+			throw new Error(`videosDeChaine(@${handle}) : HTTP ${page.status}`);
 		}
 
-		// Parse videos and metadata
-		const videos = this.parseChannelVideos(html);
-		const meta = this.parseChannelMeta(html, handle);
+		const channelId = extraireChannelId(page.html);
+		if (!channelId) {
+			throw new Error(
+				`videosDeChaine(@${handle}) : identifiant de chaîne introuvable. ` +
+					"La chaîne a peut-être été renommée ou supprimée."
+			);
+		}
 
-		// Group by season
-		const seasonMap = new Map<number, VideoRef[]>();
-		let maxSeason = 0;
+		const flux = await this.fetchTexte(urlFlux(channelId));
+		this.stats.httpRequests++;
+		if (flux.status !== 200) {
+			throw new Error(`videosDeChaine(@${handle}) : flux HTTP ${flux.status}`);
+		}
 
+		const entrees = parserFluxYoutube(flux.html);
+		const videos = entrees.map((entree): VideoRef => {
+			const { season, episode } = parseSeasonEpisode(entree.titre);
+			return {
+				title: entree.titre,
+				videoId: entree.videoId,
+				url: entree.url,
+				description: null,
+				thumbnail: `https://i.ytimg.com/vi/${entree.videoId}/hqdefault.jpg`,
+				publishDate: entree.publie,
+				season,
+				episode,
+				language: detectLanguage(entree.titre),
+				duration: null,
+				viewCount: null,
+			};
+		});
+
+		return { videos, titre: entrees[0]?.chaine ?? null };
+	}
+
+	/** Regroupe des vidéos en saisons ; celles sans saison sont écartées. */
+	private regrouperEnSaisons(videos: readonly VideoRef[]): SeasonInfo[] {
+		const parSaison = new Map<number, VideoRef[]>();
 		for (const video of videos) {
 			if (video.season === null) continue;
-			if (!seasonMap.has(video.season)) {
-				seasonMap.set(video.season, []);
-				maxSeason = Math.max(maxSeason, video.season);
-			}
-			seasonMap.get(video.season)!.push(video);
+			parSaison.set(video.season, [...(parSaison.get(video.season) ?? []), video]);
 		}
-
-		// Sort episodes within each season
-		for (const eps of seasonMap.values()) {
-			eps.sort((a, b) => {
-				const aEp = a.episode ?? 0;
-				const bEp = b.episode ?? 0;
-				return aEp - bEp;
-			});
+		for (const eps of parSaison.values()) {
+			eps.sort((a, b) => (a.episode ?? 0) - (b.episode ?? 0));
 		}
+		return [...parSaison.entries()]
+			.sort((a, b) => a[0] - b[0])
+			.map(([season, episodes]) => ({ season, episodes, totalEpisodes: episodes.length }));
+	}
 
-		// Build season array
-		const seasons: SeasonInfo[] = [];
-		for (let s = 1; s <= maxSeason; s++) {
-			const episodes = seasonMap.get(s) ?? [];
-			seasons.push({
-				season: s,
-				episodes,
-				totalEpisodes: episodes.length,
-			});
-		}
+	async getChannelEpisodes(channelHandleOrUrl: string): Promise<ChannelInfo> {
+		const handle = channelHandleOrUrl
+			.replace(/^https?:\/\/[^/]+\/@?/, "")
+			.replace(/^@/, "")
+			.split("/")[0]!;
 
-		const totalEpisodes = videos.filter((v) => v.episode !== null).length;
+		const { videos, titre } = await this.videosDeChaine(handle);
+		const seasons = this.regrouperEnSaisons(videos);
+		const totalEpisodes = seasons.reduce((n, s) => n + s.totalEpisodes, 0);
+
 		this.stats.channelsScraped++;
 		this.stats.totalEpisodes += totalEpisodes;
 
 		return {
 			channel: handle,
-			title: meta.title,
-			description: meta.description,
-			avatar: meta.avatar,
+			title: titre ?? handle,
+			description: null,
+			avatar: null,
 			seasons,
 			totalEpisodes,
 		};
@@ -1289,20 +1332,17 @@ export class IETVScraper {
 			"InazumaTVFR__",
 		];
 
-		// Parallel tasks using Promise.all (Bun native concurrency)
-		const [youtubeResults, officialSite, plutuResults] = await Promise.all([
-			// YouTube channels
+		const [chaines, officialSite, plutuResults] = await Promise.all([
 			Promise.all(
 				youtubeChannels.map(async (handle) => {
 					try {
-						return await this.getChannelEpisodes(handle);
+						return { handle, ...(await this.videosDeChaine(handle)) };
 					} catch (err) {
 						console.warn(`Failed to fetch ${handle}: ${String(err)}`);
 						return null;
 					}
 				}),
 			),
-			// Official site
 			(async () => {
 				try {
 					return await this.scrapeOfficialSite();
@@ -1311,17 +1351,46 @@ export class IETVScraper {
 					return null;
 				}
 			})(),
-			// Pluto.tv regions
 			this.scrapePlutuTvRegions(["no", "fr"]).catch(() => []),
 		]);
 
-		// Combine all results
+		// Le site officiel donne le découpage réel en arcs. Il sert de RÉFÉRENCE
+		// pour situer les vidéos YouTube numérotées en continu (« Épisode 113 »),
+		// qui sinon resteraient non classées. Sans lui, on ne devine rien : mieux
+		// vaut un épisode non classé qu'un épisode classé au hasard.
+		const arcs = (officialSite?.seasons ?? []).map((saison) => ({
+			season: saison.season,
+			totalEpisodes: saison.totalEpisodes,
+		}));
+
 		const allResults: ChannelInfo[] = [];
-
 		if (officialSite) allResults.push(officialSite);
-		allResults.push(...youtubeResults.filter((info): info is ChannelInfo => info !== null));
-		allResults.push(...plutuResults);
 
+		for (const chaine of chaines) {
+			if (!chaine) continue;
+
+			const situees = chaine.videos.map((video) => {
+				if (video.season !== null || video.episode === null || arcs.length === 0) return video;
+				const place = situerAbsolu(video.episode, arcs);
+				return place ? { ...video, season: place.season, episode: place.episode } : video;
+			});
+
+			const seasons = this.regrouperEnSaisons(situees);
+			const totalEpisodes = seasons.reduce((n, s) => n + s.totalEpisodes, 0);
+			this.stats.channelsScraped++;
+			this.stats.totalEpisodes += totalEpisodes;
+
+			allResults.push({
+				channel: chaine.handle,
+				title: chaine.titre ?? chaine.handle,
+				description: null,
+				avatar: null,
+				seasons,
+				totalEpisodes,
+			});
+		}
+
+		allResults.push(...plutuResults);
 		return allResults;
 	}
 

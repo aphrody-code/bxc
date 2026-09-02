@@ -28,6 +28,8 @@ import {
 	qualityLabel,
 	type HlsConstructor,
 } from "./video-player.ts";
+import { parseSeasonEpisode, situerAbsolu } from "./index.ts";
+import { extraireChannelId, parserFluxYoutube } from "./youtube-feed.ts";
 import {
 	extraireJsonLd,
 	identifiantOfficiel,
@@ -859,5 +861,98 @@ describe("site officiel", () => {
 	it("ne confond pas la liste des catégories et celle des épisodes", () => {
 		expect(parserEpisodes(LD_INDEX)).toEqual([]);
 		expect(parserCategories(LD_SAISON)).toEqual([]);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Numérotation continue et flux YouTube
+// ---------------------------------------------------------------------------
+
+describe("situerAbsolu", () => {
+	const arcs = [
+		{ season: 1, totalEpisodes: 26 },
+		{ season: 2, totalEpisodes: 41 },
+		{ season: 3, totalEpisodes: 60 },
+	];
+
+	it("place un numéro continu dans son arc", () => {
+		// 26 + 41 = 67 ; l'épisode 113 tombe donc en saison 3, épisode 46.
+		expect(situerAbsolu(113, arcs)).toEqual({ season: 3, episode: 46 });
+		expect(situerAbsolu(1, arcs)).toEqual({ season: 1, episode: 1 });
+		expect(situerAbsolu(26, arcs)).toEqual({ season: 1, episode: 26 });
+		expect(situerAbsolu(27, arcs)).toEqual({ season: 2, episode: 1 });
+	});
+
+	it("ne classe rien au-delà du total connu", () => {
+		expect(situerAbsolu(500, arcs)).toBeNull();
+	});
+
+	it("refuse les entrées absurdes", () => {
+		expect(situerAbsolu(0, arcs)).toBeNull();
+		expect(situerAbsolu(-3, arcs)).toBeNull();
+		expect(situerAbsolu(5, [])).toBeNull();
+	});
+
+	it("saute un arc vide au lieu de s'y arrêter", () => {
+		expect(situerAbsolu(2, [{ season: 1, totalEpisodes: 0 }, { season: 2, totalEpisodes: 5 }])).toEqual({
+			season: 2,
+			episode: 2,
+		});
+	});
+
+	it("ordonne les arcs même donnés en désordre", () => {
+		expect(situerAbsolu(27, [...arcs].reverse())).toEqual({ season: 2, episode: 1 });
+	});
+});
+
+describe("parseSeasonEpisode", () => {
+	it("n'invente plus de saison quand le titre n'en nomme aucune", () => {
+		// C'est ce défaut qui rangeait toute une chaîne numérotée en continu
+		// dans la saison 1, en y créant une centaine de faux trous.
+		expect(parseSeasonEpisode('Inazuma Eleven France - Épisode 113 "La conspiration"')).toEqual({
+			season: null,
+			episode: 113,
+		});
+		expect(parseSeasonEpisode("Ep. 7")).toEqual({ season: null, episode: 7 });
+	});
+
+	it("lit la saison quand elle est nommée", () => {
+		expect(parseSeasonEpisode("Saison 2 Épisode 10")).toEqual({ season: 2, episode: 10 });
+		expect(parseSeasonEpisode("S03E12")).toEqual({ season: 3, episode: 12 });
+	});
+});
+
+const FLUX = `<?xml version="1.0"?><feed xmlns:yt="http://www.youtube.com/xml/schemas/2015">
+<title>Inazuma Eleven France officiel</title>
+<entry><yt:videoId>abc12345678</yt:videoId><title>Épisode 113 &quot;La conspiration&quot;</title><published>2026-08-30T10:00:00+00:00</published></entry>
+<entry><yt:videoId>def12345678</yt:videoId><title>Saison 2 Épisode 4 VOSTFR</title><published>2026-08-29T10:00:00+00:00</published></entry>
+<entry><title>entrée sans identifiant</title></entry>
+</feed>`;
+
+describe("flux YouTube", () => {
+	it("lit les entrées et le nom de la chaîne", () => {
+		const entrees = parserFluxYoutube(FLUX);
+		expect(entrees).toHaveLength(2);
+		expect(entrees[0]!.chaine).toBe("Inazuma Eleven France officiel");
+		expect(entrees[0]!.url).toBe("https://www.youtube.com/watch?v=abc12345678");
+		expect(entrees[0]!.publie).toBe("2026-08-30T10:00:00+00:00");
+	});
+
+	it("décode les entités XML des titres", () => {
+		expect(parserFluxYoutube(FLUX)[0]!.titre).toBe('Épisode 113 "La conspiration"');
+	});
+
+	it("ignore une entrée sans identifiant plutôt que de tout perdre", () => {
+		expect(parserFluxYoutube(FLUX).map((e) => e.videoId)).toEqual(["abc12345678", "def12345678"]);
+	});
+
+	it("ne confond pas le titre de la chaîne avec celui de la première vidéo", () => {
+		expect(parserFluxYoutube(FLUX)[1]!.chaine).toBe("Inazuma Eleven France officiel");
+	});
+
+	it("trouve l'identifiant de chaîne sous ses différentes formes", () => {
+		expect(extraireChannelId('href="…channel_id=UCGMvTdioudzJSa5uTAY6FDw"')).toBe("UCGMvTdioudzJSa5uTAY6FDw");
+		expect(extraireChannelId('"externalId":"UC1cdmvDug3oRgl_d-w1fdTg"')).toBe("UC1cdmvDug3oRgl_d-w1fdTg");
+		expect(extraireChannelId("<html>rien</html>")).toBeNull();
 	});
 });
