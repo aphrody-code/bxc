@@ -211,6 +211,17 @@ export function estLisibleEnLigne(url: string): boolean {
 	return HOTES_LISIBLES.some((connu) => hote === connu || hote.endsWith(`.${connu}`));
 }
 
+/**
+ * `2009-04-08` → `<t:…:D>`, l'horodatage natif de Discord.
+ *
+ * Il s'affiche dans le fuseau et la langue de chaque lecteur, là où une date
+ * écrite en dur impose le format de celui qui l'a produite.
+ */
+export function dateLisible(iso: string): string {
+	const instant = Date.parse(`${iso}T12:00:00Z`);
+	return Number.isFinite(instant) ? `<t:${Math.floor(instant / 1000)}:D>` : iso;
+}
+
 /** Suffixe `(VF)` accolé aux titres quand un filtre de langue est actif. */
 function mentionLangue(langue: Langue | undefined): string {
 	return langue ? ` — ${libelleLangue(langue)}` : "";
@@ -311,13 +322,21 @@ function episode(options: OptionsCommande, contexte: ContexteCommande): Reponse 
 		);
 	}
 
+	const principal = versions[0]!;
 	const f = fiche({
 		titre: `${ICONES.episode} Saison ${saisonDemandee}, épisode ${numero}`,
-		url: versions[0]!.url,
 		marque: contexte.marque,
 	})
-		.description(versions[0]!.description ?? "")
-		.miniature(versions[0]!.thumbnail);
+		.description(principal.description ?? "")
+		.miniature(principal.thumbnail);
+
+	// Titre original et date de première diffusion : ils viennent de la
+	// chronologie et n'existent sur aucune des sources vidéo.
+	const original = [principal.titleJp, principal.romaji].filter(Boolean).join(" · ");
+	if (original) f.champ("Titre original", original, { enLigne: true });
+	if (principal.publishDate) {
+		f.champ("Première diffusion", dateLisible(principal.publishDate), { enLigne: true });
+	}
 
 	// Un champ par version : le même épisode existe en VF et en VOSTFR, souvent
 	// sur plusieurs chaînes. Les empiler dans la description perdrait le lien.

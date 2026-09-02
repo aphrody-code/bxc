@@ -31,6 +31,12 @@ import {
 import { parseSeasonEpisode, situerAbsolu } from "./index.ts";
 import { extraireChannelId, langueDeChaine, parserFluxYoutube } from "./youtube-feed.ts";
 import {
+	arcDeSection,
+	indexerChronologie,
+	normaliserDate,
+	parserListeEpisodes,
+} from "./wiki.ts";
+import {
 	extraireJsonLd,
 	identifiantOfficiel,
 	parserCategories,
@@ -1010,5 +1016,75 @@ describe("langueDeChaine", () => {
 
 	it("rend null quand le nom ne tranche pas — inconnu vaut mieux que faux", () => {
 		expect(langueDeChaine("inazumaeleven", "Inazuma Eleven")).toBeNull();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Chronologie Wikipédia
+// ---------------------------------------------------------------------------
+
+const WIKI = `<h3><span>Saison 2: Académie Alius</span></h3>
+<table><tr><th>No</th><th>Titre français</th><th>Kanji</th><th>Rōmaji</th><th>Date</th></tr>
+<tr><td>27</td><td>Les Extraterrestres débarquent</td><td>宇宙人が来た!</td><td>Uchū-jin ga kita!</td><td>8 avril 2009</td></tr>
+<tr><td>28</td><td>Le Deuxième assaut</td><td>第二の攻撃</td><td>Daini no kōgeki</td><td>15 avril 2009</td></tr></table>
+<h2><span>Inazuma Eleven GO: Chrono Stone</span></h2>
+<table><tr><th>No</th><th>Titre</th></tr>
+<tr><td>1</td><td>Le Football a disparu</td><td>—</td><td>—</td><td>18 avril 2012</td></tr></table>`;
+
+describe("chronologie Wikipédia", () => {
+	it("découpe sur les titres de niveau 2 ET 3 — la page mêle les deux", () => {
+		const sections = parserListeEpisodes(WIKI);
+		expect(sections.map((s) => s.titre)).toEqual([
+			"Saison 2: Académie Alius",
+			"Inazuma Eleven GO: Chrono Stone",
+		]);
+	});
+
+	it("rend le rang dans l'arc, pas la numérotation absolue", () => {
+		// Wikipédia numérote d'une traite : la saison 2 va de 27 à 67.
+		const episodes = parserListeEpisodes(WIKI)[0]!.episodes;
+		expect(episodes.map((e) => [e.numero, e.numeroAbsolu])).toEqual([
+			[1, 27],
+			[2, 28],
+		]);
+	});
+
+	it("lit titre français, japonais, rōmaji et date", () => {
+		const premier = parserListeEpisodes(WIKI)[0]!.episodes[0]!;
+		expect(premier.titreFr).toBe("Les Extraterrestres débarquent");
+		expect(premier.titreJp).toBe("宇宙人が来た!");
+		expect(premier.romaji).toBe("Uchū-jin ga kita!");
+		expect(premier.diffusion).toBe("2009-04-08");
+	});
+
+	it("normalise les dates françaises, et refuse d'en inventer", () => {
+		expect(normaliserDate("5 octobre 2008")).toBe("2008-10-05");
+		expect(normaliserDate("1er avril 2012")).toBe("2012-04-01");
+		expect(normaliserDate("bientôt")).toBeNull();
+		expect(normaliserDate("32 brumaire 1799")).toBeNull();
+	});
+
+	it("rattache chaque section à son arc du catalogue", () => {
+		expect(arcDeSection("Saison 2: Académie Alius")).toBe(2);
+		expect(arcDeSection("Inazuma Eleven GO")).toBe(4);
+		// L'ordre compte : « GO: Chrono Stone » contient aussi « go ».
+		expect(arcDeSection("Inazuma Eleven GO: Chrono Stone")).toBe(5);
+		expect(arcDeSection("Inazuma Eleven GO: Galaxy")).toBe(6);
+		expect(arcDeSection("Notes et références")).toBeNull();
+	});
+
+	it("indexe par arc et numéro d'arc", () => {
+		const index = indexerChronologie(parserListeEpisodes(WIKI));
+		expect(index.get("2:1")?.titreFr).toBe("Les Extraterrestres débarquent");
+		expect(index.get("5:1")?.diffusion).toBe("2012-04-18");
+		// L'absolu de Wikipédia ne doit pas servir de clé.
+		expect(index.get("2:27")).toBeUndefined();
+	});
+
+	it("ignore une section qu'on ne sait pas rattacher", () => {
+		const index = indexerChronologie([
+			{ titre: "Notes", episodes: [{ numero: 1, numeroAbsolu: 1, titreFr: "x", titreJp: null, romaji: null, diffusion: null }] },
+		]);
+		expect(index.size).toBe(0);
 	});
 });
