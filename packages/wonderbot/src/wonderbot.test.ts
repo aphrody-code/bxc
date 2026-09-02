@@ -36,6 +36,7 @@ import {
 	SynchronisationForum,
 	lireValeurOption,
 	menusDeSaison,
+	nomFilSaison,
 	valeurOption,
 	analyserTableFils,
 	etiquettesDeSaison,
@@ -1408,5 +1409,17 @@ describe("menus du forum", () => {
 		const menus = [...fils.values()][0]!.menus;
 		expect(menus).toHaveLength(1);
 		expect(menus[0].options.map((o: any) => o.value)).toEqual(["1:1", "1:2"]);
+	});
+});
+
+describe("nom d'arc", () => {
+	it("préfère le nom de la source au numéro — « Films », pas « Saison 10 »", () => {
+		expect(nomFilSaison(10, 5, "Films")).toBe("Films — 5 épisode(s)");
+		expect(nomFilSaison(5, 51, "Chrono Stones")).toBe("Chrono Stones — 51 épisode(s)");
+	});
+
+	it("retombe sur le numéro quand aucune source ne nomme l'arc", () => {
+		expect(nomFilSaison(2, 41)).toBe("Saison 2 — 41 épisode(s)");
+		expect(nomFilSaison(2, 41, "   ")).toBe("Saison 2 — 41 épisode(s)");
 	});
 });

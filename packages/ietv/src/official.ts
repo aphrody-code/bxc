@@ -166,6 +166,54 @@ export function identifiantOfficiel(slug: string, numero: number): string {
 	return `off-${slug}-${numero}`;
 }
 
+/** Métadonnées lues sur la page d'un épisode. */
+export interface MetaEpisode {
+	idYoutube: string | null;
+	titre: string | null;
+	description: string | null;
+	vignette: string | null;
+	/** Code de langue déclaré par le site (`"fr"`). */
+	langue: string | null;
+	/** Nom de l'arc tel que le site le nomme (« Saison 1 », « Films »). */
+	nomSaison: string | null;
+	numero: number | null;
+}
+
+/**
+ * Métadonnées d'une page d'épisode, lues dans son JSON-LD.
+ *
+ * La page publie un `VideoObject` ET un `Episode` : le premier porte la
+ * vignette, le second le numéro et le nom de l'arc. On lit les deux, parce
+ * qu'aucun ne suffit — et parce que cette page est de toute façon déjà
+ * récupérée pour son identifiant YouTube. Une requête, toutes les données.
+ */
+export function parserMetaEpisode(html: string): MetaEpisode {
+	const objets = extraireJsonLd(html);
+	const video = objets.find((o) => o["@type"] === "VideoObject");
+	const episode = objets.find((o) => o["@type"] === "Episode");
+
+	const chaine = (valeur: unknown): string | null =>
+		typeof valeur === "string" && valeur.trim() !== "" ? valeur.trim() : null;
+
+	const vignette = (() => {
+		const brut = video?.thumbnailUrl;
+		if (Array.isArray(brut)) return chaine(brut[0]);
+		return chaine(brut);
+	})();
+
+	const saison = episode?.partOfSeason as { name?: unknown } | undefined;
+
+	return {
+		idYoutube: extraireIdYoutube(html),
+		titre: chaine(episode?.name) ?? chaine(video?.name),
+		description: chaine(episode?.description) ?? chaine(video?.description),
+		vignette,
+		langue: chaine(episode?.inLanguage) ?? chaine(video?.inLanguage),
+		nomSaison: chaine(saison?.name),
+		numero: typeof episode?.episodeNumber === "number" ? episode.episodeNumber : null,
+	};
+}
+
 /**
  * Identifiant YouTube porté par une page d'épisode.
  *

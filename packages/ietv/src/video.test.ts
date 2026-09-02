@@ -29,12 +29,13 @@ import {
 	type HlsConstructor,
 } from "./video-player.ts";
 import { parseSeasonEpisode, situerAbsolu } from "./index.ts";
-import { extraireChannelId, parserFluxYoutube } from "./youtube-feed.ts";
+import { extraireChannelId, langueDeChaine, parserFluxYoutube } from "./youtube-feed.ts";
 import {
 	extraireJsonLd,
 	identifiantOfficiel,
 	parserCategories,
 	parserEpisodes,
+	parserMetaEpisode,
 	slugDeUrl,
 	titreSansPrefixe,
 } from "./official.ts";
@@ -954,5 +955,60 @@ describe("flux YouTube", () => {
 		expect(extraireChannelId('href="…channel_id=UCGMvTdioudzJSa5uTAY6FDw"')).toBe("UCGMvTdioudzJSa5uTAY6FDw");
 		expect(extraireChannelId('"externalId":"UC1cdmvDug3oRgl_d-w1fdTg"')).toBe("UC1cdmvDug3oRgl_d-w1fdTg");
 		expect(extraireChannelId("<html>rien</html>")).toBeNull();
+	});
+});
+
+describe("métadonnées d'un épisode officiel", () => {
+	const PAGE = `<script type="application/ld+json">{"@graph":[
+{"@type":"VideoObject","name":"Épisode 1 - Jouons au Football","description":"L'équipe de foot du Collège Raimon.","thumbnailUrl":["https://img.youtube.com/vi/xbpo3u3P9dc/hqdefault.jpg"],"inLanguage":"fr","embedUrl":"https://www.youtube.com/embed/xbpo3u3P9dc"},
+{"@type":"Episode","name":"Épisode 1 - Jouons au Football","episodeNumber":1,"description":"L'équipe de foot du Collège Raimon.","inLanguage":"fr","partOfSeason":{"@type":"CreativeWorkSeason","name":"Saison 1"}}]}</script>`;
+
+	it("croise VideoObject et Episode — aucun des deux ne suffit", () => {
+		const meta = parserMetaEpisode(PAGE);
+		// La vignette vient du VideoObject…
+		expect(meta.vignette).toBe("https://img.youtube.com/vi/xbpo3u3P9dc/hqdefault.jpg");
+		// …le numéro et le nom d'arc de l'Episode.
+		expect(meta.numero).toBe(1);
+		expect(meta.nomSaison).toBe("Saison 1");
+		expect(meta.description).toContain("Collège Raimon");
+		expect(meta.langue).toBe("fr");
+		expect(meta.idYoutube).toBe("xbpo3u3P9dc");
+	});
+
+	it("prend le premier élément quand thumbnailUrl est un tableau", () => {
+		expect(parserMetaEpisode(PAGE).vignette?.startsWith("https://img.youtube.com/")).toBe(true);
+	});
+
+	it("rend des champs nuls plutôt que de lever sur une page sans JSON-LD", () => {
+		const vide = parserMetaEpisode("<html></html>");
+		expect(vide).toEqual({
+			idYoutube: null,
+			titre: null,
+			description: null,
+			vignette: null,
+			langue: null,
+			nomSaison: null,
+			numero: null,
+		});
+	});
+});
+
+describe("langueDeChaine", () => {
+	it("déduit le doublage français du nom de la chaîne", () => {
+		expect(langueDeChaine("inazumaelevenfrance1", "Inazuma Eleven France officiel")).toBe("vf");
+		expect(langueDeChaine("inazumaelevengofrance", null)).toBe("vf");
+	});
+
+	it("reconnaît une chaîne de sous-titrage", () => {
+		expect(langueDeChaine("inazumatvfr", "Inazuma VOSTFR")).toBe("vostfr");
+	});
+
+	it("préfère VOSTFR quand les deux indices coexistent", () => {
+		// Une chaîne « … VOSTFR France » contient aussi « france ».
+		expect(langueDeChaine("chaine-vostfr-france", null)).toBe("vostfr");
+	});
+
+	it("rend null quand le nom ne tranche pas — inconnu vaut mieux que faux", () => {
+		expect(langueDeChaine("inazumaeleven", "Inazuma Eleven")).toBeNull();
 	});
 });
