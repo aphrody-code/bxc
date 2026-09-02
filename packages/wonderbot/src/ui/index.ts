@@ -29,7 +29,6 @@ export {
 	formaterDuree,
 	horodatageRelatif,
 	libelleLangue,
-	lienCourt,
 	ligneEpisode,
 	ligneSaison,
 	listerEpisodes,

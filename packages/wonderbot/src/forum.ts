@@ -27,14 +27,79 @@ import type { Marque } from "./ui/theme.ts";
 /** Clé de métadonnée portant la table saison → identifiant de fil. */
 export const CLE_FILS = "wonderbot:forum-fils";
 
+/** Préfixe des `custom_id` des menus du forum. */
+export const PREFIXE_MENU = "wb:ep";
+
+/** Menu déroulant d'épisodes, indépendant de discord.js pour rester testable. */
+export interface MenuEpisodes {
+	customId: string;
+	placeholder: string;
+	options: { label: string; value: string; description?: string }[];
+}
+
+/** Un menu Discord accepte 25 options ; un message en accepte 5. */
+const OPTIONS_PAR_MENU = 25;
+const MENUS_PAR_MESSAGE = 5;
+
+/** Valeur d'option : `saison:numéro`. */
+export function valeurOption(saison: number, numero: number): string {
+	return `${saison}:${numero}`;
+}
+
+/** Lit une valeur d'option, `null` si elle est malformée. */
+export function lireValeurOption(valeur: string): { saison: number; numero: number } | null {
+	const [saison, numero] = valeur.split(":").map((part) => Number.parseInt(part, 10));
+	if (!Number.isFinite(saison) || !Number.isFinite(numero)) return null;
+	return { saison: saison!, numero: numero! };
+}
+
+/**
+ * Menus de sélection d'une saison, découpés par tranches de 25.
+ *
+ * C'est ce qui remplace les liens : un membre choisit son épisode ici et le bot
+ * lui répond avec le lecteur intégré, sans jamais l'envoyer sur un site tiers.
+ * Au-delà de cinq menus (125 épisodes) le reste n'est pas proposé — aucune
+ * saison n'approche ce volume, et un message n'accepte pas plus de cinq rangées.
+ */
+export function menusDeSaison(
+	saison: number,
+	numeros: readonly number[]
+): MenuEpisodes[] {
+	const menus: MenuEpisodes[] = [];
+	for (let page = 0; page * OPTIONS_PAR_MENU < numeros.length && page < MENUS_PAR_MESSAGE; page++) {
+		const tranche = numeros.slice(page * OPTIONS_PAR_MENU, (page + 1) * OPTIONS_PAR_MENU);
+		if (tranche.length === 0) break;
+		const premier = tranche[0]!;
+		const dernier = tranche[tranche.length - 1]!;
+		menus.push({
+			customId: `${PREFIXE_MENU}:${saison}:${page}`,
+			placeholder:
+				numeros.length <= OPTIONS_PAR_MENU
+					? "Choisis un épisode à regarder"
+					: `Épisodes ${premier} à ${dernier}`,
+			options: tranche.map((numero) => ({
+				label: `Épisode ${numero}`,
+				value: valeurOption(saison, numero),
+			})),
+		});
+	}
+	return menus;
+}
+
 /** Ce que la synchronisation attend de Discord — remplacé par une doublure en test. */
 export interface PasserelleForum {
 	/** Identifiants des fils encore présents dans le salon forum. */
 	filsExistants(): Promise<string[]>;
 	/** Crée un fil et rend son identifiant. */
-	creerFil(nom: string, embeds: Embed[], etiquettes: string[]): Promise<string>;
+	creerFil(nom: string, embeds: Embed[], menus: MenuEpisodes[], etiquettes: string[]): Promise<string>;
 	/** Réécrit le message d'ouverture d'un fil. */
-	majFil(filId: string, nom: string, embeds: Embed[], etiquettes: string[]): Promise<void>;
+	majFil(
+		filId: string,
+		nom: string,
+		embeds: Embed[],
+		menus: MenuEpisodes[],
+		etiquettes: string[]
+	): Promise<void>;
 }
 
 /** Ce que la synchronisation attend du support de persistance. */
@@ -196,17 +261,26 @@ export class SynchronisationForum {
 
 		for (const saison of saisons) {
 			const { embeds, episodes, langues } = this.construireEmbeds(saison);
+			const numeros = [
+				...new Set(
+					this.options.catalogue
+						.saison(saison, undefined, 10_000)
+						.map((episode) => episode.episode)
+						.filter((numero): numero is number => numero !== null)
+				),
+			].sort((a, b) => a - b);
+			const menus = menusDeSaison(saison, numeros);
 			const nom = nomFilSaison(saison, episodes);
 			const tags = etiquettesDeSaison(langues, etiquettes);
 			const connu = table.get(saison);
 
 			if (connu && vivants.has(connu)) {
-				await this.options.passerelle.majFil(connu, nom, embeds, tags);
+				await this.options.passerelle.majFil(connu, nom, embeds, menus, tags);
 				resultat.majs.push(saison);
 				continue;
 			}
 
-			const filId = await this.options.passerelle.creerFil(nom, embeds, tags);
+			const filId = await this.options.passerelle.creerFil(nom, embeds, menus, tags);
 			table.set(saison, filId);
 			(connu ? resultat.recrees : resultat.crees).push(saison);
 		}

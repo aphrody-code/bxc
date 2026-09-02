@@ -63,12 +63,17 @@ export function echapperMarkdown(texte: string): string {
 	return texte.replace(/([*_`~|\\[\]()>])/g, "\\$1");
 }
 
-/** Une ligne de résultat : `**S01E05** · titre · 🇫🇷 VF · [voir](url)`. */
+/**
+ * Une ligne de résultat : `**S01E05** · titre` puis langue et durée.
+ *
+ * Aucun lien : un lien sortirait le membre du serveur sans rien lui jouer. La
+ * lecture se demande avec `/episodes episode`, qui répond avec le lecteur
+ * intégré à Discord.
+ */
 export function ligneEpisode(episode: EpisodeCatalogue): string {
 	const code = codeEpisode(episode.season, episode.episode);
 	const titre = echapperMarkdown(episode.title);
-	const lien = `[${ICONES.lien} voir](${episode.url})`;
-	return `**${code}** · ${titre}\n${libelleLangue(episode.language)} · ${formaterDuree(episode.duration)} · ${lien}`;
+	return `**${code}** · ${titre}\n${libelleLangue(episode.language)} · ${formaterDuree(episode.duration)}`;
 }
 
 /**
@@ -155,33 +160,23 @@ export function grouperParEpisode(
 }
 
 /**
- * Raccourcit une URL YouTube en `youtu.be/<id>`.
+ * Une ligne par épisode, SANS lien sortant :
+ * `**E05** · 🇫🇷 VF · 💬 VOSTFR`.
  *
- * Ce n'est pas de la cosmétique : une liste de saison tient 51 épisodes × 2
- * langues, et 15 caractères gagnés par lien font 1 500 caractères sur la page —
- * la différence entre une saison complète et une saison tronquée.
- */
-export function lienCourt(episode: EpisodeCatalogue): string {
-	if (/^[a-zA-Z0-9_-]{11}$/.test(episode.videoId) && /youtube\.com|youtu\.be/.test(episode.url)) {
-		return `https://youtu.be/${episode.videoId}`;
-	}
-	return episode.url;
-}
-
-/**
- * Une ligne par épisode, un lien par langue : `**E05** · 🇫🇷 VF · 💬 VOSTFR`,
- * les libellés étant les liens.
+ * ── POURQUOI PAS DE LIEN ───────────────────────────────────────────────────
+ * Un lien Markdown ne produit aucun lecteur dans Discord : il ne fait que
+ * sortir le membre du serveur, vers un site tiers. La lecture passe donc par le
+ * menu déroulant du fil, qui fait répondre le bot avec le lecteur intégré —
+ * personne ne quitte Discord.
  *
- * Le TITRE est délibérément absent : dans une liste de saison il répète le
- * numéro (« Inazuma Eleven — Épisode 5 VF ») et coûte le tiers du budget. Il
- * reste disponible sur `/episodes episode`.
+ * Le titre est également absent : dans une liste de saison il répète le numéro
+ * (« Inazuma Eleven — Épisode 5 VF ») et coûte le tiers du budget. Il reste sur
+ * `/episodes episode`.
  */
 export function ligneSaison(numero: number | null, versions: readonly EpisodeCatalogue[]): string {
 	const code = numero !== null ? `E${String(numero).padStart(2, "0")}` : "—";
-	const liens = versions
-		.map((version) => `[${libelleLangue(version.language)}](${lienCourt(version)})`)
-		.join(" · ");
-	return `**${code}** · ${liens}`;
+	const langues = [...new Set(versions.map((version) => libelleLangue(version.language)))];
+	return `**${code}** · ${langues.join(" · ")}`;
 }
 
 /**
@@ -232,7 +227,7 @@ export function listerSaison(
 
 	const omis = groupes.length - poses;
 	if (omis > 0 && pages.length > 0) {
-		pages[pages.length - 1] += `\n\n*…et ${omis} épisode(s) de plus — \`/episodes saison\`.*`;
+		pages[pages.length - 1] += `\n\n*…et ${omis} épisode(s) de plus.*`;
 	}
 
 	return { pages, episodes: groupes.length, omis: Math.max(0, omis) };
