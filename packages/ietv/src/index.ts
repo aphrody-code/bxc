@@ -52,6 +52,13 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import {
+	cleEpisode,
+	indexerChronologie,
+	parserListeEpisodes,
+	urlApiWiki,
+	type EpisodeWiki,
+} from "./wiki.ts";
+import {
 	extraireChannelId,
 	langueDeChaine,
 	parserFluxYoutube,
@@ -105,6 +112,10 @@ export interface VideoRef {
 	viewCount: string | null;
 	/** Rendition label (`"1080p"`, …) when a source exposes one. */
 	quality?: string | null;
+	/** Titre japonais original, quand une source encyclopédique le donne. */
+	titleJp?: string | null;
+	/** Transcription rōmaji du titre japonais. */
+	romaji?: string | null;
 }
 
 export interface SeasonInfo {
@@ -450,6 +461,7 @@ export class IETVScraper {
 	private readonly retries: number;
 	private readonly youtubeApiKey: string | null;
 	private page: AnyPage | null = null;
+	private chronologieChargee: Promise<Map<string, EpisodeWiki>> | null = null;
 	private readonly fetchQueue: FetchQueue;
 	private readonly enableCache: boolean;
 	private stats: ScrapingStats = {
@@ -1161,6 +1173,44 @@ export class IETVScraper {
 		return { status: reponse.status, html: await reponse.text() };
 	}
 
+	/** Page Wikipédia des épisodes, en français. */
+	private static readonly PAGE_WIKI = "Liste des épisodes d'Inazuma Eleven";
+
+	/**
+	 * Chronologie Wikipédia, chargée au plus une fois par instance.
+	 *
+	 * Enrichissement seulement : dates de première diffusion et titres
+	 * japonais. Elle ne fait PAS autorité sur les comptes — Wikipédia liste 35
+	 * épisodes d'Orion là où le site officiel en sert 49. Une source qui
+	 * complète n'est pas une source qui arbitre.
+	 */
+	private async chronologie(): Promise<Map<string, EpisodeWiki>> {
+		if (this.chronologieChargee) return this.chronologieChargee;
+
+		this.chronologieChargee = (async () => {
+			try {
+				const reponse = await this.fetchTexte(
+					urlApiWiki("fr.wikipedia.org", IETVScraper.PAGE_WIKI)
+				);
+				this.stats.httpRequests++;
+				if (reponse.status !== 200) return new Map<string, EpisodeWiki>();
+
+				const charge = JSON.parse(reponse.html) as { parse?: { text?: string } };
+				const texte = charge.parse?.text;
+				if (!texte) return new Map<string, EpisodeWiki>();
+
+				return indexerChronologie(parserListeEpisodes(texte));
+			} catch {
+				// Wikipédia indisponible : le catalogue reste servi sans dates.
+				// Une source d'enrichissement ne doit jamais faire échouer la
+				// source principale.
+				return new Map<string, EpisodeWiki>();
+			}
+		})();
+
+		return this.chronologieChargee;
+	}
+
 	async scrapeOfficialSite(): Promise<ChannelInfo> {
 		const racine = "https://inazuma-eleven.fr/tv/watch?lang=fr";
 
@@ -1296,10 +1346,14 @@ export class IETVScraper {
 			if (page.status !== 200) return [];
 
 			const listes = parserEpisodes(page.html);
-			const metas = await this.resoudreMetaEpisodes(categorie, listes);
+			const [metas, chrono] = await Promise.all([
+				this.resoudreMetaEpisodes(categorie, listes),
+				this.chronologie(),
+			]);
 
 			return listes.map((episode) => {
 				const meta = metas.get(episode.numero);
+				const wiki = chrono.get(cleEpisode(categorie.position, episode.numero));
 				const idYoutube = meta?.idYoutube ?? null;
 				return {
 					title: `${categorie.nom} — ${meta?.titre ?? episode.titre}`,
@@ -1315,7 +1369,11 @@ export class IETVScraper {
 					thumbnail:
 						meta?.vignette ??
 						(idYoutube ? `https://i.ytimg.com/vi/${idYoutube}/hqdefault.jpg` : null),
-					publishDate: null,
+					// Le site officiel ne date rien ; la date de première diffusion
+					// vient de la chronologie.
+					publishDate: wiki?.diffusion ?? null,
+					titleJp: wiki?.titreJp ?? null,
+					romaji: wiki?.romaji ?? null,
 					season: categorie.position,
 					episode: episode.numero,
 					// `?lang=fr` sert la version française doublée ; le site ne propose

@@ -88,6 +88,8 @@ export class IETVCache {
         url TEXT NOT NULL,
         description TEXT,
         thumbnail TEXT,
+        titleJp TEXT,
+        romaji TEXT,
         publishDate TEXT,
         viewCount TEXT,
         language TEXT CHECK(language IN ('vf', 'vostfr', 'unknown')),
@@ -130,6 +132,8 @@ export class IETVCache {
 
 		addColumn("channels", "avatar", "TEXT");
 		addColumn("seasons", "name", "TEXT");
+		addColumn("episodes", "titleJp", "TEXT");
+		addColumn("episodes", "romaji", "TEXT");
 		addColumn("episodes", "description", "TEXT");
 		addColumn("episodes", "publishDate", "TEXT");
 		addColumn("episodes", "viewCount", "TEXT");
@@ -174,8 +178,8 @@ export class IETVCache {
 					.prepare(
 						`INSERT OR REPLACE INTO episodes
            (channel_id, season, episode, videoId, title, url, description, thumbnail,
-            publishDate, viewCount, language, duration, quality)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            titleJp, romaji, publishDate, viewCount, language, duration, quality)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 					)
 					.run(
 						channelId.id,
@@ -186,6 +190,8 @@ export class IETVCache {
 						ep.url,
 						ep.description || null,
 						ep.thumbnail || null,
+						ep.titleJp || null,
+						ep.romaji || null,
 						ep.publishDate || null,
 						ep.viewCount || null,
 						ep.language,
@@ -267,7 +273,7 @@ export class IETVCache {
 			this.db
 				.prepare(
 					`SELECT videoId, season, episode, title, url, description, thumbnail,
-                publishDate, viewCount, language, duration, quality
+                titleJp, romaji, publishDate, viewCount, language, duration, quality
          FROM episodes WHERE channel_id = ? AND season = ? ORDER BY episode`
 				)
 				.all(channelId, season) as any[]
@@ -279,6 +285,8 @@ export class IETVCache {
 			season: ep.season,
 			episode: ep.episode,
 			thumbnail: ep.thumbnail ?? null,
+			titleJp: ep.titleJp ?? null,
+			romaji: ep.romaji ?? null,
 			publishDate: ep.publishDate ?? null,
 			viewCount: ep.viewCount ?? null,
 			language: ep.language,
@@ -290,7 +298,7 @@ export class IETVCache {
 	search(query: CacheSearchQuery): CachedVideoRef[] {
 		let sql = `
       SELECT DISTINCT e.videoId, e.season, e.episode, e.title, e.url, e.description, e.thumbnail,
-             e.publishDate, e.viewCount, e.language, e.duration, e.quality,
+             e.titleJp, e.romaji, e.publishDate, e.viewCount, e.language, e.duration, e.quality,
              c.channel, c.title as channel_title
       FROM episodes e
       JOIN channels c ON e.channel_id = c.id
@@ -335,6 +343,8 @@ export class IETVCache {
 			season: ep.season,
 			episode: ep.episode,
 			thumbnail: ep.thumbnail ?? null,
+			titleJp: ep.titleJp ?? null,
+			romaji: ep.romaji ?? null,
 			publishDate: ep.publishDate ?? null,
 			viewCount: ep.viewCount ?? null,
 			language: ep.language,
