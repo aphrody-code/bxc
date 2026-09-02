@@ -34,13 +34,12 @@ import {
 import {
 	CLE_FILS,
 	SynchronisationForum,
+	analyserTableFils,
+	etiquettesDeSaison,
 	lireValeurOption,
 	menusDeSaison,
 	nomFilSaison,
 	valeurOption,
-	analyserTableFils,
-	etiquettesDeSaison,
-	nomFilSaison,
 	type PasserelleForum,
 } from "./forum.ts";
 import {
@@ -1421,5 +1420,26 @@ describe("nom d'arc", () => {
 	it("retombe sur le numéro quand aucune source ne nomme l'arc", () => {
 		expect(nomFilSaison(2, 41)).toBe("Saison 2 — 41 épisode(s)");
 		expect(nomFilSaison(2, 41, "   ")).toBe("Saison 2 — 41 épisode(s)");
+	});
+});
+
+describe("titre de l'embed d'un arc", () => {
+	it("porte le nom de la source, pas le numéro", async () => {
+		const { catalogue, cache } = catalogueAvec([episode({ videoId: "a", season: 10, episode: 1 })]);
+		cache.chaines[0]!.seasons[0]!.name = "Films";
+
+		const { passerelle, fils } = passerelleForumFactice();
+		await new SynchronisationForum({
+			catalogue,
+			passerelle,
+			stockage: { lireMeta: () => null, ecrireMeta: () => {} },
+			marque: MARQUE_PAR_DEFAUT,
+		}).synchroniser();
+
+		const fil = [...fils.values()][0]!;
+		expect(fil.nom).toBe("Films — 1 épisode(s)");
+		// Le fil ET l'embed doivent dire la même chose.
+		expect(fil.embed[0].title).toContain("Films");
+		expect(fil.embed[0].title).not.toContain("Saison 10");
 	});
 });
