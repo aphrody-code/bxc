@@ -5,17 +5,19 @@
     "": {
       "name": "@aphrody/bxc",
       "dependencies": {
-        "@aphrody/challonge": "0.1.6",
-        "@aphrody/fut": "0.1.5",
-        "@aphrody/ietv": "0.1.0",
-        "@aphrody/ietv-client": "1.0.0",
-        "@aphrody/voiranime": "0.1.5",
-        "@aphrody/wonderbot": "0.1.0",
-        "@aphrody/worldbeyblade": "0.1.5",
-        "@aphrody/x": "1.1.0",
-        "@aphrody/xai": "1.0.6",
-        "@aphrody/xcom": "0.1.6",
-        "@aphrody/zukan": "0.1.5",
+        "@aphrody/animesama": "0.2.0",
+        "@aphrody/challonge": "0.2.0",
+        "@aphrody/frames": "0.2.0",
+        "@aphrody/fut": "0.2.0",
+        "@aphrody/ietv": "0.2.0",
+        "@aphrody/ietv-client": "1.1.0",
+        "@aphrody/voiranime": "0.2.0",
+        "@aphrody/wonderbot": "0.2.0",
+        "@aphrody/worldbeyblade": "0.2.0",
+        "@aphrody/x": "1.2.0",
+        "@aphrody/xai": "1.1.0",
+        "@aphrody/xcom": "0.2.0",
+        "@aphrody/zukan": "0.2.0",
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/cors": "^1.4.2",
         "@elysiajs/swagger": "^1.3.1",
@@ -55,13 +57,24 @@
         "typescript": "^6.0.3",
       },
     },
+    "packages/animesama": {
+      "name": "@aphrody/animesama",
+      "version": "0.2.0",
+    },
     "packages/challonge": {
       "name": "@aphrody/challonge",
-      "version": "0.1.6",
+      "version": "0.2.0",
+    },
+    "packages/frames": {
+      "name": "@aphrody/frames",
+      "version": "0.2.0",
+      "dependencies": {
+        "trace.moe-id": "^2.0.0",
+      },
     },
     "packages/fut": {
       "name": "@aphrody/fut",
-      "version": "0.1.5",
+      "version": "0.2.0",
       "dependencies": {
         "bottleneck": "^2.19.5",
         "lru-cache": "^11.5.1",
@@ -72,7 +85,7 @@
     },
     "packages/ietv": {
       "name": "@aphrody/ietv",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "mediabunny": "^1.55.5",
       },
@@ -93,11 +106,11 @@
     },
     "packages/ietv-client": {
       "name": "@aphrody/ietv-client",
-      "version": "1.0.0",
+      "version": "1.1.0",
     },
     "packages/next-playwright": {
       "name": "@aphrody/next-playwright",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
@@ -111,7 +124,7 @@
     },
     "packages/test": {
       "name": "@aphrody/bxc-test",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.3",
@@ -125,11 +138,11 @@
     },
     "packages/voiranime": {
       "name": "@aphrody/voiranime",
-      "version": "0.1.5",
+      "version": "0.2.0",
     },
     "packages/wonderbot": {
       "name": "@aphrody/wonderbot",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@aphrody/ietv": "0.1.0",
         "discord.js": "^14.26.4",
@@ -137,14 +150,14 @@
     },
     "packages/worldbeyblade": {
       "name": "@aphrody/worldbeyblade",
-      "version": "0.1.5",
+      "version": "0.2.0",
       "dependencies": {
         "cheerio": "^1.2.0",
       },
     },
     "packages/x": {
       "name": "@aphrody/x",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "dependencies": {
         "zod": "^4.4.3",
       },
@@ -155,7 +168,7 @@
     },
     "packages/xai": {
       "name": "@aphrody/xai",
-      "version": "1.0.6",
+      "version": "1.1.0",
       "dependencies": {
         "@aphrody/x": "1.1.0",
       },
@@ -166,11 +179,11 @@
     },
     "packages/xcom": {
       "name": "@aphrody/xcom",
-      "version": "0.1.6",
+      "version": "0.2.0",
     },
     "packages/zukan": {
       "name": "@aphrody/zukan",
-      "version": "0.1.5",
+      "version": "0.2.0",
       "dependencies": {
         "cheerio": "^1.2.0",
       },
@@ -592,9 +605,13 @@
   "packages": {
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.74.0", "", { "dependencies": { "json-schema-to-ts": "^3.1.1" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-srbJV7JKsc5cQ6eVuFzjZO7UR3xEPJqPamHFIe29bs38Ij2IripoAhC0S5NslNbaFUYqBKypmmpzMTpqfHEUDw=="],
 
+    "@aphrody/animesama": ["@aphrody/animesama@workspace:packages/animesama"],
+
     "@aphrody/bxc-test": ["@aphrody/bxc-test@workspace:packages/test"],
 
     "@aphrody/challonge": ["@aphrody/challonge@workspace:packages/challonge"],
+
+    "@aphrody/frames": ["@aphrody/frames@workspace:packages/frames"],
 
     "@aphrody/fut": ["@aphrody/fut@workspace:packages/fut"],
 
@@ -2379,6 +2396,8 @@
     "tough-cookie": ["tough-cookie@6.0.2", "", { "dependencies": { "tldts": "^7.0.5" } }, "sha512-exgYmnmL/sJpR3upZfXG5PoatXQii55xAiXGXzY+sROLZ/Y+SLcp9PgJNI9Vz37HpQ74WvDcLT8eqm+kV3FzrA=="],
 
     "tr46": ["tr46@6.0.0", "", { "dependencies": { "punycode": "^2.3.1" } }, "sha512-bLVMLPtstlZ4iMQHpFHTR7GAGj2jxi8Dg0s2h2MafAE4uSWF98FC/3MomU51iQAMf8/qDUbKWf5GxuvvVcXEhw=="],
+
+    "trace.moe-id": ["trace.moe-id@2.0.0", "", {}, "sha512-IjCgabnsYUhOrXV8BoZNiD7EOZPyebljemx5xDfGyuj0KgSvoy5yQyZZJag0DEbPR9qiqsCpDzcHqBBvzwOr+A=="],
 
     "tree-kill": ["tree-kill@1.2.2", "", { "bin": { "tree-kill": "cli.js" } }, "sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A=="],
 

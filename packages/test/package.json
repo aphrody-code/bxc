@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/bxc-test",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -16,6 +16,16 @@
     "locator",
     "web-first-assertions"
   ],
+  "files": [
+    "src/",
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "bun": ">=1.3.14"
+  },
   "license": "Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",
