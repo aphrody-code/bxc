@@ -6,6 +6,80 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.9.1] - 2026-09-03
+
+### Fixed
+
+- **VoirAnime — les deux pages d'une série sont scrapées.** Une série existe en
+  VF *et* en VOSTFR sur deux pages distinctes ; n'en lire qu'une laissait un
+  lecteur VF mort sans remplaçant possible. Mapping Kai ajouté au passage.
+
+### Changed
+
+- Dépendances remises à niveau dans leurs plages semver (`@biomejs/biome`
+  2.5.12, `patchright` 1.62.3) et plages `^` réalignées sur l'installé.
+- Bump de tous les paquets npm (16 workspaces + racine), des crates Rust du
+  workspace, du serveur MCP et du plugin Claude Code.
+
+---
+
+## [0.9.0] - 2026-09-03
+
+### Added
+
+- **Cœur média `src/media/`** (export `@aphrody/bxc/media`) : reconnaissance de
+  l'hébergeur, déballage des scripts compressés, extraction de la piste, lecture
+  des playlists HLS, résolution d'un embed. voiranime et anime-sama n'ont plus
+  de code de lecteur en propre. Rien n'est jamais `eval`-ué : les charges
+  `eval(function(p,a,c,k,e,d))` sont rejouées. Réseau injecté via
+  `MediaTransport`, d'où 49 tests hors ligne ; `resolveEmbed` ne lève jamais.
+- **`packages/animesama`** — scraper anime-sama.to : catalogue, saisons,
+  épisodes, lecteurs, adossé au cœur média.
+- **`packages/frames`** — « d'où vient cette image ? ». Index local image par
+  image (descripteur MPEG-7 ColorLayout, 33 octets/trame) et client trace.moe en
+  recours, interrogé par vecteur : 33 entiers partent, jamais l'image.
+- **Multiplateforme Windows 11** — chemins via `src/utils/platform-paths.ts`,
+  config via `src/config/resolve.ts`, installation en une commande
+  (`install.sh` / `install.ps1`) et `bxc self-update [--check]`. Audit :
+  [`CROSS-PLATFORM.md`](CROSS-PLATFORM.md).
+- **Publication de tout le dépôt** dans l'ordre des dépendances, hook
+  `postinstall` conservé.
+
+### Fixed
+
+- Le plugin Claude Code `plugins/bxc/` se charge enfin dans Claude Code.
+
+---
+
+## [0.8.0] - 2026-09-02
+
+### Added
+
+- **`packages/ietv`** — catalogue Inazuma Eleven TV : YouTube (flux Atom),
+  site officiel (JSON-LD), Pluto.tv multi-région, chronologie Wikipédia (dates
+  de diffusion, titres originaux), films nommés, métadonnées d'épisode et
+  langue par chaîne, gestion VF/VOSTFR. Cache SQLite multi-couches, serveur
+  REST + client universel (`@aphrody/ietv-client`), player media-chrome +
+  hls.js et transcodage mediabunny.
+- **`packages/wonderbot`** — bot Discord du catalogue IETV, jamais de scraping
+  en direct : il lit le cache et le rafraîchit lui-même toutes les 6 h. Forum
+  comme catalogue (un fil par saison, message d'ouverture modifié),
+  rafraîchissement au démarrage si périmé, réparation bornée des trous, lecteur
+  vidéo intégré — aucun lien sortant.
+
+### Fixed
+
+- Aucun nom déposé sur les surfaces publiques Discord ; `/ietv` renommé plus
+  tard en `/episodes`.
+- `/…  rafraichir` ouvert aux administrateurs du serveur, sans quoi un serveur
+  neuf n'a personne pour lancer le premier scraping.
+- Un catalogue vide est toujours considéré périmé.
+- `deploy` : `cp --remove-destination`, sans quoi `bin/bxc` était écrasé via un
+  lien symbolique.
+- Aucune minification des binaires : elle casse les `eval` CDP.
+
+---
+
 ## [0.7.0] - 2026-08-31
 
 ### Added

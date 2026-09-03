@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/ietv-client",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Client universel pour API IETV REST — Discord, Web, Mobile, Tauri",
   "type": "module",
   "main": "./src/index.ts",

@@ -10,7 +10,7 @@
 # This gives agents a "native" local re-ranker for X results without hand-rolled heuristics.
 [package]
 name        = "x-algorithm"
-version     = "0.2.0"
+version     = "0.2.1"
 edition     = "2021"
 publish     = false
 license     = "Apache-2.0"
