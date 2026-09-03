@@ -531,7 +531,10 @@ describe("resumable journal", () => {
       const state = loadTweetState(statePath) as TweetPurgeState;
       expect(state.queue.map((t) => t.id)).toEqual(["b", "c"]);
       expect(state.history).toHaveLength(1);
-      expect(statSync(statePath).mode & 0o777).toBe(0o600);
+      // NTFS n'a pas de bits POSIX : cf. CROSS-PLATFORM.md M7.
+      if (process.platform !== "win32") {
+        expect(statSync(statePath).mode & 0o777).toBe(0o600);
+      }
 
       const second = await purgeTweets(client, {
         now: clock.now,

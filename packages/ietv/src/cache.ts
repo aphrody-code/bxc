@@ -10,7 +10,9 @@
  */
 
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 import type { ChannelInfo, VideoRef } from "./index";
 
 /** `VideoRef` tel que stocké en cache : le nom de chaîne d'origine en plus. */
@@ -35,13 +37,34 @@ export interface CacheStats {
 	lastUpdate: number;
 }
 
+/**
+ * Étend un `~` de tête sans passer par `process.env.HOME`, qui n'existe pas
+ * sous Windows (`os.homedir()` y lit `USERPROFILE`).
+ */
+export function expandHome(input: string): string {
+	if (input !== "~" && !input.startsWith("~/") && !input.startsWith("~\\")) {
+		return input;
+	}
+	const rest = input.slice(1).replace(/^[\\/]/, "");
+	return rest ? join(homedir(), ...rest.split(/[\\/]/)) : homedir();
+}
+
+/** Chemin par défaut du catalogue SQLite, valide sur les trois plateformes. */
+export function defaultCachePath(): string {
+	const fromEnv = (process.env.IETV_CACHE_PATH ?? "").trim();
+	if (fromEnv !== "") return expandHome(fromEnv);
+	return join(homedir(), ".cache", "ietv", "episodes.db");
+}
+
 export class IETVCache {
 	private db: Database;
 	private dbPath: string;
 
-	constructor(dbPath = "~/.cache/ietv/episodes.db") {
-		this.dbPath = dbPath.replace("~", process.env.HOME || "/root");
-		const dir = this.dbPath.substring(0, this.dbPath.lastIndexOf("/"));
+	constructor(dbPath: string = defaultCachePath()) {
+		this.dbPath = expandHome(dbPath);
+		// `dirname` plutôt que `lastIndexOf("/")` : sous Windows le chemin est
+		// séparé par `\\` et l'ancien calcul renvoyait `mkdirSync("")`.
+		const dir = dirname(this.dbPath);
 		if (!existsSync(dir)) {
 			mkdirSync(dir, { recursive: true });
 		}

@@ -3,7 +3,14 @@ dist
 .bun
 .env
 rust-bridge/target
-bin
+# `bin/` contient des binaires compiles (ignores) ET les trois lanceurs
+# versionnes declares par package.json#bin. Git ne sait pas re-inclure un
+# fichier dont le REPERTOIRE parent est exclu : d'ou `bin/*` + negations,
+# et non `bin`.
+bin/*
+!bin/bxc
+!bin/bxc.mjs
+!bin/bxc.cmd
 docs_gemini
 .bxc/
 .turbo/

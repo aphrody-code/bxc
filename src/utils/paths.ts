@@ -15,73 +15,57 @@
  */
 
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { mkdirSync, existsSync } from "node:fs";
+import { resolveBxcConfig } from "../config/resolve.ts";
+
+/** Crée le répertoire si besoin, puis le renvoie. Idempotent. */
+function ensureDir(dir: string): string {
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
+	return dir;
+}
 
 /**
- * Returns the unified root bxc directory (defaults to ~/.bxc).
- * Can be overridden via BXC_DIR or BXC_HOME environment variables.
- * Automatically ensures the directory and its parents exist.
+ * Racine unifiée des données bxc.
+ *
+ * Résolution déléguée à `resolveBxcConfig()` : `BXC_DIR`/`BXC_HOME`, puis
+ * `config.json`, puis le défaut de plateforme (`~/.bxc` sous POSIX,
+ * `%LOCALAPPDATA%\bxc` sous Windows quand `~/.bxc` n'existe pas).
  */
 export function getBxcDir(): string {
-	const customDir = Bun.env.BXC_DIR ?? Bun.env.BXC_HOME;
-	const rootDir = customDir ? customDir : join(homedir(), ".bxc");
-
-	if (!existsSync(rootDir)) {
-		mkdirSync(rootDir, { recursive: true });
-	}
-	return rootDir;
+	return ensureDir(resolveBxcConfig().settings.rootDir);
 }
 
-/**
- * Returns the unified cookies folder (~/.bxc/cookies).
- */
+/** Bocaux à cookies (`<root>/cookies`, ou `BXC_COOKIES_DIR`). */
 export function getCookiesDir(): string {
-	const dir = join(getBxcDir(), "cookies");
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
-	}
-	return dir;
+	return ensureDir(resolveBxcConfig().settings.cookiesDir);
 }
 
-/**
- * Returns the unified binary folder (~/.bxc/bin).
- */
+/** Binaires extraits du bundle (`<root>/bin`, ou `BXC_BIN_DIR`). */
 export function getBinDir(): string {
-	const dir = join(getBxcDir(), "bin");
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
-	}
-	return dir;
+	return ensureDir(resolveBxcConfig().settings.binDir);
 }
 
-/**
- * Returns the unified vendor folder (~/.bxc/vendor).
- */
+/** Binaires tiers téléchargés (`<root>/vendor`, ou `BXC_VENDOR_DIR`). */
 export function getVendorDir(): string {
-	const dir = join(getBxcDir(), "vendor");
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
-	}
-	return dir;
+	return ensureDir(resolveBxcConfig().settings.vendorDir);
 }
 
-/**
- * Returns the unified user data folder (~/.bxc/user-data).
- */
+/** Profils de navigateur (`<root>/user-data`). */
 export function getUserDataDir(): string {
-	const dir = join(getBxcDir(), "user-data");
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
-	}
-	return dir;
+	return ensureDir(join(getBxcDir(), "user-data"));
 }
 
 /**
- * Returns a file path inside the unified cache/database.
+ * Chemin d'un fichier dans la racine bxc.
+ *
+ * Le nom par défaut (`cache.sqlite`) respecte `BXC_CACHE_FILE`.
  */
 export function getCacheFile(name = "cache.sqlite"): string {
-	return join(getBxcDir(), name);
+	const { settings } = resolveBxcConfig();
+	if (name === "cache.sqlite") return settings.cacheFile;
+	return join(settings.rootDir, name);
 }
 
 /**

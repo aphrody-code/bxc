@@ -27,7 +27,7 @@
  */
 
 import IETVScraper, { type ChannelInfo, type ScrapingStats } from "@aphrody/ietv";
-import { IETVCache } from "@aphrody/ietv/cache";
+import { defaultCachePath, IETVCache } from "@aphrody/ietv/cache";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -102,14 +102,15 @@ export class IETVRestServer {
 
 	constructor(config: IETVServerConfig = {}) {
 		this.scraper = new IETVScraper();
-		this.sqliteCache = new IETVCache(config.cachePath ?? "~/.cache/ietv/episodes.db");
+		const cachePath = config.cachePath ?? defaultCachePath();
+		this.sqliteCache = new IETVCache(cachePath);
 		this.requestCache = new RequestCache();
 		this.config = {
 			port: config.port ?? 3000,
 			host: config.host ?? "0.0.0.0",
 			cacheEnabled: config.cacheEnabled ?? true,
 			corsOrigins: config.corsOrigins ?? ["*"],
-			cachePath: config.cachePath ?? "~/.cache/ietv/episodes.db",
+			cachePath,
 		};
 	}
 

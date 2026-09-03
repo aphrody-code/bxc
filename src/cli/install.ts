@@ -18,10 +18,9 @@
  * `bxc install` — download Lightpanda for the current platform.
  */
 
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { chmodSync, mkdirSync, renameSync } from "node:fs";
 import { type CommonOptions, parseCommonArgs, logger } from "./shared.ts";
-
-const homedir = (): string => Bun.env.HOME ?? "/tmp";
 
 export interface InstallOptions {
 	dryRun?: boolean;
@@ -76,8 +75,9 @@ async function streamDownload(
 	}
 
 	const partial = `${destPath}.partial`;
-	const parentDir = destPath.substring(0, destPath.lastIndexOf("/"));
-	await Bun.$`mkdir -p ${parentDir}`.quiet();
+	// `dirname` gère `C:\\…` comme `/…` ; `lastIndexOf("/")` renvoyait -1 sous
+	// Windows et produisait un `mkdir ""`.
+	mkdirSync(dirname(destPath), { recursive: true });
 
 	const res = await fetch(url, {
 		headers: { "User-Agent": "bxc-install" },
@@ -120,7 +120,7 @@ async function streamDownload(
 		throw err;
 	}
 	Bun.stdout.write("\n");
-	await Bun.$`mv ${partial} ${destPath}`.quiet();
+	renameSync(partial, destPath);
 }
 
 export function detectLightpandaPlatform(
@@ -229,7 +229,9 @@ export async function installLightpanda(
 	try {
 		await streamDownload(asset.url, destPath, asset.size, dryRun);
 		if (!dryRun) {
-			await Bun.$`chmod +x ${destPath}`.quiet();
+			// Pas de `Bun.$\`chmod\`` : ce n'est pas un builtin du shell Bun et le
+			// binaire n'existe pas sous Windows, où le bit exec n'a pas de sens.
+			if (process.platform !== "win32") chmodSync(destPath, 0o755);
 			logger.log(`Installed Lightpanda: ${destPath}`);
 		}
 		return { status: "installed", path: destPath };
@@ -265,6 +267,12 @@ export async function main(
 	if (lightpanda.status === "failed") {
 		logger.warn("Lightpanda install failed.");
 		process.exit(1);
+	} else if (lightpanda.status === "unsupported") {
+		// Lightpanda ne publie pas d'asset Windows : ce n'est pas une erreur
+		// d'installation, seulement un profil indisponible sur cette cible.
+		logger.warn(
+			`No Lightpanda release for ${process.platform}/${process.arch} — bxc falls back to the chrome/http profiles.`,
+		);
 	} else {
 		logger.log("Lightpanda installed successfully.");
 	}

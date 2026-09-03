@@ -111,6 +111,7 @@ Global flags: `--json` (structured output), `--insecure`/`-k` (bypass TLS),
 | `bxc api` | `bxc api` | Run Bxc as an HTTP JSON API (REST + GraphQL). |
 | `bxc crawl-worker`| `bxc crawl-worker [opts]`| Runs the persistent recursive crawler worker 24/7. |
 | `bxc install` | `bxc install` | Downloads native dependencies (Lightpanda). |
+| `bxc self-update` | `bxc self-update [--check]` | Updates the binary from the latest GitHub release. |
 | `bxc chrome` | `bxc chrome <action>` | Native Chromium management. |
 
 ### ⚙️ Command Profiles
@@ -290,19 +291,75 @@ under the `@aphrody` scope (published to npm):
 
 ## 📦 Installation
 
-### Linux / macOS
-```bash
-# Global install (recommended)
-curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
+One command per platform. Both installers download the release binary, write a
+default configuration and verify the install by running `bxc --version`.
 
-# As a library
+### Linux / macOS
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
+```
+
+Installs to `~/.local/bin/bxc` and writes `~/.config/bxc/config.json`
+(`$XDG_CONFIG_HOME` is honoured). Knobs:
+
+| Variable | Effect |
+| --- | --- |
+| `BXC_INSTALL_DIR` | install target (default `~/.local/bin`) |
+| `BXC_VERSION` | pin a release tag instead of the latest |
+| `BXC_CONFIG_DIR` | where `config.json` is written |
+| `BXC_NO_CONFIG=1` | skip the config file |
+| `BXC_NO_VERIFY=1` | skip the `--version` check |
+
+### Windows 11
+
+```powershell
+irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1 | iex
+```
+
+Installs to `%USERPROFILE%\.bxc\bin\bxc.exe`, writes
+`%APPDATA%\bxc\config.json`, and adds the bin directory to the user `PATH`
+(broadcasting `WM_SETTINGCHANGE`, so new shells pick it up). It downloads
+`bxc-windows-x64.exe` and falls back to the `.zip` bundle; `-ForceBaseline`
+targets pre-AVX2 CPUs, `-NoPathUpdate` leaves `PATH` alone, `-Version v0.8.0`
+pins a release.
+
+### As a library
+
+```bash
 bun add @aphrody/bxc
 ```
 
-### Windows 11 (PowerShell One-Liner)
-```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/aphrody-code/bxc/main/scripts/install-bxc.ps1 | iex"
+### Updating
+
+```bash
+bxc self-update --check    # compare only, write nothing
+bxc self-update            # replace the binary for the current target
+bxc self-update --tag v0.8.0   # pin a release
 ```
+
+`self-update` compares the local version to the latest `aphrody-code/bxc`
+release, picks the asset matching `process.platform` / `process.arch` (raw
+binary first, `.zip` / `.tar.gz` fallback) and swaps the binary atomically. On
+Windows the running `.exe` is renamed aside before the new one is moved in.
+
+### Configuration
+
+Resolution order is **environment variables → user config file → platform
+defaults**, implemented by a single injectable function
+(`src/config/resolve.ts`).
+
+| | Linux / macOS | Windows 11 |
+| --- | --- | --- |
+| Config | `$XDG_CONFIG_HOME/bxc` → `~/.config/bxc` | `%APPDATA%\bxc` |
+| Cache | `$XDG_CACHE_HOME/bxc` → `~/.cache/bxc` | `%LOCALAPPDATA%\bxc\cache` |
+| Data | `$XDG_DATA_HOME/bxc` → `~/.local/share/bxc` | `%LOCALAPPDATA%\bxc\data` |
+| Binary | `~/.local/bin` | `%LOCALAPPDATA%\bxc\bin` |
+
+An existing `~/.bxc` keeps priority on every platform, so upgrading never moves
+an established install. `BXC_DIR` overrides the root; see
+[`CROSS-PLATFORM.md`](CROSS-PLATFORM.md) for the full matrix and for what is
+still Linux-only (systemd daemons, X purges, crawler).
 
 ### Windows 11 Development / Packaging
 If you are developing or building Bxc on Windows 11, you can automate setup, build, and packaging using the scripts below:

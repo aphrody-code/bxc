@@ -27,10 +27,16 @@ jobs:
             target: windows-x64
             artifact_name: bxc-windows-x64
             bun_target: bun-windows-x64
+          # `darwin-arm64` et non `macos-arm64` : c'est le nom qu'attendent
+          # install.sh et `bxc self-update` (aligné sur process.platform).
           - os: macos-latest
-            target: macos-arm64
-            artifact_name: bxc-macos-arm64
+            target: darwin-arm64
+            artifact_name: bxc-darwin-arm64
             bun_target: bun-darwin-arm64
+          - os: macos-13
+            target: darwin-x64
+            artifact_name: bxc-darwin-x64
+            bun_target: bun-darwin-x64
 
     steps:
       - uses: actions/checkout@v4
@@ -54,19 +60,28 @@ jobs:
         env:
           RUSTFLAGS: "-C target-feature=+crt-static -C target-cpu=x86-64-v3 -C lto=fat"
 
+      # Point d'entrée : src/cli/index.ts, le routeur de sous-commandes — PAS
+      # src/serverless/standalone.ts, qui ne connaît ni `--version` ni `recon`.
+      # Pas de `--minify` : les eval CDP référencent des fonctions par nom
+      # (`awaitPromise`) dans des chaînes que le bundler ne voit pas.
+      - name: Install workspace dependencies
+        run: bun install --frozen-lockfile
+
       - name: Compile Standalone (Bun Bytecode)
+        shell: bash
         run: |
           mkdir -p dist/release
-          bun build --compile --target=${{ matrix.bun_target }} --minify --bytecode --outfile dist/release/bxc src/serverless/standalone.ts
-          bun build ./src/mcp/server.ts --compile --target=${{ matrix.bun_target }} --minify --bytecode --no-compile-autoload-tsconfig --no-compile-autoload-package-json --outfile dist/release/bxc-mcp
-        if: matrix.os != 'windows-latest'
-
-      - name: Compile Standalone (Windows Bytecode)
-        run: |
-          mkdir dist\release
-          bun build --compile --target=${{ matrix.bun_target }} --minify --bytecode --outfile dist\release\bxc.exe src\serverless\standalone.ts
-          bun build .\src\mcp\server.ts --compile --target=${{ matrix.bun_target }} --minify --bytecode --no-compile-autoload-tsconfig --no-compile-autoload-package-json --outfile dist\release\bxc-mcp.exe
-        if: matrix.os == 'windows-latest'
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then EXT=".exe"; else EXT=""; fi
+          # La version vient de package.json, pas du nom de la ref : un
+          # `workflow_dispatch` sur une branche produirait sinon `--version main`.
+          VERSION="$(bun --print 'require("./package.json").version')"
+          bun build --compile --target=${{ matrix.bun_target }} --bytecode --sourcemap=linked \
+            --external electron --external playwright-core/lib/zipBundle \
+            --define "__BXC_VERSION__=\"$VERSION\"" \
+            --outfile "dist/release/bxc$EXT" src/cli/index.ts
+          bun build ./src/mcp/server.ts --compile --target=${{ matrix.bun_target }} --bytecode \
+            --no-compile-autoload-tsconfig --no-compile-autoload-package-json \
+            --outfile "dist/release/bxc-mcp$EXT"
 
       - name: Package Artifacts
         shell: bash
@@ -75,25 +90,35 @@ jobs:
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             cp ../../rust-bridge/target/x86_64-pc-windows-msvc/release/bxc_rust_bridge.dll .
             zip -r ../../${{ matrix.artifact_name }}.zip .
+            # Binaire nu, en plus de l'archive : c'est ce que téléchargent
+            # install.ps1 et `bxc self-update`.
+            cp bxc.exe ../../${{ matrix.artifact_name }}.exe
           else
             cp ../../rust-bridge/target/release/libbxc_rust_bridge.* .
             tar -czvf ../../${{ matrix.artifact_name }}.tar.gz .
+            cp bxc ../../${{ matrix.artifact_name }}
           fi
+
+      - name: Smoke test the built CLI
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then BIN=dist/release/bxc.exe; else BIN=dist/release/bxc; fi
+          # `--version` doit répondre : c'est la garantie que l'entry point
+          # compilé est bien le routeur CLI et pas un serveur.
+          "$BIN" --version
 
       - name: Generate Provenance (Attestations)
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
-            *.zip
-            *.tar.gz
+            bxc-*
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            *.zip
-            *.tar.gz
+            bxc-*
 
   release:
     name: Create GitHub Release
@@ -106,15 +131,14 @@ jobs:
       
       - name: Generate Checksums
         run: |
-          find . -type f \( -name '*.zip' -o -name '*.tar.gz' \) -print0 \
+          find . -type f -name 'bxc-*' -print0 \
             | xargs -0 sha256sum > SHA256SUMS.txt
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            */*.zip
-            */*.tar.gz
+            */bxc-*
             SHA256SUMS.txt
           draft: false
           prerelease: false

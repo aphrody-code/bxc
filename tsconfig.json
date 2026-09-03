@@ -14,11 +14,13 @@
 			"@aphrody/bxc": ["./src/api/browser.ts"],
 			"@aphrody/bxc/scrapers/challonge": ["./packages/challonge/src/index.ts"],
 			"@aphrody/bxc/scrapers/voiranime": ["./packages/voiranime/src/index.ts"],
+			"@aphrody/bxc/scrapers/animesama": ["./packages/animesama/src/index.ts"],
 			"@aphrody/bxc/scrapers/xcom": ["./packages/xcom/src/index.ts"],
 			"@aphrody/bxc/scrapers/worldbeyblade": ["./packages/worldbeyblade/src/index.ts"],
 			"@aphrody/bxc/scrapers/fut": ["./packages/fut/src/index.ts"],
 			"@aphrody/bxc/scrapers/zukan": ["./packages/zukan/src/index.ts"],
 			"@aphrody/bxc/*": ["./src/*"],
+			"@aphrody/animesama": ["./packages/animesama/src/index.ts"],
 			"@aphrody/ietv": ["./packages/ietv/src/index.ts"],
 			"@aphrody/ietv/*": ["./packages/ietv/src/*.ts"],
 			"@aphrody/wonderbot": ["./packages/wonderbot/src/index.ts"]

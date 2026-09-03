@@ -46,6 +46,35 @@ function resolveBinPath(): string | null {
 	return null;
 }
 
+/** Révision de snapshot Chromium téléchargée par `bxc chrome fetch`. */
+const CHROMIUM_SNAPSHOT_REVISION =
+	Bun.env["BXC_CHROME_SNAPSHOT_REVISION"] ?? "1399999";
+
+/**
+ * URL du snapshot Chromium pour la plateforme courante.
+ *
+ * Les noms de dossier et d'archive viennent de
+ * `chromium-browser-snapshots` : ils ne suivent ni `process.platform` ni
+ * `process.arch`, d'où la table explicite. `null` quand Google ne publie pas
+ * de snapshot pour la cible — mieux vaut le dire que télécharger un binaire
+ * Linux sur une machine Windows.
+ */
+export function chromiumSnapshot(
+	platform: NodeJS.Platform = process.platform,
+	arch: NodeJS.Architecture = process.arch,
+	revision: string = CHROMIUM_SNAPSHOT_REVISION,
+): string | null {
+	const table: Record<string, { dir: string; zip: string }> = {
+		"linux-x64": { dir: "Linux_x64", zip: "chrome-linux" },
+		"win32-x64": { dir: "Win_x64", zip: "chrome-win" },
+		"darwin-x64": { dir: "Mac", zip: "chrome-mac" },
+		"darwin-arm64": { dir: "Mac_Arm", zip: "chrome-mac" },
+	};
+	const entry = table[`${platform}-${arch}`];
+	if (!entry) return null;
+	return `https://storage.googleapis.com/chromium-browser-snapshots/${entry.dir}/${revision}/${entry.zip}.zip`;
+}
+
 /**
  * CLI Entry point for `bxc chrome ...`
  */
@@ -58,10 +87,15 @@ export async function main(
 
 	switch (subcommand) {
 		case "fetch": {
-			const url =
-				args[1] ??
-				Bun.env["BXC_CHROME_FETCH_URL"] ??
-				"https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/1399999/chrome-linux.zip";
+			const explicit = args[1] ?? Bun.env["BXC_CHROME_FETCH_URL"];
+			if (!explicit && !chromiumSnapshot()) {
+				logger.error(
+					`Aucun snapshot Chromium connu pour ${process.platform}/${process.arch}. ` +
+						`Passez l'URL en argument ou via BXC_CHROME_FETCH_URL.`,
+				);
+				process.exit(1);
+			}
+			const url = explicit ?? (chromiumSnapshot() as string);
 			logger.log(`[chrome] fetching native Chromium from ${url}...`);
 			const spawnArgs = bin
 				? [bin, "fetch", url]

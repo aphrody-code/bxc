@@ -51,7 +51,7 @@
 
 import { $ } from "bun";
 import { join } from "node:path";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 
 interface BuildTarget {
 	readonly target: string; // bun --target=<...>
@@ -513,7 +513,7 @@ async function main(): Promise<void> {
 		throw new Error(`Entry point not found : ${entry}`);
 	}
 
-	await $`mkdir -p ${outDir}`.quiet();
+	mkdirSync(outDir, { recursive: true });
 
 	const version = await readPackageVersion(root);
 	const buildTime = new Date().toISOString();

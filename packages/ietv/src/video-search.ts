@@ -74,7 +74,9 @@ function fuzzyScore(query: string, target: string): number {
 export class VideoSearch {
 	private cache: IETVCache;
 
-	constructor(cachePath = "~/.cache/ietv/episodes.db") {
+	constructor(cachePath?: string) {
+		// Pas de `~/.cache/...` codé en dur : `IETVCache` résout le défaut de
+		// façon portable (`os.homedir()` + `path.join`).
 		this.cache = new IETVCache(cachePath);
 	}
 

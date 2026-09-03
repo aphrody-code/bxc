@@ -615,8 +615,12 @@ describe("resumable journal", () => {
       });
       const mode = Bun.file(statePath).size >= 0 ? readFileSync(statePath, "utf-8") : "";
       expect(mode).toContain('"version": 1');
-      const { statSync } = await import("node:fs");
-      expect(statSync(statePath).mode & 0o777).toBe(0o600);
+      // NTFS n'a pas de bits POSIX : l'assertion ne vaut que hors Windows,
+      // où writeJsonPrivate() avertit à la place (cf. CROSS-PLATFORM.md M7).
+      if (process.platform !== "win32") {
+        const { statSync } = await import("node:fs");
+        expect(statSync(statePath).mode & 0o777).toBe(0o600);
+      }
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

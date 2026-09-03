@@ -22,7 +22,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { launchGhostBrowser } from "../profiles/ghost/index.ts";
 import { buildCookieHeader } from "../cookies/cookie-injector.ts";
@@ -189,7 +189,9 @@ export async function googleSearchRich(
 
 	if (content.organic.length === 0 && Bun.env.BXC_DEBUG === "1") {
 		const { writeFileSync } = await import("node:fs");
-		const dbg = join(Bun.env.TMPDIR ?? "/tmp", "bxc-serp-debug.html");
+		// `TMPDIR` n'existe pas sous Windows (`TEMP`/`TMP`) : `os.tmpdir()` gère
+		// les trois plateformes.
+		const dbg = join(tmpdir(), "bxc-serp-debug.html");
 		writeFileSync(dbg, html);
 		Bun.stderr.write(
 			`[google-search] 0 results via ${profileUsed} (html=${html.length}b) — saved ${dbg}\n`,

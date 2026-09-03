@@ -49,6 +49,7 @@ Usage:
 Subcommands:
   serve     Start a CDP server for browser automation
   install   Download engine binaries (Lightpanda + native Chromium)
+  self-update  Update the bxc binary from the latest GitHub release (--check)
   chrome    Native Chromium management
   recon     One-shot URL → recon doc (Markdown by default)
   detect    Framework / CMS / library detection via multi-signal
@@ -62,7 +63,9 @@ Subcommands:
   worldbeyblade worldbeyblade.org automation tools (profile, thread, PMs)
   fut       FIFA Ultimate Team (FUTGG/FUTBin) player price & stats scraper
   voiranime VoirAnime streaming site catalog search & resolver (e.g. "inazuma")
+  animesama anime-sama.to catalogue, seasons/episodes & player resolver
   ietv      Inazuma Eleven TV (IETV) — YouTube channels scraper (seasons & episodes)
+  frames    Frame-by-frame anime index (local ColorLayout) + trace.moe lookup
   wonderbot Wonderbot — Discord bot for the IETV catalogue (start, doctor, refresh, register)
   google    Google properties auditor & client
   xcom      X.com profile scraper
@@ -128,6 +131,13 @@ async function main() {
 
 		case "install": {
 			const mod = await import("./install.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "self-update":
+		case "upgrade": {
+			const mod = await import("./self-update.ts");
 			await mod.main(args, opts);
 			break;
 		}
@@ -205,6 +215,12 @@ async function main() {
 			break;
 		}
 
+		case "frames": {
+			const mod = await import("./frames.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
 		case "ietv": {
 			const mod = await import("./ietv.ts");
 			await mod.main(args, opts);
@@ -213,6 +229,12 @@ async function main() {
 
 		case "wonderbot": {
 			const mod = await import("./wonderbot.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "animesama": {
+			const mod = await import("./animesama.ts");
 			await mod.main(args, opts);
 			break;
 		}

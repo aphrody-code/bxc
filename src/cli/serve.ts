@@ -52,6 +52,9 @@ import { type CommonOptions } from "./shared.ts";
 import type { CDPEvent } from "../transport/InProcessTransport.ts";
 import { hasEmbedded, lightpandaAsset } from "../rust/embedded-assets.ts";
 import { extractEmbeddedAssetIfNeeded } from "../internal/embedded-loader.ts";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { getVendorDir } from "../utils/paths.ts";
 // NOTE: StaticDomTransport and HttpProfileTransport are loaded lazily via
 // dynamic import inside startStatic / startHttp.  This prevents FFI libraries
 // (zigquery cdylib, curl-impersonate) from loading when the user picks
@@ -435,17 +438,27 @@ async function findLightpandaBinary(): Promise<string> {
 		}
 	}
 
-	const home = Bun.env.HOME ?? "";
+	// `Bun.env.HOME` n'existe pas sous Windows : passer par `os.homedir()`, et
+	// composer les chemins avec `join` plutôt qu'en concaténant des `/`.
+	const home = homedir();
+	const exe = process.platform === "win32" ? "lightpanda.exe" : "lightpanda";
 	// Order matters: the @lightpanda/browser npm package downloads the real
 	// native binary into ~/.cache/lightpanda-node/lightpanda but installs a
 	// JS wrapper at ~/.bun/bin/lightpanda that only prints help.  We must
 	// pick the native binary, never the wrapper.
 	const candidates = [
-		`${home}/.cache/lightpanda-node/lightpanda`,
-		`${home}/.lightpanda/lightpanda`,
-		`${home}/.local/bin/lightpanda`,
+		join(home, ".cache", "lightpanda-node", exe),
+		join(home, ".lightpanda", exe),
+		join(home, ".local", "bin", exe),
+		// Là où `bxc install` le pose : <vendor>/lightpanda-bin/<os>-<arch>/.
+		join(
+			getVendorDir(),
+			"lightpanda-bin",
+			`${process.platform === "darwin" ? "darwin" : process.platform === "win32" ? "windows" : "linux"}-${process.arch === "arm64" ? "arm64" : "x64"}`,
+			exe,
+		),
 		// In-tree dev build inside the bunmium monorepo.
-		`${home}/bunmium/lightpanda-src/zig-out/bin/lightpanda`,
+		join(home, "bunmium", "lightpanda-src", "zig-out", "bin", exe),
 	];
 	for (const c of candidates) {
 		try {
@@ -458,7 +471,7 @@ async function findLightpandaBinary(): Promise<string> {
 	}
 	// Last-resort fallback.  May be the JS wrapper, in which case the spawn
 	// will exit immediately and we'll surface a clear error to the caller.
-	return "lightpanda";
+	return exe;
 }
 
 async function spawnLightpanda(

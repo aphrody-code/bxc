@@ -307,6 +307,10 @@ export async function isGoogleInfrastructure(
 ): Promise<boolean> {
 	if (isGoogleDomain(hostname)) return true;
 
+	// `dig` n'est pas livré avec Windows : ne pas tenter le spawn, aller
+	// directement au DoH plutôt que de dépendre d'un `catch`.
+	if (process.platform === "win32") return await isGoogleViaDoh(hostname);
+
 	try {
 		const proc = Bun.spawn(["dig", "NS", hostname, "+short"], {
 			stdout: "pipe",

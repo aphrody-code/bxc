@@ -31,6 +31,7 @@
 
 import { resolve } from "node:path";
 import { $ } from "bun";
+import { mkdirSync } from "node:fs";
 
 const ROOT = resolve(import.meta.dir, "..");
 const WRAPPER_DIR = resolve(ROOT, "vendor/zigquery-wrapper");
@@ -44,7 +45,7 @@ const optimize = DEBUG ? "Debug" : "ReleaseFast";
 console.log(`[bxc] Building ZigQuery DOM library (optimize=${optimize})...`);
 
 // 1. Build via zig build
-await $`mkdir -p ${BUILD_OUT}`;
+mkdirSync(BUILD_OUT, { recursive: true });
 await $`${ZIG_BIN} build -Doptimize=${optimize}`.cwd(WRAPPER_DIR);
 
 // 2. Copy artifacts
