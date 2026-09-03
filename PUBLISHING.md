@@ -6,59 +6,58 @@ Publishing is automated: pushing a `v*` tag triggers `.github/workflows/publish.
 
 ## Pre-flight
 
-- [ ] All tests green: `bun test` in the repo (`/home/ubuntu/bxc/`).
+- [ ] All tests green: `bun test test/ packages/ src/` — **never bare `bun test`**, it walks `vendor/` and dies.
 - [ ] No staged secrets: `git status` clean of `cookies/private/`, `*.env`, `*.key`.
-- [ ] `package.json` `version` bumped (semver — current line is `0.6.x`).
+- [ ] `package.json` `version` bumped (semver — current line is `0.8.x`).
 - [ ] `CHANGELOG.md` updated (or release notes drafted).
 - [ ] Cross-check `package.json#files` against `.npmignore` — defense in depth.
 - [ ] `bun outdated` reviewed for security advisories.
 
 ## Build the runtime artifacts
 
-The package ships these binaries (must exist before pack):
-
-```
-vendor/zigquery-wrapper/zig-out/lib/liblightpanda_dom.so   # 1.7 MB cdylib (DOM)
-vendor/curl-impersonate/libcurl-impersonate.so.4.8.0       # 25 MB TLS fingerprint
-vendor/curl-impersonate/libcurl-impersonate.so             # symlink
-vendor/curl-impersonate/libcurl-impersonate.so.4           # symlink
-```
-
-If absent, rebuild:
+Nothing binary ships on npm: the tarball is TypeScript only. The native
+libraries are resolved at runtime and are optional — `src/rust/bridge.ts`
+`dlopen`s them lazily and the text paths fall back to pure JS when they are
+missing. Build them for local testing with:
 
 ```bash
-cd /home/ubuntu/bxc
-bun run build:cdylib                       # rebuilds liblightpanda_dom.so
-# curl-impersonate is a vendored binary; download via scripts/postinstall.ts logic
+cargo build -p bxc-rust-bridge --release   # libbxc_rust_bridge.{so,dylib,dll}
+bun run build:linux                        # cargo + standalone binaries
 ```
 
 ## Build the standalone executable (separate channel — GitHub Release)
 
 ```bash
-bun run build:exe
+BXC_TARGETS=linux-x64 bun scripts/build-standalone.ts   # TypeScript only, no cargo
+bun run build:mcp                                       # dist/standalone/bxc-mcp
 ls -lh dist/standalone/
 ```
 
-Expected output: `bxc-linux-x64` ~96 MB. Upload this artifact to the GitHub Release after `npm publish` lands.
+`bxc-linux-x64` weighs ~275 MB (Bun runtime included). Upload it to the GitHub
+Release; it is deliberately not on npm.
 
 ## Pack and audit
 
 ```bash
 cd /home/ubuntu/bxc
 rm -f aphrody-bxc-*.tgz
+bun pm pack --dry-run          # liste sans écrire
 bun pm pack
 ```
 
-Expected:
-- Packed size under 15 MB.
-- Unpacked size under 30 MB.
-- Tarball includes `src/`, two runtime `.so` files, `bin/bxc`, `README.md`, `LICENSE`, `scripts/postinstall.ts`.
-- Tarball does NOT include `cookies/`, `forks/`, `test/`, `benchmarks/`, `vendor/camoufox/`, `vendor/wappalyzergo/`, `dist/`, `.gemini/`, or any `*.test.ts`.
+Measured on 0.8.0 — **313 files, 2.71 MB unpacked**:
 
-Inspect the contents:
+- `src/` (181 files) and `packages/*/src/` (138) — `package.json#files` excludes
+  every `*.test.ts` from both;
+- `packages/*/package.json` — required, the root `exports` map points into them;
+- the three launchers `bin/bxc`, `bin/bxc.mjs`, `bin/bxc.cmd`;
+- `scripts/postinstall.ts`, `types/`, `patches/`, `README.md`, `LICENSE`.
+
+No `.so`, no `dist/`, no `vendor/`, no test file. Check with:
 
 ```bash
-tar tzf aphrody-bxc-0.6.4.tgz | sort
+tar tzf aphrody-bxc-0.8.0.tgz | grep -c "test.ts"    # expect 0
+tar tzf aphrody-bxc-0.8.0.tgz | sort | head -30
 ```
 
 ## Smoke-test in a clean project
@@ -67,7 +66,7 @@ tar tzf aphrody-bxc-0.6.4.tgz | sort
 rm -rf /tmp/bxc-install-test
 mkdir -p /tmp/bxc-install-test && cd /tmp/bxc-install-test
 bun init -y
-bun add file:/home/ubuntu/bxc/aphrody-bxc-0.6.4.tgz
+bun add file:/home/ubuntu/bxc/aphrody-bxc-0.8.0.tgz
 bun -e 'import { Browser } from "@aphrody/bxc"; console.log(typeof Browser)'
 ```
 
@@ -93,10 +92,28 @@ npm login --registry=https://registry.npmjs.org/
 
 ## Publish
 
-CI publishes automatically on a `v*` tag push (`.github/workflows/publish.yml`). For a manual publish, scoped packages need `--access public` (already set via `publishConfig.access` in `package.json`):
+CI publishes automatically on a `v*` tag push
+(`.github/workflows/publish.yml`), which runs:
 
 ```bash
-cd /home/ubuntu/bxc
+bun scripts/publish-workspaces.ts
+```
+
+That script publishes **every** workspace package, then the root — in
+dependency order (`@aphrody/x` before `@aphrody/xai`, `@aphrody/ietv` before
+`@aphrody/wonderbot`), skipping versions already on the registry. This matters:
+the root pins all its `@aphrody/*` dependencies to exact versions, so publishing
+the root alone ships a package that cannot be installed. Preview the order
+without publishing anything:
+
+```bash
+bun scripts/publish-workspaces.ts --dry-run
+```
+
+For a single manual publish (scoped packages need `--access public`, already set
+via `publishConfig.access`):
+
+```bash
 bun publish --access public --registry https://registry.npmjs.org
 ```
 
@@ -105,6 +122,15 @@ For pre-release channels (alpha/beta/rc), add `--tag`:
 ```bash
 bun publish --access public --tag next --registry https://registry.npmjs.org
 ```
+
+### postinstall
+
+The package declares `postinstall: bun scripts/postinstall.ts`, which downloads
+the Lightpanda browser for the consumer's platform. It never blocks an install
+(any failure warns and exits 0) and it **skips inside this repository** — a
+`.git` directory next to the script is the signal, so `bun install` here stays
+inert. Opt out with `BXC_NO_AUTOINSTALL=1`; force it with
+`LIGHTPANDA_AUTOINSTALL=1`.
 
 ## Post-publish verification
 
@@ -126,16 +152,16 @@ bun -e 'import { Browser } from "@aphrody/bxc"; console.log(typeof Browser)'
 
 ```bash
 cd /home/ubuntu/bxc
-gh release create v0.6.4 \
+gh release create v0.8.0 \
   dist/standalone/bxc-linux-x64 \
-  --title "v0.6.4" \
+  --title "v0.8.0" \
   --notes-file RELEASE-NOTES.md
 ```
 
 Verify:
 
 ```bash
-gh release view v0.6.4
+gh release view v0.8.0
 ```
 
 ## Yank (only if necessary)
@@ -143,14 +169,14 @@ gh release view v0.6.4
 If a tarball ships secrets or broken artefacts, yank within 72 hours:
 
 ```bash
-bun pm unpublish @aphrody/bxc@0.6.4
+bun pm unpublish @aphrody/bxc@0.8.0
 # Or deprecate (preferred for cosmetic/release-note errors):
-npm deprecate @aphrody/bxc@0.6.4 "Use 0.6.5 — fixes X"
+npm deprecate @aphrody/bxc@0.8.0 "Use 0.8.1 — fixes X"
 ```
 
 ## Rollback checklist
 
-- Bump patch version (`0.6.4` to `0.6.5`) rather than re-publishing the same version (immutable).
+- Bump patch version (`0.8.0` to `0.8.1`) rather than re-publishing the same version (immutable).
 - Update `CHANGELOG.md` to reflect the rollback.
 - Document the cause in the release notes.
 

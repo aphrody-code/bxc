@@ -37,6 +37,9 @@
  * Bun-native APIs only : Bun.file, Bun.write, Bun.$, fetch.
  */
 
+import { chmodSync, existsSync, mkdirSync, renameSync } from "node:fs";
+import { dirname, join } from "node:path";
+
 type LightpandaPlatform =
 	| "x86_64-linux"
 	| "aarch64-linux"
@@ -116,18 +119,30 @@ export function detectPlatform(
 /**
  * Decide whether the postinstall should run.
  * Returns a reason string if it should skip, or null if it should proceed.
+ *
+ * The hook is wired in `package.json` so that **consumers** of the npm package
+ * get a browser without a second command. It must stay out of the way of the
+ * source checkout: a `bun install` in this repository would otherwise start
+ * downloading a browser binary as a side effect. A `.git` directory next to
+ * the script is the signal — `LIGHTPANDA_AUTOINSTALL=1` overrides it for the
+ * rare case where a contributor does want the download.
  */
 export function shouldSkip(
 	env: Record<string, string | undefined> = Bun.env as Record<
 		string,
 		string | undefined
 	>,
+	exists: (path: string) => boolean = existsSync,
+	rootDir: string = join(import.meta.dir, ".."),
 ): string | null {
 	if (env.BXC_NO_AUTOINSTALL === "1") {
 		return "BXC_NO_AUTOINSTALL=1 (user opt-out)";
 	}
 	if (env.CI === "1" && env.LIGHTPANDA_AUTOINSTALL !== "1") {
 		return "CI=1 detected and LIGHTPANDA_AUTOINSTALL!=1 (CI cache assumed)";
+	}
+	if (env.LIGHTPANDA_AUTOINSTALL !== "1" && exists(join(rootDir, ".git"))) {
+		return "source checkout detected (.git present) — run `bxc install` explicitly";
 	}
 	return null;
 }
@@ -142,9 +157,9 @@ export function resolveTargetPath(
 ): string {
 	const baseDir = vendorOverride
 		? vendorOverride
-		: `${rootDir}/../vendor/lightpanda-bin`;
+		: join(rootDir, "..", "vendor", "lightpanda-bin");
 	const ext = platform.id.includes("windows") ? ".exe" : "";
-	return `${baseDir}/${platform.dirName}/lightpanda${ext}`;
+	return join(baseDir, platform.dirName, `lightpanda${ext}`);
 }
 
 function fmtMB(bytes: number): string {
@@ -209,7 +224,8 @@ async function streamDownload(
 	expectedSize: number,
 ): Promise<{ written: number }> {
 	const partial = `${targetPath}.partial`;
-	await Bun.$`mkdir -p ${targetPath.substring(0, targetPath.lastIndexOf("/"))}`.quiet();
+	// `dirname` supporte `C:\\…` ; `lastIndexOf("/")` renvoyait -1 sous Windows.
+	mkdirSync(dirname(targetPath), { recursive: true });
 	const res = await fetch(url, {
 		headers: { "User-Agent": "bxc-postinstall" },
 		redirect: "follow",
@@ -242,7 +258,7 @@ async function streamDownload(
 			`size mismatch : expected ${expectedSize} bytes, got ${written}`,
 		);
 	}
-	await Bun.$`mv ${partial} ${targetPath}`.quiet();
+	renameSync(partial, targetPath);
 	return { written };
 }
 
@@ -304,7 +320,8 @@ export async function runPostinstall(
 	);
 	try {
 		const { written } = await streamDownload(asset.url, targetPath, asset.size);
-		await Bun.$`chmod +x ${targetPath}`.quiet();
+		// `chmod` n'est pas un builtin du shell Bun et n'existe pas sous Windows.
+		if (process.platform !== "win32") chmodSync(targetPath, 0o755);
 		log(`installed lightpanda binary : ${targetPath} (${fmtMB(written)})`);
 		return { status: "downloaded", path: targetPath };
 	} catch (err) {

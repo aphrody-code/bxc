@@ -25,6 +25,7 @@
  * suite fast and offline-safe.
  */
 
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
 	detectPlatform,
@@ -77,8 +78,29 @@ describe("detectPlatform", () => {
 });
 
 describe("shouldSkip", () => {
+	/** Hors dépôt : pas de `.git` à côté du script. */
+	const horsDepot = () => false;
+
 	test("returns null with empty env (proceed with download)", () => {
-		expect(shouldSkip({})).toBeNull();
+		expect(shouldSkip({}, horsDepot)).toBeNull();
+	});
+
+	test("skips inside a source checkout so `bun install` stays inert", () => {
+		const reason = shouldSkip({}, (path) => path.endsWith(".git"));
+		expect(reason).toContain("source checkout");
+	});
+
+	test("LIGHTPANDA_AUTOINSTALL=1 overrides the source-checkout guard", () => {
+		expect(shouldSkip({ LIGHTPANDA_AUTOINSTALL: "1" }, () => true)).toBeNull();
+	});
+
+	test("looks for .git next to the repository root, not the script", () => {
+		const vus: string[] = [];
+		shouldSkip({}, (path) => {
+			vus.push(path);
+			return false;
+		}, "/abs/repo");
+		expect(vus).toEqual(["/abs/repo/.git"]);
 	});
 
 	test("opt-out via BXC_NO_AUTOINSTALL=1", () => {
@@ -88,20 +110,20 @@ describe("shouldSkip", () => {
 	});
 
 	test("CI=1 alone causes skip", () => {
-		const reason = shouldSkip({ CI: "1" });
+		const reason = shouldSkip({ CI: "1" }, horsDepot);
 		expect(reason).not.toBeNull();
 		expect(reason).toContain("CI=1");
 	});
 
 	test("CI=1 + LIGHTPANDA_AUTOINSTALL=1 proceeds", () => {
-		expect(shouldSkip({ CI: "1", LIGHTPANDA_AUTOINSTALL: "1" })).toBeNull();
+		expect(shouldSkip({ CI: "1", LIGHTPANDA_AUTOINSTALL: "1" }, horsDepot)).toBeNull();
 	});
 
 	test("BXC_NO_AUTOINSTALL takes precedence even with LIGHTPANDA_AUTOINSTALL", () => {
-		const reason = shouldSkip({
-			BXC_NO_AUTOINSTALL: "1",
-			LIGHTPANDA_AUTOINSTALL: "1",
-		});
+		const reason = shouldSkip(
+			{ BXC_NO_AUTOINSTALL: "1", LIGHTPANDA_AUTOINSTALL: "1" },
+			horsDepot,
+		);
 		expect(reason).toContain("BXC_NO_AUTOINSTALL");
 	});
 });
@@ -111,9 +133,16 @@ describe("resolveTargetPath", () => {
 		const p = detectPlatform("linux", "x64");
 		expect(p).not.toBeNull();
 		const target = resolveTargetPath(p!, "/abs/scripts");
-		expect(target).toBe(
-			"/abs/scripts/../vendor/lightpanda-bin/linux-x64/lightpanda",
-		);
+		// `path.join` normalise le `..` : le chemin sert à `mkdir`/`open`, pas à
+		// l'affichage, et il doit rester valide avec un séparateur Windows.
+		expect(target).toBe(join("/abs", "vendor", "lightpanda-bin", "linux-x64", "lightpanda"));
+	});
+
+	test("Windows : le binaire porte le suffixe .exe", () => {
+		const p = detectPlatform("win32", "x64");
+		expect(p).not.toBeNull();
+		const target = resolveTargetPath(p!, "/abs/scripts");
+		expect(target.endsWith("lightpanda.exe")).toBe(true);
 	});
 
 	test("BXC_VENDOR_DIR override is honored", () => {
