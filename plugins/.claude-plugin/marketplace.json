@@ -1,0 +1,19 @@
+{
+  "name": "bxc-marketplace",
+  "owner": {
+    "name": "aphrody-code",
+    "email": "yohanpierre15@gmail.com"
+  },
+  "metadata": {
+    "description": "Marketplace local du dépôt bxc",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "bxc",
+      "source": "./bxc",
+      "description": "Outillage Claude Code du moteur bxc : serveur MCP bxc-native-mcp, sous-agents dédiés (FFI Rust, scrapers, client X, Grok), compétences et commandes de vérification.",
+      "category": "development"
+    }
+  ]
+}
