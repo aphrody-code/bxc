@@ -1,0 +1,23 @@
+	<script>
+	$(document).ready(function(){
+		//check si episode existe
+		if(typeof eps1 === 'undefined'){$('#msgErrorEp').show();$('#playerDF').hide();}
+		resetListe();
+		finirListe(1);
+		$('#avOeuvre').html();
+	});
+	</script>
+
+		<script>
+		$(document).ready(function(){
+			/*
+			resetListe(); toujours au debut en premier
+			creerListe(debut, fin);newSP(special); on en met autant qu'on veut
+			creerListe(debut, fin);newSP(special); on en met autant qu'on veut
+			finirListe(debut de la fin);
+			*/
+			resetListe(); 
+			newSPF("Broly"); 
+			newSPF("Super Hero"); 
+			finirListe(2);
+		});
