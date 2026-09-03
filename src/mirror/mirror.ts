@@ -57,6 +57,10 @@ import {
 	ImpersonatedClient,
 	type ImpersonateProfile,
 } from "../ffi/curl-impersonate.ts";
+import {
+	browserHeaders,
+	type FetchDest,
+} from "../internal/browser-headers.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -432,6 +436,8 @@ function buildHarEntry(url: string, r: DownloadedAsset, ua: string): HarEntry {
 interface AssetTask {
 	url: string;
 	sourceTag: string;
+	/** Page the asset was found on. Hotlink guards reject a missing Referer. */
+	referer?: string;
 }
 
 const HTML_ASSET_SELECTORS: Array<{
@@ -938,6 +944,32 @@ function cookieHeaderForHost(
 	return matches.length > 0 ? matches.join("; ") : undefined;
 }
 
+/**
+ * Maps a discovery tag to the `Sec-Fetch-Dest` a browser would have used.
+ *
+ * Unknown tags fall back to `"empty"` rather than `"document"`: claiming a
+ * navigation for a subresource is a worse mismatch than admitting a generic
+ * fetch.
+ */
+function destForTag(tag: string | undefined): FetchDest {
+	if (!tag) return "document";
+	if (tag === "html-crawler") return "document";
+	if (tag === "link-css" || tag === "inline-style" || tag === "css-url")
+		return "style";
+	if (tag.startsWith("script") || tag === "link-modulepreload") return "script";
+	if (
+		tag.startsWith("img-") ||
+		tag.startsWith("source-") ||
+		tag.startsWith("svg-") ||
+		tag === "link-icon" ||
+		tag === "video-poster" ||
+		tag === "meta-og-image" ||
+		tag === "meta-twitter-image"
+	)
+		return "image";
+	return "empty";
+}
+
 async function downloadAsset(
 	url: string,
 	options: {
@@ -952,6 +984,10 @@ async function downloadAsset(
 		auth?: string;
 		httpVersion?: "1.0" | "1.1" | "2.0" | "3.0" | "default";
 		verbose?: boolean;
+		/** Resource kind, so `Sec-Fetch-Dest`/`Accept` match what a browser sends. */
+		dest?: FetchDest;
+		/** Page the asset was discovered on, sent as `Referer`. */
+		referer?: string;
 	},
 ): Promise<DownloadedAsset> {
 	const startedAt = new Date().toISOString();
@@ -964,7 +1000,12 @@ async function downloadAsset(
 
 	if (isLocal) {
 		try {
-			const headers: Record<string, string> = { "User-Agent": options.ua };
+			const headers = browserHeaders({
+				userAgent: options.ua,
+				dest: options.dest,
+				referer: options.referer,
+				url,
+			});
 			const cookieHeader = cookieHeaderForHost(
 				options.cookieJar,
 				new URL(url).hostname,
@@ -1069,7 +1110,14 @@ async function downloadAsset(
 	});
 
 	try {
-		const requestHeaders: Record<string, string> = { "User-Agent": options.ua };
+		// curl-impersonate replays a real Chrome TLS+H2 fingerprint, but the header
+		// map is ours: a matching JA3 with a one-header request is still a bot.
+		const requestHeaders = browserHeaders({
+			userAgent: options.ua,
+			dest: options.dest,
+			referer: options.referer,
+			url,
+		});
 		const cookieHeader = cookieHeaderForHost(
 			options.cookieJar,
 			new URL(url).hostname,
@@ -1354,7 +1402,7 @@ export async function mirrorSite(
 			) {
 				continue;
 			}
-			enqueueAsset(t);
+			enqueueAsset({ ...t, referer: pageData.finalUrl });
 		}
 	}
 	log(`[mirror] discovered ${assetQueue.length} assets to download`);
@@ -1366,6 +1414,8 @@ export async function mirrorSite(
 		const results = await workerPool(batch, concurrency, (t) =>
 			downloadAsset(t.url, {
 				ua,
+				dest: destForTag(t.sourceTag),
+				referer: t.referer,
 				timeoutMs,
 				cookieJar,
 				maxBytes: maxAssetBytes,
@@ -1415,6 +1465,7 @@ export async function mirrorSite(
 						enqueueAsset({
 							url: new URL(u, r.finalUrl).href,
 							sourceTag: "css-url",
+							referer: r.finalUrl,
 						});
 					} catch {
 						// ignore

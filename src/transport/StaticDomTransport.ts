@@ -86,6 +86,10 @@ import {
 	parseHtml as zigParseHtml,
 } from "../ffi/zigquery.ts";
 import {
+	browserHeaders,
+	DEFAULT_DESKTOP_UA,
+} from "../internal/browser-headers.ts";
+import {
 	extractTitle,
 	openingTagOf,
 	parseAttributes,
@@ -743,19 +747,19 @@ class StaticDomHandler {
 		const ts = Date.now() / 1000;
 
 		// Build request headers from emulation state.
-		const userAgent =
-			page.emulation.userAgent ?? "Bxc/0.1.0 StaticDomTransport";
-		const headers: Record<string, string> = {
-			"User-Agent": userAgent,
-			// Merge extra headers set via Network.setExtraHTTPHeaders
-			...this.#networkCtx.extraHeaders,
-		};
-		if (page.emulation.locale) {
-			const lang = page.emulation.locale;
-			const base = lang.split("-")[0];
-			headers["Accept-Language"] =
-				base !== lang ? `${lang},${base};q=0.9,en;q=0.8` : `${lang},en;q=0.8`;
-		}
+		//
+		// A `User-Agent` on its own is a bot tell: WAFs score the whole set, and
+		// a navigation missing `Accept-Language` / `Sec-Fetch-*` gets a 403 even
+		// when the UA is impeccable. `browserHeaders` keeps the values mutually
+		// consistent (client hints derived from the UA, never hardcoded).
+		const userAgent = page.emulation.userAgent ?? DEFAULT_DESKTOP_UA;
+		const headers: Record<string, string> = browserHeaders({
+			userAgent,
+			locale: page.emulation.locale,
+			url,
+			// Caller headers set via Network.setExtraHTTPHeaders win.
+			extra: this.#networkCtx.extraHeaders,
+		});
 
 		// Register in-flight request for getResponseBody
 		this.#networkCtx.requestRegistry.set(requestId, {

@@ -37,10 +37,15 @@ describe("Stealth Challenge System", () => {
 		const page = await Browser.newPage({ profile: "static" });
 		const resp = await page.goto(MOCK_URL);
 
-		// The mock returns 403 for bot detection (no Mozilla UA)
+		// The static profile now sends a credible browser header set, so it clears
+		// the mock's User-Agent check and reaches the challenge itself — which it
+		// still cannot pass, because solving it requires running the page script.
+		// (It used to be rejected as a bot on `Bxc/0.1.0 StaticDomTransport`,
+		// which made the profile useless against any real WAF.)
 		expect(resp.status).toBe(403);
 		const content = await page.content();
-		expect(content).toContain("Bot detected");
+		expect(content).not.toContain("Bot detected");
+		expect(content).toContain("cf-challenge");
 		await page.close();
 	});
 
