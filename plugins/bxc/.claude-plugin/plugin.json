@@ -22,10 +22,5 @@
     "zero-spawn",
     "native-client",
     "autopilot"
-  ],
-  "commands": "./commands",
-  "agents": "./agents",
-  "skills": "./skills",
-  "hooks": "./hooks/hooks.json",
-  "mcpServers": "./.mcp.json"
+  ]
 }
