@@ -67,6 +67,14 @@
  */
 
 import { Browser } from "@aphrody/bxc";
+import {
+	hostFromUrl,
+	resolveEmbed,
+	resolveVariants,
+	unpackPacker as unpackPackerCore,
+	type MediaTransport,
+	type MediaVariant,
+} from "@aphrody/bxc/media";
 
 type AnyPage = Awaited<ReturnType<typeof Browser.newPage>>;
 
@@ -173,8 +181,8 @@ export interface MediaQuality {
 export interface ResolvedSource {
 	provider: string;
 	embedUrl: string;
-	/** `hls` for `.m3u8`, `mp4` for progressive, `unknown` otherwise. */
-	type: "hls" | "mp4" | "unknown";
+	/** `hls` for `.m3u8`, `dash` for `.mpd`, `mp4` for progressive, `unknown` otherwise. */
+	type: "hls" | "dash" | "mp4" | "unknown";
 	/** The direct media URL, or `null` when resolution failed. */
 	url: string | null;
 	/** Poster / preview image declared by the player, when present. */
@@ -276,27 +284,15 @@ function originalImage(src: string): string {
 // Provider detection
 // ---------------------------------------------------------------------------
 
-const PROVIDER_MATCHERS: Array<[RegExp, string]> = [
-	[/vidmoly/i, "vidmoly"],
-	[/voe\.sx|voe\b|\bvoe/i, "voe"],
-	[/streamtape|strtape|tapecontent|streamadblock/i, "streamtape"],
-	[/streamhide|guccihide|haghalaz|movearnpre/i, "streamhide"],
-	[/yourupload/i, "yourupload"],
-	[/mail\.ru/i, "mailru"],
-	[/weneverbeenfree|filemoon|moon|kerapoxy/i, "filemoon"],
-	[/dood|dood\.|d000d|dooood|ds2play/i, "doodstream"],
-	[/mp4upload/i, "mp4upload"],
-	[/sendvid/i, "sendvid"],
-];
-
+/**
+ * Nom canonique de l'hébergeur d'un embed.
+ *
+ * Le registre vit dans le cœur média de bxc (`@aphrody/bxc/media`) : les mêmes
+ * hébergeurs servent anime-sama, et un domaine qui change ne doit être corrigé
+ * qu'à un seul endroit.
+ */
 export function providerFromUrl(embedUrl: string): string {
-	for (const [re, name] of PROVIDER_MATCHERS)
-		if (re.test(embedUrl)) return name;
-	try {
-		return new URL(embedUrl).hostname.replace(/^www\./, "");
-	} catch {
-		return "unknown";
-	}
+	return hostFromUrl(embedUrl);
 }
 
 function playerNameFromLabel(label: string): string {
@@ -533,68 +529,24 @@ export function parseEpisode(html: string, url: string): EpisodeInfo {
 // ---------------------------------------------------------------------------
 
 /** Unpack a Dean-Edwards `eval(function(p,a,c,k,e,d){…})` payload, if present. */
+/** Unpack a Dean-Edwards-packed payload (`eval(function(p,a,c,k,e,d){…})`). */
 export function unpackPacker(source: string): string {
-	const m =
-		/}\s*\(\s*'([\s\S]*?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]*?)'\s*\.split\('\|'\)/.exec(
-			source,
-		);
-	if (!m) return source;
-	let payload = m[1];
-	const a = parseInt(m[2], 10);
-	let c = parseInt(m[3], 10);
-	const k = m[4].split("|");
-	payload = payload
-		.replace(/\\'/g, "'")
-		.replace(/\\\\/g, "\\")
-		.replace(/\\n/g, "\n");
-	const enc = (n: number): string => {
-		const lo = n % a;
-		const rest = Math.floor(n / a);
-		const tok = lo > 35 ? String.fromCharCode(lo + 29) : lo.toString(36);
-		return (n < a ? "" : enc(rest)) + tok;
-	};
-	while (c--) {
-		if (k[c])
-			payload = payload.replace(new RegExp("\\b" + enc(c) + "\\b", "g"), k[c]);
-	}
-	return payload;
+	return unpackPackerCore(source);
 }
 
-function classifyMedia(u: string): "hls" | "mp4" | "unknown" {
-	if (/\.m3u8(\?|$)/i.test(u)) return "hls";
-	if (/\.mp4(\?|$)/i.test(u)) return "mp4";
-	return "unknown";
-}
-
-/** Scan a player page body for a JW-Player source / bare media URL. */
-function scanForMedia(body: string): {
-	url: string | null;
-	poster: string | null;
-} {
-	const unpacked = unpackPacker(body);
-	const haystack = body + "\n" + unpacked;
-
-	const fromSources =
-		/sources?\s*:\s*\[\s*\{[^}]*?\bfile\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(
-			haystack,
-		) ??
-		/\bfile\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(haystack) ??
-		/["']?(?:hls|src|url)["']?\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i.exec(
-			haystack,
-		);
-	let url = fromSources ? fromSources[1] : null;
-
-	if (!url) {
-		const bare = haystack.match(
-			/https?:\/\/[^\s"'<>\\]+\.(?:m3u8|mp4)[^\s"'<>\\]*/i,
-		);
-		url = bare ? bare[0] : null;
-	}
-
-	const posterM = /\bimage\s*:\s*["']([^"']+)["']/i.exec(haystack);
+/** Translate a media-core variant into this package's vocabulary. */
+function toQuality(variant: MediaVariant): MediaQuality {
+	const label =
+		variant.label ??
+		variant.name ??
+		(variant.bandwidth ? `${Math.round(variant.bandwidth / 1000)}kbps` : "variant");
 	return {
-		url: url ? url.replace(/\\\//g, "/") : null,
-		poster: posterM ? posterM[1] : null,
+		label,
+		url: variant.url,
+		...(variant.width && variant.height
+			? { resolution: `${variant.width}x${variant.height}` }
+			: {}),
+		...(variant.bandwidth ? { bandwidth: variant.bandwidth } : {}),
 	};
 }
 
@@ -723,54 +675,38 @@ export class VoiranimeScraper {
 		const embedUrl = typeof player === "string" ? player : player.embedUrl;
 		const provider =
 			typeof player === "string" ? providerFromUrl(embedUrl) : player.provider;
-		const playbackReferer = (() => {
-			try {
-				return `${new URL(embedUrl).origin}/`;
-			} catch {
-				return `${this.baseUrl}/`;
-			}
-		})();
-		const base: ResolvedSource = {
-			provider,
-			embedUrl,
-			type: "unknown",
-			url: null,
-			poster: null,
-			headers: { Referer: playbackReferer },
-			error: null,
+
+		const media = await resolveEmbed(embedUrl, {
+			transport: this.mediaTransport(),
+			referer: `${this.baseUrl}/`,
+			enumerateVariants: opts.enumerateQualities,
+			timeoutMs: this.timeoutMs,
+		});
+
+		return {
+			provider: media.host === "unknown" ? provider : media.host,
+			embedUrl: media.embedUrl,
+			type: media.kind,
+			url: media.url,
+			poster: media.poster,
+			headers: media.headers,
+			error: media.error ?? null,
+			...(media.variants.length ? { qualities: media.variants.map(toQuality) } : {}),
 		};
+	}
 
-		let status: number, html: string;
-		try {
-			({ status, html } = await this.fetchHtml(embedUrl, `${this.baseUrl}/`));
-		} catch (err) {
-			return { ...base, error: `fetch failed: ${String(err)}` };
-		}
-		if (status !== 200) return { ...base, error: `embed HTTP ${status}` };
-
-		const { url, poster } = scanForMedia(html);
-		if (!url) {
-			const hint =
-				provider === "voe" || provider === "mailru"
-					? `${provider} is obfuscated — JS rendering (profile "fast") required`
-					: "no JW-Player source / media URL found in embed";
-			return { ...base, poster, error: hint };
-		}
-
-		const type = classifyMedia(url);
-		const resolved: ResolvedSource = { ...base, type, url, poster };
-
-		if (opts.enumerateQualities && type === "hls") {
-			try {
-				resolved.qualities = await this.enumerateHlsQualities(
-					url,
-					playbackReferer,
-				);
-			} catch {
-				/* non-fatal */
-			}
-		}
-		return resolved;
+	/**
+	 * Adapt this scraper's page-based fetch to the transport the media core
+	 * expects — the single place where bxc navigation meets embed resolution.
+	 */
+	private mediaTransport(): MediaTransport {
+		return async (request) => {
+			const { status, html } = await this.fetchHtml(
+				request.url,
+				request.referer ?? `${this.baseUrl}/`,
+			);
+			return { status, body: html, url: request.url };
+		};
 	}
 
 	/** Fetch + parse an HLS master playlist into its variant streams. */
@@ -778,28 +714,12 @@ export class VoiranimeScraper {
 		masterUrl: string,
 		referer: string,
 	): Promise<MediaQuality[]> {
-		const { status, html } = await this.fetchHtml(masterUrl, referer);
-		if (status !== 200) return [];
-		const text = html.replace(/<[^>]+>/g, "");
-		const out: MediaQuality[] = [];
-		const lines = text.split(/\r?\n/);
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			if (!line.startsWith("#EXT-X-STREAM-INF")) continue;
-			const res = /RESOLUTION=([0-9x]+)/.exec(line)?.[1];
-			const bw = /BANDWIDTH=(\d+)/.exec(line)?.[1];
-			const uri = (lines[i + 1] ?? "").trim();
-			if (!uri || uri.startsWith("#")) continue;
-			out.push({
-				label:
-					res ??
-					(bw ? `${Math.round(+bw / 1000)}kbps` : `variant ${out.length + 1}`),
-				url: uri,
-				resolution: res,
-				bandwidth: bw ? parseInt(bw, 10) : undefined,
-			});
-		}
-		return out;
+		const variants = await resolveVariants(masterUrl, {
+			transport: this.mediaTransport(),
+			referer,
+			timeoutMs: this.timeoutMs,
+		});
+		return variants.map(toQuality);
 	}
 
 	/**
