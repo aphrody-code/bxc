@@ -33,21 +33,9 @@ jobs:
           echo "@aphrody:registry=https://registry.npmjs.org" > .npmrc
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
 
-          # Sous-packages AVANT la racine : @aphrody/bxc epingle @aphrody/x et
-          # @aphrody/xai a une version exacte. Publier la racine seule livre un
-          # paquet qui ne s'installe pas des que l'un des deux a ete bumpe.
-          # Une version deja publiee fait echouer `bun publish` — on l'ignore,
-          # seuls les packages effectivement bumpes doivent partir.
-          for pkg in packages/x packages/xai packages/test; do
-            name="$(bun --print "require('./$pkg/package.json').name")"
-            version="$(bun --print "require('./$pkg/package.json').version")"
-            if npm view "${name}@${version}" version \
-                 --registry https://registry.npmjs.org >/dev/null 2>&1; then
-              echo "skip ${name}@${version} (deja publie)"
-              continue
-            fi
-            echo "publish ${name}@${version}"
-            (cd "$pkg" && bun publish --access public --registry https://registry.npmjs.org)
-          done
-
-          bun publish --access public --registry https://registry.npmjs.org
+          # La racine @aphrody/bxc epingle TOUTES ses dependances @aphrody/* a
+          # une version exacte : n'en publier que trois livrait un paquet qui ne
+          # s'installe pas. Le script publie chaque workspace dans l'ordre de
+          # ses dependances, saute ce qui est deja au registre, et finit par la
+          # racine. Cf. test/scripts/publish-workspaces.test.ts.
+          bun scripts/publish-workspaces.ts
