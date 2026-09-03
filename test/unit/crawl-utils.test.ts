@@ -38,4 +38,34 @@ describe("crawl-utils: isCrawlFailure", () => {
 		const html = "<html><body><h1>Hello World</h1><p>This is a valid test page with enough content to pass the length check.</p></body></html>";
 		expect(isCrawlFailure(200, html, "Hello World")).toBe(false);
 	});
+
+	it("should not flag an ordinary page merely served by Cloudflare", () => {
+		// email-decode / rocket-loader / beacon are injected into plain 200s across
+		// a large share of the web. Matching the bare word "cloudflare" flagged
+		// every CF-fronted page as blocked and burned the escalation chain on a
+		// body that had already been fetched in full.
+		const html = `<html><head><title>Real page</title>
+			<script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js"></script>
+			<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+			<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6"></script>
+			</head><body><h1>Catalogue</h1><p>${"content ".repeat(30)}</p>
+			<a href="/cdn-cgi/l/email-protection">contact</a></body></html>`;
+		expect(isCrawlFailure(200, html, "Real page")).toBe(false);
+	});
+
+	it("should still flag a genuine Cloudflare challenge", () => {
+		const html = `<html><head><title>Just a moment...</title></head><body>
+			<div id="challenge-form"></div>
+			<script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script>
+			<p>${"verifying ".repeat(40)}</p></body></html>`;
+		expect(isCrawlFailure(200, html, "Just a moment...")).toBe(true);
+		// ...and on the body alone, when the title is missing.
+		expect(isCrawlFailure(200, html, "")).toBe(true);
+	});
+
+	it("should not flag a real page that merely embeds a CAPTCHA widget", () => {
+		const html = `<html><body><h1>Contact</h1><p>${"text ".repeat(600)}</p>
+			<div class="g-recaptcha"></div></body></html>`;
+		expect(isCrawlFailure(200, html, "Contact")).toBe(false);
+	});
 });
