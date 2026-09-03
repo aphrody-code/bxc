@@ -55,6 +55,32 @@ en repli) et remplace le fichier par `rename` atomique.
 > `~/.local/bin/bxc` sans que `bxc.service` (qui pointe sur `/usr/local/bin`)
 > ne bouge — les deux copies divergeraient silencieusement.
 
+### Auto-update du VPS
+
+Sur le VPS, `/usr/local/bin/bxc` et `~/.local/bin/bxc` sont des **wrappers** qui
+exécutent `bun /home/ubuntu/bxc/src/cli/index.ts` : la prod, c'est le checkout,
+pas un binaire. L'auto-update suit donc le dépôt, et non les releases GitHub.
+
+```bash
+systemctl list-timers bxc-auto-update      # NEXT doit être renseigné
+journalctl -u bxc-auto-update -n 50        # dernier passage
+./scripts/bxc-auto-update.sh               # forcer un cycle, à la main
+sudo systemctl disable --now bxc-auto-update.timer  # couper
+```
+
+`bxc-auto-update.timer` (horaire, posé et activé par `bxc-control.sh deploy`)
+déclenche `scripts/bxc-auto-update.sh`, qui **s'abstient** plutôt que de forcer :
+
+- worktree sale → rien (une modif non commitée est du travail en cours) ;
+- `origin/main` == `HEAD` → rien, cas nominal ;
+- fast-forward **strict** — un historique divergé est une décision humaine ;
+- `bun install --frozen-lockfile`, le lockfile fait foi ;
+- test de fumée `--version` **depuis les sources** avant de toucher aux
+  services ; en cas d'échec, `reset --hard` sur la révision précédente et
+  **aucun redémarrage** — mieux vaut de l'ancien code qui tourne ;
+- ne redémarre que les units `bxc`/`bxc-crawler`/`bxc-scheduler` **déjà
+  actives** : ce qui a été arrêté à la main le reste.
+
 **Portabilité Windows** : la station de travail obtient la CLI et le serveur
 MCP. Les daemons (`bxc.service`, `bxc-crawler`, purges X, wonderbot) restent
 Linux — ils reposent sur systemd et sur `SIGTERM`. Détail des écarts et de ce

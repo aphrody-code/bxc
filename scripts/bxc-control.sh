@@ -100,6 +100,8 @@ deploy_all() {
   log "Installing systemd unit files..."
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc.service" "/etc/systemd/system/bxc.service"
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc-crawler.service" "/etc/systemd/system/bxc-crawler.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-auto-update.service" "/etc/systemd/system/bxc-auto-update.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-auto-update.timer" "/etc/systemd/system/bxc-auto-update.timer"
 
   # 5. Correct log ownerships
   log "Aligning log permissions..."
@@ -114,6 +116,9 @@ deploy_all() {
   log "Starting systemd services..."
   sudo systemctl start bxc
   sudo systemctl enable --now bxc-crawler || sudo systemctl restart bxc-crawler
+  # Le timer, pas le service : bxc-auto-update.service est un oneshot declenche.
+  # `enable` sur le service seul le lancerait au boot et plus jamais.
+  sudo systemctl enable --now bxc-auto-update.timer
 
   # 8. Print status
   systemctl status bxc --no-pager || true

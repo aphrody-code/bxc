@@ -1,0 +1,21 @@
+[Unit]
+Description=Bxc auto-update (git fast-forward du checkout de prod + restart des units actives)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/bxc
+Environment=PATH=/home/ubuntu/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/home/ubuntu/bxc/scripts/bxc-auto-update.sh
+# git fetch + bun install + restart : large, mais borne. Un timer qui traine
+# n'est pas replanifie tant qu'il tourne (OnUnitInactiveSec).
+TimeoutStartSec=900
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bxc-auto-update
+
+[Install]
+WantedBy=multi-user.target
