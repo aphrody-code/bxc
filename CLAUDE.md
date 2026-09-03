@@ -71,6 +71,48 @@ l'aune de « est-ce que ça réduit l'exposition de l'utilisateur ? ».
   Use it (or load its skills/agents) for any bxc-like project. It follows the anthropics/claude-code plugin-dev patterns (see `plugins/plugin-dev-reference/`).
   Update the plugin when you add major capabilities to bxc (new agents, skills, cross-platform notes). The plugin README contains the install + adaptation guide for other projects.
 
+- **Cœur média `src/media/`** (export `@aphrody/bxc/media`) : reconnaissance de
+  l'hébergeur, déballage des scripts compressés, extraction de la piste,
+  lecture des playlists HLS, résolution d'un embed. **voiranime et anime-sama
+  n'ont plus de code de lecteur en propre** — ils traduisent le résultat dans
+  leur vocabulaire. Un hébergeur corrigé ici l'est pour les deux (même règle
+  que `purge-engine.ts`).
+  - **Rien n'est évalué** : les charges `eval(function(p,a,c,k,e,d))` sont
+    rejouées, jamais exécutées — c'est du code tiers arbitraire.
+  - **Le réseau passe par `MediaTransport`**, injecté par l'appelant (page bxc,
+    `fetch`, cache). D'où 49 tests sans réseau.
+  - `resolveEmbed` **ne lève jamais** : un échec est décrit dans `error` avec
+    l'hébergeur et les candidats — un scraper qui parcourt 30 épisodes ne doit
+    pas s'arrêter sur un lecteur cassé.
+  - Chaque candidat porte **sa provenance** (`rule`, `layer`, `offset`,
+    `confidence`) : quand un hébergeur change sa page, on voit quelle règle a
+    mordu au lieu de constater une URL vide.
+  - Les URL de variantes sont **absolues** et les qualités de même hauteur sont
+    départagées par leur débit (`416p (1282 kbps)`).
+  - `playbackHeaders()` rend le `Referer`/`Origin` sans lequel le flux répond
+    403 : première cause du « ça marche dans le navigateur, pas en CLI ».
+
+- **`packages/frames`** : « d'où vient cette image ? ». Index local image par
+  image (descripteur MPEG-7 ColorLayout, 33 octets/trame) + client trace.moe en
+  recours. Sert l'objectif vie privée : en local **rien** ne sort ; en distant
+  c'est `searchByVector` — 33 entiers partent, jamais l'image (précision
+  mesurée identique : 0,9920 contre 0,9919 en téléversant).
+  - **Le descripteur est global** : une incrustation, une bordure ou un
+    recadrage change le vecteur. Les vignettes YouTube brandées de la chaîne
+    IETV échouent (1 sur 10 au-dessus du seuil 0,90) ; une capture plein cadre
+    donne 0,99. Ne jamais indexer une vignette à la place d'une trame.
+  - **Une seule taille de vignette** pour l'index et pour la requête
+    (`FrameSearch.size`) : deux tailles donnent des vecteurs différents. Au-delà
+    de 64 px le descripteur ne bouge plus (mesuré identique jusqu'à 512).
+  - **`ffmpeg` est la seule dépendance externe** ; le processus et le `fetch`
+    sont injectables, d'où 61 tests sans ffmpeg ni réseau.
+  - Ordres de grandeur mesurés : 24 min indexées à 1 img/s en 10,7 s (135×
+    temps réel), 92 Ko/épisode, 32,5 Mo pour 412 épisodes, recherche
+    exhaustive de 593 280 trames en ~500 ms.
+  - trace.moe : 100 recherches/24 h sans clé, **une seule à la fois** — une
+    requête concurrente est refusée avec le même code (402) qu'un quota épuisé,
+    le client tranche avec le quota connu.
+
 - **`packages/ietv` + `packages/wonderbot`** : catalogue Inazuma Eleven TV et son
   bot Discord. **Le bot ne scrape jamais en direct** — il lit le cache SQLite
   (`~/.cache/ietv/episodes.db`, `IETV_CACHE_PATH`) et le rafraîchit lui-même
@@ -131,6 +173,8 @@ bun run lint                                 # oxlint .
 # Commandes des Scrapers dédiés
 bun src/cli/index.ts fut price <url>         # FIFA Ultimate Team Price
 bun src/cli/index.ts voiranime search <q>    # VoirAnime search (ex: "inazuma")
+bun src/cli/index.ts animesama seasons <slug> # anime-sama.to (search|info|seasons|episodes|resolve)
+bun src/cli/index.ts frames search <img>     # d'où vient cette image : index local puis trace.moe
 bun src/cli/index.ts google search <q>       # Google Atlas Audits
 bun src/cli/index.ts xcom profile <user>     # Twitter profile markdown / screenshot
 bun src/cli/index.ts x whoami                # Native X client (profile|tweets|search|news|whoami|rank|foryou + x-algorithm)
@@ -155,6 +199,14 @@ bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.tom
 > **Nouvelle sous-commande CLI** : créer `src/cli/<name>.ts` (`export async function main(argv, baseOpts)`),
 > ajouter un `case "<name>"` dans `src/cli/index.ts`, et une ligne dans `printUsage()`.
 
+> **Multiplateforme (Linux VPS + Windows 11)** : chemins via
+> `src/utils/platform-paths.ts` (injectable, XDG / `%APPDATA%`), config via
+> `src/config/resolve.ts` (env > `config.json` > défauts) — jamais
+> `process.env.HOME` (absent sous Windows), jamais `` Bun.$`chmod|mkdir -p|mv` ``.
+> `~/.bxc` reste prioritaire s'il existe : ne pas casser le VPS. Installation :
+> `install.sh` / `install.ps1`, mise à jour `bxc self-update [--check]`.
+> Audit et reste-à-faire : [`CROSS-PLATFORM.md`](./CROSS-PLATFORM.md).
+
 > **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-crawler.service`
 > (24/7 `crawl-worker`) + `bxc-x-unfollow.service` / `bxc-x-purge-tweets.service`
 > (daemons de purge X) + `bxc-x-purge-doctor.timer` (watchdog auto-fix commun,
@@ -167,11 +219,14 @@ bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.tom
 ```
 bxc/
 ├── src/                          # API browser TS
+│   ├── media/                    # cœur média : hébergeurs, déballage, extraction, HLS, résolution d'embed
 │   └── google/                   # Google Ecosystem Atlas & compliance
 ├── packages/                     # Monorepo workspaces & scrapers
 │   ├── challonge/                # Challonge tournament brackets scraper
 │   ├── fut/                      # FIFA Ultimate Team (FUTBin / FUTGG)
+│   ├── frames/                   # @aphrody/frames — index image par image (ColorLayout MPEG-7) + client trace.moe
 │   ├── voiranime/                # VoirAnime catalog & embed resolver
+│   ├── animesama/                # @aphrody/animesama — anime-sama.to (catalogue, saisons/langues, episodes.js, lecteurs)
 │   ├── worldbeyblade/            # Scraper & metagame sub-package
 │   ├── xcom/                     # X.com profile markdown scraper
 │   ├── ietv/                     # @aphrody/ietv — catalogue Inazuma Eleven TV (scraper + cache SQLite + video)

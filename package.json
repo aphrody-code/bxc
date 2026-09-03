@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/bxc",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "publishConfig": {
     "access": "public"
   },
@@ -19,12 +19,20 @@
   "main": "./src/api/browser.ts",
   "types": "./src/api/browser.ts",
   "bin": {
-    "bxc": "./bin/bxc"
+    "bxc": "./bin/bxc.mjs"
   },
   "files": [
     "src/",
     "!src/actors/**/storage/",
+    "packages/*/src/",
+    "!packages/*/src/**/*.test.ts",
+    "!packages/*/src/**/*.spec.ts",
+    "!src/**/*.test.ts",
+    "packages/*/package.json",
     "bin/bxc",
+    "bin/bxc.mjs",
+    "bin/bxc.cmd",
+    "scripts/postinstall.ts",
     "types/",
     "patches/",
     "LICENSE",
@@ -35,6 +43,7 @@
     "./browser": "./src/api/browser.ts",
     "./detect": "./src/detect.ts",
     "./privacy": "./src/privacy/index.ts",
+    "./media": "./src/media/index.ts",
     "./privacy/pii": "./src/privacy/pii.ts",
     "./google": "./src/google/index.ts",
     "./google/gemini-web": "./src/google/gemini-web.ts",
@@ -44,6 +53,7 @@
     "./ffi/curl-impersonate": "./src/ffi/curl-impersonate.ts",
     "./scrapers/challonge": "./packages/challonge/src/index.ts",
     "./scrapers/voiranime": "./packages/voiranime/src/index.ts",
+    "./scrapers/animesama": "./packages/animesama/src/index.ts",
     "./scrapers/xcom": "./packages/xcom/src/index.ts",
     "./scrapers/worldbeyblade": "./packages/worldbeyblade/src/index.ts",
     "./scrapers/fut": "./packages/fut/src/index.ts",
@@ -67,6 +77,7 @@
   },
   "scripts": {
     "dev": "bun --watch src/serverless/standalone.ts",
+    "postinstall": "bun scripts/postinstall.ts",
     "build": "bun run build:linux && bun run build:win",
     "build:linux": "cd rust-bridge && cargo build --release && cd .. && bun scripts/build-standalone.ts",
     "build:win": "bun scripts/build-windows.ts",
@@ -79,6 +90,7 @@
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "build:mcp": "bun build ./src/mcp/server.ts --compile --bytecode --sourcemap=linked --compile-exec-argv=--smol --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-linux-x64 --outfile ./dist/standalone/bxc-mcp",
+    "build:mcp:win": "bun build ./src/mcp/server.ts --compile --bytecode --sourcemap=linked --compile-exec-argv=--smol --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-windows-x64 --outfile ./dist/standalone/bxc-mcp-windows-x64.exe",
     "server:dev": "bun --watch src/server/index.ts",
     "server:start": "bun src/server/index.ts",
     "db:push": "drizzle-kit push",
@@ -126,17 +138,19 @@
     "reflect-metadata": "^0.2.2",
     "type-graphql": "^2.0.0-rc.3",
     "zod": "^4.4.3",
-    "@aphrody/challonge": "0.1.6",
-    "@aphrody/fut": "0.1.5",
-    "@aphrody/voiranime": "0.1.5",
-    "@aphrody/worldbeyblade": "0.1.5",
-    "@aphrody/xcom": "0.1.6",
-    "@aphrody/zukan": "0.1.5",
-    "@aphrody/x": "1.1.0",
-    "@aphrody/xai": "1.0.6",
-    "@aphrody/ietv": "0.1.0",
-    "@aphrody/ietv-client": "1.0.0",
-    "@aphrody/wonderbot": "0.1.0"
+    "@aphrody/challonge": "0.2.0",
+    "@aphrody/fut": "0.2.0",
+    "@aphrody/voiranime": "0.2.0",
+    "@aphrody/animesama": "0.2.0",
+    "@aphrody/worldbeyblade": "0.2.0",
+    "@aphrody/xcom": "0.2.0",
+    "@aphrody/zukan": "0.2.0",
+    "@aphrody/x": "1.2.0",
+    "@aphrody/xai": "1.1.0",
+    "@aphrody/ietv": "0.2.0",
+    "@aphrody/ietv-client": "1.1.0",
+    "@aphrody/wonderbot": "0.2.0",
+    "@aphrody/frames": "0.2.0"
   },
   "license": "Apache-2.0"
 }
