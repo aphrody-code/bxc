@@ -32,10 +32,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust-bridge
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
       - name: Build Rust Bridge
         run: cd rust-bridge && cargo build --release
+      # Toujours avec des chemins : `bun test` nu marche `vendor/` (mcp-sdk,
+      # chroma) et remonte ~200 échecs qui ne sont pas des régressions bxc.
       - name: Run Tests (Core)
-        run: bun test
+        run: bun test test/ packages/ src/
         env:
           BXC_RUST_BRIDGE_LIB: ${{ github.workspace }}/rust-bridge/target/release/libbxc_rust_bridge.so
           SKIP_NETWORK_TESTS: "1"
@@ -52,14 +56,23 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust-bridge
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
       - name: Build Rust Bridge (MSVC)
         run: |
           cd rust-bridge
           cargo build --release --target x86_64-pc-windows-msvc
         env:
           RUSTFLAGS: "-C target-feature=+crt-static -C target-cpu=x86-64-v3"
-      - name: Run Tests (Core)
-        run: bun test
+      # Sous-ensemble portable : les suites e2e/perf/integration supposent
+      # `/proc`, `mkdir -p`, `rm -rf` ou des `.so` — cf. CROSS-PLATFORM.md (m10).
+      # Élargir ce scope au fur et à mesure qu'elles sont gardées.
+      - name: Run Tests (portable subset)
+        run: bun test test/cli test/config test/utils test/unit test/privacy packages/x packages/xai
         env:
           BXC_RUST_BRIDGE_LIB: ${{ github.workspace }}\rust-bridge\target\x86_64-pc-windows-msvc\release\bxc_rust_bridge.dll
           SKIP_NETWORK_TESTS: "1"
+      - name: Smoke test the cross-platform launcher
+        run: bun bin/bxc.mjs --version
+        env:
+          BXC_FROM_SOURCE: "1"

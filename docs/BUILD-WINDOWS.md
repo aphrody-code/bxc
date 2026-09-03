@@ -441,10 +441,17 @@ irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1 | iex
 
 L'installer (`install.ps1` dans le repo bxc) :
 1. Détecte AMD64 / ARM64 via le registre.
-2. Télécharge `bxc-windows-<arch>.zip` depuis Google Developers Releases.
-3. Extract dans `%USERPROFILE%\.bxc\bin\`.
-4. Met à jour le `PATH` user (HKCU registry).
-5. Vérifie via `bxc.exe --version`.
+2. Télécharge `bxc-windows-<arch>.exe` depuis les releases GitHub, et retombe
+   sur `bxc-windows-<arch>.zip` si l'exécutable nu n'est pas publié.
+3. Installe `%USERPROFILE%\.bxc\bin\bxc.exe` (l'ancien binaire est renommé
+   avant d'être remplacé : un `.exe` en cours d'exécution ne peut pas être
+   écrasé, seulement renommé).
+4. Écrit la configuration par défaut dans `%APPDATA%\bxc\config.json`.
+5. Met à jour le `PATH` user (HKCU registry) et diffuse `WM_SETTINGCHANGE`.
+6. Vérifie via `bxc.exe --version`.
+
+Mise à jour ensuite : `bxc self-update` (`--check` pour comparer sans rien
+écrire). `scripts/install-bxc.ps1` est déprécié et redirige vers `install.ps1`.
 
 ---
 

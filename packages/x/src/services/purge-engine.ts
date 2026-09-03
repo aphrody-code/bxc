@@ -105,11 +105,25 @@ export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
  * Purge journals name the accounts and posts being removed, so they are 0600;
  * the temp-file + rename keeps a crash from leaving a half-written queue.
  */
+let warnedAboutWindowsPermissions = false;
+
 export function writeJsonPrivate(path: string, data: unknown): void {
   mkdirSync(dirname(path), { recursive: true });
   const tmp = `${path}.tmp`;
   writeFileSync(tmp, `${JSON.stringify(data, null, 2)}\n`, { mode: 0o600 });
   renameSync(tmp, path);
+  if (process.platform === "win32") {
+    // NTFS ignore les modes POSIX : le fichier hérite des ACL du dossier
+    // parent. Le journal nomme le compte et les posts supprimés — le dire une
+    // fois vaut mieux que laisser croire qu'il est protégé.
+    if (!warnedAboutWindowsPermissions) {
+      warnedAboutWindowsPermissions = true;
+      console.warn(
+        `[bxc] ${path} : Windows ignore le mode 0600. Placez le journal dans un dossier dont vous êtes seul propriétaire (ex. %LOCALAPPDATA%).`,
+      );
+    }
+    return;
+  }
   try {
     chmodSync(path, 0o600);
   } catch {

@@ -1,34 +1,34 @@
-# Bxc Windows Installer
+#!/usr/bin/env pwsh
+# DEPRECIE — conserve pour ne pas casser les liens existants.
+#
+# L'installeur Windows canonique est `install.ps1`, a la racine du depot :
+# il gere l'executable nu ET l'archive, ecrit la configuration par defaut sous
+# %APPDATA%\bxc, met a jour le PATH utilisateur et verifie l'installation.
+#
+#   irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1 | iex
+#
+# Ce fichier se contente de rediriger vers lui, avec les memes parametres.
+
+param(
+  [String]$Version = "latest",
+  [Switch]$ForceBaseline = $false,
+  [Switch]$NoPathUpdate = $false,
+  [Switch]$DownloadWithoutCurl = $false
+)
+
 $ErrorActionPreference = "Stop"
 
-$InstallDir = Join-Path $env:USERPROFILE ".bxc\bin"
-if (-not (Test-Path $InstallDir)) {
-    $null = New-Item -ItemType Directory -Force -Path $InstallDir
+Write-Warning "scripts/install-bxc.ps1 est deprecie — utilisez install.ps1 a la racine du depot."
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent $ScriptDir
+$Canonical = Join-Path $RepoRoot "install.ps1"
+
+if (Test-Path $Canonical) {
+  & $Canonical -Version $Version -ForceBaseline:$ForceBaseline -NoPathUpdate:$NoPathUpdate -DownloadWithoutCurl:$DownloadWithoutCurl
+  exit $LASTEXITCODE
 }
 
-Write-Output "Resolving latest Bxc version..."
-$PkgUrl = "https://raw.githubusercontent.com/aphrody-code/bxc/main/package.json"
-$Pkg = Invoke-RestMethod -Uri $PkgUrl
-$Version = $Pkg.version
-Write-Output "Latest version: v$Version"
-
-$ZipUrl = "https://github.com/aphrody-code/bxc/releases/download/v$Version/bxc-windows-x64.zip"
-$ZipPath = Join-Path $InstallDir "bxc.zip"
-
-Write-Output "Downloading Bxc..."
-& curl.exe -#SfLo $ZipPath $ZipUrl
-
-Write-Output "Extracting Bxc..."
-Expand-Archive -Path $ZipPath -DestinationPath $InstallDir -Force
-Remove-Item -Path $ZipPath -Force
-
-# Add to User PATH if not already present
-$UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($UserPath -notlike "*$InstallDir*") {
-    Write-Output "Adding $InstallDir to user PATH..."
-    [Environment]::SetEnvironmentVariable("Path", "$UserPath;$InstallDir", "User")
-    $env:Path += ";$InstallDir"
-}
-
-Write-Output "Bxc installed successfully to $InstallDir!"
-Write-Output "Restart your terminal and run 'bxc --version' to get started."
+Write-Output "install.ps1 introuvable localement — telechargement depuis GitHub..."
+$Remote = "https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1"
+Invoke-Expression ((Invoke-WebRequest -Uri $Remote -UseBasicParsing).Content)

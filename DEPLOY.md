@@ -18,6 +18,50 @@ Canonical deploy path for **bxc** on a Linux VPS (Ubuntu 26.04). Pair with [`../
 
 ---
 
+## Installation en une commande
+
+Le VPS se déploie depuis les sources (`bxc-control.sh`, plus bas). Pour une
+machine qui n'a pas le dépôt — poste de travail, second serveur, CI — une seule
+commande suffit :
+
+```bash
+# Linux / macOS — pose ~/.local/bin/bxc + ~/.config/bxc/config.json, puis vérifie
+curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
+
+# Épingler une version / choisir la destination
+BXC_VERSION=v0.8.0 BXC_INSTALL_DIR=/usr/local/bin \
+  curl -fsSL https://raw.githubusercontent.com/aphrody-code/bxc/main/install.sh | bash
+```
+
+```powershell
+# Windows 11 — pose %USERPROFILE%\.bxc\bin\bxc.exe + %APPDATA%\bxc\config.json
+irm https://raw.githubusercontent.com/aphrody-code/bxc/main/install.ps1 | iex
+```
+
+Mise à jour, sur les deux plateformes :
+
+```bash
+bxc self-update --check   # compare seulement, n'écrit rien
+bxc self-update           # remplace le binaire de la cible courante
+```
+
+`self-update` interroge la dernière release `aphrody-code/bxc`, choisit l'asset
+correspondant à `process.platform`/`process.arch` (binaire nu d'abord, archive
+en repli) et remplace le fichier par `rename` atomique.
+
+> **Sur le VPS, préférer `bxc-control.sh deploy`** : `self-update` ne touche
+> qu'un binaire, il ne rafraîchit ni `bxc-mcp`, ni les unités systemd, ni
+> `/usr/local/bin`. Utiliser `self-update` sur le VPS remplacerait
+> `~/.local/bin/bxc` sans que `bxc.service` (qui pointe sur `/usr/local/bin`)
+> ne bouge — les deux copies divergeraient silencieusement.
+
+**Portabilité Windows** : la station de travail obtient la CLI et le serveur
+MCP. Les daemons (`bxc.service`, `bxc-crawler`, purges X, wonderbot) restent
+Linux — ils reposent sur systemd et sur `SIGTERM`. Détail des écarts et de ce
+qui reste à valider : [`CROSS-PLATFORM.md`](CROSS-PLATFORM.md).
+
+---
+
 ## Prerequisites
 
 ```bash

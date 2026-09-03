@@ -21,7 +21,7 @@
  * `projectdiscovery/wappalyzergo` Go library.
  */
 
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { detectGoogleSpecifics, googleToTech } from "./google/index.ts";
 import { bxcFetch } from "./utils/bxc-fetch.ts";
 import { hasEmbedded, wappalyzergoAsset } from "./rust/embedded-assets.ts";
@@ -86,24 +86,23 @@ export async function resolveBinary(): Promise<string> {
 		}
 	}
 
-	const candidate = resolve(
-		HERE,
-		"..",
-		"vendor",
-		"wappalyzergo",
-		"wappalyzergo-cli",
-	);
+	// Windows attend un `.exe` : sans le suffixe, `Bun.file(...).exists()` est
+	// faux et `detect` échoue alors que le binaire est bien là.
+	const cliName =
+		process.platform === "win32" ? "wappalyzergo-cli.exe" : "wappalyzergo-cli";
+
+	const candidate = resolve(HERE, "..", "vendor", "wappalyzergo", cliName);
 	if (await Bun.file(candidate).exists()) return candidate;
 
 	for (const rel of [
-		"vendor/wappalyzergo/wappalyzergo-cli",
-		"../vendor/wappalyzergo/wappalyzergo-cli",
+		join("vendor", "wappalyzergo", cliName),
+		join("..", "vendor", "wappalyzergo", cliName),
 	]) {
 		const p = resolve(process.cwd(), rel);
 		if (await Bun.file(p).exists()) return p;
 	}
 
-	throw new Error(`bxc/detect: wappalyzergo-cli binary not found.`);
+	throw new Error(`bxc/detect: ${cliName} binary not found.`);
 }
 
 // ---------------------------------------------------------------------------

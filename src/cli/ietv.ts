@@ -20,6 +20,9 @@
 
 import IETVScraper, { loadYouTubeApiKey, loadGCloudCredentials } from "@aphrody/ietv";
 import { EXIT, type CommonOptions, logger } from "./shared.ts";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 interface CliOptions extends CommonOptions {
 	action: "list" | "channel" | "all" | "discover" | "check-auth" | "official" | "pluto";
@@ -183,11 +186,13 @@ export async function main(
 				gcloud_path: gcloudCreds.path || null,
 				sources: {
 					env_youtube_api_key: !!process.env.YOUTUBE_API_KEY,
-					ietv_auth_json: !!process.env.HOME && require("fs").existsSync(
-						require("path").join(process.env.HOME, ".ietv", "auth.json")
+					// `process.env.HOME` est vide sous Windows : le doctor annonçait
+					// « absent » même quand les fichiers existaient.
+					ietv_auth_json: existsSync(
+						join(homedir(), ".ietv", "auth.json")
 					),
-					aphrody_ietv_credentials: !!process.env.HOME && require("fs").existsSync(
-						require("path").join(process.env.HOME, ".aphrody", "ietv-credentials.json")
+					aphrody_ietv_credentials: existsSync(
+						join(homedir(), ".aphrody", "ietv-credentials.json")
 					),
 					google_application_credentials: !!process.env.GOOGLE_APPLICATION_CREDENTIALS,
 				},

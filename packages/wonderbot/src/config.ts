@@ -158,7 +158,11 @@ export function lireEntier(
 export function cheminCacheParDefaut(env: EnvLisible): string {
 	const impose = (env.IETV_CACHE_PATH ?? env.WONDERBOT_CACHE_PATH ?? "").trim();
 	if (impose !== "") return impose;
-	return join(env.HOME || homedir(), ".cache", "ietv", "episodes.db");
+	// `HOME` reste prioritaire (c'est l'environnement injecté, testable), mais
+	// il n'existe pas sous Windows : `USERPROFILE` puis `os.homedir()` prennent
+	// le relais plutôt que de composer un chemin depuis une chaîne vide.
+	const base = env.HOME || env.USERPROFILE || homedir() || ".";
+	return join(base, ".cache", "ietv", "episodes.db");
 }
 
 /**

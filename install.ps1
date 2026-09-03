@@ -14,10 +14,11 @@
 #
 # What it does:
 #   1. Detects Windows + AMD64/ARM64 architecture from the registry
-#   2. Downloads bxc-windows-<arch>.zip from GitHub releases
-#   3. Extracts to %USERPROFILE%\.bxc\bin\
-#   4. Updates the user PATH so `bxc` is callable from any shell
-#   5. Verifies install via `bxc --version`
+#   2. Downloads bxc-windows-<arch>.exe (or the .zip fallback) from GitHub
+#   3. Installs it as %USERPROFILE%\.bxc\bin\bxc.exe
+#   4. Writes the default configuration to %APPDATA%\bxc\config.json
+#   5. Updates the user PATH so `bxc` is callable from any shell
+#   6. Verifies install via `bxc --version`
 
 param(
   [String]$Version = "latest",
@@ -129,56 +130,118 @@ function Install-Bxc {
   }
 
   $BaseURL = "https://github.com/aphrody-code/bxc/releases"
-  $URL = if ($Version -eq "latest") {
-    "$BaseURL/latest/download/$Target.zip"
-  } else {
-    "$BaseURL/download/$Version/$Target.zip"
+  $Prefix = if ($Version -eq "latest") { "$BaseURL/latest/download" } else { "$BaseURL/download/$Version" }
+
+  # Ordre des candidats : l'executable nu d'abord (c'est ce que publie
+  # scripts/build-standalone.ts et ce que porte la release v0.8.0), l'archive
+  # ensuite (scripts/build-windows.ts). Le premier telechargement qui aboutit
+  # gagne — pas d'hypothese sur le format reellement publie.
+  $CandidateNames = New-Object System.Collections.ArrayList
+  foreach ($n in @("$Target.exe", "bxc-windows-$BunArch.exe", "$Target.zip", "bxc-windows-$BunArch.zip")) {
+    if (-not $CandidateNames.Contains($n)) { $null = $CandidateNames.Add($n) }
   }
 
-  $ZipPath = "${BxcBin}\$Target.zip"
-  Remove-Item -Force $ZipPath -ErrorAction SilentlyContinue
-
-  Write-Output "Downloading $URL ..."
-
-  if (-not $DownloadWithoutCurl) {
-    curl.exe "-#SfLo" "$ZipPath" "$URL"
-  }
-  if ($DownloadWithoutCurl -or ($LASTEXITCODE -ne 0)) {
-    Write-Warning "curl.exe failed (exit ${LASTEXITCODE}) — trying Invoke-RestMethod ..."
+  function Get-Remote {
+    param([String]$Url, [String]$OutFile, [bool]$NoCurl)
+    Remove-Item -Force $OutFile -ErrorAction SilentlyContinue
+    if (-not $NoCurl) {
+      # `| Out-Null` : la sortie native d'un .exe part sinon dans le pipeline
+      # et polluerait la valeur de retour de la fonction. Le try/catch neutralise
+      # NativeCommandError, que PowerShell leve sur stderr quand
+      # $ErrorActionPreference vaut "Stop" — un 404 attendu ne doit pas
+      # interrompre la boucle de candidats.
+      try {
+        & curl.exe "-#SfLo" "$OutFile" "$Url" 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0 -and (Test-Path $OutFile)) { return $true }
+      } catch { }
+    }
     try {
-      Invoke-RestMethod -Uri $URL -OutFile $ZipPath
+      Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing -ErrorAction Stop | Out-Null
+      return (Test-Path $OutFile)
     } catch {
-      Write-Output "Install Failed — could not download $URL"
+      return $false
+    }
+  }
+
+  $DownloadedPath = $null
+  $DownloadedIsArchive = $false
+  foreach ($name in $CandidateNames) {
+    $url = "$Prefix/$name"
+    $out = Join-Path $BxcBin $name
+    Write-Output "Downloading $url ..."
+    if (Get-Remote -Url $url -OutFile $out -NoCurl $DownloadWithoutCurl.IsPresent) {
+      $DownloadedPath = $out
+      $DownloadedIsArchive = $name.EndsWith(".zip")
+      break
+    }
+  }
+
+  if ($null -eq $DownloadedPath) {
+    Write-Output "Install Failed — no release asset found for $Target (tried: $($CandidateNames -join ', '))"
+    return 1
+  }
+
+  $ExePath = Join-Path $BxcBin "bxc.exe"
+
+  if ($DownloadedIsArchive) {
+    try {
+      $lastProgressPreference = $global:ProgressPreference
+      $global:ProgressPreference = 'SilentlyContinue'
+      $Extract = Join-Path $BxcBin "_extract"
+      Remove-Item -Recurse -Force $Extract -ErrorAction SilentlyContinue
+      Expand-Archive $DownloadedPath $Extract -Force
+      $global:ProgressPreference = $lastProgressPreference
+
+      $Found = Get-ChildItem -Path $Extract -Filter "bxc.exe" -Recurse | Select-Object -First 1
+      if ($null -eq $Found) {
+        Write-Output "Install Failed — bxc.exe not found inside $DownloadedPath"
+        return 1
+      }
+      Move-Item $Found.FullName $ExePath -Force
+      Remove-Item -Recurse -Force $Extract -ErrorAction SilentlyContinue
+    } catch {
+      Write-Output "Install Failed — could not extract $DownloadedPath"
+      Write-Error $_
       return 1
+    } finally {
+      Remove-Item -Force $DownloadedPath -ErrorAction SilentlyContinue
     }
-  }
-
-  if (-not (Test-Path $ZipPath)) {
-    Write-Output "Install Failed — $ZipPath does not exist (antivirus interference?)"
-    return 1
-  }
-
-  try {
-    $lastProgressPreference = $global:ProgressPreference
-    $global:ProgressPreference = 'SilentlyContinue'
-    Expand-Archive "$ZipPath" "$BxcBin" -Force
-    $global:ProgressPreference = $lastProgressPreference
-
-    if (Test-Path "${BxcBin}\$Target\bxc.exe") {
-      Move-Item "${BxcBin}\$Target\bxc.exe" "${BxcBin}\bxc.exe" -Force
-      Remove-Item -Recurse -Force "${BxcBin}\$Target" -ErrorAction SilentlyContinue
+  } elseif ($DownloadedPath -ne $ExePath) {
+    # Un .exe en cours d'execution ne peut pas etre ecrase, mais il peut etre
+    # renomme : on decale l'ancien avant de mettre le neuf en place.
+    if (Test-Path $ExePath) {
+      $Backup = "$ExePath.old-$(Get-Date -Format 'yyyyMMddHHmmss')"
+      try { Move-Item $ExePath $Backup -Force } catch { }
+      Remove-Item -Force $Backup -ErrorAction SilentlyContinue
     }
-  } catch {
-    Write-Output "Install Failed — could not extract $ZipPath"
-    Write-Error $_
-    return 1
-  } finally {
-    Remove-Item -Force $ZipPath -ErrorAction SilentlyContinue
+    Move-Item $DownloadedPath $ExePath -Force
   }
 
-  if (-not (Test-Path "${BxcBin}\bxc.exe")) {
-    Write-Output "Install Failed — bxc.exe not found in $BxcBin after extract"
+  if (-not (Test-Path $ExePath)) {
+    Write-Output "Install Failed — bxc.exe not found in $BxcBin after install"
     return 1
+  }
+
+  # ─── Configuration par defaut (%APPDATA%\bxc\config.json) ─────────────
+
+  $AppData = if ($env:APPDATA) { $env:APPDATA } else { Join-Path $Home "AppData\Roaming" }
+  $ConfigDir = if ($env:BXC_CONFIG_DIR) { $env:BXC_CONFIG_DIR } else { Join-Path $AppData "bxc" }
+  $null = New-Item -ItemType Directory -Force -Path $ConfigDir
+  $ConfigPath = Join-Path $ConfigDir "config.json"
+  if (-not (Test-Path $ConfigPath)) {
+    $Config = [ordered]@{
+      rootDir       = $BxcRoot
+      installDir    = $BxcBin
+      releaseRepo   = "aphrody-code/bxc"
+      lightpandaTag = "nightly"
+      timeoutMs     = 30000
+    }
+    # UTF-8 SANS BOM : Windows PowerShell 5.1 ecrit un BOM avec `-Encoding UTF8`
+    # et `JSON.parse` s'etrangle dessus. WriteAllText sans BOM marche partout.
+    [System.IO.File]::WriteAllText($ConfigPath, ($Config | ConvertTo-Json), (New-Object System.Text.UTF8Encoding($false)))
+    Write-Output "Configuration written to $ConfigPath"
+  } else {
+    Write-Output "Existing configuration kept: $ConfigPath"
   }
 
   # ─── PATH update ────────────────────────────────────────────────────
@@ -204,16 +267,19 @@ function Install-Bxc {
   Write-Output ""
 
   try {
-    & "${BxcBin}\bxc.exe" --version
+    & $ExePath --version
+    if ($LASTEXITCODE -ne 0) {
+      Write-Warning "bxc.exe --version exited with $LASTEXITCODE."
+    }
   } catch {
     Write-Warning "Could not run bxc.exe — see error above. Open a new shell and try again."
   }
 
   Write-Output ""
   Write-Output "Get started:"
-  Write-Output "  bxc serve --cdp-port 9222"
-  Write-Output "  bxc scrape https://example.com"
   Write-Output "  bxc --help"
+  Write-Output "  bxc recon https://example.com"
+  Write-Output "  bxc self-update --check   # verifie les mises a jour sans rien ecrire"
   Write-Output ""
   Write-Output "Docs: https://github.com/aphrody-code/bxc"
 }
