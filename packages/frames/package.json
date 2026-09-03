@@ -1,0 +1,45 @@
+{
+  "name": "@aphrody/frames",
+  "version": "0.2.0",
+  "description": "Index et recherche image par image d'épisodes d'anime — descripteur MPEG-7 ColorLayout local, compatible trace.moe",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./descriptor": "./src/descriptor.ts",
+    "./extract": "./src/extract.ts",
+    "./store": "./src/store.ts",
+    "./search": "./src/search.ts",
+    "./trace-moe": "./src/trace-moe.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "keywords": [
+    "anime",
+    "frame",
+    "color-layout",
+    "mpeg-7",
+    "reverse-image-search",
+    "trace.moe"
+  ],
+  "dependencies": {
+    "trace.moe-id": "^2.0.0"
+  },
+  "files": [
+    "src/",
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "bun": ">=1.3.14"
+  },
+  "license": "Apache-2.0"
+}

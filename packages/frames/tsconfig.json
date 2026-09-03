@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@aphrody/bxc": ["../../src/api/browser.ts"],
+      "@aphrody/bxc/*": ["../../src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}
