@@ -10,7 +10,9 @@
 #      SIGKILL cgroup en plein milieu d'une écriture SQLite).
 #   3. Units systemd bxc* en échec → reset-failed + start, rate-limité
 #      (cooldown 60 min) pour ne pas noyer le journal si la cause est
-#      structurelle (donnée invalide, dépendance morte…).
+#      structurelle (donnée invalide, dépendance morte…). Une unit sortie sur
+#      un code listé dans son RestartPreventExitStatus (77 = credentials
+#      rejetés) est signalée mais jamais relancée : elle s'est arrêtée exprès.
 #   4. Services bxc* attendus actifs mais arrêtés/désactivés → signalé
 #      (pas de restart aveugle ici : un arrêt volontaire — ex. maintenance
 #      manuelle — ne doit pas être annulé par le watchdog).
@@ -92,6 +94,17 @@ if [ -z "$failed_units" ]; then
 else
   for u in $failed_units; do
     log "  ✗ ALERTE : $u en échec — diagnostic: journalctl -u $u -n 50"
+    # Une unit qui déclare RestartPreventExitStatus reste volontairement en
+    # échec sur ces codes — 77 = credentials rejetés pour les daemons de purge
+    # X et wonderbot. Les relancer rejouerait indéfiniment un démarrage voué à
+    # échouer, et masquerait le signal « il faut renouveler la session ».
+    main_status=$(systemctl show "$u" -p ExecMainStatus --value 2>/dev/null || true)
+    prevent=$(systemctl show "$u" -p RestartPreventExitStatus --value 2>/dev/null || true)
+    if [ -n "$main_status" ] && [ -n "$prevent" ] \
+       && printf '%s\n' $prevent | grep -qx -- "$main_status"; then
+      log "    · relance refusée : sortie $main_status listée dans RestartPreventExitStatus"
+      continue
+    fi
     if cooldown_ok "failed-$u" 60; then
       log "    ⟲ tentative de relance"
       sudo systemctl reset-failed "$u" 2>&1 | sed 's/^/      /'

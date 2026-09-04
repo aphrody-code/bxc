@@ -219,8 +219,10 @@ bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.tom
 
 > **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-scheduler.service`
 > (`Bun.cron` in-process) + `bxc-watchdog.timer` (auto-remediation 5 min : CDP,
-> memoire vs `MemoryMax`, units `failed` — tout est rate-limite, et un service
-> arrete a la main est signale, jamais relance) + `bxc-crawler.service`
+> memoire vs `MemoryMax`, units `failed` — tout est rate-limite, un service
+> arrete a la main est signale jamais relance, et une unit sortie sur un code
+> de son `RestartPreventExitStatus` — 77, credentials rejetes — n'est jamais
+> relancee : elle s'est arretee expres) + `bxc-crawler.service`
 > (24/7 `crawl-worker`) + `bxc-x-unfollow.service` / `bxc-x-purge-tweets.service`
 > (daemons de purge X) + `bxc-x-purge-doctor.timer` (watchdog auto-fix commun,
 > 10 min) + `bxc-wonderbot.service` (bot Discord IETV, opt-in) — les purges sont opt-in, non installees par `bxc-control deploy`,
