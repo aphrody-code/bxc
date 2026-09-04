@@ -28,6 +28,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { DEFAULT_DESKTOP_UA } from "../../../src/internal/browser-headers.ts";
 import { StaticDomTransport } from "../../../src/transport/StaticDomTransport.ts";
 
 // ---------------------------------------------------------------------------
@@ -233,7 +234,7 @@ describe("Emulation domain handler", () => {
 		}
 	});
 
-	test("setUserAgentOverride with empty string reverts to default Bxc UA", async () => {
+	test("setUserAgentOverride with empty string reverts to the default UA", async () => {
 		const sessionId = await openSession(transport);
 
 		// Set a custom UA first
@@ -255,8 +256,9 @@ describe("Emulation domain handler", () => {
 		try {
 			await cdpCall(transport, "Page.navigate", { url }, sessionId);
 			const headers = await promise;
-			// Should fall back to the default Bxc UA
-			expect(headers.get("user-agent")).toMatch(/Bxc/);
+			// Falls back to the transport default, which is a credible desktop UA:
+			// announcing `Bxc/*` was a bot tell that got the static profile 403ed.
+			expect(headers.get("user-agent")).toBe(DEFAULT_DESKTOP_UA);
 		} finally {
 			stop();
 		}
