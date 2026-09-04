@@ -33,6 +33,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - `bxc-watchdog.timer` passe à `OnUnitInactiveSec` : sur un `Type=oneshot`,
   l'intervalle doit se compter depuis la **fin** du passage précédent, sinon
   deux runs peuvent se chevaucher.
+- **`bxc-control.sh deploy` ne remplace plus les wrappers du checkout.**
+  `/usr/local/bin/bxc` est un wrapper bash et `~/.local/bin/bxc` un symlink vers
+  `bin/bxc` : les écraser par le standalone de 291 Mo faisait tourner la prod
+  sur un binaire figé, pendant que l'auto-update horaire mettait consciencieusement
+  à jour un checkout que plus rien n'exécutait. `BXC_DEPLOY_BINARY=1` force
+  l'ancien comportement.
+- L'auto-update ne redémarre plus les services quand le checkout est **en
+  avance** sur l'amont (commits locaux non poussés) : `merge --ff-only` était un
+  no-op, mais les trois services redémarraient à chaque passage horaire.
 
 ---
 
