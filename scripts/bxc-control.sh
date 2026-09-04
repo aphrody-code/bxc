@@ -79,15 +79,28 @@ deploy_all() {
   pkill -9 -f "crawl-worker" || true
 
   # 3. Copy binaries (bxc to both bin dirs; bxc-mcp to both for CLI + MCP clients)
-  log "Installing standalone bxc binary to /home/ubuntu/.local/bin/bxc..."
-  # --remove-destination : ~/.local/bin/bxc a deja ete un lien symbolique vers
-  # bin/bxc du depot, et `cp` suit les liens — chaque deploy ecrasait alors le
-  # wrapper versionne par un binaire de 270 Mo.
-  cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/home/ubuntu/.local/bin/bxc"
-
-  log "Installing standalone bxc binary to /usr/local/bin/bxc..."
-  sudo cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/usr/local/bin/bxc"
-  sudo chmod +x "/usr/local/bin/bxc"
+  #
+  # Sur ce VPS la prod EST le checkout : /usr/local/bin/bxc est un wrapper bash
+  # qui exec `bun src/cli/index.ts`, et ~/.local/bin/bxc un symlink vers
+  # bin/bxc du depot. Ecraser ces cibles par le standalone de 291 Mo casse le
+  # modele documente dans DEPLOY.md — le checkout ne serait plus ce qui tourne,
+  # et l'auto-update horaire mettrait a jour du code que plus rien n'execute.
+  # On ne remplace donc une cible que si c'est deja un binaire, ou si
+  # BXC_DEPLOY_BINARY=1 le demande explicitement.
+  install_bxc_cli() { # $1=chemin cible  $2=prefixe sudo ("" ou "sudo")
+    local target="$1" sudo_cmd="${2:-}"
+    if [ "${BXC_DEPLOY_BINARY:-0}" != "1" ] && { [ -L "$target" ] || head -c2 "$target" 2>/dev/null | grep -q '#!'; }; then
+      log "  · $target est un wrapper/symlink vers le checkout — conserve (BXC_DEPLOY_BINARY=1 pour forcer le binaire)"
+      return
+    fi
+    log "Installing standalone bxc binary to ${target}..."
+    # --remove-destination : `cp` suit les liens symboliques, sans quoi on
+    # ecraserait la cible du lien (bin/bxc du depot) au lieu du lien lui-meme.
+    ${sudo_cmd} cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "$target"
+    ${sudo_cmd} chmod +x "$target"
+  }
+  install_bxc_cli "/home/ubuntu/.local/bin/bxc"
+  install_bxc_cli "/usr/local/bin/bxc" sudo
 
   log "Installing standalone bxc-mcp binary to /usr/local/bin/bxc-mcp..."
   sudo cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-mcp" "/usr/local/bin/bxc-mcp"

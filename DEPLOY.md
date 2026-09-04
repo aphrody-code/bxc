@@ -16,6 +16,13 @@ Canonical deploy path for **bxc** on a Linux VPS (Ubuntu 26.04). Pair with [`../
 
 **Do not** copy a stale wrapper into `~/.local/bin` without symlinking to `~/bxc/bin/bxc` — agents expect the repo wrapper to pick up workspace changes.
 
+Sur ce VPS, `/usr/local/bin/bxc` est un **wrapper bash** et `~/.local/bin/bxc`
+un **symlink** vers `bin/bxc` du dépôt : la prod, c'est le checkout. Par sûreté,
+`bxc-control.sh deploy` **ne remplace pas** une cible qui est un wrapper ou un
+symlink — sinon le standalone de 291 Mo prendrait la place du wrapper et
+l'auto-update horaire mettrait à jour du code que plus rien n'exécute. Pour
+basculer volontairement sur le binaire : `BXC_DEPLOY_BINARY=1 ./scripts/bxc-control.sh deploy`.
+
 ---
 
 ## Installation en une commande
