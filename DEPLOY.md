@@ -72,7 +72,11 @@ sudo systemctl disable --now bxc-auto-update.timer  # couper
 déclenche `scripts/bxc-auto-update.sh`, qui **s'abstient** plutôt que de forcer :
 
 - worktree sale → rien (une modif non commitée est du travail en cours) ;
-- `origin/main` == `HEAD` → rien, cas nominal ;
+- amont de la branche courante == `HEAD` → rien, cas nominal. La branche
+  suivie est **celle du checkout** (`git rev-parse --abbrev-ref HEAD`), pas
+  `main` en dur : la prod tourne sur `master`, et un timer pointé sur une
+  branche divergée échoue à chaque passage sans jamais rien mettre à jour.
+  Forçable par `BXC_UPDATE_BRANCH` ;
 - fast-forward **strict** — un historique divergé est une décision humaine ;
 - `bun install --frozen-lockfile`, le lockfile fait foi ;
 - test de fumée `--version` **depuis les sources** avant de toucher aux
@@ -80,6 +84,40 @@ déclenche `scripts/bxc-auto-update.sh`, qui **s'abstient** plutôt que de force
   **aucun redémarrage** — mieux vaut de l'ancien code qui tourne ;
 - ne redémarre que les units `bxc`/`bxc-crawler`/`bxc-scheduler` **déjà
   actives** : ce qui a été arrêté à la main le reste.
+
+### Watchdog d'auto-remédiation
+
+`bxc-watchdog.timer` (5 min, posé et activé par `bxc-control.sh deploy`)
+déclenche `scripts/bxc-watchdog.sh`. Quatre volets, tous rate-limités — un
+watchdog qui redémarre en boucle est pire que la panne qu'il traite :
+
+| Volet | Déclencheur | Action | Cooldown |
+| --- | --- | --- | --- |
+| Endpoint CDP | `:9222/json/version` ≠ 200, **3 cycles** de suite (~15 min) | `restart bxc` | 30 min |
+| Mémoire | `MemoryCurrent` ≥ 90 % de `MemoryMax` | restart préventif (évite le SIGKILL cgroup en pleine écriture SQLite) | 30 min |
+| Units en échec | `systemctl list-units 'bxc*' --state=failed` | `reset-failed` + `start` | 60 min |
+| Units attendues actives | `bxc`/`bxc-crawler`/`bxc-scheduler` non `active` | **signalement seul** — un arrêt manuel ne doit pas être annulé | — |
+
+```bash
+systemctl list-timers bxc-watchdog          # NEXT doit être renseigné
+journalctl -u bxc-watchdog -n 50            # dernier passage
+./scripts/bxc-watchdog.sh                   # forcer un cycle, à la main
+sudo systemctl disable --now bxc-watchdog.timer   # couper
+```
+
+Le timer est un `Type=oneshot` : il utilise `OnUnitInactiveSec` (compte depuis
+la **fin** du passage précédent) et non `OnUnitActiveSec`. `Persistent=` ne
+s'appliquant qu'à `OnCalendar`, la reprise après reboot vient d'`OnBootSec`.
+
+L'état (compteurs d'échecs consécutifs, marqueurs de cooldown) vit sous
+`/tmp/bxc-watchdog` : un reboot repart d'une ardoise propre, ce qui est le
+comportement voulu.
+
+### Planificateur in-process
+
+`bxc-scheduler.service` exécute `scripts/cron-scheduler.ts` (`Bun.cron`) pour
+les scrapes périodiques. `MemoryMax=512M`, `Nice=15` : il cède le CPU à l'API
+et au crawler. Journaux dans `/var/log/bxc/scheduler{,-error}.log`.
 
 **Portabilité Windows** : la station de travail obtient la CLI et le serveur
 MCP. Les daemons (`bxc.service`, `bxc-crawler`, purges X, wonderbot) restent

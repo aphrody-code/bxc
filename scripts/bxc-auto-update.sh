@@ -12,7 +12,7 @@
 #
 #   1. Rien a faire si le worktree est sale : une modif non commitee est du
 #      travail en cours, un `merge --ff-only` par-dessus est un vol de donnees.
-#   2. Rien a faire si origin/main == HEAD : le cas nominal, silencieux.
+#   2. Rien a faire si l'amont de la branche courante == HEAD : cas nominal.
 #   3. Fast-forward strict. Jamais de merge, jamais de rebase : si l'historique
 #      a diverge, c'est une decision humaine, pas celle d'un timer.
 #   4. `bun install --frozen-lockfile` : le lockfile fait foi, un timer ne
@@ -29,7 +29,11 @@ set -uo pipefail
 
 REPO_ROOT="${REPO_ROOT:-/home/ubuntu/bxc}"
 REMOTE="${BXC_UPDATE_REMOTE:-origin}"
-BRANCH="${BXC_UPDATE_BRANCH:-main}"
+# La branche suivie est celle du checkout, pas "main" en dur : la prod tourne sur
+# `master`, et pointer un timer horaire sur une branche divergee le fait echouer
+# a chaque passage (fast-forward impossible) sans que rien ne soit jamais mis a
+# jour. Repli sur main si HEAD est detache.
+BRANCH="${BXC_UPDATE_BRANCH:-}"
 # Les units redemarrees apres une mise a jour reussie, si elles sont actives.
 SERVICES=(bxc bxc-crawler bxc-scheduler)
 
@@ -38,6 +42,12 @@ log(){ echo "[$(ts)] $*"; }
 
 log "=== auto-update run ==="
 cd "$REPO_ROOT" || { log "  ✗ checkout introuvable : $REPO_ROOT"; exit 1; }
+
+if [ -z "$BRANCH" ]; then
+  BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
+  [ "$BRANCH" = "HEAD" ] && BRANCH=main   # HEAD detache : pas de branche a suivre
+fi
+log "  branche suivie : $REMOTE/$BRANCH"
 
 # ── 1. worktree propre ? ────────────────────────────────────────────────────
 dirty="$(git status --porcelain --untracked-files=no 2>/dev/null)"
