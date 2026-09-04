@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.9.3] - 2026-09-04
+
+### Fixed
+
+- **Les deux historiques `main` et `master` sont refusionnés.** Ils portaient le
+  même travail sous des SHA différents (historique réécrit), donc une
+  merge-base vieille de 200 commits et 38 conflits qui n'en étaient pas. `main`
+  repart de l'arbre de `master` — releases 0.9.1 et 0.9.2, auto-update horaire,
+  watchdog, headers navigateur complets — avec le seul commit qui lui était
+  propre réappliqué par-dessus. Plus rien ne diverge entre les deux branches.
+- **Le watchdog ne relance plus une unit sortie sur un code qu'elle déclare
+  non-relançable.** Le volet « units en échec » redémarrait tout ce qui matche
+  `bxc*`, y compris les daemons de purge X et wonderbot dont le
+  `RestartPreventExitStatus=77` sert précisément à rester en `failed` quand les
+  credentials sont rejetés. Toutes les 5 minutes, le watchdog rejouait donc un
+  démarrage voué à l'échec et noyait le signal « il faut renouveler la session ».
+  La garde lit la déclaration de l'unit, sans liste en dur.
+- **La chaîne de packaging Windows est de nouveau raccordée** :
+  `build-windows.ps1` écrit dans `dist\standalone\windows` depuis l'alignement
+  package management, `deploy-windows.ps1` lisait toujours `dist\windows` et
+  empaquetait un répertoire vide.
+- Le profil statique n'annonce plus d'UA `Bxc/*` : le test du handler
+  `Emulation` attendait encore ce marqueur, resté rouge dans la 0.9.2 alors que
+  le jeu de headers navigateur complet est justement là pour ne plus se
+  déclarer robot.
+
+### Changed
+
+- `bun.lock` et `rust-bridge/Cargo.lock` resynchronisés avec les manifestes :
+  les bumps 0.9.1 / 0.9.2 avaient touché les `package.json` et les `Cargo.toml`
+  sans régénérer les verrous, qui épinglaient encore les crates locales en
+  `0.1.0` et trois workspaces sur des plages périmées.
+- `ai.json` et `gemini-extension.json` repassent à la version du dépôt : ils
+  étaient figés en 0.7.0, trois releases en arrière.
+
+---
+
 ## [0.9.2] - 2026-09-04
 
 ### Added
