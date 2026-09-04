@@ -48,11 +48,11 @@ function ctxWindows(
 		platform: "win32",
 		arch: "x64",
 		env: {
-			APPDATA: "C:\\Users\\yohan\\AppData\\Roaming",
-			LOCALAPPDATA: "C:\\Users\\yohan\\AppData\\Local",
+			APPDATA: "C:\\Users\\test\\AppData\\Roaming",
+			LOCALAPPDATA: "C:\\Users\\test\\AppData\\Local",
 			...env,
 		},
-		home: "C:\\Users\\yohan",
+		home: "C:\\Users\\test",
 		exists: () => false,
 	};
 }
@@ -68,7 +68,7 @@ describe("resolveConfigPath", () => {
 
 	test("Windows : sous %APPDATA%", () => {
 		expect(resolveConfigPath(ctxWindows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Roaming\\bxc\\config.json",
+			"C:\\Users\\test\\AppData\\Roaming\\bxc\\config.json",
 		);
 	});
 
@@ -103,12 +103,12 @@ describe("défauts sans fichier ni variable", () => {
 			ctx: ctxWindows(),
 			readFile: noFile,
 		});
-		expect(settings.rootDir).toBe("C:\\Users\\yohan\\AppData\\Local\\bxc");
+		expect(settings.rootDir).toBe("C:\\Users\\test\\AppData\\Local\\bxc");
 		expect(settings.cookiesDir).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc\\cookies",
+			"C:\\Users\\test\\AppData\\Local\\bxc\\cookies",
 		);
 		expect(settings.installDir).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc\\bin",
+			"C:\\Users\\test\\AppData\\Local\\bxc\\bin",
 		);
 		for (const value of Object.values(settings)) {
 			if (typeof value === "string") expect(value.startsWith("/")).toBe(false);
@@ -237,7 +237,7 @@ describe("defaultConfigFile", () => {
 			timeoutMs: 30_000,
 		});
 		expect(defaultConfigFile(ctxWindows()).installDir).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc\\bin",
+			"C:\\Users\\test\\AppData\\Local\\bxc\\bin",
 		);
 	});
 });

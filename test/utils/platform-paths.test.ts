@@ -58,11 +58,11 @@ function windows(
 		platform: "win32",
 		arch: "x64",
 		env: {
-			APPDATA: "C:\\Users\\yohan\\AppData\\Roaming",
-			LOCALAPPDATA: "C:\\Users\\yohan\\AppData\\Local",
+			APPDATA: "C:\\Users\\test\\AppData\\Roaming",
+			LOCALAPPDATA: "C:\\Users\\test\\AppData\\Local",
 			...env,
 		},
-		home: "C:\\Users\\yohan",
+		home: "C:\\Users\\test",
 		exists,
 	};
 }
@@ -93,13 +93,13 @@ describe("expandHome", () => {
 			"/home/ubuntu/.bxc/cookies",
 		);
 		expect(expandHome("~/.bxc/cookies", windows())).toBe(
-			"C:\\Users\\yohan\\.bxc\\cookies",
+			"C:\\Users\\test\\.bxc\\cookies",
 		);
 	});
 
 	test("accepte un séparateur Windows en entrée", () => {
 		expect(expandHome("~\\.bxc\\bin", windows())).toBe(
-			"C:\\Users\\yohan\\.bxc\\bin",
+			"C:\\Users\\test\\.bxc\\bin",
 		);
 	});
 
@@ -110,7 +110,7 @@ describe("expandHome", () => {
 	});
 
 	test("~ seul renvoie le home", () => {
-		expect(expandHome("~", windows())).toBe("C:\\Users\\yohan");
+		expect(expandHome("~", windows())).toBe("C:\\Users\\test");
 	});
 });
 
@@ -136,18 +136,18 @@ describe("resolveRootDir", () => {
 
 	test("Windows : %LOCALAPPDATA%\\bxc quand ~/.bxc n'existe pas", () => {
 		expect(resolveRootDir(windows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc",
+			"C:\\Users\\test\\AppData\\Local\\bxc",
 		);
 	});
 
 	test("Windows : ~/.bxc l'emporte s'il existe déjà", () => {
-		const ctx = windows({}, (p) => p === "C:\\Users\\yohan\\.bxc");
-		expect(resolveRootDir(ctx)).toBe("C:\\Users\\yohan\\.bxc");
+		const ctx = windows({}, (p) => p === "C:\\Users\\test\\.bxc");
+		expect(resolveRootDir(ctx)).toBe("C:\\Users\\test\\.bxc");
 	});
 
 	test("Windows sans LOCALAPPDATA : replie sur AppData\\Local", () => {
 		const ctx = windows({ LOCALAPPDATA: undefined });
-		expect(resolveRootDir(ctx)).toBe("C:\\Users\\yohan\\AppData\\Local\\bxc");
+		expect(resolveRootDir(ctx)).toBe("C:\\Users\\test\\AppData\\Local\\bxc");
 	});
 });
 
@@ -161,7 +161,7 @@ describe("resolveConfigDir", () => {
 
 	test("Windows : %APPDATA%\\bxc", () => {
 		expect(resolveConfigDir(windows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Roaming\\bxc",
+			"C:\\Users\\test\\AppData\\Roaming\\bxc",
 		);
 	});
 
@@ -187,10 +187,10 @@ describe("resolveCacheDir / resolveDataDir", () => {
 
 	test("Windows : sous %LOCALAPPDATA%\\bxc", () => {
 		expect(resolveCacheDir(windows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc\\cache",
+			"C:\\Users\\test\\AppData\\Local\\bxc\\cache",
 		);
 		expect(resolveDataDir(windows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc\\data",
+			"C:\\Users\\test\\AppData\\Local\\bxc\\data",
 		);
 	});
 
@@ -209,7 +209,7 @@ describe("resolveInstallBinDir", () => {
 
 	test("Windows : la racine bxc + \\bin, comme install.ps1", () => {
 		expect(resolveInstallBinDir(windows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\bxc\\bin",
+			"C:\\Users\\test\\AppData\\Local\\bxc\\bin",
 		);
 	});
 
@@ -232,7 +232,7 @@ describe("resolveTempDir", () => {
 	test("Windows : TEMP, jamais /tmp", () => {
 		expect(resolveTempDir(windows({ TEMP: "C:\\Temp" }))).toBe("C:\\Temp");
 		expect(resolveTempDir(windows())).toBe(
-			"C:\\Users\\yohan\\AppData\\Local\\Temp",
+			"C:\\Users\\test\\AppData\\Local\\Temp",
 		);
 	});
 });
@@ -240,6 +240,6 @@ describe("resolveTempDir", () => {
 describe("legacyRoot", () => {
 	test("est ~/.bxc sur les deux plateformes", () => {
 		expect(legacyRoot(linux())).toBe("/home/ubuntu/.bxc");
-		expect(legacyRoot(windows())).toBe("C:\\Users\\yohan\\.bxc");
+		expect(legacyRoot(windows())).toBe("C:\\Users\\test\\.bxc");
 	});
 });
