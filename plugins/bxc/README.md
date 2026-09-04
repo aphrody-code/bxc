@@ -49,6 +49,22 @@ lowercase hyphen-case and have valid `SKILL.md` frontmatter.
 - `bxc-scraper` — monorepo package pattern for new scrapers (fut, voiranime, worldbeyblade style), CLI integration.
 - `bxc-autopilot` — the loop (verify + lint scoped + log feeding + subagents), monitors, continuous operation.
 - `bxc-docs` — writing high-quality SKILL.md, agents, commands following plugin-dev + bxc conventions.
+- `bxc-build`, `bxc-verify`, `bxc-new-scraper` — cross-platform build, scoped verify, scaffolding a scraper package.
+
+Une skill par sous-module de `packages/`, chacune avec ses exports réels, sa
+sous-commande `bxc` et le piège qui lui est propre :
+
+- `bxc-fut` — scraper EA FC Ultimate Team (futbin, fut.gg), resolver GraphQL, base SQLite git-ignorée.
+- `bxc-ietv` — catalogue d'épisodes, cache SQLite, `VideoTranscoder` mediabunny et son descripteur de sortie.
+- `bxc-frames` — index image par image, descripteur ColorLayout, pilotage ffmpeg, repli trace.moe.
+- `bxc-animesama` — scraper anime-sama.to, variantes de langue, résolution des lecteurs.
+- `bxc-voiranime` — scraper voiranime, règle des deux pages VF/VOSTFR, correspondance Kai.
+- `bxc-wonderbot` — bot Discord du catalogue, portée des commandes, journal d'annonces.
+- `bxc-worldbeyblade` — forum WBO, normalisation des combos, analyse du métagame.
+- `bxc-challonge` — brackets Challonge, mount React et `window.gon`.
+- `bxc-xcom` — scraper de profils x.com (à ne pas confondre avec le client natif `@aphrody/x`).
+- `bxc-zukan` — encyclopédie zukan.inazuma.jp.
+- `bxc-next-playwright` — `instant()` Next.js sur CDP, sans dépendance Playwright.
 
 Each skill has references/ and examples/ for depth.
 
