@@ -72,6 +72,14 @@ if [ "$before" = "$target" ]; then
   log "=== fin ==="
   exit 0
 fi
+# HEAD contient deja l'amont (checkout en avance : commits locaux pas encore
+# pousses). Le merge --ff-only serait un no-op, mais on redemarrerait les
+# services a chaque passage horaire pour rien.
+if git merge-base --is-ancestor "$target" "$before"; then
+  log "  ✓ deja a jour : $REMOTE/$BRANCH ($(git rev-parse --short "$target")) est deja contenu dans HEAD ($(git rev-parse --short "$before"))"
+  log "=== fin ==="
+  exit 0
+fi
 
 log "  ⇣ $(git rev-parse --short "$before") → $(git rev-parse --short "$target")"
 git log --oneline "$before..$target" 2>/dev/null | sed 's/^/      /'
