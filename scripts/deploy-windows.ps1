@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
-$DistDir = Join-Path $RepoRoot "dist\windows"
+$DistDir = Join-Path $RepoRoot "dist\standalone\windows"
 $ZipName = "bxc-windows-x64.zip"
 $ZipPath = Join-Path $DistDir $ZipName
 
@@ -76,7 +76,7 @@ if (Test-Path $AppxManifest) {
     
     if ($MakeAppx) {
         Write-Output "Found MakeAppx at: $MakeAppx"
-        # Copy AppxManifest to dist\windows for packaging
+        # Copy AppxManifest to dist\standalone\windows for packaging
         Copy-Item -Path $AppxManifest -Destination $DistDir -Force
         
         # We need an Assets folder for MSIX
