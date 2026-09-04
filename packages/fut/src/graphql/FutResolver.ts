@@ -26,7 +26,34 @@ import {
 	Float,
 } from "type-graphql";
 import { Database } from "bun:sqlite";
+import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
+
+/**
+ * Chemin de la base extraite par le scraper FUT.
+ *
+ * Le fichier est un artefact de crawl (git-ignoré) : il n'existe pas sur un
+ * clone frais. `new Database(path)` le CRÉERAIT vide, et les requêtes
+ * échoueraient ensuite sur « no such table: players » — un message qui accuse
+ * le schéma alors que le vrai défaut est l'absence de données. On ouvre donc en
+ * lecture seule, sans création, et on dit quoi lancer pour la produire.
+ */
+const FUT_DB_PATH = join(import.meta.dir, "../data/fut_extracted_database.sqlite");
+
+export function futDatabaseExists(): boolean {
+	return existsSync(FUT_DB_PATH) && statSync(FUT_DB_PATH).size > 0;
+}
+
+function openFutDatabase(): Database {
+	if (!futDatabaseExists()) {
+		throw new Error(
+			`Base FUT absente ou vide (${FUT_DB_PATH}). Lancer le scraper ` +
+				"(`bun packages/fut/src/scripts/recursive_fut_scraper.ts`) pour la produire.",
+		);
+	}
+	return new Database(FUT_DB_PATH, { readonly: true });
+}
+
 
 function classifyPlayer(player: any) {
 	const tags: string[] = [];
@@ -334,11 +361,7 @@ export class FutResolver {
 		@Arg("offset", () => Int, { nullable: true, defaultValue: 0 })
 		offset?: number,
 	): Promise<GraphQLFutPlayer[]> {
-		const dbPath = join(
-			import.meta.dir,
-			"../data/fut_extracted_database.sqlite",
-		);
-		const db = new Database(dbPath);
+		using db = openFutDatabase();
 
 		let sql = "SELECT * FROM players WHERE 1=1";
 		const params: Record<string, any> = {};
@@ -499,11 +522,7 @@ export class FutResolver {
 
 	@Query(() => FutStatsSummary)
 	async futStatsSummary(): Promise<FutStatsSummary> {
-		const dbPath = join(
-			import.meta.dir,
-			"../data/fut_extracted_database.sqlite",
-		);
-		const db = new Database(dbPath);
+		using db = openFutDatabase();
 
 		const totalPlayers = db
 			.query("SELECT COUNT(*) as count FROM players")

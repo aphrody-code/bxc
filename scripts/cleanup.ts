@@ -28,9 +28,9 @@
  */
 
 import { existsSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = resolve(import.meta.dir, "..");
 
 const execute = process.argv.includes("--yes") || process.argv.includes("-y");
 

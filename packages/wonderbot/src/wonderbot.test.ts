@@ -15,6 +15,7 @@
  */
 
 import { describe, expect, it } from "bun:test";
+import { join } from "node:path";
 
 import type { ChannelInfo, VideoRef } from "@aphrody/ietv";
 import type { CacheStats } from "@aphrody/ietv/cache";
@@ -316,7 +317,8 @@ describe("lireConfig", () => {
 		const config = lireConfig(base);
 		expect(config.jeton).toBe("jeton");
 		expect(config.applicationId).toBe("1544463751279812740");
-		expect(config.cheminCache).toBe("/home/test/.cache/ietv/episodes.db");
+		// `join` fixe le séparateur natif : comparer à une chaîne POSIX échouerait sous Windows.
+		expect(config.cheminCache).toBe(join("/home/test", ".cache", "ietv", "episodes.db"));
 		// Sans guilde, la portée « guildes » n'enregistrerait nulle part.
 		expect(config.portee).toBe("globale");
 	});

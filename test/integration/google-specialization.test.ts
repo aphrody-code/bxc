@@ -20,6 +20,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
+import { resolve } from "node:path";
 import { Browser } from "../../src/api/browser.ts";
 import {
 	detectGoogleSpecifics,
@@ -33,7 +34,7 @@ import { suggestStrategy } from "../../src/router/framework-strategy.ts";
 // ---------------------------------------------------------------------------
 
 async function locateLightpanda(): Promise<string | null> {
-	const root = new URL("../../", import.meta.url).pathname;
+	const root = resolve(import.meta.dir, "../..");
 	const envBin = Bun.env.BXC_LIGHTPANDA_BIN;
 	if (envBin && (await Bun.file(envBin).exists())) return envBin;
 
@@ -120,7 +121,8 @@ async function isOnline(): Promise<boolean> {
 	}
 }
 
-const ONLINE = await isOnline();
+const NETWORK_OK = !Bun.env.SKIP_NETWORK_TESTS;
+const ONLINE = NETWORK_OK && (await isOnline());
 const itIfOnline = ONLINE ? test : test.skip;
 
 describe("Zukan Inazuma — Live Site Tests", () => {

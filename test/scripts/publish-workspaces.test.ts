@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { resolve } from "node:path";
 import { describe, expect, test } from "bun:test";
 import {
 	internalDeps,
@@ -107,7 +108,7 @@ describe("publication", () => {
 
 describe("lecture du dépôt", () => {
 	test("trouve les paquets réels et place la racine après ses dépendances", () => {
-		const packages = readWorkspaces(new URL("../..", import.meta.url).pathname);
+		const packages = readWorkspaces(resolve(import.meta.dir, "../.."));
 		const names = packages.map((p) => p.name);
 		expect(names).toContain("@aphrody/bxc");
 		expect(names).toContain("@aphrody/x");

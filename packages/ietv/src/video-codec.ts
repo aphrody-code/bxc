@@ -347,57 +347,79 @@ export class VideoTranscoder {
 			target: new FilePathTarget(outputPath),
 		});
 
-		const conversion = await this.deps.initConversion({
-			input,
-			output,
-			trim: options.trim,
-			video: {
-				height,
-				codec,
-				frameRate: profile.fps,
-				quality: new Quality({
-					bitrate: profile.bitrate,
-					...(profile.quantizer !== undefined ? { quantizer: profile.quantizer } : {}),
-				}),
-			},
-			audio: { codec: profile.audioCodec },
-		});
-
-		if (options.onProgress) {
-			const report = options.onProgress;
-			conversion.onProgress = (progress, processedTime) => report(progress, processedTime);
-		}
-
-		if (!conversion.isValid) {
-			const reasons = describeDiscarded(conversion.discardedTracks);
-			throw new Error(
-				`Transcodage impossible pour ${inputPath} → ${outputPath}` +
-					(reasons.length > 0 ? ` : ${reasons.join(", ")}` : "")
-			);
-		}
-
-		const onAbort = () => void conversion.cancel();
-		options.signal?.addEventListener("abort", onAbort, { once: true });
+		// `new Output({ target: new FilePathTarget(...) })` prend un descripteur sur
+		// le fichier de sortie dès la construction. Seul `finalize()` (que fait
+		// `execute()`) ou `cancel()` le rend : l'abandonner au ramasse-miettes lève
+		// sous Bun (« FileHandle closed during garbage collection ») et laisse le
+		// fichier verrouillé sous Windows. Tout ce qui suit la construction vit donc
+		// sous un `finally` qui libère l'entrée ET la sortie, y compris quand
+		// `initConversion` échoue ou que la conversion est jugée invalide.
+		const release = async () => {
+			input.dispose();
+			if (output.state === "finalized" || output.state === "canceled") return;
+			// `FilePathTarget` ouvre son descripteur dans le `start()` du WritableStream,
+			// donc dès la construction de l'Output — mais mediabunny 1.55 ne referme ce
+			// descripteur que par le `close()` du flux, atteint via `finalize()` ou via
+			// `cancel()` d'un output DÉMARRÉ. Annuler un output resté « pending » laisse
+			// donc le handle ouvert. On le démarre pour pouvoir l'annuler proprement.
+			if (output.state === "pending") await output.start();
+			await output.cancel();
+		};
 
 		try {
-			await conversion.execute();
-		} finally {
-			options.signal?.removeEventListener("abort", onAbort);
-			input.dispose();
-		}
+			const conversion = await this.deps.initConversion({
+				input,
+				output,
+				trim: options.trim,
+				video: {
+					height,
+					codec,
+					frameRate: profile.fps,
+					quality: new Quality({
+						bitrate: profile.bitrate,
+						...(profile.quantizer !== undefined ? { quantizer: profile.quantizer } : {}),
+					}),
+				},
+				audio: { codec: profile.audioCodec },
+			});
 
-		return {
-			output: outputPath,
-			container,
-			videoCodec: profile.videoCodec,
-			audioCodec: profile.audioCodec,
-			sizeBytes: await this.deps.fileSize(outputPath),
-			elapsedMs: this.deps.now() - startedAt,
-			discarded: conversion.discardedTracks.map((track) => ({
-				type: track.track.type,
-				reason: track.reason,
-			})),
-		};
+			if (options.onProgress) {
+				const report = options.onProgress;
+				conversion.onProgress = (progress, processedTime) => report(progress, processedTime);
+			}
+
+			if (!conversion.isValid) {
+				const reasons = describeDiscarded(conversion.discardedTracks);
+				throw new Error(
+					`Transcodage impossible pour ${inputPath} → ${outputPath}` +
+						(reasons.length > 0 ? ` : ${reasons.join(", ")}` : "")
+				);
+			}
+
+			const onAbort = () => void conversion.cancel();
+			options.signal?.addEventListener("abort", onAbort, { once: true });
+
+			try {
+				await conversion.execute();
+			} finally {
+				options.signal?.removeEventListener("abort", onAbort);
+			}
+
+			return {
+				output: outputPath,
+				container,
+				videoCodec: profile.videoCodec,
+				audioCodec: profile.audioCodec,
+				sizeBytes: await this.deps.fileSize(outputPath),
+				elapsedMs: this.deps.now() - startedAt,
+				discarded: conversion.discardedTracks.map((track) => ({
+					type: track.track.type,
+					reason: track.reason,
+				})),
+			};
+		} finally {
+			await release();
+		}
 	}
 }
 

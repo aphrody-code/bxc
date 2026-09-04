@@ -17,10 +17,12 @@
 import { describe, expect, test } from "bun:test";
 import { graphql } from "graphql";
 import { buildSchema } from "type-graphql";
-import { ScrapeResolver } from "../../../server/graphql/resolvers/ScrapeResolver.ts";
-import { FutResolver } from "../graphql/FutResolver.ts";
+import { ScrapeResolver } from "../../../../src/server/graphql/resolvers/ScrapeResolver.ts";
+import { FutResolver, futDatabaseExists } from "../graphql/FutResolver.ts";
 
-describe("FUT GraphQL Resolvers Integration", () => {
+// La base FUT est un artefact de crawl (git-ignoré) : sur un clone frais elle
+// n'existe pas, et ces requêtes n'ont rien à interroger.
+describe.skipIf(!futDatabaseExists())("FUT GraphQL Resolvers Integration", () => {
 	test("should build schema and execute futStatsSummary query", async () => {
 		const schema = await buildSchema({
 			resolvers: [ScrapeResolver, FutResolver],

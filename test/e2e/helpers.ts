@@ -25,6 +25,8 @@
  * - Markdown report writer (matching the layout in the spec 05a-e2e-prod-sites).
  */
 
+import { resolve } from "node:path";
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
@@ -188,7 +190,7 @@ async function curlImpersonateAvailable(): Promise<boolean> {
 		(await fileExists(Bun.env.BXC_CURL_IMPERSONATE_LIB))
 	)
 		return true;
-	const root = new URL("../../", import.meta.url).pathname;
+	const root = resolve(import.meta.dir, "../..");
 	const candidates = [
 		`${root}vendor/curl-impersonate/libcurl-impersonate.so.4.8.0`,
 		`${root}vendor/curl-impersonate/libcurl-impersonate.so.4`,
@@ -200,7 +202,7 @@ async function curlImpersonateAvailable(): Promise<boolean> {
 }
 
 async function zigqueryAvailable(): Promise<boolean> {
-	const root = new URL("../../", import.meta.url).pathname;
+	const root = resolve(import.meta.dir, "../..");
 	const candidates = [
 		Bun.env.BXC_ZIGQUERY_LIB,
 		`${root}vendor/zigquery-wrapper/zig-out/lib/liblightpanda_dom.so`,

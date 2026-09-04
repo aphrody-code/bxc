@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, test } from "bun:test";
+import { resolve } from "node:path";
 import { CL_DIMS } from "./descriptor.ts";
 import { FrameIndex, defaultIndexPath } from "./store.ts";
 
@@ -110,7 +111,8 @@ describe("index local", () => {
 	test("le chemin par défaut suit BXC_FRAMES_DB", () => {
 		const previous = process.env.BXC_FRAMES_DB;
 		process.env.BXC_FRAMES_DB = "/tmp/bxc-frames-test.db";
-		expect(defaultIndexPath()).toBe("/tmp/bxc-frames-test.db");
+		// resolve() normalise le séparateur : la comparaison doit être portable.
+		expect(defaultIndexPath()).toBe(resolve("/tmp/bxc-frames-test.db"));
 		if (previous === undefined) delete process.env.BXC_FRAMES_DB;
 		else process.env.BXC_FRAMES_DB = previous;
 		expect(defaultIndexPath()).toMatch(/frames\.db$/);
