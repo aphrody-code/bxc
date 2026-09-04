@@ -22,10 +22,10 @@
 #   .\scripts\build-windows.ps1 -Arch arm64      # ARM64 build (experimental)
 #
 # Outputs:
-#   dist\windows\bxc.exe
-#   dist\windows\lightpanda.exe
-#   dist\windows\libcurl-impersonate.dll
-#   dist\windows\bxc-windows-x64.zip
+#   dist\standalone\windows\bxc.exe
+#   dist\standalone\windows\lightpanda.exe
+#   dist\standalone\windows\libcurl-impersonate.dll
+#   dist\standalone\windows\bxc-windows-x64.zip
 #
 # Note on Lightpanda:
 #   Upstream lightpanda-io/browser is an Alpha-stage Zig project with V8
@@ -74,7 +74,7 @@ Write-Output "  bun       $(bun --version)"
 Write-Output "  zig       $(zig version)"
 Write-Output "  target    $ZigTarget / $BunTarget"
 
-$DistDir = Join-Path $RepoRoot "dist\windows"
+$DistDir = Join-Path $RepoRoot "dist\standalone\windows"
 $null = New-Item -ItemType Directory -Force -Path $DistDir
 
 # ─── Step 2: Lightpanda native build (Zig cross-compile) ──────────────
@@ -149,14 +149,19 @@ try {
   }
 
   $OutExe = Join-Path $DistDir "bxc.exe"
+  $Package = Get-Content (Join-Path $RepoRoot "package.json") -Raw | ConvertFrom-Json
+  $BuildVersion = $Package.version
+  $BuildTime = Get-Date -Format 'o'
   $BuildArgs = @(
     "build", "src/cli/index.ts",
     "--compile", "--target=$BunTarget",
-    "--minify", "--sourcemap=linked", "--bytecode",
+    "--sourcemap=linked", "--bytecode",
+    "--no-compile-autoload-tsconfig",
+    "--no-compile-autoload-package-json",
     "--external", "electron",
     "--external", "playwright-core/lib/zipBundle",
-    "--define", "BUILD_VERSION=`"$(jq -r .version package.json)`"",
-    "--define", "BUILD_TIME=`"$(Get-Date -Format 'o')`"",
+    "--define", "__BXC_VERSION__=`"$BuildVersion`"",
+    "--define", "__BXC_BUILD_TIME__=`"$BuildTime`"",
     "--outfile", $OutExe
   )
 
@@ -247,4 +252,4 @@ Get-ChildItem $DistDir | ForEach-Object {
 }
 Write-Output ""
 Write-Output "Upload via:"
-Write-Output "  gh release create v$(jq -r .version package.json) $ZipPath --generate-notes"
+Write-Output "  gh release create v$BuildVersion $ZipPath --generate-notes"

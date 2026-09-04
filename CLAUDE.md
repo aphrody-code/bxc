@@ -326,3 +326,12 @@ gh release create vX.Y.Z --repo aphrody-code/bxc --title "bxc vX.Y.Z" --notes "<
   - Exports subpath : `@aphrody/bxc/google/gemini-web` et `@aphrody/bxc/google/gemini-session` (en plus du barrel `./google`).
   - `gemini-scraper.ts` réutilise `GEMINI_HOST`/`GEMINI_APP_URL`/`DEFAULT_USER_AGENT` de `gemini-web.ts` (plus de constantes dupliquées) ; `GEMINI_BASE_URL` = alias déprécié de `GEMINI_HOST`.
   - Consommé par aphrody web (chat MD3 natif, modèle `"gemini-web"`). La CLI `bxc google chat` utilise `GeminiWebClient` en direct (one-shot, pas de pool).
+
+## Vitrine Rust — bxc.aphrody.com
+
+La prochaine surface publique est une crate `bxc-site` 100 % Rust : Axum 0.8,
+Tokio 1.x, Tower et rustls, écoute privée `127.0.0.1:8084`. Elle ne doit jamais
+exposer CDP `9222`, cookies, profils, crawls, secrets ou données personnelles.
+Routes minimales : `/healthz`, `/robots.txt`, `/.well-known/security.txt` ;
+futures API sous `/api/v1/` avec authentification. Le DNS/TLS est déjà réservé.
+Voir [`AGENTS.md`](AGENTS.md) pour les critères de livraison.

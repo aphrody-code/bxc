@@ -196,7 +196,7 @@ async function buildBxcExe(args: Args, distDir: string): Promise<void> {
 	const arch = args.arch === "arm64" ? "aarch64" : "x64";
 	const target = args.baseline
 		? `bun-windows-${arch}-baseline`
-		: `bun-windows-${arch}-baseline`; // Force baseline for maximum compatibility
+		: `bun-windows-${arch}`;
 	const repoRoot = `${import.meta.dir}/..`;
 	const out = `${distDir}/bxc.exe`;
 
@@ -207,7 +207,10 @@ async function buildBxcExe(args: Args, distDir: string): Promise<void> {
 
 	console.log(`[bxc] bun build --compile --target=${target} (with bytecode)`);
 
-	await $`bun build src/cli/index.ts --compile --target=${target} --minify --bytecode --sourcemap=linked --external electron --external playwright-core/lib/zipBundle --define __BXC_VERSION__="\"${pkg.version}\"" --define __BXC_BUILD_TIME__="\"${buildTime}\"" --outfile ${out}`.cwd(
+	// Do not minify this entry point. CDP evaluation payloads refer to function
+	// names embedded in strings, which a bundler cannot safely rewrite. Keep
+	// this aligned with build-standalone.ts and the release workflow.
+	await $`bun build src/cli/index.ts --compile --target=${target} --bytecode --sourcemap=linked --no-compile-autoload-tsconfig --no-compile-autoload-package-json --external electron --external playwright-core/lib/zipBundle --define __BXC_VERSION__="\"${pkg.version}\"" --define __BXC_BUILD_TIME__="\"${buildTime}\"" --outfile ${out}`.cwd(
 		repoRoot,
 	);
 

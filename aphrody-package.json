@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "bxc",
+  "repository": "aphrody-code/bxc",
+  "versionSource": "package.json",
+  "release": {
+    "provider": "github",
+    "tagTemplate": "v{version}",
+    "checksumsAsset": "SHA256SUMS.txt"
+  },
+  "executable": {
+    "unix": "bxc",
+    "windows": "bxc.exe",
+    "versionArgs": ["--version"],
+    "versionPattern": "^bxc ([0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?)$"
+  },
+  "artifacts": [
+    { "os": "linux", "arch": "x64", "asset": "bxc-linux-x64", "archive": false },
+    { "os": "linux", "arch": "arm64", "asset": "bxc-linux-arm64", "archive": false },
+    { "os": "darwin", "arch": "x64", "asset": "bxc-darwin-x64", "archive": false },
+    { "os": "darwin", "arch": "arm64", "asset": "bxc-darwin-arm64", "archive": false },
+    { "os": "windows", "arch": "x64", "asset": "bxc-windows-x64.exe", "archive": false }
+  ],
+  "runtimeDependencies": [],
+  "userData": {
+    "preserveOnUninstall": true,
+    "configEnv": "BXC_CONFIG_DIR",
+    "installEnv": "BXC_INSTALL_DIR"
+  }
+}

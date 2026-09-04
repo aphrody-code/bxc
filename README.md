@@ -557,3 +557,10 @@ We welcome contributions to Bxc! Feel free to report issues, suggest new feature
 <div align="center">
   <sub>Built with ⚡ by <a href="https://github.com/aphrody-code">@aphrody-code</a>. Optimized for human and artificial intelligence.</sub>
 </div>
+
+## Future vitrine Rust
+
+`bxc.aphrody.com` est réservé à une vitrine 100 % Rust directement intégrée au
+workspace BXC. Elle sera servie par Axum/Tokio derrière nginx, sans runtime
+JavaScript, sans collecte et sans exposition du port CDP. Le cahier des charges
+agent est dans [`AGENTS.md`](AGENTS.md).
