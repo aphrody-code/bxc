@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.9.2] - 2026-09-04
+
+### Added
+
+- **Watchdog d'auto-remédiation** (`scripts/bxc-watchdog.sh`,
+  `bxc-watchdog.timer`, 5 min) : endpoint CDP en échec 3 cycles de suite,
+  mémoire d'un service au-dessus de 90 % de son `MemoryMax`, unit `bxc*` en
+  `failed`. Chaque action est rate-limitée par un cooldown (30 / 60 min) — un
+  watchdog qui redémarre en boucle est pire que la panne qu'il traite. Les
+  services attendus actifs mais arrêtés sont **signalés, pas relancés** : un
+  arrêt manuel est une décision.
+- `bxc-scheduler.service` (planificateur `Bun.cron` in-process) et les units du
+  watchdog sont désormais posées et activées par `bxc-control.sh deploy` — elles
+  tournaient en prod sans jamais être rafraîchies depuis le dépôt.
+- `.mcp.json` versionné : le serveur `bxc-native-mcp` est déclaré au niveau du
+  projet, plus besoin de câblage manuel par poste.
+
+### Fixed
+
+- **L'auto-update horaire suit la branche du checkout**, plus `main` en dur. La
+  prod tourne sur `master` : `bxc-auto-update.service` échouait à chaque passage
+  (« fast-forward impossible : l'historique local a divergé ») sans jamais rien
+  mettre à jour, et laissait une unit en `failed` en permanence.
+  `BXC_UPDATE_BRANCH` force toujours le comportement.
+- `bxc-watchdog.timer` passe à `OnUnitInactiveSec` : sur un `Type=oneshot`,
+  l'intervalle doit se compter depuis la **fin** du passage précédent, sinon
+  deux runs peuvent se chevaucher.
+
+---
+
 ## [0.9.1] - 2026-09-03
 
 ### Fixed

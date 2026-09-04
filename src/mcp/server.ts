@@ -26,7 +26,7 @@ async function getOrCreatePage(
 
 const server = new McpServer({
 	name: "bxc-native-mcp",
-	version: "0.9.1",
+	version: "0.9.2",
 });
 
 /** Maps a friendly search vertical to Google's `udm` result-mode code. */
