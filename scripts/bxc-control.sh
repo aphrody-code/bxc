@@ -70,6 +70,7 @@ deploy_all() {
   log "Stopping systemd services..."
   sudo systemctl stop bxc || true
   sudo systemctl stop bxc-crawler || true
+  sudo systemctl stop bxc-scheduler || true
 
   # 2. Kill residual bxc processes
   log "Stopping running bxc and bxc-mcp processes..."
@@ -102,6 +103,9 @@ deploy_all() {
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc-crawler.service" "/etc/systemd/system/bxc-crawler.service"
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc-auto-update.service" "/etc/systemd/system/bxc-auto-update.service"
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc-auto-update.timer" "/etc/systemd/system/bxc-auto-update.timer"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-scheduler.service" "/etc/systemd/system/bxc-scheduler.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-watchdog.service" "/etc/systemd/system/bxc-watchdog.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-watchdog.timer" "/etc/systemd/system/bxc-watchdog.timer"
 
   # 5. Correct log ownerships
   log "Aligning log permissions..."
@@ -116,9 +120,12 @@ deploy_all() {
   log "Starting systemd services..."
   sudo systemctl start bxc
   sudo systemctl enable --now bxc-crawler || sudo systemctl restart bxc-crawler
-  # Le timer, pas le service : bxc-auto-update.service est un oneshot declenche.
-  # `enable` sur le service seul le lancerait au boot et plus jamais.
+  sudo systemctl enable --now bxc-scheduler || sudo systemctl restart bxc-scheduler
+  # Le timer, pas le service : bxc-auto-update.service et bxc-watchdog.service
+  # sont des oneshot declenches. `enable` sur le service seul le lancerait au
+  # boot et plus jamais.
   sudo systemctl enable --now bxc-auto-update.timer
+  sudo systemctl enable --now bxc-watchdog.timer
 
   # 8. Print status
   systemctl status bxc --no-pager || true

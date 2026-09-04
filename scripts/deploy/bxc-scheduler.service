@@ -1,0 +1,21 @@
+[Unit]
+Description=Bxc In-Process Cron Scheduler (Bun.cron periodic scrapes)
+Documentation=https://github.com/aphrody-code/bxc
+After=network-online.target bxc.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bxc
+ExecStart=/home/ubuntu/.bun/bin/bun run /home/ubuntu/bxc/scripts/cron-scheduler.ts
+Restart=always
+RestartSec=10
+MemoryMax=512M
+CPUWeight=40
+Nice=15
+StandardOutput=append:/var/log/bxc/scheduler.log
+StandardError=append:/var/log/bxc/scheduler-error.log
+
+[Install]
+WantedBy=multi-user.target

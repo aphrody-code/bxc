@@ -1,0 +1,16 @@
+[Unit]
+Description=Watchdog auto-remediation bxc toutes les 5 minutes
+Documentation=https://github.com/aphrody-code/bxc
+
+[Timer]
+# OnUnitInactiveSec (et non OnUnitActiveSec) : le watchdog est un oneshot dont
+# la duree varie avec les appels curl/systemctl. On compte l'intervalle depuis
+# la FIN du passage precedent, sinon deux runs peuvent se chevaucher.
+OnBootSec=2min
+OnUnitInactiveSec=5min
+AccuracySec=30s
+# Pas de Persistent= : il ne s'applique qu'aux declencheurs OnCalendar. La
+# reprise apres reboot vient d'OnBootSec.
+
+[Install]
+WantedBy=timers.target
