@@ -327,7 +327,7 @@ checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 
 [[package]]
 name = "bxc-chromium"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "bxc-engine"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -362,7 +362,7 @@ dependencies = [
 
 [[package]]
 name = "bxc-rust-bridge"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bxc-chromium",
@@ -1196,7 +1196,7 @@ dependencies = [
 
 [[package]]
 name = "gemini-web"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "regex",
  "reqwest 0.13.3",
@@ -2081,7 +2081,7 @@ dependencies = [
 
 [[package]]
 name = "obscura-browser"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "futures",
@@ -2097,7 +2097,7 @@ dependencies = [
 
 [[package]]
 name = "obscura-cdp"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "futures-util",
@@ -2117,7 +2117,7 @@ dependencies = [
 
 [[package]]
 name = "obscura-dom"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "cssparser",
  "html5ever 0.39.0",
@@ -2131,7 +2131,7 @@ dependencies = [
 
 [[package]]
 name = "obscura-js"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "base64",
@@ -2151,7 +2151,7 @@ dependencies = [
 
 [[package]]
 name = "obscura-mcp"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "obscura-browser",
@@ -2165,7 +2165,7 @@ dependencies = [
 
 [[package]]
 name = "obscura-net"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4554,7 +4554,7 @@ dependencies = [
 
 [[package]]
 name = "x-algorithm"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "serde",
@@ -4564,7 +4564,7 @@ dependencies = [
 
 [[package]]
 name = "x-client"
-version = "0.2.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "clap",
