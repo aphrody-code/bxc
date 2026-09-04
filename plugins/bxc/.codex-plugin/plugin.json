@@ -1,6 +1,6 @@
 {
   "name": "bxc",
-  "version": "0.1.1+codex.20260904120520",
+  "version": "0.2.0+codex.20260904",
   "description": "Bun-native bxc browser, scraper, Rust FFI, X/Grok and MCP toolkit for Codex.",
   "author": {
     "name": "aphrody / bxc contributors"
