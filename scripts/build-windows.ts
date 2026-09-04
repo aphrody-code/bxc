@@ -40,7 +40,7 @@
  *   bun scripts/build-windows.ts --lightpanda-ref nightly  # specific Lightpanda ref
  *
  * Environment overrides :
- *   BXC_CURL_VERSION   curl-impersonate release tag (default v1.5.6)
+ *   BXC_CURL_VERSION   curl-impersonate release tag (default v2.2.2)
  *   BXC_ZIG_TARGET     override Zig triple (default x86_64-windows-gnu)
  *   BXC_LIGHTPANDA_URL skip Lightpanda build, fetch this URL instead
  *
@@ -51,6 +51,9 @@
  *   bxc-windows-x64.zip            (or aarch64-baseline variants)
  */
 
+import { rmSync, mkdirSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { $ } from "bun";
 
 interface Args {
@@ -69,7 +72,7 @@ function parseArgs(argv: readonly string[]): Args {
 		skipLightpanda: false,
 		skipCurl: false,
 		lightpandaRef: "main",
-		curlVersion: Bun.env.BXC_CURL_VERSION ?? "v1.5.6",
+		curlVersion: Bun.env.BXC_CURL_VERSION ?? "v2.2.2",
 	};
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
@@ -253,11 +256,16 @@ async function fetchCurlImpersonate(
 	distDir: string,
 ): Promise<boolean> {
 	const ver = args.curlVersion;
-	const tmpZip = `/tmp/libcurl-impersonate-${ver}-windows.zip`;
-	const url = `https://github.com/lexiforest/curl-impersonate/releases/download/${ver}/libcurl-impersonate-${ver}.x86_64-win64.zip`;
+	const curlArch = args.arch === "arm64" ? "arm64" : "x86_64";
+	const archiveName = `libcurl-impersonate-${ver}.${curlArch}-win32.tar.gz`;
+	const tmpArchive = join(
+		tmpdir(),
+		archiveName,
+	);
+	const url = `https://github.com/lexiforest/curl-impersonate/releases/download/${ver}/${archiveName}`;
 
 	console.log(`[curl-impersonate] fetching ${url}`);
-	const dl = await $`curl -#SfLo ${tmpZip} ${url}`.nothrow();
+	const dl = await $`curl -#SfLo ${tmpArchive} ${url}`.nothrow();
 	if (dl.exitCode !== 0) {
 		console.warn(
 			`[curl-impersonate] download failed — bxc will lack http profile on Windows.`,
@@ -265,25 +273,21 @@ async function fetchCurlImpersonate(
 		return false;
 	}
 
-	const extractDir = `/tmp/curl-impersonate-extract-${Bun.hash(ver)}`;
-	await $`rm -rf ${extractDir}`.nothrow();
-	await $`mkdir -p ${extractDir}`;
-	await $`unzip -o ${tmpZip} -d ${extractDir}`.quiet().nothrow();
+	const extractDir = join(tmpdir(), `curl-impersonate-extract-${Bun.hash(ver)}`);
+	rmSync(extractDir, { recursive: true, force: true });
+	mkdirSync(extractDir, { recursive: true });
+	await $`tar -xzf ${tmpArchive} -C ${extractDir}`.quiet().nothrow();
 
-	const glob = new Bun.Glob("**/libcurl-impersonate*.dll");
-	let found: string | null = null;
-	for await (const f of glob.scan({ cwd: extractDir, absolute: true })) {
-		found = f;
-		break;
-	}
-	if (!found) {
-		console.warn(`[curl-impersonate] DLL not found inside ${tmpZip}`);
+	const found = join(extractDir, "lib", "libcurl-impersonate.dll");
+	if (!existsSync(found)) {
+		console.warn(`[curl-impersonate] DLL not found inside ${tmpArchive}`);
 		return false;
 	}
 
 	await Bun.write(`${distDir}/libcurl-impersonate.dll`, Bun.file(found));
 	console.log(`[curl-impersonate] OK -> ${distDir}/libcurl-impersonate.dll`);
-	await $`rm -rf ${extractDir} ${tmpZip}`.nothrow();
+	rmSync(extractDir, { recursive: true, force: true });
+	rmSync(tmpArchive, { force: true });
 	return true;
 }
 

@@ -82,7 +82,7 @@
     "build:linux": "cd rust-bridge && cargo build --release && cd .. && bun scripts/build-standalone.ts",
     "build:win": "bun scripts/build-windows.ts",
     "build:win:aggressive": "bun scripts/build-windows.ts --baseline",
-    "test": "bun test test/ packages/ src/",
+    "test": "bun test test/ packages/ src/ --path-ignore-patterns vendor/**",
     "test:google": "bun test test/integration/google-atlas.test.ts",
     "test:rust": "bun test test/rust-bridge.test.ts",
     "lint": "oxlint src test packages/x/examples scripts",

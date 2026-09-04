@@ -27,6 +27,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { mkdirSync, rmSync } from "node:fs";
 import { AutoscaledPool } from "../../src/pool/AutoscaledPool.ts";
 import { RequestQueue } from "../../src/queue/RequestQueue.ts";
 import { Dataset } from "../../src/storage/Dataset.ts";
@@ -44,7 +45,7 @@ import {
 
 function makeTmpDir(prefix: string): string {
 	const dir = join(tmpdir(), `bxc-test-${prefix}-${Date.now()}`);
-	Bun.spawnSync(["mkdir", "-p", dir], { stdin: "ignore" });
+	mkdirSync(dir, { recursive: true });
 	return dir;
 }
 
@@ -544,7 +545,7 @@ describe("Dataset", () => {
 
 	afterEach(async () => {
 		await ds.close();
-		Bun.spawnSync(["rm", "-rf", tmpDir], { stdin: "ignore" });
+		rmSync(tmpDir, { recursive: true, force: true });
 	});
 
 	test("pushData stores a single item and getItemCount reflects it", async () => {
@@ -638,7 +639,7 @@ describe("KeyValueStore", () => {
 
 	afterEach(() => {
 		kv.close();
-		Bun.spawnSync(["rm", "-rf", tmpDir], { stdin: "ignore" });
+		rmSync(tmpDir, { recursive: true, force: true });
 	});
 
 	test("set/get roundtrip for JSON value", async () => {

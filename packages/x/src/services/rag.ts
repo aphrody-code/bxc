@@ -115,52 +115,58 @@ Question: "${query}"`;
     const seenIds = new Set<string>();
     const candidates: any[] = [];
 
-    // 1. Fetch seed candidate tweets from Redis similarity search
-    try {
-      const queryVector = await this.getEmbedding(query);
-      const { redis } = await import("bun");
-      await redis.connect();
-      
-      const simRes = await redis.send("VSIM", [
-        "tweet_embeddings",
-        "FP32",
-        queryVector as any,
-        "COUNT",
-        this.limit.toString(),
-        "WITHSCORES"
-      ]) as Record<string, number> | null;
-      
-      redis.close();
+    // 1. Fetch seed candidate tweets from Redis similarity search. Offline
+    // mode is deliberately Redis-free so local tests and CLI usage never
+    // block on a service that was not requested.
+    if (!this.offlineMock) {
+      try {
+        const queryVector = await this.getEmbedding(query);
+        const { redis } = await import("bun");
+        await redis.connect();
 
-      if (simRes) {
-        const sortedIds = Object.entries(simRes)
-          .sort((a, b) => b[1] - a[1])
-          .map(entry => entry[0]);
+        try {
+          const simRes = await redis.send("VSIM", [
+            "tweet_embeddings",
+            "FP32",
+            queryVector as any,
+            "COUNT",
+            this.limit.toString(),
+            "WITHSCORES",
+          ]) as Record<string, number> | null;
 
-        for (const tweetId of sortedIds) {
-          try {
-            const tweet = store.db.prepare(`
-              SELECT id, author_username, author_name, text, created_at, like_count, conversation_id
-              FROM tweets WHERE id = ?
-            `).get(tweetId) as any;
+          if (simRes) {
+            const sortedIds = Object.entries(simRes)
+              .sort((a, b) => b[1] - a[1])
+              .map((entry) => entry[0]);
 
-            if (tweet) {
-              seenIds.add(tweet.id);
-              candidates.push({
-                id: tweet.id,
-                author_username: tweet.author_username,
-                author_name: tweet.author_name,
-                text: tweet.text,
-                created_at: tweet.created_at || undefined,
-                like_count: Number(tweet.like_count),
-                conversation_id: tweet.conversation_id || undefined
-              });
+            for (const tweetId of sortedIds) {
+              try {
+                const tweet = store.db.prepare(`
+                  SELECT id, author_username, author_name, text, created_at, like_count, conversation_id
+                  FROM tweets WHERE id = ?
+                `).get(tweetId) as any;
+
+                if (tweet) {
+                  seenIds.add(tweet.id);
+                  candidates.push({
+                    id: tweet.id,
+                    author_username: tweet.author_username,
+                    author_name: tweet.author_name,
+                    text: tweet.text,
+                    created_at: tweet.created_at || undefined,
+                    like_count: Number(tweet.like_count),
+                    conversation_id: tweet.conversation_id || undefined,
+                  });
+                }
+              } catch {}
             }
-          } catch {}
+          }
+        } finally {
+          redis.close();
         }
+      } catch (err: any) {
+        console.warn(`[rag] Redis vector search failed: ${err.message}. Falling back to keyword search only.`);
       }
-    } catch (err: any) {
-      console.warn(`[rag] Redis vector search failed: ${err.message}. Falling back to keyword search only.`);
     }
 
     // 2. Fallback / Hybrid search: FTS5 keyword matching from SQLite

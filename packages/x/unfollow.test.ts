@@ -662,11 +662,11 @@ describe("resumable journal", () => {
     }
   });
 
-  test("a journal belonging to another account is ignored", () => {
+  test("a journal belonging to another account is ignored", async () => {
     const dir = mkdtempSync(join(tmpdir(), "bxc-unfollow-"));
     const statePath = join(dir, "state.json");
     try {
-      Bun.write(
+      await Bun.write(
         statePath,
         JSON.stringify({ version: 1, user_id: "someone-else", queue: [] }),
       );

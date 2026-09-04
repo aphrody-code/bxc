@@ -204,18 +204,24 @@ export class BrowserCrawler extends BasicCrawler<BrowserCrawlingContext> {
 			const workerUrl = new URL("./BrowserWorker.ts", import.meta.url).href;
 			const worker = new Worker(workerUrl);
 			(worker as any).unref();
+			const pendingWrites = new Set<Promise<void>>();
 
 			worker.onmessage = async (event: MessageEvent) => {
 				const { type, data, urls, message, error } = event.data;
 				if (type === "pushData") {
-					if (this.dataset) {
-						await this.dataset.pushData(data);
+					const write = this.dataset?.pushData(data) ?? Promise.resolve();
+					pendingWrites.add(write);
+					try {
+						await write;
+					} finally {
+						pendingWrites.delete(write);
 					}
 				} else if (type === "addRequests") {
 					this.requestQueue.addRequests(urls);
 				} else if (type === "log") {
 					this.log(message);
 				} else if (type === "done") {
+					await Promise.all(pendingWrites);
 					worker.terminate();
 					resolve();
 				} else if (type === "error") {

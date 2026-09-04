@@ -100,7 +100,7 @@ describe("shouldSkip", () => {
 			vus.push(path);
 			return false;
 		}, "/abs/repo");
-		expect(vus).toEqual(["/abs/repo/.git"]);
+		expect(vus).toEqual([join("/abs/repo", ".git")]);
 	});
 
 	test("opt-out via BXC_NO_AUTOINSTALL=1", () => {
@@ -149,7 +149,7 @@ describe("resolveTargetPath", () => {
 		const p = detectPlatform("darwin", "arm64");
 		expect(p).not.toBeNull();
 		const target = resolveTargetPath(p!, "/ignored", "/tmp/custom");
-		expect(target).toBe("/tmp/custom/darwin-arm64/lightpanda");
+		expect(target).toBe(join("/tmp/custom", "darwin-arm64", "lightpanda"));
 	});
 });
 

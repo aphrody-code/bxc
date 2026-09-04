@@ -102,7 +102,9 @@ export async function resolveBinary(): Promise<string> {
 		if (await Bun.file(p).exists()) return p;
 	}
 
-	throw new Error(`bxc/detect: ${cliName} binary not found.`);
+	throw new Error(
+		`bxc/detect: wappalyzergo-cli binary not found (expected ${cliName}).`,
+	);
 }
 
 // ---------------------------------------------------------------------------

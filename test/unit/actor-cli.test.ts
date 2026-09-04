@@ -16,6 +16,7 @@
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import {
 	existsSync,
 	rmSync,
@@ -26,6 +27,9 @@ import {
 import { main as actorCliMain } from "../../src/cli/actor.ts";
 
 const TEST_DIR = join(import.meta.dir, "../../dist/test-cli-actor");
+const ACTOR_SDK_URL = pathToFileURL(
+	join(import.meta.dir, "../../src/sdk/Actor.ts"),
+).href;
 
 describe("Actor CLI Command", () => {
 	beforeAll(() => {
@@ -68,7 +72,7 @@ describe("Actor CLI Command", () => {
 
 		// Write a mock script that imports the Actor SDK
 		const mockScriptContent = `
-import { Actor } from "${join(import.meta.dir, "../../src/sdk/Actor.ts")}";
+import { Actor } from "${ACTOR_SDK_URL}";
 await Actor.main(async () => {
 	const input = await Actor.getInput() || {};
 	await Actor.setValue("OUTPUT", { received: input.val, ok: true });
@@ -127,7 +131,7 @@ await Actor.main(async () => {
 		writeFileSync(join(targetProjectDir, "actor.json"), JSON.stringify(actorJson, null, 2), "utf8");
 
 		const mockScriptContent = `
-import { Actor } from "${join(import.meta.dir, "../../src/sdk/Actor.ts")}";
+import { Actor } from "${ACTOR_SDK_URL}";
 await Actor.main(async () => {
 	await Actor.setValue("OUTPUT", { success: true });
 });

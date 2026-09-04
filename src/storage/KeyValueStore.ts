@@ -110,6 +110,7 @@ export class KeyValueStore {
 	readonly #db: Database;
 	readonly #blobDir: string;
 	readonly #inlineThreshold: number;
+	#closed = false;
 
 	// Prepared statements
 	readonly #stmtUpsert: ReturnType<Database["prepare"]>;
@@ -316,6 +317,13 @@ export class KeyValueStore {
 
 	/** Close the underlying SQLite connection. */
 	close(): void {
+		if (this.#closed) return;
+		this.#closed = true;
+		this.#stmtUpsert.finalize();
+		this.#stmtGet.finalize();
+		this.#stmtDelete.finalize();
+		this.#stmtList.finalize();
+		this.#stmtHas.finalize();
 		this.#db.close();
 	}
 

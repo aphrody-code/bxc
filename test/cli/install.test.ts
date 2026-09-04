@@ -26,7 +26,7 @@
 
 import { describe, expect, test } from "bun:test";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,7 +104,7 @@ describe("resolveLightpandaPath", () => {
 		const platform = detectLightpandaPlatform("linux", "x64");
 		expect(platform).not.toBeNull();
 		const p = resolveLightpandaPath(platform!, "/custom/vendor");
-		expect(p).toBe("/custom/vendor/lightpanda-bin/linux-x64/lightpanda");
+		expect(p).toBe(join("/custom/vendor", "lightpanda-bin", "linux-x64", "lightpanda"));
 	});
 
 	test("uses VENDOR_DIR constant when no override given", () => {
@@ -112,7 +112,7 @@ describe("resolveLightpandaPath", () => {
 		const p = resolveLightpandaPath(platform);
 		expect(p).toContain("lightpanda-bin");
 		expect(p).toContain("linux-x64");
-		expect(p.endsWith("/lightpanda")).toBe(true);
+		expect(p.endsWith(`${sep}lightpanda`)).toBe(true);
 	});
 });
 

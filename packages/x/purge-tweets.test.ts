@@ -584,11 +584,11 @@ describe("resumable journal", () => {
     }
   });
 
-  test("a journal belonging to another account is ignored", () => {
+  test("a journal belonging to another account is ignored", async () => {
     const dir = mkdtempSync(join(tmpdir(), "bxc-purge-tweets-"));
     const statePath = join(dir, "state.json");
     try {
-      Bun.write(statePath, JSON.stringify({ version: 1, user_id: "other", queue: [] }));
+      await Bun.write(statePath, JSON.stringify({ version: 1, user_id: "other", queue: [] }));
       expect(loadTweetState(statePath, VIEWER)).toBeNull();
       expect(loadTweetState(statePath, "other")).not.toBeNull();
       expect(loadTweetState(join(dir, "nope.json"))).toBeNull();

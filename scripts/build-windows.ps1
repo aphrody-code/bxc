@@ -43,7 +43,7 @@ param(
   [Switch]$SkipCurl = $false,
   [String]$LightpandaRef = "main",
   [String]$ZigVersion = "0.14.0",
-  [String]$CurlVersion = "v1.5.6"
+  [String]$CurlVersion = "v2.2.2"
 )
 
 $ErrorActionPreference = "Stop"
@@ -182,16 +182,17 @@ if (-not $SkipCurl) {
   Write-Output ""
   Write-Output "[4/5] Fetching curl-impersonate Windows DLL ($CurlVersion)..."
 
-  $CurlAsset = "libcurl-impersonate-$CurlVersion.x86_64-win64.zip"
+  $CurlArch = if ($Arch -eq "arm64") { "arm64" } else { "x86_64" }
+  $CurlAsset = "libcurl-impersonate-$CurlVersion.$CurlArch-win32.tar.gz"
   $CurlURL = "https://github.com/lexiforest/curl-impersonate/releases/download/$CurlVersion/$CurlAsset"
-  $TmpZip = Join-Path $env:TEMP $CurlAsset
+  $TmpArchive = Join-Path $env:TEMP $CurlAsset
 
   try {
-    curl.exe "-#SfLo" $TmpZip $CurlURL
+    curl.exe "-#SfLo" $TmpArchive $CurlURL
     if ($LASTEXITCODE -ne 0) { throw "curl returned $LASTEXITCODE" }
   } catch {
     try {
-      Invoke-RestMethod -Uri $CurlURL -OutFile $TmpZip
+      Invoke-RestMethod -Uri $CurlURL -OutFile $TmpArchive
     } catch {
       Write-Warning "Could not download curl-impersonate Windows DLL ($CurlURL)."
       Write-Warning "The bxc.exe will lack TLS-fingerprint http profile on Windows."
@@ -199,21 +200,22 @@ if (-not $SkipCurl) {
     }
   }
 
-  if (-not $SkipCurl -and (Test-Path $TmpZip)) {
+  if (-not $SkipCurl -and (Test-Path $TmpArchive)) {
     $TmpExtract = Join-Path $env:TEMP "curl-impersonate-extract"
     Remove-Item -Recurse -Force $TmpExtract -ErrorAction SilentlyContinue
-    Expand-Archive $TmpZip $TmpExtract -Force
+    New-Item -ItemType Directory -Path $TmpExtract -Force | Out-Null
+    tar.exe -xzf $TmpArchive -C $TmpExtract
 
     $Dll = Get-ChildItem -Path $TmpExtract -Filter "libcurl-impersonate*.dll" -Recurse | Select-Object -First 1
     if ($Dll) {
       Copy-Item $Dll.FullName (Join-Path $DistDir "libcurl-impersonate.dll") -Force
       Write-Output "  OK libcurl-impersonate.dll -> $DistDir"
     } else {
-      Write-Warning "DLL not found inside $TmpZip — skipping."
+      Write-Warning "DLL not found inside $TmpArchive — skipping."
     }
 
     Remove-Item -Recurse -Force $TmpExtract -ErrorAction SilentlyContinue
-    Remove-Item -Force $TmpZip -ErrorAction SilentlyContinue
+    Remove-Item -Force $TmpArchive -ErrorAction SilentlyContinue
   }
 } else {
   Write-Output ""

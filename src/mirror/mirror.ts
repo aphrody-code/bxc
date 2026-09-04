@@ -43,7 +43,7 @@
 
 import {
 	dirname,
-	relative as relativePath,
+	relative as nodeRelativePath,
 	resolve as resolvePath,
 } from "node:path";
 import zlib from "node:zlib";
@@ -53,6 +53,11 @@ import { autoDiscoverAndParse } from "../utils/sitemap.ts";
 import type { HarEntry, HarLog } from "../recorder/types.ts";
 
 const brotliCompress = promisify(zlib.brotliCompress);
+
+/** Convert filesystem-relative paths into URL/manifest-relative paths. */
+function relativePath(from: string, to: string): string {
+	return nodeRelativePath(from, to).split("\\").join("/");
+}
 import {
 	ImpersonatedClient,
 	type ImpersonateProfile,

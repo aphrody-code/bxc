@@ -39,7 +39,7 @@ jobs:
       # Toujours avec des chemins : `bun test` nu marche `vendor/` (mcp-sdk,
       # chroma) et remonte ~200 échecs qui ne sont pas des régressions bxc.
       - name: Run Tests (Core)
-        run: bun test test/ packages/ src/
+        run: bun test test/ packages/ src/ --path-ignore-patterns "vendor/**"
         env:
           BXC_RUST_BRIDGE_LIB: ${{ github.workspace }}/rust-bridge/target/release/libbxc_rust_bridge.so
           SKIP_NETWORK_TESTS: "1"
@@ -68,7 +68,7 @@ jobs:
       # `/proc`, `mkdir -p`, `rm -rf` ou des `.so` — cf. CROSS-PLATFORM.md (m10).
       # Élargir ce scope au fur et à mesure qu'elles sont gardées.
       - name: Run Tests (portable subset)
-        run: bun test test/cli test/config test/utils test/unit test/privacy packages/x packages/xai
+        run: bun test test/cli test/config test/utils test/unit test/privacy packages/x packages/xai --path-ignore-patterns "vendor/**"
         env:
           BXC_RUST_BRIDGE_LIB: ${{ github.workspace }}\rust-bridge\target\x86_64-pc-windows-msvc\release\bxc_rust_bridge.dll
           SKIP_NETWORK_TESTS: "1"

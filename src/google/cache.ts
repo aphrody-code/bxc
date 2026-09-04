@@ -54,6 +54,7 @@ export class GoogleCache {
 	readonly #db: Database;
 	readonly #ttl: number;
 	readonly #max: number;
+	#closed = false;
 
 	// Prepared statements for maximum speed (compiled once)
 	readonly #getStmt: any;
@@ -232,6 +233,14 @@ export class GoogleCache {
 	 * Force a WAL checkpoint and close the database.
 	 */
 	close(): void {
+		if (this.#closed) return;
+		this.#closed = true;
+		this.#getStmt.finalize();
+		this.#setStmt.finalize();
+		this.#delStmt.finalize();
+		this.#purgeStmt.finalize();
+		this.#countStmt.finalize();
+		this.#evictStmt.finalize();
 		this.#db.exec("PRAGMA wal_checkpoint(TRUNCATE);");
 		this.#db.close();
 	}

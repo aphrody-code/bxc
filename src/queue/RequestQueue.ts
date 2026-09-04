@@ -142,6 +142,7 @@ export class RequestQueue {
 	readonly #db: Database;
 	readonly #maxRetries: number;
 	readonly #lockTimeoutMs: number;
+	#closed = false;
 
 	// Prepared statements (compiled once, reused on every call)
 	readonly #stmtInsert: ReturnType<Database["prepare"]>;
@@ -371,11 +372,14 @@ export class RequestQueue {
 			for (const id of ids) {
 				this.#stmtLockBatch.run({ $id: id, $now: now });
 			}
-			return this.#db
-				.prepare(
-					`SELECT * FROM requests WHERE id IN (${ids.map(() => "?").join(",")})`,
-				)
-				.all(...ids) as any[];
+			const select = this.#db.prepare(
+				`SELECT * FROM requests WHERE id IN (${ids.map(() => "?").join(",")})`,
+			);
+			try {
+				return select.all(...ids) as any[];
+			} finally {
+				select.finalize();
+			}
 		});
 
 		return lockTx(rows.map((r) => r.id)).map((row) => this.#mapRow(row));
@@ -395,11 +399,13 @@ export class RequestQueue {
 	 * Otherwise, it enters the dead-letter queue (state = FAILED).
 	 */
 	markFailed(id: number, errorMessage: string): void {
-		const row = this.#db
-			.prepare("SELECT retries FROM requests WHERE id = ?")
-			.get(id) as {
-			retries: number;
-		} | null;
+		const select = this.#db.prepare("SELECT retries FROM requests WHERE id = ?");
+		let row: { retries: number } | null;
+		try {
+			row = select.get(id) as { retries: number } | null;
+		} finally {
+			select.finalize();
+		}
 
 		if (row === null) return;
 
@@ -456,6 +462,18 @@ export class RequestQueue {
 
 	/** Close the underlying SQLite connection. */
 	close(): void {
+		if (this.#closed) return;
+		this.#closed = true;
+		this.#stmtInsert.finalize();
+		this.#stmtFetchBatch.finalize();
+		this.#stmtLockBatch.finalize();
+		this.#stmtMarkDone.finalize();
+		this.#stmtMarkFailed.finalize();
+		this.#stmtRequeue.finalize();
+		this.#stmtStats.finalize();
+		this.#stmtRecoverStale.finalize();
+		this.#stmtDlq.finalize();
+		this.#stmtExists.finalize();
 		this.#db.close();
 	}
 
