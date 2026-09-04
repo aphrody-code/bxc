@@ -207,7 +207,20 @@ bash ~/aphrody/scripts/vps-sync-agent-stack.sh  # MCP mcp.json + Grok config.tom
 > `install.sh` / `install.ps1`, mise à jour `bxc self-update [--check]`.
 > Audit et reste-à-faire : [`CROSS-PLATFORM.md`](./CROSS-PLATFORM.md).
 
-> **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-crawler.service`
+> **Auto-update VPS** : `bxc-auto-update.timer` (horaire) →
+> `scripts/bxc-auto-update.sh`. La prod tourne **depuis le checkout** (les
+> `bxc` de `/usr/local/bin` et `~/.local/bin` sont des wrappers vers
+> `bun src/cli/index.ts`), donc l'auto-update est un `git merge --ff-only` +
+> `bun install`, **pas** `bxc self-update` — celui-ci remplacerait un binaire
+> que rien n'exécute. Le script s'abstient sur worktree sale ou historique
+> divergé, teste `--version` avant de toucher aux services, revient à la
+> révision précédente si la fumée échoue, et ne redémarre que les units déjà
+> actives. Détail : [`DEPLOY.md`](./DEPLOY.md).
+
+> **Services systemd** : `bxc.service` (API/CDP `serve :9222`) + `bxc-scheduler.service`
+> (`Bun.cron` in-process) + `bxc-watchdog.timer` (auto-remediation 5 min : CDP,
+> memoire vs `MemoryMax`, units `failed` — tout est rate-limite, et un service
+> arrete a la main est signale, jamais relance) + `bxc-crawler.service`
 > (24/7 `crawl-worker`) + `bxc-x-unfollow.service` / `bxc-x-purge-tweets.service`
 > (daemons de purge X) + `bxc-x-purge-doctor.timer` (watchdog auto-fix commun,
 > 10 min) + `bxc-wonderbot.service` (bot Discord IETV, opt-in) — les purges sont opt-in, non installees par `bxc-control deploy`,

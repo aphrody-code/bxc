@@ -1,0 +1,17 @@
+[Unit]
+Description=Bxc watchdog auto-remediation (CDP endpoint / memoire / units en echec)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+ExecStart=/home/ubuntu/bxc/scripts/bxc-watchdog.sh
+TimeoutStartSec=120
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bxc-watchdog
+
+[Install]
+WantedBy=multi-user.target

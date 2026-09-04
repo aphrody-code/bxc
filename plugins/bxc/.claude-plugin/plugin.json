@@ -1,6 +1,6 @@
 {
   "name": "bxc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Complete cross-platform Claude Code plugin for the bxc stack: Bun runtime + Rust FFI (DOM, lol_html, X clients, algorithms), native keyless @aphrody/x X/Twitter client, keyless @aphrody/xai Grok client with deep native X tool calling, bxc-native-mcp server, monorepo scraper packages, stealth crawling, autopilot loops. Provides dedicated sub-agents, skills, commands, hooks, and MCP integration. Designed to be generic and reusable for any project adopting zero-spawn native browser/X/Grok/agent patterns.",
   "author": {
     "name": "aphrody / bxc contributors"

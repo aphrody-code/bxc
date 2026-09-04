@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/wonderbot",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publishConfig": {
     "access": "public"
   },
@@ -28,7 +28,7 @@
     "streaming"
   ],
   "dependencies": {
-    "@aphrody/ietv": "0.2.0",
+    "@aphrody/ietv": "0.2.1",
     "discord.js": "^14.26.4"
   },
   "files": [

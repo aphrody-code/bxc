@@ -121,7 +121,7 @@ export async function main(
 		if (exitProcess) process.exit(EXIT.SOFTWARE);
 		throw err;
 	} finally {
-		process.off("SIGINT", stopHandler);
-		process.off("SIGTERM", stopHandler);
+		(process as NodeJS.EventEmitter).removeListener("SIGINT", stopHandler);
+		(process as NodeJS.EventEmitter).removeListener("SIGTERM", stopHandler);
 	}
 }

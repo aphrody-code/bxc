@@ -17,6 +17,42 @@
 import type { ConnectionTransport } from "../../types/ConnectionTransport.ts";
 import { drainStream } from "../internal/stream-drain.ts";
 import { join } from "node:path";
+import { DEFAULT_ACCEPT_LANGUAGE } from "../internal/browser-headers.ts";
+
+/**
+ * Builds a User-Agent for a locally installed Chromium, derived from the
+ * binary's own version.
+ *
+ * Under `--headless=new` Chrome advertises `HeadlessChrome/<v>`, which is the
+ * cheapest bot signal there is — a WAF matches the literal token and serves a
+ * challenge no amount of stealth patching will clear. Overriding it with a
+ * *hardcoded* UA trades one tell for another, because `Sec-CH-UA` still carries
+ * the real major version and the mismatch is itself a signal. So read the
+ * version off the binary and only drop the `Headless` marker.
+ *
+ * Returns `null` when the version cannot be read: no override beats an
+ * inconsistent one.
+ */
+function chromeUaFromBinary(chromePath: string, isWin: boolean): string | null {
+	try {
+		const proc = Bun.spawnSync([chromePath, "--version"], { env: Bun.env });
+		if (!proc.success) return null;
+		const raw = proc.stdout.toString().trim();
+		const major = /(\d+)\.\d+\.\d+/.exec(raw)?.[1];
+		if (!major) return null;
+		const platform = isWin
+			? "Windows NT 10.0; Win64; x64"
+			: process.platform === "darwin"
+				? "Macintosh; Intel Mac OS X 10_15_7"
+				: "X11; Linux x86_64";
+		return (
+			`Mozilla/5.0 (${platform}) AppleWebKit/537.36 (KHTML, like Gecko) ` +
+			`Chrome/${major}.0.0.0 Safari/537.36`
+		);
+	} catch {
+		return null;
+	}
+}
 
 export interface WebSocketTransportOptions {
 	/** URL to the chromium websocket endpoint (if already running) */
@@ -31,6 +67,8 @@ export interface WebSocketTransportOptions {
 	// --- Legacy Lightpanda Options (SocketPairTransport compatibility) ---
 	binaryPath?: string;
 	logLevel?: "debug" | "info" | "warn" | "error" | "fatal" | string;
+	/** User-Agent for the launched browser. Defaults to the binary's own. */
+	userAgent?: string;
 	readyTimeoutMs?: number;
 	insecure?: boolean;
 	proxy?: string;
@@ -194,7 +232,16 @@ export class WebSocketTransport implements ConnectionTransport {
 				const launchArgs = [
 					`--remote-debugging-port=${port}`,
 					"--remote-allow-origins=*", // Required for CDP connections
+					// Removes `navigator.webdriver`, which every commercial WAF reads
+					// before it looks at anything harder to fake.
+					"--disable-blink-features=AutomationControlled",
+					`--accept-lang=${DEFAULT_ACCEPT_LANGUAGE}`,
 				];
+				// Drop the `HeadlessChrome/` token when we can name the real version.
+				const nativeUa = opts.userAgent ?? chromeUaFromBinary(chromePath, isWin);
+				if (nativeUa) {
+					launchArgs.push(`--user-agent=${nativeUa}`);
+				}
 				if (opts.proxy) {
 					launchArgs.push(`--proxy-server=${opts.proxy}`);
 				}

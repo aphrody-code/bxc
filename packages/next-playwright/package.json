@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/next-playwright",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publishConfig": {
     "access": "public"
   },
@@ -44,7 +44,7 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@aphrody/bxc-test": "^0.1.3"
+    "@aphrody/bxc-test": "^0.2.1"
   },
   "peerDependenciesMeta": {
     "@aphrody/bxc-test": {

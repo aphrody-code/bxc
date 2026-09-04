@@ -1,6 +1,6 @@
 {
   "name": "@aphrody/frames",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Index et recherche image par image d'épisodes d'anime — descripteur MPEG-7 ColorLayout local, compatible trace.moe",
   "publishConfig": {
     "access": "public"

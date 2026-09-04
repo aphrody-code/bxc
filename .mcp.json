@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "bxc-native-mcp": {
+      "type": "stdio",
+      "command": "/usr/local/bin/bxc-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

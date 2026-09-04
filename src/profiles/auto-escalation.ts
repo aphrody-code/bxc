@@ -110,9 +110,14 @@ export function detectEscalationSignal(
 		return { reason: "turnstile", detectedFromBody: "Turnstile CAPTCHA" };
 	}
 
-	// Generic CAPTCHA widget (but not if it's just an error page)
+	// Generic CAPTCHA widget. Only conclusive on a page with no real content:
+	// a contact form carrying a reCAPTCHA is a delivered page, not a wall, and
+	// escalating on it throws away a body that was already fetched.
 	if (/(recaptcha|hcaptcha)/i.test(body)) {
-		return { reason: "captcha", detectedFromBody: "CAPTCHA widget detected" };
+		const text = body.replace(/<[^>]*>/g, " ").trim();
+		if (text.length < 2000) {
+			return { reason: "captcha", detectedFromBody: "CAPTCHA widget detected" };
+		}
 	}
 
 	// SPA placeholder: <noscript> in a small HTML with 200 status (NOT error codes)

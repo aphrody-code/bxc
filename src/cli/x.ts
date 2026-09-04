@@ -415,8 +415,8 @@ export async function main(
 					if (report.stopped_by === "auth-error") process.exit(EXIT.NOPERM);
 					if (report.stopped_by === "aborted") process.exit(EXIT.SIGINT);
 				} finally {
-					process.off("SIGINT", onSignal);
-					process.off("SIGTERM", onSignal);
+					(process as NodeJS.EventEmitter).removeListener("SIGINT", onSignal);
+					(process as NodeJS.EventEmitter).removeListener("SIGTERM", onSignal);
 				}
 				break;
 			}

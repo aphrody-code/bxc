@@ -54,41 +54,76 @@ export interface SmartFetchResult {
 }
 
 /**
- * Checks if a crawl result represents a failure or blocker (like Cloudflare, Captcha, or 403).
+ * Markers that only appear on a Cloudflare *interstitial* (challenge or block
+ * page), never on an ordinary page that merely happens to be served by
+ * Cloudflare.
+ *
+ * The distinction matters: `email-decode.min.js`, `rocket-loader.min.js` and
+ * `static.cloudflareinsights.com/beacon.min.js` are injected into perfectly
+ * normal 200 responses across a large share of the web. Matching the bare word
+ * "cloudflare" in the body therefore marked *every* CF-fronted page as blocked,
+ * which made a successful fetch indistinguishable from a challenge and burned
+ * the whole escalation chain on pages that had already been retrieved in full.
+ */
+const CF_INTERSTITIAL_MARKERS = [
+	"/cdn-cgi/challenge-platform/",
+	"cf-challenge",
+	"cf-browser-verification",
+	"cf-spinner",
+	"cf_chl_opt",
+	"window._cf_chl",
+	"challenge-form",
+	"cf-error-details",
+	"cf-please-wait",
+] as const;
+
+/** Interstitial `<title>` values used by Cloudflare and friends. */
+const BLOCKED_TITLE_MARKERS = [
+	"just a moment",
+	"please wait",
+	"attention required",
+	"access denied",
+	"block page",
+	"ddos",
+	"security check",
+	"verifying you are human",
+] as const;
+
+/** CAPTCHA widgets. Only conclusive on a page with no real content. */
+const CAPTCHA_MARKERS = ["hcaptcha", "recaptcha", "turnstile"] as const;
+
+/**
+ * Checks if a crawl result represents a failure or blocker (like Cloudflare,
+ * Captcha, or 403).
+ *
+ * Errs towards *accepting* a page: a false positive throws away a body that was
+ * actually fetched and escalates to a slower profile that will fare no better,
+ * whereas a false negative merely hands the caller a page it can inspect.
  */
 export function isCrawlFailure(status: number | undefined, html: string, title: string): boolean {
 	if (status !== undefined && (status < 200 || status >= 400)) {
 		return true;
 	}
+
 	const lowerTitle = title.toLowerCase();
-	if (
-		lowerTitle.includes("just a moment") ||
-		lowerTitle.includes("please wait") ||
-		lowerTitle.includes("cloudflare") ||
-		lowerTitle.includes("attention required") ||
-		lowerTitle.includes("access denied") ||
-		lowerTitle.includes("block page") ||
-		lowerTitle.includes("ddos")
-	) {
-		return true;
-	}
-	const lowerHtml = html.toLowerCase();
-	if (
-		lowerHtml.includes("cf-challenge") ||
-		lowerHtml.includes("cf-browser-verification") ||
-		lowerHtml.includes("cloudflare") ||
-		lowerHtml.includes("ray id:") ||
-		lowerHtml.includes("cf-spinner") ||
-		lowerHtml.includes("hcaptcha") ||
-		lowerHtml.includes("recaptcha") ||
-		lowerHtml.includes("challenge-form")
-	) {
+	if (BLOCKED_TITLE_MARKERS.some((m) => lowerTitle.includes(m))) {
 		return true;
 	}
 
-	// Check if content is empty or extremely short (failed load)
+	const lowerHtml = html.toLowerCase();
+	if (CF_INTERSTITIAL_MARKERS.some((m) => lowerHtml.includes(m))) {
+		return true;
+	}
+
+	// Content is empty or a stub: a failed load whatever the status says.
 	const cleanText = html.replace(/<[^>]*>/g, " ").trim();
 	if (cleanText.length < 50) {
+		return true;
+	}
+
+	// A CAPTCHA widget on a page that also carries substantial text is a contact
+	// form, not a wall. Only treat it as a block on a near-empty page.
+	if (cleanText.length < 2000 && CAPTCHA_MARKERS.some((m) => lowerHtml.includes(m))) {
 		return true;
 	}
 

@@ -70,6 +70,7 @@ deploy_all() {
   log "Stopping systemd services..."
   sudo systemctl stop bxc || true
   sudo systemctl stop bxc-crawler || true
+  sudo systemctl stop bxc-scheduler || true
 
   # 2. Kill residual bxc processes
   log "Stopping running bxc and bxc-mcp processes..."
@@ -78,15 +79,28 @@ deploy_all() {
   pkill -9 -f "crawl-worker" || true
 
   # 3. Copy binaries (bxc to both bin dirs; bxc-mcp to both for CLI + MCP clients)
-  log "Installing standalone bxc binary to /home/ubuntu/.local/bin/bxc..."
-  # --remove-destination : ~/.local/bin/bxc a deja ete un lien symbolique vers
-  # bin/bxc du depot, et `cp` suit les liens — chaque deploy ecrasait alors le
-  # wrapper versionne par un binaire de 270 Mo.
-  cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/home/ubuntu/.local/bin/bxc"
-
-  log "Installing standalone bxc binary to /usr/local/bin/bxc..."
-  sudo cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "/usr/local/bin/bxc"
-  sudo chmod +x "/usr/local/bin/bxc"
+  #
+  # Sur ce VPS la prod EST le checkout : /usr/local/bin/bxc est un wrapper bash
+  # qui exec `bun src/cli/index.ts`, et ~/.local/bin/bxc un symlink vers
+  # bin/bxc du depot. Ecraser ces cibles par le standalone de 291 Mo casse le
+  # modele documente dans DEPLOY.md — le checkout ne serait plus ce qui tourne,
+  # et l'auto-update horaire mettrait a jour du code que plus rien n'execute.
+  # On ne remplace donc une cible que si c'est deja un binaire, ou si
+  # BXC_DEPLOY_BINARY=1 le demande explicitement.
+  install_bxc_cli() { # $1=chemin cible  $2=prefixe sudo ("" ou "sudo")
+    local target="$1" sudo_cmd="${2:-}"
+    if [ "${BXC_DEPLOY_BINARY:-0}" != "1" ] && { [ -L "$target" ] || head -c2 "$target" 2>/dev/null | grep -q '#!'; }; then
+      log "  · $target est un wrapper/symlink vers le checkout — conserve (BXC_DEPLOY_BINARY=1 pour forcer le binaire)"
+      return
+    fi
+    log "Installing standalone bxc binary to ${target}..."
+    # --remove-destination : `cp` suit les liens symboliques, sans quoi on
+    # ecraserait la cible du lien (bin/bxc du depot) au lieu du lien lui-meme.
+    ${sudo_cmd} cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-linux-x64" "$target"
+    ${sudo_cmd} chmod +x "$target"
+  }
+  install_bxc_cli "/home/ubuntu/.local/bin/bxc"
+  install_bxc_cli "/usr/local/bin/bxc" sudo
 
   log "Installing standalone bxc-mcp binary to /usr/local/bin/bxc-mcp..."
   sudo cp --remove-destination "${REPO_ROOT}/dist/standalone/bxc-mcp" "/usr/local/bin/bxc-mcp"
@@ -100,6 +114,11 @@ deploy_all() {
   log "Installing systemd unit files..."
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc.service" "/etc/systemd/system/bxc.service"
   sudo cp "${REPO_ROOT}/scripts/deploy/bxc-crawler.service" "/etc/systemd/system/bxc-crawler.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-auto-update.service" "/etc/systemd/system/bxc-auto-update.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-auto-update.timer" "/etc/systemd/system/bxc-auto-update.timer"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-scheduler.service" "/etc/systemd/system/bxc-scheduler.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-watchdog.service" "/etc/systemd/system/bxc-watchdog.service"
+  sudo cp "${REPO_ROOT}/scripts/deploy/bxc-watchdog.timer" "/etc/systemd/system/bxc-watchdog.timer"
 
   # 5. Correct log ownerships
   log "Aligning log permissions..."
@@ -114,6 +133,12 @@ deploy_all() {
   log "Starting systemd services..."
   sudo systemctl start bxc
   sudo systemctl enable --now bxc-crawler || sudo systemctl restart bxc-crawler
+  sudo systemctl enable --now bxc-scheduler || sudo systemctl restart bxc-scheduler
+  # Le timer, pas le service : bxc-auto-update.service et bxc-watchdog.service
+  # sont des oneshot declenches. `enable` sur le service seul le lancerait au
+  # boot et plus jamais.
+  sudo systemctl enable --now bxc-auto-update.timer
+  sudo systemctl enable --now bxc-watchdog.timer
 
   # 8. Print status
   systemctl status bxc --no-pager || true

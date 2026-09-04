@@ -1,0 +1,13 @@
+[Unit]
+Description=Auto-update bxc toutes les heures
+
+[Timer]
+OnBootSec=5min
+# OnUnitInactiveSec et non OnUnitActiveSec : sur un Type=oneshot, le decompte
+# doit repartir de la FIN du run, sinon une execution plus longue que la
+# periode se replanifie dans le passe.
+OnUnitInactiveSec=1h
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target
