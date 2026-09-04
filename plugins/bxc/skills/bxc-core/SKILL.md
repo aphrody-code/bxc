@@ -1,7 +1,8 @@
 ---
-name: bxc Core
+name: bxc-core
 description: This skill should be used when the user asks to work on bxc (or similar Bun + Rust FFI native browser/X/Grok/agent engine projects), "bxc stack", "zero-spawn", native X client, Grok xAI high-level, bxc-mcp, scraper packages, rust-bridge FFI, autopilot, CLAUDE.md rules, cross-platform Bun/Rust builds, or needs patterns from the bxc monorepo adapted to other projects.
-version: 0.1.0
+metadata:
+  short-description: Apply bxc architecture and repository conventions.
 ---
 
 # bxc — Zero-Spawn Native Browser Engine for Agents (toolkit)
@@ -9,6 +10,14 @@ version: 0.1.0
 bxc is a production-grade, cross-platform (Linux/macOS/Windows) "zero-spawn" navigation engine for AI agents: Bun runtime + Rust cdylib FFI (lol_html, html5ever, V8 bindings, X GraphQL client, For-You ranking algo port) + Zig DOM history in some components. No Chromium spawn for most workloads.
 
 The `bxc` plugin provides reusable skills, dedicated sub-agents, commands, hooks, and MCP integration so any project can adopt the same architecture, patterns, and quality bars (bxc* naming, scoped testing, native keyless clients, agentic Grok+X loops, monorepo scrapers, autopilot).
+
+## Codex integration
+
+When running in Codex, use the `.codex-plugin/plugin.json` manifest and the
+`skills/` tree. The `bxc-build`, `bxc-new-scraper`, and `bxc-verify` skills are
+the Codex equivalents of the Claude slash commands. Do not depend on Claude
+hooks or Claude-only agent invocation; use the available Codex tools and the
+global `bxc-mcp` command instead.
 
 ## Core Principles (always follow)
 - **Naming**: Every identifier, binary, doc, crate, package must use `bxc*` prefix. Rebrand is final — never reintroduce old names.

@@ -1,7 +1,8 @@
 ---
-name: bxc Scraper Monorepo
+name: bxc-scraper
 description: This skill should be used when creating or maintaining scraper packages under packages/ (fut, voiranime, xcom, zukan, worldbeyblade, challonge, etc.), following the monorepo workspace pattern, CLI integration in src/cli/, profile mapping (stealth/http/static...), and publishing as @aphrody/*.
-version: 0.1.0
+metadata:
+  short-description: Create and maintain bxc scraper packages.
 ---
 
 See existing packages/ as templates. New subcommand in src/cli/index.ts + dedicated src/cli/<name>.ts exporting `main(argv, baseOpts)`.

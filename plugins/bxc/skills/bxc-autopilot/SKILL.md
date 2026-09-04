@@ -1,7 +1,8 @@
 ---
-name: bxc Autopilot & Autonomy
+name: bxc-autopilot
 description: This skill should be used for the autopilot loop (scripts/autopilot.sh), scoped verify + lint to avoid global noise, monitor feeding, subagent spawning, PLAN.md / MEGA-PLAN.md management, continuous "YOLO" operation without human in the loop, and log-based coordination.
-version: 0.1.0
+metadata:
+  short-description: Run bounded bxc verification and autonomy loops.
 ---
 
 Key: always scope the verify/lint commands to the feature packages + relevant src (see the bxc-verify command and verify-enforcer agent).

@@ -4,7 +4,7 @@ Complete, cross-platform toolkit for developing and maintaining **bxc-style proj
 
 **Designed to be reusable**: The patterns, skills, agents, and commands are generalized so any project that wants "zero-spawn native browser/X/Grok/agent engines" can adopt them (or the whole plugin).
 
-## Installation (for Claude Code)
+## Installation (Claude Code)
 
 ```bash
 # From source (development / inside the bxc repo or a similar project)
@@ -15,6 +15,28 @@ Complete, cross-platform toolkit for developing and maintaining **bxc-style proj
 ```
 
 Once enabled, the skills load on relevant triggers, agents are available, commands appear as `/bxc:*`, hooks enforce rules, and `.mcp.json` (or inline) can start the bxc MCP.
+
+## Installation (Codex)
+
+The Codex manifest is `./.codex-plugin/plugin.json`. Codex uses the
+`skills/` tree and the companion `.mcp.json`; Claude-only agents, slash
+commands, and hooks remain in this directory for Claude Code compatibility.
+
+The repository's personal Codex marketplace is installed with:
+
+```powershell
+codex plugin add bxc@personal
+```
+
+For local development, copy or link this plugin to `C:\Users\<user>\plugins\bxc`,
+keep the personal marketplace entry at
+`C:\Users\<user>\.agents\plugins\marketplace.json`, and reinstall after
+changing the manifest. Start a new Codex thread after reinstalling so the new
+skills and MCP definition are loaded.
+
+Codex-native equivalents of the former slash commands are the skills
+`bxc-build`, `bxc-new-scraper`, and `bxc-verify`. All Codex skill names use
+lowercase hyphen-case and have valid `SKILL.md` frontmatter.
 
 ## What's Included
 

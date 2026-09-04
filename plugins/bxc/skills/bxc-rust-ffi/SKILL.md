@@ -1,7 +1,8 @@
 ---
-name: bxc Rust FFI Bridge
+name: bxc-rust-ffi
 description: This skill should be used when working on rust-bridge/, FFI between Bun and Rust (cdylib, no_mangle extern "C", lol_html, V8, x-client, x-algorithm), rusqlite workspace constraints, tokio async blocks for FFI, cross-platform cdylib (.so/.dylib/.dll), bxc_x_* symbols, Cargo workspace for rust-bridge crates, or porting Rust code for native browser/X/ranking in Bun projects.
-version: 0.1.0
+metadata:
+  short-description: Implement safe cross-platform bxc Rust FFI.
 ---
 
 # bxc Rust FFI (cdylib for Bun)

@@ -1,7 +1,8 @@
 ---
-name: bxc X Native Client
+name: bxc-x-client
 description: This skill should be used for the native cookie-based X/Twitter client (@aphrody/x), GraphQL + REST, catalog sync from bundles, local For You ranking (rankTweets / tweetToPostCandidate from x-algorithm port), SQLite store + FTS, Radar / X Pro decks, stealth profiles, and using it from Grok tool calling via XTools.
-version: 0.1.0
+metadata:
+  short-description: Use the native cookie-based bxc X client.
 ---
 
 See packages/x/README.md (the canonical, complete, readable one created as part of bxc docs work) and the bxc-grok-xai skill for the synergy side.

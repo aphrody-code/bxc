@@ -1,0 +1,39 @@
+{
+  "name": "bxc",
+  "version": "0.1.1+codex.20260904120520",
+  "description": "Bun-native bxc browser, scraper, Rust FFI, X/Grok and MCP toolkit for Codex.",
+  "author": {
+    "name": "aphrody / bxc contributors"
+  },
+  "homepage": "https://github.com/aphrody-code/bxc",
+  "repository": "https://github.com/aphrody-code/bxc",
+  "license": "Apache-2.0",
+  "keywords": [
+    "bun",
+    "rust",
+    "ffi",
+    "browser-automation",
+    "scrapers",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "bxc",
+    "shortDescription": "Bun-native browser, scraper, FFI and MCP workflows.",
+    "longDescription": "Production guidance for bxc-style Bun + Rust FFI projects, native browser automation, scrapers, X/Grok clients, MCP servers and scoped verification.",
+    "developerName": "aphrody / bxc contributors",
+    "category": "Development",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/aphrody-code/bxc",
+    "defaultPrompt": [
+      "Use bxc conventions to implement this change.",
+      "Run the scoped bxc verification for this feature.",
+      "Extend the bxc MCP server with this capability."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

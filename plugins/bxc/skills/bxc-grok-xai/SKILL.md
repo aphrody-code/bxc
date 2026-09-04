@@ -1,7 +1,8 @@
 ---
-name: bxc Grok xAI High-Level Client
+name: bxc-grok-xai
 description: This skill should be used for anything involving @aphrody/xai (high-level Chat.createChat/append/sample/stream/executeToolCalls/sampleStructured), XTools for native X fulfillment, SuperGrok / OIDC keyless (SUPER_GROK_TOKEN or ~/.grok/auth.json), reasoning_effort, structured outputs, tool calling loops with real @aphrody/x XClient, or porting Python xai-sdk patterns to Bun/TS while staying 100% fetch + OpenAI-compatible.
-version: 0.1.0
+metadata:
+  short-description: Build native X and Grok agent flows with bxc.
 ---
 
 # @aphrody/xai — High-Level Grok Client (Bun native, keyless)

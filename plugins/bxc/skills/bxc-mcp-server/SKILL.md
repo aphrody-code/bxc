@@ -1,7 +1,8 @@
 ---
-name: bxc MCP Server
+name: bxc-mcp-server
 description: This skill should be used when extending or building the bxc-native-mcp (src/mcp/server.ts), adding registerTool calls with Zod schemas, versioning the server, building the standalone binary, wiring .mcp.json or gemini-extension.json, or exposing new capabilities from the bxc packages/Rust FFI as MCP tools.
-version: 0.1.0
+metadata:
+  short-description: Extend and verify the bxc MCP server.
 ---
 
 Core file: src/mcp/server.ts (version const at top, Elysia or raw for standalone).
