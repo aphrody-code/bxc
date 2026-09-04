@@ -316,9 +316,31 @@ async function bundleZip(args: Args, distDir: string): Promise<void> {
 	}
 
 	await $`rm -f ${zipPath}`.nothrow();
-	await $`zip -j ${zipPath} ${present.map((p) => `${distDir}/${p}`)}`
+
+	// `zip` n'existe pas sur une installation Windows nue — et ce script tourne
+	// justement sous Windows la plupart du temps. On l'utilise s'il est là, sinon
+	// on passe par `Compress-Archive`, présent avec PowerShell depuis Windows 8.
+	const zipped = await $`zip -j ${zipPath} ${present.map((p) => `${distDir}/${p}`)}`
 		.cwd(distDir)
-		.quiet();
+		.quiet()
+		.nothrow();
+
+	if (zipped.exitCode !== 0) {
+		if (process.platform !== "win32") {
+			throw new Error(`zip a échoué (${zipped.exitCode}) : ${zipped.stderr.toString().trim()}`);
+		}
+		const sources = present.map((f) => `'${distDir}/${f}'`).join(", ");
+		const ps = `Compress-Archive -Path ${sources} -DestinationPath '${zipPath}' -Force`;
+		const fallback = await $`powershell -NoProfile -NonInteractive -Command ${ps}`
+			.quiet()
+			.nothrow();
+		if (fallback.exitCode !== 0) {
+			throw new Error(
+				`ni zip ni Compress-Archive n'ont pu produire ${zipName} : ` +
+					fallback.stderr.toString().trim(),
+			);
+		}
+	}
 
 	const size = ((await Bun.file(zipPath).stat()).size / 1024 / 1024).toFixed(2);
 	console.log(`[bundle] OK ${zipName} (${size} MB) [${present.length} files]`);
