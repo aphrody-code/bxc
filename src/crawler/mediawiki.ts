@@ -192,8 +192,13 @@ export async function resoudreImages(base: string, fichiers: string[], hote: str
                 if (!info?.url) continue;
                 out.push({
                     fichier: p.title ?? "",
-                    // Défensif : certains wikis renvoient déjà une vignette.
-                    url: String(info.url).replace(/\/scale-to-width-down\/\d+/, "").replace(/\?cb=.*$/, ""),
+                    // Retirer la VIGNETTE (`/scale-to-width-down/<n>`) pour obtenir l'original,
+                    // mais SURTOUT PAS la query string : sur un wiki localisé, elle porte
+                    // `path-prefix=fr`, sans lequel le CDN cherche le fichier sur le wiki
+                    // anglais et rend 404. Mesuré : en la supprimant, 33 des 34 images d'une
+                    // page FR échouaient, dont une qui réussissait — celle qui existe aussi
+                    // sur le wiki anglais. Le `cb=` est un cache-buster inoffensif.
+                    url: String(info.url).replace(/\/scale-to-width-down\/\d+/, ""),
                     largeur: info.width ?? null,
                     hauteur: info.height ?? null,
                     mime: info.mime ?? null,
