@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ---
 
+## [0.9.5] - 2026-09-05
+
+### Added
+
+- `bxc wiki` — lecture d'un site MediaWiki par son API (Fandom, Wikipedia, Miraheze, wiki.gg,
+  Fextralife) : `page`, `md`, `tables`, `images`, `infobox`, `search`, `check`. L'infobox est lue
+  dans le wikitext (vrais noms de champs, stables entre pages), les `rowspan`/`colspan` des
+  tableaux sont développés, et les images sont résolues en pleine résolution via `imageinfo`
+  plutôt qu'en vignettes `/scale-to-width-down/`.
+- Repli MediaWiki automatique dans `smartFetch` : l'API est interrogée avant l'escalade des
+  profils sur les hôtes MediaWiki connus ou détectés, et en dernier recours quand tous les
+  profils ont échoué. Débit limité à une requête toutes les 6 s par hôte.
+
+### Fixed
+
+- **Cache empoisonné** : les entrées inexploitables (corps vide, interstitiel) étaient resservies
+  indéfiniment avec un code de sortie 0. 137 des 365 entrées de la base locale étaient dans ce cas.
+  `isCrawlFailure` n'était appliquée qu'au crawl, jamais à la lecture du cache.
+- **Base de cache par répertoire** : le repli `resolve(process.cwd(), "data/bxc.sqlite")` donnait
+  une base distincte à chaque dossier depuis lequel bxc était lancé. Repli désormais sur
+  `~/.bxc/bxc.sqlite`.
+- **`scrape --markdown` rendait 0 octet avec un code de sortie 0** : une sortie vide est désormais
+  une erreur nommant le profil, la source et la taille du HTML.
+- **La ligne `[smartFetch]` polluait stdout**, donc le Markdown de chaque page. Passée sur stderr.
+- **`bun run build:linux` ne construisait pas `bxc-engine`** : le workspace a un paquet racine, donc
+  `cargo build` sans `--workspace` ne construit que lui. Les profils navigateur étaient muets faute
+  de moteur, sans qu'aucune erreur ne l'explique.
+- **`bxc-engine` sans `default-run`** malgré deux `[[bin]]` : `bxc chrome` échouait en
+  « no bin target named bxc-engine ».
+- **Le convertisseur Markdown natif faisait exploser les tableaux** : 89 008 045 o de sortie pour
+  514 791 o d'entrée (×172,9, une ligne de 984 840 caractères) contre 169 387 o en 31 ms pour le
+  convertisseur JS. Garde de ratio ajoutée ; le correctif de fond côté Rust reste à faire.
+
+### Documentation
+
+- `docs/RAPPORT-DEFAUTS-2026-09-05.md` : treize défauts mesurés, chacun avec sa reproduction, son
+  chiffre et son état.
+
+---
+
 ## [0.9.3] - 2026-09-04
 
 ### Fixed
