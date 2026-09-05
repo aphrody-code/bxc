@@ -3,8 +3,9 @@
 Relevé pendant une session d'extraction réelle (zukan.inazuma.jp, fandom.com,
 azalee.rosegriffon.fr) avec **bxc 0.9.3** installé, dépôt en 0.9.4, sur le VPS Linux.
 
-Chaque point porte sa reproduction et son chiffre. Les cinq premiers sont **corrigés dans ce
-commit** ; les suivants sont ouverts, avec ce qu'il faudrait faire.
+Chaque point porte sa reproduction et son chiffre. **Six sont corrigés** ; les autres sont
+ouverts, avec ce qu'il faudrait faire. Tout a été retesté après correction sur les URL réelles
+de la session — le détail des mesures est dans chaque section.
 
 Le fil rouge : **bxc échoue en silence avec un code de sortie 0**. Ce n'est pas un défaut de
 robustesse — c'est le mode d'échec le plus cher qui soit, parce que l'appelant traite le vide
@@ -105,7 +106,51 @@ est parfaitement installé (`/usr/local/bin/google-chrome`, Chrome for Testing 1
 
 ## Défauts ouverts
 
-### 6. Les profils `stealth`, `fast` et `max` ne produisent rien
+### 6bis. `bun run build:linux` ne construit pas `bxc-engine` — CORRIGÉ
+
+C'est la **cause racine** du point 5, et elle est ailleurs que dans le code Rust.
+
+`package.json` : `"build:linux": "cd rust-bridge && cargo build --release && …"`. Or ce
+workspace a un **paquet racine** (`.` figure dans ses `members`). Dans ce cas, `cargo build`
+sans `-p` ni `--workspace` ne construit **que le paquet racine**. Mesuré après un build complet
+réussi :
+
+```
+rust-bridge/target/release/libbxc_rust_bridge.so   13 315 400 o   ✔ produit
+rust-bridge/target/release/bxc-engine              absent         ✘ jamais construit
+```
+
+Aucune erreur, aucun avertissement : le build se termine « avec succès » sans son binaire
+principal. C'est ce que `CLAUDE.md` décrit comme une fatalité à contourner à la main
+(« binaire absent : reconstruire via `cargo build -p bxc-engine --release` ») — ce n'en était
+pas une, c'était un drapeau manquant.
+
+**Correctif** : `cargo build --release --workspace`. Vérifié : `bxc-engine` est alors produit
+(58 866 144 o, 2 min 22 s).
+
+### 6. Les profils navigateur rendent une page tronquée — TOUJOURS OUVERT
+
+Une fois `bxc-engine` construit, les profils navigateur **démarrent** (plus d'erreur cargo).
+Mais ils rendent beaucoup moins que `http`, sur la même URL, au même instant :
+
+| Profil | Octets de Markdown sur `zukan.inazuma.jp/en/chara_list/?q=…` |
+|---|---:|
+| `http` | **14 776** |
+| `fast` | 1 765 |
+| `stealth` | 987 |
+
+Soit **8 à 15 fois moins**, et pourtant **exit 0** des deux côtés : la page tronquée passe la
+garde des 50 caractères. Un profil censé être plus capable qu'un simple `fetch` doit rendre au
+moins autant, sinon il n'a aucune raison d'exister.
+
+Piste : le DOM est probablement lu avant la fin du montage, ou le moteur n'exécute pas le
+JavaScript du site. À rapprocher du point 7 — un contrôle CDP direct sur le même domaine rend
+518 Ko de DOM monté, donc le problème est dans l'attente/extraction, pas dans le navigateur.
+
+Deux correctifs à envisager ensemble : attendre un signal de fin de montage
+(`Page.loadEventFired` + quiescence réseau) plutôt qu'un délai fixe, et **comparer les profils
+entre eux** dans les tests — un profil qui rend 10× moins que `http` sur la même URL doit faire
+échouer la CI.
 
 Conséquence directe du point 5 : ces profils passent par `WebSocketTransport`, qui spawn
 `bxc-engine`. Binaire absent ⇒ pas de navigateur ⇒ page vide. Après correction du `default-run`
@@ -113,8 +158,7 @@ il faut **vérifier de bout en bout**, et surtout : un profil navigateur qui ne 
 son moteur doit **le dire et échouer**, jamais rendre une page vide.
 
 Contournement pendant la session : piloter Chrome soi-même en CDP. 518 Ko de DOM monté et
-158 requêtes capturées là où bxc rendait une coquille — le moteur n'est pas en cause, seulement
-son lancement.
+158 requêtes capturées là où bxc rendait une coquille.
 
 ### 7. Le stub CDP se fait passer pour un navigateur
 
@@ -203,8 +247,10 @@ devient inutilisable dans n'importe quel dépôt qui a un `bunfig.toml` avec `pr
 
 1. Purger les 137 entrées de cache inexploitables et trouver **qui** les écrit (ce n'est pas
    `smartFetch`).
-2. Construire `bxc-engine` et vérifier `fast`/`stealth`/`max` de bout en bout ; faire échouer
-   bruyamment un profil navigateur dont le moteur ne démarre pas (points 5 et 6).
+2. Comprendre pourquoi les profils navigateur rendent 8 à 15× moins que `http` (point 6). Le
+   binaire se construit désormais et démarre : ce qui reste est un problème d'attente ou
+   d'extraction du DOM, pas de lancement. Ajouter un test qui compare les profils entre eux
+   sur une même URL.
 3. Repli MediaWiki automatique quand le domaine expose `/api.php` (point 10) — le meilleur
    rapport couverture/effort du lot.
 4. Réparer ou retirer `search` ; il ment aujourd'hui par omission (point 8).

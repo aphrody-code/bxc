@@ -79,7 +79,7 @@
     "dev": "bun --watch src/serverless/standalone.ts",
     "postinstall": "bun scripts/postinstall.ts",
     "build": "bun run build:linux && bun run build:win",
-    "build:linux": "cd rust-bridge && cargo build --release && cd .. && bun scripts/build-standalone.ts",
+    "build:linux": "cd rust-bridge && cargo build --release --workspace && cd .. && bun scripts/build-standalone.ts",
     "build:win": "bun scripts/build-windows.ts",
     "build:win:aggressive": "bun scripts/build-windows.ts --baseline",
     "test": "SKIP_NETWORK_TESTS=1 bun test test/ packages/ src/ --path-ignore-patterns 'vendor/**'",
