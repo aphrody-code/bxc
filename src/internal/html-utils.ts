@@ -77,7 +77,25 @@ export function htmlToMarkdown(html: string): string {
 		const md = nativeHtmlToMarkdown(cleaned);
 		// An empty result on non-empty input means the native path silently
 		// produced nothing — prefer the JS converter over returning "".
-		if (md.trim().length > 0 || cleaned.trim().length === 0) return md;
+		if (md.trim().length > 0 || cleaned.trim().length === 0) {
+			// Le convertisseur natif fait exploser les tableaux : il aligne les colonnes en
+			// remplissant chaque cellule d'espaces jusqu'a la largeur de la plus large, ce qui
+			// coute O(lignes x largeur max) et devient absurde des qu'une cellule est longue.
+			// Mesure du 2026-09-05 sur une page de wiki de 514 791 o (127 tableaux, 1 177
+			// cellules) : natif 89 008 045 o en 1 451 ms, avec une ligne de 984 840
+			// caracteres — contre 169 387 o en 31 ms pour le convertisseur JS, soit 525 fois
+			// plus compact et 47 fois plus rapide. Un Markdown 173 fois plus gros que son
+			// HTML n'est pas une conversion, c'est du remplissage.
+			//
+			// Le seuil est volontairement large (x3) : une conversion honnete REDUIT la
+			// taille (ratio mesure ici : x0,3). Seule une explosion franche declenche le
+			// repli, donc aucune page normale ne change de chemin.
+			if (md.length <= cleaned.length * 3) return md;
+			console.error(
+				`[htmlToMarkdown] sortie native aberrante (${md.length} o pour ${cleaned.length} o ` +
+					`d'entree, x${(md.length / cleaned.length).toFixed(1)}) — repli sur le convertisseur JS`,
+			);
+		}
 	} catch {
 		// cdylib missing/unloadable — degrade to the portable JS converter.
 	}

@@ -199,7 +199,33 @@ Le second appel suffit à déclencher la limite. Deux manques : aucune temporisa
 exponentielle, et le corps HTML de Google est déversé brut dans le message d'erreur au lieu
 d'être résumé en « quota dépassé, réessayer dans N s ».
 
-### 10. fandom.com n'est pas franchi, et l'API n'est pas essayée
+### 13. Le convertisseur Markdown natif fait exploser les tableaux — CORRIGÉ
+
+Découvert en testant le repli MediaWiki. Sur une page de wiki de 514 791 o (127 tableaux,
+1 177 cellules), les deux chemins de `htmlToMarkdown()` ne rendent pas du tout la même chose :
+
+| Chemin | Sortie | Ratio | Temps | Ligne la plus longue |
+|---|---:|---:|---:|---:|
+| natif (cdylib Rust) | 89 008 045 o | **×172,9** | 1 451 ms | **984 840** |
+| JS (`html-to-markdown.ts`) | 169 387 o | ×0,3 | 31 ms | 2 921 |
+
+Le natif est **525 fois plus volumineux et 47 fois plus lent**. La cause est visible dans la
+sortie : il aligne les colonnes en remplissant chaque cellule d'espaces jusqu'à la largeur de
+la plus large, ce qui coûte O(lignes × largeur max). Une seule cellule longue suffit à faire
+exploser tout le tableau. Un Markdown 173 fois plus gros que son HTML n'est pas une
+conversion, c'est du remplissage.
+
+**Correctif immédiat** : garde de ratio dans `htmlToMarkdown()` — au-delà de ×3, repli sur le
+convertisseur JS avec un message expliquant pourquoi. Le seuil est large à dessein : une
+conversion honnête *réduit* la taille (×0,3 mesuré), donc aucune page normale ne change de
+chemin.
+
+**Correctif de fond, à faire** : borner le remplissage dans le convertisseur Rust
+(`bxc_html_to_markdown`). Le Markdown GFM n'exige aucun alignement des colonnes — `|a|b|`
+est valide. Tant que ce n'est pas fait, le natif reste plus lent que le JS sur tout HTML
+contenant des tableaux.
+
+### 10. fandom.com n'est pas franchi, et l'API n'est pas essayée — CORRIGÉ
 
 ```
 $ bxc scrape https://inazuma-eleven.fandom.com/wiki/Afuro_Terumi --markdown --profile http --force
@@ -208,11 +234,36 @@ $ bxc scrape https://inazuma-eleven.fandom.com/wiki/Afuro_Terumi --markdown --pr
 # → corps vide
 ```
 
-Or **l'API MediaWiki du même domaine répond parfaitement** en `curl` avec un User-Agent
-explicite (`/api.php?action=parse&page=…&prop=text|wikitext|images|sections`). MediaWiki étant
-un moteur ultra-répandu, un repli automatique « si le domaine expose `/api.php`, l'interroger
-plutôt que d'escalader les profils » couvrirait des milliers de sites d'un coup, plus vite et
-plus proprement que n'importe quel profil furtif.
+Diagnostic complet, même machine, même instant :
+
+```
+GET /wiki/Afuro_Terumi                       403  (5 467 o d'interstitiel)
+GET /wiki/Afuro_Terumi  + UA navigateur      403  (5 680 o)
+GET /api.php?action=parse&page=Afuro_Terumi  200  (549 208 o)
+GET /rest.php/v1/page/Afuro_Terumi           200  (54 012 o)
+```
+
+Le 403 est inconditionnel sur le HTML : changer d'UA n'y fait rien, et aucun profil furtif
+n'y fera rien non plus. Cloudflare protège les pages ; l'API, non. C'est aussi ce que rapporte
+ProfessionalWiki/MediaWiki-MCP-Server#217 (février 2026), à ceci près que `rest.php` répond
+encore depuis cette IP — d'où l'ordre retenu : `api.php` d'abord, `rest.php` en repli.
+
+**Correctif** : `src/crawler/mediawiki.ts`, branché dans `smartFetch`. L'API est interrogée
+**avant** l'escalade quand l'hôte est un MediaWiki connu (`*.fandom.com`, `*.wikipedia.org`,
+`*.miraheze.org`, `*.wiki.gg`, `*.fextralife.com`) ou détecté par `meta=siteinfo`, et **en
+dernier recours** quand tous les profils ont échoué sur un hôte inconnu. Débit limité à une
+requête toutes les 6 s par hôte (Fandom recommande ~10/min).
+
+Le gain dépasse Fandom : MediaWiki fait tourner des dizaines de milliers de wikis, et son API
+rend un contenu **plus propre** que le scraping — ni menu, ni bannière, avec les sections, les
+images, les catégories et le wikitext déjà structurés.
+
+Résultat mesuré après correctif :
+
+```
+fandom EN  exit=0  172 726 o   servi par api.php
+fandom FR  exit=0  547 403 o   servi par api.php
+```
 
 ### 11. Les paquets `packages/*` ne sont pas tous exposés au CLI
 
@@ -251,7 +302,7 @@ devient inutilisable dans n'importe quel dépôt qui a un `bunfig.toml` avec `pr
    binaire se construit désormais et démarre : ce qui reste est un problème d'attente ou
    d'extraction du DOM, pas de lancement. Ajouter un test qui compare les profils entre eux
    sur une même URL.
-3. Repli MediaWiki automatique quand le domaine expose `/api.php` (point 10) — le meilleur
-   rapport couverture/effort du lot.
+3. Borner le remplissage des tableaux dans le convertisseur Rust (point 13). La garde de ratio
+   masque le problème ; elle ne le corrige pas, et le natif reste inutilisable sur du tableau.
 4. Réparer ou retirer `search` ; il ment aujourd'hui par omission (point 8).
 5. Isoler le CLI du `bunfig.toml` ambiant (point 12).

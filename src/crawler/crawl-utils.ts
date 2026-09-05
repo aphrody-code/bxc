@@ -20,6 +20,7 @@ import { redis } from "bun";
 import { extractStructuredData } from "../google/fetch.ts";
 import { generateOpenApiSchema } from "../utils/openapi.ts";
 import { getEmbedding } from "../utils/vector.ts";
+import { estMediaWiki, recupererViaMediaWiki, titreDepuisUrl } from "./mediawiki.ts";
 
 export const profilesOrder = ["static", "http", "fast", "stealth", "max"] as const;
 export type ScrapeProfile = typeof profilesOrder[number];
@@ -49,7 +50,7 @@ export interface SmartFetchResult {
 	openapi: any;
 	vector?: number[];
 	timestamp: string;
-	source: "redis" | "sqlite" | "live-crawl";
+	source: "redis" | "sqlite" | "live-crawl" | "mediawiki";
 	profileUsed?: string;
 }
 
@@ -233,6 +234,57 @@ export async function smartFetch(
 		}
 	}
 
+	// 1bis. Repli MediaWiki.
+	//
+	// Un wiki bloque son HTML mais publie son API : sur inazuma-eleven.fandom.com, la page
+	// rend 403 (meme avec un UA de navigateur) tandis que /api.php rend 200 et 549 Ko de
+	// JSON. Escalader les profils sur ces domaines, c'est cinq navigations pour un echec
+	// garanti — alors qu'une requete suffit, et rend un contenu PLUS propre : ni menu, ni
+	// banniere, avec les sections, images et categories deja structurees.
+	//
+	// On tente l'API AVANT le crawl quand l'hote est un MediaWiki connu, et en dernier
+	// recours quand tous les profils ont echoue sur un hote inconnu.
+	const cibleWiki = titreDepuisUrl(url);
+	const viaWiki = async (raison: string): Promise<SmartFetchResult | null> => {
+		if (!cibleWiki) return null;
+		const page = await recupererViaMediaWiki(url);
+		if (!page) return null;
+		console.error(`[smartFetch] ${raison} : servi par l'API MediaWiki (${page.api}) pour ${url}`);
+		const timestamp = new Date().toISOString();
+		const structured = {
+			title: page.title,
+			sections: page.sections,
+			images: page.images,
+			categories: page.categories,
+			externalLinks: page.liens_externes,
+			wikitext: page.wikitext,
+		};
+		try {
+			const db = new BxcDB();
+			db.saveScrape(url, `mediawiki:${page.api}`, 200, page.html, { title: page.title }, page.markdown, structured);
+			db.close();
+		} catch (err) {
+			console.error("[smartFetch] MediaWiki: echec d'ecriture en cache:", err);
+		}
+		return {
+			url,
+			title: page.title,
+			status: 200,
+			html: page.html,
+			markdown: page.markdown,
+			structured,
+			openapi: null,
+			timestamp,
+			source: "mediawiki",
+			profileUsed: `mediawiki:${page.api}`,
+		};
+	};
+
+	if (cibleWiki && (await estMediaWiki(url))) {
+		const r = await viaWiki("hote MediaWiki reconnu");
+		if (r) return r;
+	}
+
 	// 2. Profile escalation sequence
 	const idx = profilesOrder.indexOf(initialProfile);
 	const escalationPath = idx === -1 ? profilesOrder : profilesOrder.slice(idx);
@@ -352,6 +404,11 @@ export async function smartFetch(
 			}
 		}
 	}
+
+	// Dernier recours : l'hote n'etait pas reconnu comme un wiki, mais l'URL en a la forme.
+	// Un site sur cinq derriere Cloudflare est un MediaWiki qui s'ignore.
+	const secours = await viaWiki("tous les profils ont echoue");
+	if (secours) return secours;
 
 	throw lastError ?? new Error(`Failed to crawl ${url} with all profiles in escalation path.`);
 }
