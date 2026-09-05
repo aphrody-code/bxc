@@ -135,6 +135,17 @@ export async function main(
 		});
 
 		if (opts.markdown) {
+			// Un corps vide avec un code de sortie 0 est un faux vert : l'appelant croit
+			// avoir une page. Mesure du 2026-09-05 : plusieurs profils rendaient 0 octet
+			// utile sans que rien ne le signale, et les scripts en aval traitaient le vide
+			// comme une reponse valide.
+			if ((result.markdown ?? "").trim().length < 50) {
+				logger.error(
+					`Markdown vide pour ${opts.url} (profil ${result.profileUsed}, source ${result.source}, ` +
+						`html ${result.html?.length ?? 0} o) — ce n'est pas une page.`,
+				);
+				process.exit(EXIT.DATA_ERR);
+			}
 			Bun.stdout.write(result.markdown + "\n");
 			return;
 		}

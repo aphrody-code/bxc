@@ -2,6 +2,11 @@
 name = "bxc-engine"
 version.workspace = true
 edition.workspace = true
+# Deux [[bin]] sans default-run : `cargo run -p bxc-engine` echoue en
+# « no bin target named `bxc-engine` in default-run packages », ce qui rend
+# `bxc chrome fetch` et `bxc chrome launch` inutilisables des que le binaire
+# n'est pas deja construit. Mesure du 2026-09-05.
+default-run = "bxc-engine"
 
 [[bin]]
 name = "bxc-engine"

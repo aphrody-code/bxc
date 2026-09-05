@@ -97,6 +97,17 @@ export async function main(
 			}
 			const url = explicit ?? (chromiumSnapshot() as string);
 			logger.log(`[chrome] fetching native Chromium from ${url}...`);
+			// Le repli `cargo run` n'est PAS un repli silencieux : il compile, il est lent, et
+			// il echouait jusqu'ici en « no bin target named bxc-engine » (deux [[bin]] sans
+			// default-run). Le dire, plutot que de laisser l'utilisateur lire un message de
+			// cargo qui n'a rien a voir avec ce qu'il a demande.
+			if (!bin) {
+				logger.warn(
+					"binaire bxc-engine introuvable — repli sur `cargo run` (compilation, 2-3 min a froid). " +
+						"Pour l'eviter : cargo build -p bxc-engine --release --manifest-path " +
+						CARGO_TOML,
+				);
+			}
 			const spawnArgs = bin
 				? [bin, "fetch", url]
 				: [

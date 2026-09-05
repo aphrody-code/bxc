@@ -16,14 +16,20 @@
 
 import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
+import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
 
 export class BxcDB {
 	private db: Database;
 
 	constructor(path?: string) {
+		// Le repli NE DOIT PAS dependre du repertoire courant : avec `resolve(process.cwd(),
+		// ...)`, chaque dossier depuis lequel on lance bxc obtenait sa PROPRE base, donc son
+		// propre cache. Mesure du 2026-09-05 sur ce VPS : trois bases distinctes
+		// (~/bxc/data, ~/rg/data, ~/niers/data), d'ou des resultats incoherents pour la
+		// meme URL selon le cwd — et un `--force` qui semblait seul capable de « reparer ».
 		const dbPath =
-			path ?? Bun.env.BXC_DB_PATH ?? resolve(process.cwd(), "data/bxc.sqlite");
+			path ?? Bun.env.BXC_DB_PATH ?? resolve(homedir(), ".bxc", "bxc.sqlite");
 
 		// Ensure directory exists
 		const dir = resolve(dbPath, "..");

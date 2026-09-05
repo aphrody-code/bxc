@@ -100,6 +100,18 @@ const CAPTCHA_MARKERS = ["hcaptcha", "recaptcha", "turnstile"] as const;
  * actually fetched and escalates to a slower profile that will fare no better,
  * whereas a false negative merely hands the caller a page it can inspect.
  */
+/**
+ * Une entree de cache est-elle inexploitable ? Une page mise en cache apres un echec
+ * (corps vide, interstitiel) est pire qu'une absence de cache : elle est servie
+ * indefiniment avec un code de sortie 0, et seul `--force` la contourne.
+ * Mesure du 2026-09-05 : 137 des 365 entrees de ~/bxc/data/bxc.sqlite avaient un
+ * markdown de moins de 50 caracteres.
+ */
+export function isCacheUnusable(html: string, markdown: string, title: string, status?: number): boolean {
+	if ((markdown ?? "").trim().length < 50 && (html ?? "").trim().length < 200) return true;
+	return isCrawlFailure(status, html ?? "", title ?? "");
+}
+
 export function isCrawlFailure(status: number | undefined, html: string, title: string): boolean {
 	if (status !== undefined && (status < 200 || status >= 400)) {
 		return true;
@@ -149,7 +161,10 @@ export async function smartFetch(
 			const cached = await redis.get(cacheKey);
 			if (cached) {
 				const parsed = JSON.parse(cached);
-				return {
+				if (isCacheUnusable(parsed.html || "", parsed.markdown || "", parsed.title || "", parsed.status)) {
+					console.error(`[smartFetch] Entree Redis inexploitable pour ${url} — purgee, recrawl`);
+					await redis.del(cacheKey).catch(() => {});
+				} else return {
 					url,
 					title: parsed.title || "",
 					status: parsed.status || 200,
@@ -170,7 +185,9 @@ export async function smartFetch(
 		const db = new BxcDB();
 		try {
 			const row = db.getScrapeByUrl(url);
-			if (row) {
+			if (row && isCacheUnusable(row.content || "", row.markdown || "", row.metadata ? (JSON.parse(row.metadata).title ?? "") : "", row.status)) {
+				console.error(`[smartFetch] Entree SQLite inexploitable pour ${url} — ignoree, recrawl`);
+			} else if (row) {
 				const result: SmartFetchResult = {
 					url: row.url,
 					title: row.metadata ? JSON.parse(row.metadata).title || "" : "",
@@ -223,7 +240,9 @@ export async function smartFetch(
 	let lastError: Error | null = null;
 
 	for (const profile of escalationPath) {
-		console.log(`[smartFetch] Trying profile: ${profile} for ${url}`);
+		// stderr, jamais stdout : `bxc scrape --markdown` ecrit son resultat sur stdout, et
+		// cette ligne se retrouvait EN TETE du Markdown de chaque page rendue.
+		console.error(`[smartFetch] Trying profile: ${profile} for ${url}`);
 		let page: any = null;
 		try {
 			const isBrowserProfile = profile === "fast" || profile === "stealth" || profile === "max";
