@@ -54,6 +54,7 @@ Subcommands:
   recon     One-shot URL → recon doc (Markdown by default)
   detect    Framework / CMS / library detection via multi-signal
   scrape    Extract textContent from CSS-matched elements
+  wiki      Read a MediaWiki site through its API (Fandom, Wikipedia, Miraheze, wiki.gg)
   search    Google Web Search → clean results (text/JSON/Markdown)
   api       Run Bxc as an HTTP JSON API
   cookies   Cookie jar tools
@@ -163,6 +164,12 @@ async function main() {
 
 		case "scrape": {
 			const mod = await import("./scrape.ts");
+			await mod.main(args, opts);
+			break;
+		}
+
+		case "wiki": {
+			const mod = await import("./wiki.ts");
 			await mod.main(args, opts);
 			break;
 		}
