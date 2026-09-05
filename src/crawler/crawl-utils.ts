@@ -20,7 +20,7 @@ import { redis } from "bun";
 import { extractStructuredData } from "../google/fetch.ts";
 import { generateOpenApiSchema } from "../utils/openapi.ts";
 import { getEmbedding } from "../utils/vector.ts";
-import { estMediaWiki, recupererViaMediaWiki, titreDepuisUrl } from "./mediawiki.ts";
+import { type OptionsMediaWiki, estMediaWiki, recupererViaMediaWiki, titreDepuisUrl } from "./mediawiki.ts";
 
 export const profilesOrder = ["static", "http", "fast", "stealth", "max"] as const;
 export type ScrapeProfile = typeof profilesOrder[number];
@@ -244,10 +244,21 @@ export async function smartFetch(
 	//
 	// On tente l'API AVANT le crawl quand l'hote est un MediaWiki connu, et en dernier
 	// recours quand tous les profils ont echoue sur un hote inconnu.
+	//
+	// Les options de transport sont TRANSMISES : sans elles, un utilisateur derriere un proxy
+	// d'entreprise voyait les profils navigateur passer et le repli MediaWiki echouer, c'est-a-dire
+	// le repli tomber exactement la ou il est le plus utile. `proxy` et `tls` sont des options
+	// natives du `fetch` de Bun (verifie le 2026-09-05 : un proxy injoignable fait echouer la
+	// requete, donc l'option est bien honoree).
+	const optsWiki: OptionsMediaWiki = {
+		...(opts.proxy ? { proxy: opts.proxy } : {}),
+		...(opts.insecure ? { insecure: true } : {}),
+		...(opts.timeoutMs ? { timeoutMs: opts.timeoutMs } : {}),
+	};
 	const cibleWiki = titreDepuisUrl(url);
 	const viaWiki = async (raison: string): Promise<SmartFetchResult | null> => {
 		if (!cibleWiki) return null;
-		const page = await recupererViaMediaWiki(url);
+		const page = await recupererViaMediaWiki(url, optsWiki);
 		if (!page) return null;
 		console.error(`[smartFetch] ${raison} : servi par l'API MediaWiki (${page.api}) pour ${url}`);
 		const timestamp = new Date().toISOString();
@@ -280,7 +291,7 @@ export async function smartFetch(
 		};
 	};
 
-	if (cibleWiki && (await estMediaWiki(url))) {
+	if (cibleWiki && (await estMediaWiki(url, optsWiki))) {
 		const r = await viaWiki("hote MediaWiki reconnu");
 		if (r) return r;
 	}

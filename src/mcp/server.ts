@@ -2181,6 +2181,143 @@ server.registerTool(
 	},
 );
 
+/**
+ * Wiki MediaWiki (Fandom, Wikipedia, Miraheze, wiki.gg...).
+ *
+ * Ces outils appellent `src/crawler/wiki-service.ts`, exactement comme `bxc wiki` : une seule
+ * implementation pour les deux surfaces. Un correctif sur le parseur d'infobox profite aux
+ * deux le meme jour, ce qui n'aurait pas ete le cas si le MCP avait recopie la CLI.
+ */
+const reglagesWiki = {
+	proxy: z.string().optional().describe("Proxy URL traversed by every API call."),
+	insecure: z.boolean().optional().describe("Accept invalid TLS certificates."),
+};
+
+server.registerTool(
+	"bxc_wiki_page",
+	{
+		description:
+			"Reads a MediaWiki page through its API (works where the HTML is 403-blocked, e.g. Fandom). Returns sections, infobox fields with their real names, tables with rowspan/colspan expanded, full-resolution image URLs, categories and the revision id.",
+		inputSchema: z.object({
+			url: z.string().describe("Wiki page URL, e.g. https://example.fandom.com/fr/wiki/Title."),
+			withImages: z.boolean().default(true).describe("Resolve full-resolution image URLs (one API call per 50 files)."),
+			withContent: z.boolean().default(false).describe("Include the page markdown and wikitext in the payload."),
+			...reglagesWiki,
+		}),
+	},
+	async (args) => {
+		const { construireDossier } = await import("../crawler/wiki-service.ts");
+		const dossier = await construireDossier(args.url, {
+			avecImages: args.withImages,
+			avecContenu: args.withContent,
+			proxy: args.proxy,
+			insecure: args.insecure,
+		});
+		return { content: [{ type: "text", text: JSON.stringify(dossier, null, 2) }] };
+	},
+);
+
+server.registerTool(
+	"bxc_wiki_markdown",
+	{
+		description:
+			"Returns a MediaWiki page as clean Markdown through its API: no navigation, no banner, no menu.",
+		inputSchema: z.object({
+			url: z.string().describe("Wiki page URL."),
+			...reglagesWiki,
+		}),
+	},
+	async (args) => {
+		const { pageOuErreur } = await import("../crawler/wiki-service.ts");
+		const page = await pageOuErreur(args.url, { proxy: args.proxy, insecure: args.insecure });
+		return { content: [{ type: "text", text: page.markdown }] };
+	},
+);
+
+server.registerTool(
+	"bxc_wiki_search",
+	{
+		description:
+			"Full-text search ON a wiki through its API. Any page URL of that wiki is enough to locate it.",
+		inputSchema: z.object({
+			url: z.string().describe("Any page URL of the target wiki."),
+			query: z.string().describe("Search query."),
+			limit: z.number().default(20).describe("Maximum number of results."),
+			...reglagesWiki,
+		}),
+	},
+	async (args) => {
+		const { rechercherSurLeWiki } = await import("../crawler/wiki-service.ts");
+		const res = await rechercherSurLeWiki(args.url, args.query, args.limit, {
+			proxy: args.proxy,
+			insecure: args.insecure,
+		});
+		return { content: [{ type: "text", text: JSON.stringify(res, null, 2) }] };
+	},
+);
+
+server.registerTool(
+	"bxc_wiki_mirror",
+	{
+		description:
+			"Mirrors a wiki page and every one of its images to a local directory, verifying each download against the SHA-1 published by the wiki, and indexes the page locally (FTS5 + embedding).",
+		inputSchema: z.object({
+			url: z.string().describe("Wiki page URL."),
+			outDir: z.string().describe("Local output directory."),
+			concurrency: z.number().default(8).describe("Parallel image downloads."),
+			index: z.boolean().default(true).describe("Write the page into the local bxc database."),
+			compress: z.boolean().default(false).describe("Store page.html/page.wikitext as zstd (measured x10)."),
+			...reglagesWiki,
+		}),
+	},
+	async (args) => {
+		const { miroirWiki } = await import("../crawler/wiki-service.ts");
+		const { mesures } = await miroirWiki(args.url, args.outDir, {
+			concurrence: args.concurrency,
+			indexer: args.index,
+			compresser: args.compress,
+			avecContenu: true,
+			proxy: args.proxy,
+			insecure: args.insecure,
+		});
+		return { content: [{ type: "text", text: JSON.stringify(mesures, null, 2) }] };
+	},
+);
+
+server.registerTool(
+	"bxc_wiki_find",
+	{
+		description:
+			"Full-text search INSIDE the wiki pages already read by bxc (local FTS5, no network).",
+		inputSchema: z.object({
+			query: z.string().describe("Search query."),
+			limit: z.number().default(20).describe("Maximum number of results."),
+		}),
+	},
+	async (args) => {
+		const { chercherLocalement } = await import("../crawler/wiki-service.ts");
+		return {
+			content: [{ type: "text", text: JSON.stringify(chercherLocalement(args.query, args.limit), null, 2) }],
+		};
+	},
+);
+
+server.registerTool(
+	"bxc_wiki_check",
+	{
+		description: "Does this domain serve MediaWiki? Known hosts answer instantly, others are probed via meta=siteinfo.",
+		inputSchema: z.object({
+			url: z.string().describe("Any page URL of the site to test."),
+			...reglagesWiki,
+		}),
+	},
+	async (args) => {
+		const { verifierMediaWiki } = await import("../crawler/wiki-service.ts");
+		const r = await verifierMediaWiki(args.url, { proxy: args.proxy, insecure: args.insecure });
+		return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
+	},
+);
+
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
@@ -2202,6 +2339,7 @@ async function main() {
 			import("@aphrody/challonge"),
 			import("@aphrody/worldbeyblade"),
 			import("../cli/actor.ts"),
+			import("../crawler/wiki-service.ts"),
 		]).catch(() => {});
 	}, 100);
 }

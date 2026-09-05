@@ -23,24 +23,29 @@
  * resolution, la liste des sections, les categories. Un scrape rend une page ; l'API rend une
  * base de donnees.
  *
+ * Ce fichier ne fait plus QUE de la ligne de commande : analyse d'`argv`, ecriture, codes de
+ * sortie. Toute la logique vit dans `src/crawler/wiki-service.ts`, que le serveur MCP appelle
+ * telle quelle — les deux surfaces executent le meme code, pas deux copies.
+ *
  * Le contenu recupere appartient a ses auteurs (les wikis Fandom sont sous CC BY-SA) :
- * l'outil extrait, l'appelant reste responsable de l'usage et de l'attribution.
+ * l'outil extrait, l'appelant reste responsable de l'usage et de l'attribution. Le `revid`
+ * joint a chaque dossier est ce qui rend cette attribution verifiable.
  */
 
-import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { BxcDB } from "../db/BxcDB.ts";
-import { getEmbedding } from "../utils/vector.ts";
-import { EXIT, type CommonOptions, logger, parseCommonArgs } from "./shared.ts";
+import type { OptionsMediaWiki } from "../crawler/mediawiki.ts";
+import { parserInfobox, resoudreImages } from "../crawler/mediawiki.ts";
 import {
-	estMediaWiki,
-	parserInfobox,
-	parserTableaux,
-	recupererViaMediaWiki,
-	rechercher,
-	resoudreImages,
-	titreDepuisUrl,
-} from "../crawler/mediawiki.ts";
+	ErreurWiki,
+	chercherLocalement,
+	cibleOuErreur,
+	construireDossierEtPage,
+	miroirWiki,
+	pageOuErreur,
+	rechercherSurLeWiki,
+	tableauxDePage,
+	verifierMediaWiki,
+} from "../crawler/wiki-service.ts";
+import { EXIT, type CommonOptions, logger, parseCommonArgs } from "./shared.ts";
 
 function printUsage(): void {
 	Bun.stdout.write(
@@ -60,9 +65,13 @@ Usage:
 Options:
   --json          sortie JSON (defaut pour page/tables/images/infobox/search)
   --out <chemin>  fichier de sortie, ou dossier pour 'mirror'
+  --limite <n>    nombre de resultats de 'search' et 'find' (defaut 20)
   --concurrence <n>  telechargements simultanes de 'mirror' (defaut 8)
+  --compress      'mirror' archive page.html/page.wikitext en zstd (x10 mesure)
   --no-index      'mirror' n'ecrit pas dans la base locale
   --help, -h      cette aide
+
+Options globales honorees : --proxy <url>, --insecure, --timeout <ms>, --quiet.
 
 Exemples:
   bxc wiki page https://inazuma-eleven.fandom.com/wiki/Afuro_Terumi
@@ -74,233 +83,187 @@ Exemples:
 	);
 }
 
-async function ecrire(contenu: string, out: string | null): Promise<void> {
-	if (out) {
-		await Bun.write(out, contenu);
-		logger.log(`ecrit : ${out} (${contenu.length} o)`);
-	} else Bun.stdout.write(contenu + "\n");
+/** Drapeaux qui consomment l'argument suivant. Le reste des `--xxx` est booleen. */
+const DRAPEAUX_VALEUR = new Set(["--out", "--concurrence", "--limite"]);
+
+/**
+ * Separe `argv` en positionnels, valeurs et booleens.
+ *
+ * L'ancienne forme reconstruisait la requete par `argv.filter(a => !a.startsWith("--"))` :
+ * la VALEUR d'un drapeau y survivait. `bxc wiki find "Aphrodi" --out r.json` cherchait donc
+ * « Aphrodi r.json » et ne rendait rien, sans que rien ne l'explique.
+ */
+function separerArguments(argv: string[]): { positionnels: string[]; valeurs: Map<string, string>; bools: Set<string> } {
+	const positionnels: string[] = [];
+	const valeurs = new Map<string, string>();
+	const bools = new Set<string>();
+	for (let i = 0; i < argv.length; i++) {
+		const a = argv[i]!;
+		if (DRAPEAUX_VALEUR.has(a)) {
+			const v = argv[++i];
+			if (v !== undefined) valeurs.set(a, v);
+		} else if (a.startsWith("-") && !/^-\d/.test(a)) {
+			bools.add(a);
+		} else {
+			positionnels.push(a);
+		}
+	}
+	return { positionnels, valeurs, bools };
 }
 
-export async function main(argv: string[], _base: CommonOptions): Promise<void> {
-	const sous = argv[0];
-	const url = argv[1];
-	if (!sous || argv.includes("--help") || argv.includes("-h")) {
+function entier(v: string | undefined, defaut: number): number {
+	const n = Number.parseInt(v ?? "", 10);
+	return Number.isFinite(n) && n > 0 ? n : defaut;
+}
+
+/**
+ * Ecrit sur le fichier demande, ou sur stdout.
+ *
+ * `Bun.stdout.write` rend une PROMESSE : sans `await`, une sortie volumineuse suivie d'un
+ * `process.exit` est tronquee ou perdue (verifie — l'ordre des lignes s'inverse deja sur une
+ * sortie minuscule). Et le compte d'octets vient de `Bun.write`, pas de `contenu.length` :
+ * sur un titre accentue, la longueur en caracteres n'est pas la taille du fichier.
+ */
+async function ecrire(contenu: string, out: string | null): Promise<void> {
+	if (out) {
+		const n = await Bun.write(out, contenu);
+		logger.log(`ecrit : ${out} (${n} o)`);
+	} else {
+		await Bun.stdout.write(`${contenu}\n`);
+	}
+}
+
+const enJson = (v: unknown) => JSON.stringify(v, null, 2);
+
+export async function main(argv: string[], base?: CommonOptions): Promise<void> {
+	const { positionnels, valeurs, bools } = separerArguments(argv);
+	const sous = positionnels[0];
+	if (!sous || bools.has("--help") || bools.has("-h")) {
 		printUsage();
 		return;
 	}
-	if (!url) {
-		printUsage();
-		process.exit(EXIT.MISUSE);
-	}
-	const iOut = argv.indexOf("--out");
-	const out = iOut >= 0 && argv[iOut + 1] ? argv[iOut + 1]! : null;
+	const out = valeurs.get("--out") ?? null;
 
-	// `find` interroge la base locale : son deuxieme argument est une requete, pas une URL.
-	if (sous === "find") {
-		const requete = argv.slice(1).filter((a) => !a.startsWith("--")).join(" ");
-		if (!requete) {
-			logger.error("requete manquante");
-			process.exit(EXIT.MISUSE);
-		}
-		const db = new BxcDB();
-		// `saveScrape` insere sans dedupliquer : une page relue N fois apparait N fois.
-		// On ne garde que la lecture la plus recente de chaque URL.
-		const vues = new Set<string>();
-		const res = db
-			.searchFullText(requete, 60)
-			.filter((r: any) => String(r.profile ?? "").startsWith("mediawiki"))
-			.filter((r: any) => !vues.has(r.url) && (vues.add(r.url), true))
-			.slice(0, 20)
-			.map((r: any) => ({
-				url: r.url,
-				titre: r.metadata ? (JSON.parse(r.metadata).title ?? null) : null,
-				octets: (r.markdown ?? "").length,
-				lu_le: r.timestamp,
-			}));
-		db.close();
-		await ecrire(JSON.stringify(res, null, 2), out);
-		if (!res.length) process.exit(EXIT.DATA_ERR);
-		return;
-	}
+	// Les options globales de bxc etaient recues puis jetees : `--proxy` et `--insecure`
+	// n'atteignaient pas le repli MediaWiki, qui est pourtant le seul chemin reseau de cette
+	// commande. `proxy` et `tls` sont des options natives du `fetch` de Bun.
+	const opts: OptionsMediaWiki = {
+		...(base?.proxy ? { proxy: base.proxy } : {}),
+		...(base?.insecure ? { insecure: true } : {}),
+		...(base?.timeoutMs ? { timeoutMs: base.timeoutMs } : {}),
+	};
 
-	const cible = titreDepuisUrl(url);
-	if (!cible && sous !== "check") {
-		logger.error(
-			`${url} n'a pas la forme d'une page de wiki (/wiki/<Titre> ou ?title=<Titre>). ` +
-				`Pour un wiki localise, inclure le prefixe de langue : /fr/wiki/<Titre>.`,
-		);
-		process.exit(EXIT.MISUSE);
-	}
-
-	if (sous === "check") {
-		const ok = await estMediaWiki(url);
-		Bun.stdout.write(JSON.stringify({ url, mediawiki: ok }, null, 2) + "\n");
-		if (!ok) process.exit(EXIT.DATA_ERR);
-		return;
-	}
-
-	if (sous === "search") {
-		const requete = argv.slice(2).filter((a) => !a.startsWith("--") && a !== out).join(" ");
-		if (!requete) {
-			logger.error("requete de recherche manquante");
-			process.exit(EXIT.MISUSE);
-		}
-		const res = await rechercher(cible!.base, requete, cible!.hote);
-		await ecrire(JSON.stringify(res, null, 2), out);
-		// Zero resultat n'est pas une erreur de l'outil, mais l'appelant doit pouvoir le
-		// distinguer sans reparser la sortie.
-		if (!res.length) process.exit(EXIT.DATA_ERR);
-		return;
-	}
-
-	const page = await recupererViaMediaWiki(url);
-	if (!page) {
-		logger.error(
-			`aucun contenu rendu par l'API pour ${url}. Causes possibles : page inexistante, ` +
-				`api.php desactive, ou prefixe de langue manquant dans l'URL.`,
-		);
-		process.exit(EXIT.DATA_ERR);
-	}
-
-	if (sous === "mirror") {
-		if (!out) {
-			logger.error("`mirror` exige --out <dossier>");
-			process.exit(EXIT.MISUSE);
-		}
-		const iC = argv.indexOf("--concurrence");
-		const concurrence = Math.max(1, Number.parseInt(iC >= 0 ? (argv[iC + 1] ?? "8") : "8", 10) || 8);
-		await mkdir(join(out, "images"), { recursive: true });
-
-		const images = await resoudreImages(cible!.base, page.images, cible!.hote);
-		// Bun.write(chemin, Response) ecrit le flux directement sur le disque : pas de
-		// Buffer intermediaire, donc une image de 10 Mo ne coute pas 10 Mo de RAM.
-		// La concurrence est bornee : le CDN d'un wiki repond mal a 114 requetes d'un coup.
-		let ok = 0;
-		let echecs = 0;
-		const octets: number[] = [];
-		for (let i = 0; i < images.length; i += concurrence) {
-			await Promise.all(
-				images.slice(i, i + concurrence).map(async (img) => {
-					const nom = (img.fichier.replace(/^(File|Fichier):/, "") || "sans-nom")
-						.replace(/[^\w.\-]+/g, "_")
-						.slice(0, 120);
-					try {
-						const r = await fetch(img.url, { headers: { "user-agent": "bxc/0.9 (wiki mirror)" } });
-						if (!r.ok) {
-							echecs++;
-							return;
-						}
-						const n = await Bun.write(join(out, "images", nom), r);
-						octets.push(n);
-						ok++;
-					} catch {
-						echecs++;
-					}
-				}),
-			);
-		}
-
-		const cheerioM = await import("cheerio");
-		const tables = parserTableaux(page.html, cheerioM.load(page.html));
-		const dossier = {
-			url,
-			titre: page.title,
-			api: page.api,
-			sections: page.sections,
-			infobox: page.wikitext ? parserInfobox(page.wikitext) : [],
-			tableaux: tables,
-			images,
-			categories: page.categories,
-			liens_externes: page.liens_externes,
-			mesures: { images_telechargees: ok, images_en_echec: echecs, octets_images: octets.reduce((a, b) => a + b, 0) },
-		};
-		await Bun.write(join(out, "page.json"), JSON.stringify(dossier, null, 2));
-		await Bun.write(join(out, "page.md"), page.markdown);
-		if (page.wikitext) await Bun.write(join(out, "page.wikitext"), page.wikitext);
-
-		if (!argv.includes("--no-index")) {
-			// Indexer dans la base de bxc : la page devient cherchable hors ligne par FTS5
-			// (`bxc wiki find`), et son vecteur rejoint le corpus RAG existant.
-			try {
-				const db = new BxcDB();
-				const vecteur = await getEmbedding(page.markdown).catch(() => undefined);
-				db.saveScrape(url, `mediawiki:${page.api}`, 200, page.html, { title: page.title }, page.markdown, dossier, null, vecteur);
-				db.close();
-			} catch (err) {
-				logger.warn(`indexation locale impossible : ${err instanceof Error ? err.message : String(err)}`);
+	try {
+		// `find` interroge la base locale : son argument est une requete, pas une URL.
+		if (sous === "find") {
+			const requete = positionnels.slice(1).join(" ");
+			if (!requete) {
+				logger.error("requete manquante");
+				process.exit(EXIT.MISUSE);
 			}
-		}
-
-		logger.log(
-			`${out} — ${ok} images (${(dossier.mesures.octets_images / 1024).toFixed(0)} Kio)` +
-				`${echecs ? `, ${echecs} en echec` : ""}, ${tables.length} tableaux, ${page.sections.length} sections`,
-		);
-		return;
-	}
-
-	if (sous === "md") {
-		await ecrire(page.markdown, out);
-		return;
-	}
-
-	const cheerio = await import("cheerio");
-	const $ = cheerio.load(page.html);
-
-	switch (sous) {
-		case "tables": {
-			const t = parserTableaux(page.html, $);
-			await ecrire(JSON.stringify(t, null, 2), out);
+			const res = chercherLocalement(requete, entier(valeurs.get("--limite"), 20));
+			await ecrire(enJson(res), out);
+			if (!res.length) process.exit(EXIT.DATA_ERR);
 			return;
 		}
-		case "images": {
-			const img = await resoudreImages(cible!.base, page.images, cible!.hote);
-			await ecrire(JSON.stringify(img, null, 2), out);
-			return;
-		}
-		case "infobox": {
-			const box = page.wikitext ? parserInfobox(page.wikitext) : [];
-			await ecrire(JSON.stringify(box, null, 2), out);
-			if (!box.length) {
-				logger.warn("aucune infobox trouvee dans le wikitext de cette page");
-				process.exit(EXIT.DATA_ERR);
+
+		if (sous === "check") {
+			const url = positionnels[1];
+			if (!url) {
+				printUsage();
+				process.exit(EXIT.MISUSE);
 			}
+			const r = await verifierMediaWiki(url, opts);
+			await ecrire(enJson(r), out);
+			if (!r.mediawiki) process.exit(EXIT.DATA_ERR);
 			return;
 		}
-		case "page": {
-			const [images, tables] = await Promise.all([
-				resoudreImages(cible!.base, page.images, cible!.hote),
-				Promise.resolve(parserTableaux(page.html, $)),
-			]);
-			const dossier = {
-				url,
-				titre: page.title,
-				api: page.api,
-				sections: page.sections,
-				infobox: page.wikitext ? parserInfobox(page.wikitext) : [],
-				tableaux: tables,
-				images,
-				categories: page.categories,
-				liens_externes: page.liens_externes,
-				markdown: page.markdown,
-				wikitext: page.wikitext,
-				mesures: {
-					sections: page.sections.length,
-					tableaux: tables.length,
-					lignes_de_tableau: tables.reduce((n, t) => n + t.lignes.length, 0),
-					images: images.length,
-					categories: page.categories.length,
-					octets_html: page.html.length,
-					octets_markdown: page.markdown.length,
-					octets_wikitext: page.wikitext?.length ?? 0,
-				},
-			};
-			await ecrire(JSON.stringify(dossier, null, 2), out);
-			return;
-		}
-		default:
-			logger.error(`sous-commande inconnue : ${sous}`);
+
+		const url = positionnels[1];
+		if (!url) {
 			printUsage();
 			process.exit(EXIT.MISUSE);
+		}
+
+		if (sous === "search") {
+			const requete = positionnels.slice(2).join(" ");
+			if (!requete) {
+				logger.error("requete de recherche manquante");
+				process.exit(EXIT.MISUSE);
+			}
+			const res = await rechercherSurLeWiki(url, requete, entier(valeurs.get("--limite"), 20), opts);
+			await ecrire(enJson(res), out);
+			// Zero resultat n'est pas une erreur de l'outil, mais l'appelant doit pouvoir le
+			// distinguer sans reparser la sortie.
+			if (!res.length) process.exit(EXIT.DATA_ERR);
+			return;
+		}
+
+		if (sous === "mirror") {
+			if (!out) {
+				logger.error("`mirror` exige --out <dossier>");
+				process.exit(EXIT.MISUSE);
+			}
+			const { mesures } = await miroirWiki(url, out, {
+				...opts,
+				concurrence: entier(valeurs.get("--concurrence"), 8),
+				indexer: !bools.has("--no-index"),
+				compresser: bools.has("--compress"),
+				avecContenu: true,
+			});
+			logger.log(
+				`${mesures.dossier} — ${mesures.images_telechargees} images (${(mesures.octets_images / 1024).toFixed(0)} Kio)` +
+					`${mesures.images_en_echec ? `, ${mesures.images_en_echec} en echec` : ""}` +
+					`${mesures.images_corrompues ? `, ${mesures.images_corrompues} corrompues (sha1)` : ""}` +
+					`, ${mesures.tableaux} tableaux, ${mesures.sections} sections`,
+			);
+			return;
+		}
+
+		// Les sous-commandes restantes n'ont besoin que d'une lecture de page.
+		switch (sous) {
+			case "md": {
+				const page = await pageOuErreur(url, opts);
+				await ecrire(page.markdown, out);
+				return;
+			}
+			case "tables": {
+				const page = await pageOuErreur(url, opts);
+				await ecrire(enJson(await tableauxDePage(page)), out);
+				return;
+			}
+			case "images": {
+				const cible = cibleOuErreur(url);
+				const page = await pageOuErreur(url, opts);
+				await ecrire(enJson(await resoudreImages(cible.base, page.images, cible.hote, opts)), out);
+				return;
+			}
+			case "infobox": {
+				const page = await pageOuErreur(url, opts);
+				const box = page.wikitext ? parserInfobox(page.wikitext) : [];
+				await ecrire(enJson(box), out);
+				if (!box.length) {
+					logger.warn("aucune infobox trouvee dans le wikitext de cette page");
+					process.exit(EXIT.DATA_ERR);
+				}
+				return;
+			}
+			case "page": {
+				const { dossier } = await construireDossierEtPage(url, { ...opts, avecContenu: true });
+				await ecrire(enJson(dossier), out);
+				return;
+			}
+			default:
+				logger.error(`sous-commande inconnue : ${sous}`);
+				printUsage();
+				process.exit(EXIT.MISUSE);
+		}
+	} catch (err) {
+		if (err instanceof ErreurWiki) {
+			logger.error(err.message);
+			process.exit(err.genre === "url" ? EXIT.MISUSE : EXIT.DATA_ERR);
+		}
+		throw err;
 	}
 }
 
